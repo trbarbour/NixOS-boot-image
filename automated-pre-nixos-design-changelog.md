@@ -41,3 +41,6 @@
 
 ### v0.8 — 2025-09-09
 - Defined ISO configuration in flake and documented build instructions.
+
+### v0.9 — 2025-09-09
+- Clarified volume group naming: only the largest SSD/HDD bucket uses `main` or `large`; smaller buckets get suffixed names and remain unmounted.

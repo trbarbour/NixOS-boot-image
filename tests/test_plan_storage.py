@@ -23,3 +23,28 @@ def test_plan_single_disk() -> None:
     plan = plan_storage("fast", disks)
     assert plan["arrays"] == []
     assert plan["vgs"] == [{"name": "main", "devices": ["nvme0n1"]}]
+
+
+def test_multiple_ssd_buckets_named_separately() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=1000, rotational=False),
+        Disk(name="sdc", size=500, rotational=False),
+    ]
+    plan = plan_storage("fast", disks)
+    vg_names = {vg["name"] for vg in plan["vgs"]}
+    assert "main" in vg_names and "main-1" in vg_names
+    lv_vgs = {lv["vg"] for lv in plan["lvs"]}
+    assert lv_vgs == {"main"}
+
+def test_multiple_hdd_buckets_named_separately() -> None:
+    disks = [
+        Disk(name="sda", size=2000, rotational=True),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=1000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    vg_names = {vg["name"] for vg in plan["vgs"]}
+    assert "large" in vg_names and "large-1" in vg_names
+    lv_vgs = {lv["vg"] for lv in plan["lvs"]}
+    assert lv_vgs == {"large"}
