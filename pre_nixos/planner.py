@@ -74,29 +74,41 @@ def plan_storage(mode: str, disks: List[Disk]) -> Dict[str, Any]:
     plan: Dict[str, Any] = {"arrays": [], "vgs": [], "lvs": []}
     array_index = 0
 
-    # Handle SSD buckets for VG "main"
-    for bucket in groups["ssd"]:
+    # Handle SSD buckets for VG "main" and suffixed variants
+    ssd_buckets = sorted(
+        groups["ssd"],
+        key=lambda b: sum(d.size for d in b),
+        reverse=True,
+    )
+    for idx, bucket in enumerate(ssd_buckets):
+        vg_name = "main" if idx == 0 else f"main-{idx}"
         arr = decide_ssd_array(bucket, mode)
         devices = arr["devices"]
         if arr["level"] == "single":
-            plan["vgs"].append({"name": "main", "devices": devices})
+            plan["vgs"].append({"name": vg_name, "devices": devices})
         else:
             name = f"md{array_index}"
             array_index += 1
             plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "ssd"})
-            plan["vgs"].append({"name": "main", "devices": [name]})
+            plan["vgs"].append({"name": vg_name, "devices": [name]})
 
-    # Handle HDD buckets for VG "large"
-    for bucket in groups["hdd"]:
+    # Handle HDD buckets for VG "large" and suffixed variants
+    hdd_buckets = sorted(
+        groups["hdd"],
+        key=lambda b: sum(d.size for d in b),
+        reverse=True,
+    )
+    for idx, bucket in enumerate(hdd_buckets):
+        vg_name = "large" if idx == 0 else f"large-{idx}"
         arr = decide_hdd_array(bucket)
         devices = arr["devices"]
         if arr["level"] == "single":
-            plan["vgs"].append({"name": "large", "devices": devices})
+            plan["vgs"].append({"name": vg_name, "devices": devices})
         else:
             name = f"md{array_index}"
             array_index += 1
             plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "hdd"})
-            plan["vgs"].append({"name": "large", "devices": [name]})
+            plan["vgs"].append({"name": vg_name, "devices": [name]})
 
     # Simple LV layout
     if any(vg["name"] == "main" for vg in plan["vgs"]):
