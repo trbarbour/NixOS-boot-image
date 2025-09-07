@@ -27,3 +27,17 @@
 - Expanded **Test Plan** with T9 (no serial console scenario).  
 - Corrected and fully expanded document back into original detailed style (no “unchanged” placeholders).  
 - Header updated to **Draft v0.4**, dated 2025-09-05.
+
+### v0.5 — 2025-09-08
+- Added Python project skeleton with inventory, planner, apply, network modules and CLI.
+- Implemented disk enumeration, grouping heuristics, basic plan generation, and stub application.
+- Introduced pytest test suite covering inventory, planning, apply, network, and CLI behaviour.
+
+### v0.6 — 2025-09-09
+- Added Nix flake packaging with dev shell and packaged runtime dependencies.
+
+### v0.7 — 2025-09-09
+- Added NixOS module and flake export for optional service.
+
+### v0.8 — 2025-09-09
+- Defined ISO configuration in flake and documented build instructions.
