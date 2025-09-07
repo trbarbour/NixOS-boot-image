@@ -1,0 +1,43 @@
+{
+  description = "Pre-NixOS setup tool";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        pre-nixos = pkgs.python3Packages.buildPythonApplication {
+          pname = "pre-nixos";
+          version = "0.1.0";
+          src = ./.;
+          pyproject = true;
+          propagatedBuildInputs = with pkgs; [ gptfdisk mdadm lvm2 ethtool ];
+        };
+      in {
+        packages.default = pre-nixos;
+        packages.pre-nixos = pre-nixos;
+        devShells.default = pkgs.mkShell {
+          buildInputs = [ pkgs.python3 pkgs.python3Packages.pytest ];
+        };
+      }) // {
+        nixosModules.pre-nixos = import ./modules/pre-nixos.nix;
+        nixosConfigurations.pre-installer = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            ({ ... }: {
+              nixpkgs.overlays = [
+                (final: prev: { pre-nixos = self.packages.x86_64-linux.pre-nixos; })
+              ];
+            })
+            self.nixosModules.pre-nixos
+            "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
+            "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+            ({ config, ... }: { services.pre-nixos.enable = true; })
+          ];
+        };
+      };
+}
