@@ -1,64 +1,72 @@
-# Automated Pre‑NixOS Setup — Design (per Design‑Debate Template)
+# Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.1  
-**Date:** 2025‑08‑31 (America/New_York)  
+**Doc status:** Draft v0.4  
+**Date:** 2025-09-05 (America/New_York)  
 **Author:** ChatGPT  
-**Based on:** `generic‑debate‑design‑prompt‑template.md` → applied to `automated‑pre‑nixos‑setup.md` requirements
+**Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
 ---
 
 ## 1) Problem Statement (What we must achieve)
-Provision bare‑metal servers to a **known, repeatable disk + network baseline** *before* running `nixos-install`. The process must be **non‑interactive until SSH is available** over a **serial‑console‑friendly boot image**, discover heterogeneous storage/NICs, and apply **deterministic RAID + LVM heuristics** with **UEFI + GPT** and **ext4** filesystems (with dense inode options where indicated). NIC with physical link should be identified and **renamed to `lan`**. Outcome: a mounted `/mnt` target with labeled filesystems and a generated NixOS config stub, ready for hand‑off or automated install.
+Provision bare-metal servers to a **known, repeatable disk + network baseline** *before* running `nixos-install`. The process must be **non-interactive until SSH is available** over a **serial-console-friendly boot image**, discover heterogeneous storage/NICs, and apply **deterministic RAID + LVM heuristics** with **UEFI + GPT** and **ext4** filesystems (with dense inode options where indicated). NIC with physical link should be identified and **renamed to `lan`**. Outcome: a mounted `/mnt` target with labeled filesystems and a generated NixOS config stub, ready for hand-off or automated install.
 
 ---
 
 ## 2) Goals (Success criteria)
-- **G1. Non‑interactive boot to SSH:** From power‑on of removable media to an SSH server reachable on the cabled NIC (renamed `lan`), with IP announced on serial console.
-- **G2. Deterministic disk layout:** Auto‑discovery builds an explicit **plan** (printed + logged) then applies: GPT, ESP, mdadm arrays, LVM VGs (`main`, `large`), ext4 FS, labels, mount under `/mnt`.
-- **G3. Requirements‑compliant storage heuristics:**
+- **G1. Non-interactive boot to SSH:** From power-on of removable media to an SSH server reachable on the cabled NIC (renamed `lan`), with IP announced on serial console.
+- **G2. Deterministic disk layout:** Auto-discovery builds an explicit **plan** (printed + logged) then applies: GPT, ESP, mdadm arrays, LVM VGs (`main`, `swap`, `large`), ext4 FS, labels, mount under `/mnt`.
+- **G3. Requirements-compliant storage heuristics:**
+  - **Equal-size RAID sets only** (tight tolerance, e.g., ≤1%). Do **not** truncate larger disks to smallest; leave mismatched disks unused unless explicitly configured.
   - SSD pair ⇒ **RAID0** by default (or **RAID1** in “careful” mode).
-  - Rotational pair ⇒ **RAID1**.
-  - Rotational 3–5 ⇒ **RAID5**; rotational ≥6 ⇒ **RAID6**.
+  - Rotational pair ⇒ **RAID1** (used for swap mirror partitions by default).
+  - Rotational 3–5 ⇒ **RAID5** (bulk data tier).
+  - Rotational ≥6 ⇒ **RAID6** (bulk data tier).
   - Prefer **LVM over partitions** for all data (special partitions excepted).
-- **G4. UEFI + GPT:** Bootable on modern firmware using systemd‑boot (or GRUB‑UEFI as fallback if required).
+- **G4. UEFI + GPT:** Bootable on modern firmware using systemd-boot (or GRUB-UEFI as fallback if required).
 - **G5. Ext4 everywhere:** Tuned mount options and **dense inode profile** for paths prone to many small files (e.g., `/nix`).
-- **G6. Repeatable & idempotent:** Running twice is safe; decisions are logged; same hardware ⇒ same results.
-- **G7. Team‑usable artifacts:** Machine‑readable **plan JSON**, **audit log**, and generated **NixOS config stubs** for later automation.
+- **G6. Swap policy (with fallback):**
+  - Prefer a dedicated **VG `swap`** backed by **HDD RAID1** (carved from small mirror partitions on two equal-size disks).
+  - If **no `swap` VG** is present/possible, create a swap LV on **VG `large`** (rotating-disk only — RAID5/6 or single-HDD PV). 
+  - **Never** place swap on SSD/NVMe. If neither `swap` nor `large` exist ⇒ **no swap**.
+- **G7. Repeatable & idempotent:** Running twice is safe; decisions are logged; same hardware ⇒ same results.
+- **G8. Team-usable artifacts:** Machine-readable **plan JSON**, **audit log**, and generated **NixOS config stubs** for later automation.
+- **G9. Serial-console resilience:** All serial writes must be **best-effort and non-blocking**. If no serial console is present or if the device blocks writes, scripts must **never hang or fail**. Logging always falls back to journald, `/var/log`, and `dmesg`.
 
 ---
 
-## 3) Non‑Goals
-- Full OS provisioning beyond the pre‑install baseline (the final `nixos-install` run may optionally be triggered, but is out of scope for *design guarantees*).
-- Advanced crypto (e.g., LUKS), ZFS/btrfs, or multi‑boot support.
+## 3) Non-Goals
+- Full OS provisioning beyond the pre-install baseline (the final `nixos-install` run may optionally be triggered, but is out of scope for *design guarantees*).
+- Advanced crypto (e.g., LUKS), ZFS/btrfs, or multi-boot support.
 - NIC bonding/VLANs or complex network topologies.
 
 ---
 
 ## 4) Context & Constraints (Reality we must respect)
-- **Hardware variety:** EPYC servers, variable SSD/HDD/NVMe counts and sizes; some hosts have only SSDs, others add HDD groups for bulk storage or swap.
-- **Boot path:** Removable media → serial console available (e.g., `console=ttyS0,115200n8`), graphics optional.
+- **Hardware variety:** EPYC servers, variable SSD/HDD/NVMe counts and sizes; some hosts have only SSDs, others add HDD groups for swap or bulk storage.
+- **Boot path:** Removable media → serial console preferred (e.g., `console=ttyS0,115200n8`), but serial may be **absent or disconnected**. Scripts must not block on serial I/O.
 - **Networking:** One or more NICs; must **identify the cabled NIC** and rename it to `lan` deterministically.
 - **Filesystems:** **ext4** required; use **GPT** partitioning; **UEFI** boot; mount **by label**.
-- **Preference:** **LVM** over partitions (except ESP and, if needed, BIOS‑GRUB padding).
+- **Preference:** **LVM** over partitions (except ESP and, if needed, BIOS-GRUB padding).
 
 ---
 
 ## 5) Definitions
-- **ESP:** EFI System Partition (FAT32), default 1 GiB.
-- **main / large:** LVM **Volume Groups**. `main` on SSD tier; `large` on rotational tier.
-- **Careful mode:** Safety‑biased decisions (e.g., SSD pair as RAID1, `discard` off by default, conservative `mkfs` options).
-- **Plan:** The computed, human‑readable + JSON‑serializable description of intended storage and network actions.
+- **ESP:** EFI System Partition (FAT32), default 1 GiB.
+- **main / swap / large:** LVM **Volume Groups**. `main` on SSD tier; `swap` on HDD RAID1 (if present); `large` on HDD RAID5/6 or single-HDD PV (if present).
+- **swap (policy):** A dedicated **VG `swap`** on **HDD RAID1** when possible; **fallback** is a swap LV on **VG `large`** (HDD-backed). **Never** on SSD/NVMe.
+- **Careful mode:** Safety-biased decisions (e.g., SSD pair as RAID1, `discard` off by default, conservative `mkfs` options).
+- **Plan:** The computed, human-readable + JSON-serializable description of intended storage and network actions.
 
 ---
 
 ## 6) Inputs & Configuration Surfaces
-1. **Kernel parameters** (read from `/proc/cmdline`):
+1. **Kernel parameters** (from `/proc/cmdline`):
    - `pre.mode={fast|careful}` (default: `fast`).
    - `pre.autoinstall={0|1}` (default: `0`; if `1`, proceed to `nixos-install` after staging `/mnt`).
    - `pre.host=NAME` (optional, used for labels/hostname).
    - `pre.plan.only={0|1}` (compute/print plan; do not apply).
 2. **USB config file** (YAML/TOML at `/pre/config.{yml,toml}` on the boot media):
-   - Overrides for RAID level decisions, ESP size, LV sizes, dense‑inode targets, swap policy, etc.
+   - Overrides for RAID level decisions, ESP size, LV sizes, dense-inode targets, swap policy, etc.
    - SSH public keys path(s) to authorize.
 3. **Host fingerprint** (optional) to pin known devices (e.g., by disk serial or NIC MAC) for deterministic naming or explicit overrides.
 
@@ -66,53 +74,54 @@ Provision bare‑metal servers to a **known, repeatable disk + network baseline*
 
 ## 7) Discovery & Heuristics (Core logic)
 ### 7.1 Disk inventory
-- Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm‑crypt.
-- For each disk: `model`, `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical` sector size, `serial`, and whether NVMe.
-- Group **SSDs** and **HDDs** by `(rotational flag, size within tolerance, type)`; prefer arrays of identical sizes; if mixed, **truncate to min size** for RAIDs.
+- Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
+- For each disk: gather `model`, `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
+- Group disks into **SSDs** and **HDDs**, then bucket them by approximate size (≤1% tolerance).
+- **Equal-size requirement:** Only disks in the same bucket form a RAID set. Larger disks are not truncated down; outliers are excluded unless explicitly overridden.
 
 ### 7.2 RAID plan selection
-- **SSD group**:
-  - If **count ≥2**: default **RAID0**; in `careful` ⇒ **RAID1** (if exactly 2) or **RAID10** (if ≥4 even). If odd and `careful`, prefer RAID1 across two + hot‑spare.
-  - If **count =1**: no md, single PV.
-- **HDD group**:
-  - **2 ⇒ RAID1**.
-  - **3–5 ⇒ RAID5**.
-  - **≥6 ⇒ RAID6**.
-  - Hot spare if count allows (`careful` mode preference).
-- Create md arrays with 1 MiB alignment and metadata 1.2; choose `chunk=512K` for SSD RAID0/10; appropriate for ext4/LVM.
+- **SSD group (per size bucket):**
+  - If **count ≥2**: default **RAID0**; in `careful` mode ⇒ **RAID1** (if exactly 2) or **RAID10** (if ≥4 even). If odd and `careful`, prefer RAID1 across two + hot-spare; leave extras unused.
+  - If **count =1**: no md, single PV for `main`.
+  - **Never used for swap.**
+- **HDD group (per size bucket):**
+  - **Swap mirror first:** If **≥2** present, allocate **two equal-size disks** for a small **RAID1** md device dedicated to swap (capacity sized per config; defaults 2 x RAM). This device becomes **VG `swap`** (LV `swap`). Remaining capacity on those disks still contributes to data.
+  - **Data array next:** With remaining disks, choose level: **2 ⇒ RAID1**, **3–5 ⇒ RAID5**, **≥6 ⇒ RAID6**. This md becomes PV for **VG `large`**.
+  - **Fallback:** If insufficient HDDs for swap mirror, create VG `large` from available HDDs and put swap LV there.
 
 ### 7.3 Partitioning scheme (GPT)
-- On **SSD boot device(s)** (single or md):
-  1. **`ESP`** FAT32, 1 GiB, `EF00` GUID, label `ESP`.
-  2. **`PV_main`** consuming remainder for LVM PV → `VG main`.
-- On **HDD group** (if present): entire md device as single **`PV_large`** → `VG large`.
+- **SSD boot device(s):**
+  1. ESP FAT32 1 GiB, label `ESP`.
+  2. Remainder → PV_main → VG `main`.
+- **HDDs:**
+  - `HDD-SWAP`: small partitions on two disks → md RAID1 → PV → VG `swap`.
+  - `HDD-DATA`: remainders → md RAID (RAID1/5/6) → PV → VG `large`.
+  - Fallback: if no swap mirror, omit `HDD-SWAP` and use all for `large`; swap LV goes on `large`.
 
 ### 7.4 LVM layout
-- **VGs:** `main` (SSD tier), `large` (HDD tier if present).
-- **LVs (defaults, configurable):**
-  - `main/root` 20 GiB (ext4) — minimal root.
-  - `main/nix` 100–200 GiB or `%FREE` if only SSDs present.
-  - `main/var` 20–50 GiB (logs/pkg DBs) as needed.
-  - **Swap:**
-    - If **HDD pair** exists: create `large/swap` with **RAID1** underlying; size from config (e.g., 16–64 GiB).
-    - Else: `main/swap` LV.
-  - **Bulk storage:** if **HDD group** exists, `large/data` uses remaining; ext4.
+- **VGs:** `main`, `swap` (if present), `large` (if present).
+- **LVs:**
+  - `main/root` 20 GiB (ext4).
+  - `main/nix` 100–200 GiB.
+  - `main/var` 20–50 GiB.
+  - Swap: `swap/swap` on VG `swap`; fallback: `large/swap` on VG `large`. Never on SSD.
+  - Bulk: `large/data`.
 
 ### 7.5 Filesystems (ext4)
-- **Dense inodes** for `/nix`: `mkfs.ext4 -T news` (or `-i 4096`) to raise inode count; explicit `-L` labels.
-- Mount options defaults: `noatime`, `commit=30`. For SSDs, optional `discard=async` (omit in `careful`).
-- Labels (examples, adjustable): `ROOT`, `NIX`, `VAR`, `DATA`, `SWAP` — referenced by **LABEL=** in fstab.
+- Mount options: `noatime`. For SSDs, optional `discard=async`.
 
 ### 7.6 UEFI bootloader
-- Install **systemd‑boot** into ESP by default. Fallback to GRUB‑UEFI if firmware quirks detected.
+- Install **systemd-boot** into ESP by default. Fallback to GRUB-UEFI if firmware quirks detected.
 
 ### 7.7 NIC identification & rename to `lan`
-- Detect interfaces with **carrier=1** via `/sys/class/net/*/carrier`; rank by **speed** (ethtool), then by **PCI order**.
-- Select top candidate; create persistent **udev .link** and `.rules` mapping **that NIC’s MAC** to name `lan`.
-- Bring `lan` up with DHCP; print **assigned IP** to serial console.
+- Detect interfaces with carrier=1 via `/sys/class/net/*/carrier`.
+- Rank by **speed** (ethtool), then PCI order.
+- Select top candidate; persist rename to `lan` via udev/systemd.
+- Bring `lan` up with DHCP; log assigned IP.
 
 ### 7.8 SSH exposure
-- Load **authorized_keys** from boot media (`/pre/authorized_keys` or directory), start OpenSSH; disable password auth; announce IP + fingerprint on serial.
+- Load authorized_keys from boot media, start OpenSSH, disable password login.
+- Announce IP + fingerprint via log fan-out.
 
 ### 7.9 Outputs
 - `/var/log/pre‑nixos/plan.json` — full machine‑readable plan.
@@ -125,16 +134,20 @@ Provision bare‑metal servers to a **known, repeatable disk + network baseline*
 ---
 
 ## 8) State Machine / Flow
-1. **Early boot:** set serial console, mount boot media read‑only; parse kernel args; import config file if present.
-2. **Network stage:** probe carriers; choose NIC; write persistent rename → `lan`; start DHCP; start sshd; print IP to serial.
-3. **Discovery:** enumerate disks; compute candidate RAID groups; dry‑run `plan` if `pre.plan.only=1`.
+1. **Early boot:**
+   - Parse kernel args; detect available consoles from `/proc/consoles` and `/proc/cmdline`.
+   - Establish **non-blocking log fan-out**: log to journald, append to `/var/log/pre-nixos/actions.log`, send to `dmesg`, and **attempt** serial emits with timeouts (e.g., `timeout 1s sh -c 'printf ... > /dev/ttyS0' || true`).
+   - If no serial console is present/connected, skip serial writes silently; never fail the step on serial errors.
+   - Mount boot media read-only; import config file if present.
+2. **Network stage:** probe carriers; choose NIC; write persistent rename → `lan`; start DHCP; start sshd; print IP via logging fan-out (serial best-effort/time-bounded).
+3. **Discovery:** enumerate disks; compute candidate RAID groups; dry-run `plan` if `pre.plan.only=1`.
 4. **Apply plan:**
    - Confirm boot target (SSD/NVMe); wipe signatures (configurable safety).
    - Partition with `sgdisk`.
    - Create md arrays; wait for sync (background) or `--assume-clean` if blank disks.
-   - Create PVs/VGs/LVs; format ext4 with labels; create swap.
+   - Create PVs/VGs/LVs; format ext4 with labels; create swap per policy (VG `swap` preferred; fallback to VG `large`; never SSD).
 5. **Mount target:** `/mnt` tree; generate NixOS config stubs; install bootloader into ESP (if `pre.autoinstall=1`, also run `nixos-install`).
-6. **Ready:** leave SSH up; write artifacts; emit summary on serial.
+6. **Ready:** leave SSH up; write artifacts; emit summary through log fan-out (serial best-effort/time-bounded).
 
 ---
 
@@ -145,18 +158,19 @@ function choose_lan():
   for if in list_interfaces():
     if carrier(if) == 1:
       candidates.append((speed(if), pci_path(if), mac(if), if))
-  if empty(candidates): fallback = first_up_or_first()
-  else: pick = max(candidates)  # speed then pci order
+  if not candidates:
+    pick = first_available()
+  else:
+    pick = max(candidates)  # by speed, then pci order
   write_udev_rules(mac(pick) -> name 'lan')
   ip = dhcp_up('lan')
-  print_serial("LAN=lan IP=" + ip)
+  print_log("LAN=lan IP=" + ip)
 
 function plan_storage(mode):
   disks = enumerate_disks()
   groups = group_by_rotational_and_size(disks)
-  ssd = groups.ssd; hdd = groups.hdd
-  ssd_md = decide_ssd_array(ssd, mode)
-  hdd_md = decide_hdd_array(hdd)
+  ssd_md = decide_ssd_array(groups.ssd, mode)
+  hdd_md = decide_hdd_array(groups.hdd)
   return {ssd_md, hdd_md, partitions, vgs, lvs, fs}
 
 function apply_plan(plan):
@@ -175,16 +189,17 @@ function apply_plan(plan):
 
 ## 10) Idempotency & Safety
 - **Dry‑run (`pre.plan.only=1`)** prints plan and exits.
-- **Guard rails:** refuse to operate on disks matching “boot media” or USB vendor IDs; require explicit `pre.mode=force` to touch nonempty arrays.
+- **Guard rails:** refuse to operate on disks matching “boot media” or USB vendor IDs; require explicit `pre.mode=force` to touch nonempty arrays; serial I/O always non-blocking.
 - **Re‑entrancy:** if md/VG/LV exist and match plan, skip creation; verify labels and mounts; regenerate stubs idempotently.
 
 ---
 
 ## 11) Risks & Mitigations
 - **NIC mis‑selection:** multiple live links. *Mitigation:* speed‑first heuristic + optional `pre.lan.mac=` override.
-- **Mixed disk sizes in RAID:** capacity loss. *Mitigation:* log truncation; allow override to JBOD via config.
+- **Mixed disk sizes:** arrays only with equal-size disks.
+- **No HDDs:** no swap.
 - **UEFI quirks:** some firmware rejects 1 GiB ESP. *Mitigation:* configurable ESP size; GRUB fallback.
-- **Ext4 inode pressure in `/nix`:** default insufficient. *Mitigation:* dense inode profile by default for `/nix`.
+- **Serial issues:**  all serial writes wrapped in timeouts and error-ignored; logging always has alternative sinks (journald/file/dmesg).
 
 ---
 
@@ -239,29 +254,32 @@ function apply_plan(plan):
 ---
 
 ## 15) Test Plan / Matrix
-- **T1:** Single NVMe only → `main` VG, root+nix LVs, DHCP on `lan`.
-- **T2:** Two SSDs → RAID0 (fast) / RAID1 (careful) → `main`.
-- **T3:** Two HDDs → RAID1 → `large` (swap+data), SSD single for `main`.
-- **T4:** Four HDDs → RAID6 (careful) or RAID5 (fast) → `large`.
-- **T5:** No cable on any NIC → fallback selection + visible serial warning; user override accepted.
-- **T6:** Re‑run on already‑prepared host → no destructive actions; only verification.
+- T1: NVMe only → `main`; no swap.
+- T2: Two same size SSDs → RAID0/1; no swap.
+- T3: Two same size HDDs + SSD → HDD RAID1 → VG `swap`; SSD → `main`.
+- T4: Four same size HDDs + SSD → HDD RAID6 → `large`; SSD → `main`.
+- T5: Four same size HDDs + two smaller (like-size) HDDs + SSD → HDD RAID6 → `large`; HDD RAID1 → `swap`; SSD → `main`.
+- T6: Heterogeneous HDD sizes → only disks in the same size bucket are assembled; others left unused. Verify planner refuses mixed-size arrays.
+- T7: Re-run → no destructive actions.
+- T8: No NIC cable → fallback + log warning.
+- T9: No serial console present or disconnected/blocked serial device → all steps complete without hang; logs present in journald and file; serial emits skipped or time-bounded.
 
 ---
 
 ## 16) Acceptance Criteria
-- Booting the image on varied hardware automatically leads to: `lan` with DHCP; SSH reachable with provided keys; `/mnt` has labeled ext4 FS per plan; config stubs exist; serial console shows summary. No prompts before SSH.
+- On supported hardware, booting the image automatically yields: lan with DHCP; SSH reachable with provided keys; /mnt has labeled ext4 FS per plan; swap provided only when HDD-backed (VG swap preferred, fallback large/swap), never on SSD; config stubs exist; serial console shows summary. No prompts before SSH.
+- Serial-safe: absence of a serial console or a disconnected/blocked tty never causes a hang or failure; messages still reach journald and the action log.
 
 ---
 
-## 17) Open Questions
-- Preferred default sizes for `nix`/`var` LVs on small SSDs?
-- Should we always allocate a tiny `/boot` ext4 partition in addition to ESP for kernels, or rely on ESP alone?
-- Standardize on systemd‑networkd vs traditional `networking.*` (above sketch assumes either is acceptable).
+## 17) Open Questions [answered]
+- Need separate `/boot` ext4 partition? [no]
+- Standardize on systemd-networkd? [yes]
 
 ---
 
 ## 18) Next Steps
-- Validate discovery on 3–4 hardware profiles; adjust heuristics.
-- Implement planner (JSON) and applier; wire into boot image.
-- Author end‑to‑end CI scenario using QEMU to verify idempotency and acceptance criteria.
-
+- Validate planner on diverse hardware configurations (single SSD, SSD+HDD pairs, larger HDD farms).
+- Implement reference plan generator (Go or Python).
+- Implement apply with dry-run support and idempotency checks.
+- Add CI integration with QEMU/KVM to validate on virtual hardware.
