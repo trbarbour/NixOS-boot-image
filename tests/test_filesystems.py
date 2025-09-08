@@ -19,7 +19,9 @@ def test_filesystem_commands_for_lvs() -> None:
     assert f"mkfs.ext4 -i 2048 /dev/main/root" in commands
     assert f"e2label /dev/main/root root" in commands
     assert f"mount -L root /mnt" in commands
+    assert "mkdir -p /mnt" not in commands
 
     assert f"mkfs.ext4 -i 2048 /dev/large/data" in commands
     assert f"e2label /dev/large/data data" in commands
+    assert f"mkdir -p /mnt/data" in commands
     assert f"mount -L data /mnt/data" in commands
