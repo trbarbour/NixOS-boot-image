@@ -1,6 +1,6 @@
 # Pre-NixOS Setup
 
-This project contains tools to prepare bare-metal machines for a NixOS installation. It discovers hardware, plans a storage layout, and can apply that plan. When multiple disk groups qualify for the same tier, only the largest is mounted as `main` or `large`; smaller groups receive suffixed VG names and are left unmounted for manual use after installation.
+This project contains tools to prepare bare-metal machines for a NixOS installation. It discovers hardware, plans a storage layout, configures the active network interface for DHCP (renaming it to `lan`), and can apply that plan. When multiple disk groups qualify for the same tier, only the largest is mounted as `main` or `large`; smaller groups receive suffixed VG names and are left unmounted for manual use after installation.
 
 ## Usage
 

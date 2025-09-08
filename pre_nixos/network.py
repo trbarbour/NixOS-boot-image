@@ -74,18 +74,23 @@ def configure_lan(
     network_dir: Path = Path("/etc/systemd/network"),
     ssh_service: str = "ssh",
 ) -> Optional[Path]:
-    """Configure the LAN interface for DHCP and enable SSH access.
+    """Configure the active NIC for DHCP and enable SSH access.
 
-    A ``systemd-networkd`` ``.network`` file is written for the interface renamed
-    to ``lan``.  When execution is enabled (``PRE_NIXOS_EXEC=1``) the interface is
-    brought up, networkd is restarted and the specified SSH service is enabled.
+    The interface with an active carrier is renamed to ``lan`` via a persistent
+    systemd ``.link`` file and renamed immediately for the running system.  A
+    matching ``.network`` file enables DHCP.  When execution is enabled
+    (``PRE_NIXOS_EXEC=1``) the interface is brought up, networkd is restarted and
+    the specified SSH service is enabled.
 
     Returns the path to the created network file or ``None`` when no LAN
     interface is detected.
     """
 
-    if write_lan_rename_rule(net_path, network_dir) is None:
+    iface = identify_lan(net_path)
+    if iface is None:
         return None
+
+    write_lan_rename_rule(net_path, network_dir)
 
     network_dir.mkdir(parents=True, exist_ok=True)
     net_path_conf = network_dir / "20-lan.network"
@@ -94,7 +99,10 @@ def configure_lan(
         encoding="utf-8",
     )
 
-    # Bring up the interface and ensure networking/SSH services are active.
+    # Rename the interface for the current session and ensure networking/SSH
+    # services are active.
+    _run(["ip", "link", "set", iface, "down"])
+    _run(["ip", "link", "set", iface, "name", "lan"])
     _run(["ip", "link", "set", "lan", "up"])
     _run(["systemctl", "restart", "systemd-networkd"])
     _run(["systemctl", "enable", "--now", ssh_service])
