@@ -25,6 +25,10 @@ def test_filesystem_commands_for_lvs() -> None:
     assert f"e2label /dev/large/data data" in commands
     assert f"mount -L data /mnt/data" in commands
 
+    # Ensure the EFI system partition is created, labeled and mounted.
+    assert any(cmd.startswith("mkfs.vfat -F 32 -n EFI") for cmd in commands)
+    assert "mount -L EFI /mnt/boot" in commands
+
 
 def test_mount_points_created_for_non_root_lvs() -> None:
     disks = [
