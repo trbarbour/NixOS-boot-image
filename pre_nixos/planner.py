@@ -1,20 +1,8 @@
 """Storage planning heuristics."""
 
-from pathlib import Path
 from typing import List, Dict, Any
 
 from .inventory import Disk
-
-
-def _ram_mib(meminfo: Path = Path("/proc/meminfo")) -> int:
-    """Return system RAM in MiB (best effort)."""
-    try:
-        for line in meminfo.read_text().splitlines():
-            if line.startswith("MemTotal:"):
-                return int(line.split()[1]) // 1024
-    except FileNotFoundError:
-        pass
-    return 0
 
 
 def _part_name(device: str, part: int) -> str:
@@ -143,7 +131,7 @@ def plan_storage(
                 {"name": name, "level": arr["level"], "devices": devices, "type": "hdd"}
             )
             plan["vgs"].append({"name": "main", "devices": [name]})
-        swap_size = f"{_ram_mib() * 2}M"
+        swap_size = f"{ram_gb * 2 * 1024}M"
         plan["lvs"].append({"name": "swap", "vg": "main", "size": swap_size})
         plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
         return plan
@@ -206,7 +194,7 @@ def plan_storage(
             plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "hdd"})
             plan["vgs"].append({"name": vg_name, "devices": [name]})
 
-    swap_size = f"{_ram_mib() * 2}M"
+    swap_size = f"{ram_gb * 2 * 1024}M"
     if any(vg["name"] == "swap" for vg in plan["vgs"]):
         plan["lvs"].append({"name": "swap", "vg": "swap", "size": swap_size})
     if any(vg["name"] == "main" for vg in plan["vgs"]):

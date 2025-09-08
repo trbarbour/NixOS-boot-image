@@ -120,23 +120,15 @@ def test_only_one_swap_lv() -> None:
     assert len(swap_lvs) == 1
 
 
-def _ram_mib() -> int:
-    with open("/proc/meminfo") as f:
-        for line in f:
-            if line.startswith("MemTotal:"):
-                return int(line.split()[1]) // 1024
-    return 0
-
-
 def test_swap_size_matches_double_ram() -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
         Disk(name="sdb", size=2000, rotational=True),
         Disk(name="sdc", size=2000, rotational=True),
     ]
-    plan = plan_storage("fast", disks)
+    plan = plan_storage("fast", disks, ram_gb=5)
     swap_lv = next(lv for lv in plan["lvs"] if lv["name"] == "swap")
-    assert swap_lv["size"] == f"{_ram_mib() * 2}M"
+    assert swap_lv["size"] == f"{5 * 2 * 1024}M"
 
 
 def test_efi_partitions_only_for_main_vg() -> None:
