@@ -29,6 +29,8 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = True) -> List[str]:
         commands.append(
             f"lvcreate -n {lv['name']} {lv['vg']} -l {lv['size']}"
         )
+        if lv["name"] == "swap":
+            commands.append(f"mkswap /dev/{lv['vg']}/{lv['name']}")
 
     if dry_run:
         return commands
