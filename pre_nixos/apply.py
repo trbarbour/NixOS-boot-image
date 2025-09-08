@@ -42,6 +42,8 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     commands: List[str] = []
     execute = not dry_run and os.environ.get("PRE_NIXOS_EXEC") == "1"
 
+    efi_parts: List[str] = []
+
     for disk, parts in plan.get("partitions", {}).items():
         cmd = f"sgdisk -Z /dev/{disk}"
         commands.append(cmd)
@@ -49,6 +51,7 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         for idx, part in enumerate(parts, start=1):
             if part["type"] == "efi":
                 cmd = f"sgdisk -n{idx}:0:+1G -t{idx}:EF00 /dev/{disk}"
+                efi_parts.append(part["name"])
             elif part["type"] == "linux-raid":
                 cmd = f"sgdisk -n{idx}:0:0 -t{idx}:FD00 /dev/{disk}"
             else:
@@ -89,7 +92,7 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         _run(cmd, execute)
         lv_path = f"/dev/{lv['vg']}/{lv['name']}"
         if lv["name"] == "swap":
-            cmd = f"mkswap {lv_path}"
+            cmd = f"mkswap -L swap {lv_path}"
             commands.append(cmd)
             _run(cmd, execute)
             continue
@@ -108,6 +111,20 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
             commands.append(cmd)
             _run(cmd, execute)
         cmd = f"mount -L {lv['name']} {mount_point}"
+        commands.append(cmd)
+        _run(cmd, execute)
+
+    if efi_parts:
+        for idx, part in enumerate(efi_parts):
+            label = "EFI" if idx == 0 else f"EFI{idx+1}"
+            cmd = f"mkfs.vfat -F 32 -n {label} /dev/{part}"
+            commands.append(cmd)
+            _run(cmd, execute)
+        # Mount the first EFI partition for the NixOS install environment.
+        cmd = "mkdir -p /mnt/boot"
+        commands.append(cmd)
+        _run(cmd, execute)
+        cmd = "mount -L EFI /mnt/boot"
         commands.append(cmd)
         _run(cmd, execute)
 
