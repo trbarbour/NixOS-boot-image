@@ -37,7 +37,7 @@ def test_mount_points_created_for_non_root_lvs() -> None:
     commands = apply_plan(plan)
 
     for lv in plan["lvs"]:
-        if lv["name"] == "root":
+        if lv["name"] in {"root", "swap"}:
             continue
         mount_point = f"/mnt/{lv['name']}"
         mkdir_cmd = f"mkdir -p {mount_point}"
