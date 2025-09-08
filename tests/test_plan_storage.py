@@ -48,3 +48,19 @@ def test_multiple_hdd_buckets_named_separately() -> None:
     assert "large" in vg_names and "large-1" in vg_names
     lv_vgs = {lv["vg"] for lv in plan["lvs"]}
     assert lv_vgs == {"large"}
+
+
+def test_swap_prefers_smallest_hdd_pair() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=1000, rotational=True),
+        Disk(name="sde", size=1000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks, ram=400)
+    swap_vg = next(vg for vg in plan["vgs"] if vg["name"] == "swap")
+    swap_array = next(arr for arr in plan["arrays"] if arr["name"] == swap_vg["devices"][0])
+    assert set(swap_array["devices"]) == {"sdd", "sde"}
+    lv_names = {lv["name"] for lv in plan["lvs"]}
+    assert "swap" in lv_names

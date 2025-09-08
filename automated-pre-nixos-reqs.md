@@ -22,8 +22,8 @@ The system must automate the hardware setup process on new servers prior to NixO
 - Classify them by type, size and function:
   - SSD(s): designated for system/root volume.
   - For each group of (approximately) same-sized rotating disks:
-    - If exactly two → use for swap on RAID-1.
-    - If three or more → use for bulk storage on RAID-5 or RAID-6, depending on count.
+    - Prefer the smallest pair that can hold a swap volume of size *2 × RAM* → use for swap on RAID-1.
+    - If three or more remain → use for bulk storage on RAID-5 or RAID-6, depending on count.
 
 ### 2.2 RAID Configuration
 
