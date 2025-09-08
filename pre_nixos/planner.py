@@ -130,16 +130,18 @@ def plan_storage(
         reverse=True,
     )
 
-    if not ssd_buckets and len(hdd_buckets) == 1 and len(hdd_buckets[0]) == 2:
+    if not ssd_buckets and len(hdd_buckets) == 1 and len(hdd_buckets[0]) <= 2:
         bucket = hdd_buckets[0]
         devices = record_partitions(bucket, with_efi=True)
-        arr = decide_hdd_array(bucket)
+        arr = decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
         if arr["level"] == "single":
             plan["vgs"].append({"name": "main", "devices": devices})
         else:
             name = f"md{array_index}"
             array_index += 1
-            plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "hdd"})
+            plan["arrays"].append(
+                {"name": name, "level": arr["level"], "devices": devices, "type": "hdd"}
+            )
             plan["vgs"].append({"name": "main", "devices": [name]})
         swap_size = f"{_ram_mib() * 2}M"
         plan["lvs"].append({"name": "swap", "vg": "main", "size": swap_size})
