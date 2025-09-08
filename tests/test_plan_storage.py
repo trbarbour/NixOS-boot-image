@@ -85,6 +85,18 @@ def test_single_hdd_with_ssd_gets_swap_vg() -> None:
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])
 
 
+def test_only_one_swap_lv() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=1000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    swap_lvs = [lv for lv in plan["lvs"] if lv["name"] == "swap"]
+    assert len(swap_lvs) == 1
+
+
 def test_efi_partitions_only_for_main_vg() -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
@@ -99,7 +111,8 @@ def test_efi_partitions_only_for_main_vg() -> None:
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdc"])
 
-    def test_prefer_raid6_on_four_disks() -> None:
+
+def test_prefer_raid6_on_four_disks() -> None:
     disks = [
         Disk(name="sda", size=2000, rotational=True),
         Disk(name="sdb", size=2000, rotational=True),
