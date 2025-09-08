@@ -86,7 +86,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - **Naming:** the size bucket with the greatest total capacity becomes **VG `main`**; additional SSD buckets are named `main-1`, `main-2`, … and are left unmounted.
   - **Never used for swap.**
 - **HDD group (per size bucket):**
-  - **Swap mirror first:** If **≥2** present, allocate **two equal-size disks** for a small **RAID1** md device dedicated to swap (capacity sized per config; defaults 2 x RAM). This device becomes **VG `swap`** (LV `swap`). Remaining capacity on those disks still contributes to data.
+  - **Swap mirror first:** If **≥2** present, allocate the **smallest pair of equal-size disks** with enough capacity for a **RAID1** swap device (at least *2 × RAM*). This device becomes **VG `swap`** (LV `swap`). Remaining capacity on those disks still contributes to data.
   - **Data array next:** With remaining disks, choose level: **2 ⇒ RAID1**, **3–5 ⇒ RAID5**, **≥6 ⇒ RAID6**. This md becomes PV for **VG `large`**.
   - **Naming:** the largest HDD bucket forms **VG `large`**; additional buckets are named `large-1`, `large-2`, … and remain unused.
   - **Fallback:** If insufficient HDDs for swap mirror, create VG `large` from available HDDs and put swap LV there.

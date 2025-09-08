@@ -12,9 +12,9 @@
 
 ### v0.3 — 2025-09-03
 - Refined **swap policy**:  
-  - Default: **VG `swap`** on HDD RAID1 mirror.  
-  - Fallback: if no `swap` VG possible, create swap LV on **VG `large`** (HDD only).  
-  - Never use SSD/NVMe for swap.  
+  - Default: **VG `swap`** on the smallest suitable HDD RAID1 mirror (>= 2 × RAM).
+  - Fallback: if no `swap` VG possible, create swap LV on **VG `large`** (HDD only).
+  - Never use SSD/NVMe for swap.
 - Adjusted LVM layout to include `swap/swap` LV, with fallback to `large/swap`.
 
 ### v0.4 — 2025-09-05
