@@ -17,3 +17,7 @@ def test_apply_plan_returns_commands() -> None:
     assert any("vgcreate main" in cmd for cmd in commands)
     assert any("lvcreate -n root" in cmd for cmd in commands)
     assert any(cmd.startswith("mkswap") for cmd in commands)
+    assert any(cmd.startswith("sgdisk") for cmd in commands)
+    # only disks in the main VG should receive an EFI partition
+    assert sum("EF00" in cmd for cmd in commands) == 1
+    assert any(cmd.startswith("pvcreate") for cmd in commands)

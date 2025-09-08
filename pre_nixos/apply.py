@@ -15,11 +15,23 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = True) -> List[str]:
     """
     commands: List[str] = []
 
+    for disk, parts in plan.get("partitions", {}).items():
+        commands.append(f"sgdisk -Z /dev/{disk}")
+        for idx, part in enumerate(parts, start=1):
+            if part["type"] == "efi":
+                commands.append(f"sgdisk -n{idx}:0:+1G -t{idx}:EF00 /dev/{disk}")
+            elif part["type"] == "linux-raid":
+                commands.append(f"sgdisk -n{idx}:0:0 -t{idx}:FD00 /dev/{disk}")
+
     for array in plan.get("arrays", []):
         devices = " ".join(f"/dev/{d}" for d in array["devices"])
         commands.append(
             f"mdadm --create /dev/{array['name']} --level={array['level']} {devices}"
         )
+
+    pv_devices = {d for vg in plan.get("vgs", []) for d in vg["devices"]}
+    for dev in pv_devices:
+        commands.append(f"pvcreate /dev/{dev}")
 
     for vg in plan.get("vgs", []):
         devs = " ".join(f"/dev/{d}" for d in vg["devices"])
