@@ -54,7 +54,6 @@ def test_multiple_hdd_buckets_named_separately() -> None:
     lv_vgs = {lv["vg"] for lv in plan["lvs"]}
     assert lv_vgs == {"swap", "large"}
 
-
 def test_two_hdd_only_becomes_main_with_swap_lv() -> None:
     disks = [
         Disk(name="sdb", size=2000, rotational=True),
@@ -99,3 +98,13 @@ def test_efi_partitions_only_for_main_vg() -> None:
     assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdc"])
+
+    def test_prefer_raid6_on_four_disks() -> None:
+    disks = [
+        Disk(name="sda", size=2000, rotational=True),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=2000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks, prefer_raid6_on_four=True)
+    assert any(arr["level"] == "raid6" for arr in plan["arrays"])

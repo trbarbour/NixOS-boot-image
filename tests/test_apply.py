@@ -14,6 +14,7 @@ def test_apply_plan_returns_commands() -> None:
     plan = plan_storage("fast", disks)
     commands = apply_plan(plan)
     assert any(cmd.startswith("mdadm") for cmd in commands)
+    assert any(cmd.startswith("pvcreate") for cmd in commands)
     assert any("vgcreate main" in cmd for cmd in commands)
     assert any("lvcreate -n root" in cmd for cmd in commands)
     assert any(cmd.startswith("mkswap") for cmd in commands)
@@ -21,3 +22,23 @@ def test_apply_plan_returns_commands() -> None:
     # only disks in the main VG should receive an EFI partition
     assert sum("EF00" in cmd for cmd in commands) == 1
     assert any(cmd.startswith("pvcreate") for cmd in commands)
+
+def test_apply_plan_handles_swap() -> None:
+    plan = {
+        "arrays": [
+            {"name": "md0", "level": "raid1", "devices": ["sdb", "sdc"]}
+        ],
+        "vgs": [
+            {"name": "swap", "devices": ["md0"]}
+        ],
+        "lvs": [
+            {"name": "swap", "vg": "swap", "size": "100%"}
+        ],
+    }
+    commands = apply_plan(plan)
+    assert "pvcreate /dev/md0" in commands
+    assert "vgcreate swap /dev/md0" in commands
+    assert "lvcreate -n swap swap -l 100%" in commands
+    assert commands.index("pvcreate /dev/md0") < commands.index(
+        "vgcreate swap /dev/md0"
+    )
