@@ -32,13 +32,13 @@ def test_apply_plan_handles_swap() -> None:
             {"name": "swap", "devices": ["md0"]}
         ],
         "lvs": [
-            {"name": "swap", "vg": "swap", "size": "100%"}
+            {"name": "swap", "vg": "swap", "size": "8G"}
         ],
     }
     commands = apply_plan(plan, dry_run=True)
     assert "pvcreate /dev/md0" in commands
     assert "vgcreate swap /dev/md0" in commands
-    assert "lvcreate -n swap swap -l 100%" in commands
+    assert "lvcreate -n swap swap -L 8G" in commands
     assert commands.index("pvcreate /dev/md0") < commands.index(
         "vgcreate swap /dev/md0"
     )
