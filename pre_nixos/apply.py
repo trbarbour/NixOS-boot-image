@@ -3,7 +3,7 @@
 from typing import Dict, Any, List
 
 
-def apply_plan(plan: Dict[str, Any], dry_run: bool = True) -> List[str]:
+def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     """Apply a storage plan.
 
     Parameters:

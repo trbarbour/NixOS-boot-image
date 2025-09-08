@@ -30,12 +30,17 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Use RAID6 instead of RAID5 for four-disk HDD groups",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only print commands without executing them",
+    )
     args = parser.parse_args(argv)
 
     if args.partition_boot:
-        partition.create_partitions(args.partition_boot)
+        partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
     for dev in args.partition_lvm:
-        partition.create_partitions(dev, with_efi=False)
+        partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
 
     disks = inventory.enumerate_disks()
     plan = planner.plan_storage(
@@ -43,7 +48,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     print(json.dumps(plan, indent=2))
     if not args.plan_only:
-        apply.apply_plan(plan)
+        apply.apply_plan(plan, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

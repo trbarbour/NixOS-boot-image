@@ -13,7 +13,7 @@ def test_filesystem_commands_for_lvs() -> None:
         Disk(name="sdd", size=1000, rotational=True),
     ]
     plan = plan_storage("fast", disks)
-    commands = apply_plan(plan)
+    commands = apply_plan(plan, dry_run=True)
 
     # mkfs.ext4 uses a 2 KiB bytes-per-inode ratio to avoid inode exhaustion
     # in the Nix store which contains many small files.
