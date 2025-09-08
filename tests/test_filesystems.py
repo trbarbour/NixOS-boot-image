@@ -24,3 +24,23 @@ def test_filesystem_commands_for_lvs() -> None:
     assert f"mkfs.ext4 -i 2048 /dev/large/data" in commands
     assert f"e2label /dev/large/data data" in commands
     assert f"mount -L data /mnt/data" in commands
+
+
+def test_mount_points_created_for_non_root_lvs() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=1000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    commands = apply_plan(plan)
+
+    for lv in plan["lvs"]:
+        if lv["name"] == "root":
+            continue
+        mount_point = f"/mnt/{lv['name']}"
+        mkdir_cmd = f"mkdir -p {mount_point}"
+        mount_cmd = f"mount -L {lv['name']} {mount_point}"
+        assert mkdir_cmd in commands
+        assert commands.index(mkdir_cmd) < commands.index(mount_cmd)
