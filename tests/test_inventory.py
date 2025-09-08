@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pre_nixos.inventory import enumerate_disks
+from pre_nixos.inventory import enumerate_disks, detect_ram_gb
 
 
 def create_disk(root: Path, name: str, *, removable: str = "0", rotational: str = "0", size: str = "0", model: str = "", serial: str = "") -> None:
@@ -38,3 +38,9 @@ def test_enumerate_disks(tmp_path: Path) -> None:
     assert d.size == 2097152 * 512
     assert d.rotational is False
     assert d.nvme is False
+
+
+def test_detect_ram_gb(tmp_path: Path) -> None:
+    meminfo = tmp_path / "meminfo"
+    meminfo.write_text("MemTotal:       16777216 kB\n")
+    assert detect_ram_gb(meminfo) == 16

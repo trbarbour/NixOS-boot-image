@@ -121,3 +121,17 @@ def test_prefer_raid6_on_four_disks() -> None:
     ]
     plan = plan_storage("fast", disks, prefer_raid6_on_four=True)
     assert any(arr["level"] == "raid6" for arr in plan["arrays"])
+
+
+def test_small_hdd_pair_preferred_for_swap() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=1000, rotational=True),
+        Disk(name="sde", size=1000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    swap_vg = next(vg for vg in plan["vgs"] if vg["name"] == "swap")
+    swap_array = next(arr for arr in plan["arrays"] if arr["name"] == swap_vg["devices"][0])
+    assert set(swap_array["devices"]) == {"sdd1", "sde1"}

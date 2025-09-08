@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
+import math
 
 
 @dataclass
@@ -60,3 +61,27 @@ def enumerate_disks(sys_block: Path = Path("/sys/block")) -> List[Disk]:
             )
         )
     return disks
+
+
+def detect_ram_gb(meminfo: Path = Path("/proc/meminfo")) -> int:
+    """Detect total system RAM in GiB.
+
+    Args:
+        meminfo: Path to ``/proc/meminfo`` (overridable for tests).
+
+    Returns:
+        Total RAM rounded up to the nearest GiB. Returns ``0`` if the
+        information cannot be determined.
+    """
+
+    try:
+        for line in meminfo.read_text().splitlines():
+            if line.startswith("MemTotal:"):
+                parts = line.split()
+                if len(parts) >= 2:
+                    kb = int(parts[1])
+                    # Convert kB to GiB, rounding up
+                    return int(math.ceil(kb / (1024 * 1024)))
+    except FileNotFoundError:
+        pass
+    return 0

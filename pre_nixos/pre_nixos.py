@@ -38,8 +38,12 @@ def main(argv: list[str] | None = None) -> None:
         partition.create_partitions(dev, with_efi=False)
 
     disks = inventory.enumerate_disks()
+    ram_gb = inventory.detect_ram_gb()
     plan = planner.plan_storage(
-        args.mode, disks, prefer_raid6_on_four=args.prefer_raid6_on_four
+        args.mode,
+        disks,
+        prefer_raid6_on_four=args.prefer_raid6_on_four,
+        ram_gb=ram_gb,
     )
     print(json.dumps(plan, indent=2))
     if not args.plan_only:

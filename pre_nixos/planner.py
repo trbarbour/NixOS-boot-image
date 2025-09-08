@@ -76,7 +76,10 @@ def decide_hdd_array(group: List[Disk], prefer_raid6_on_four: bool = False) -> D
 
 
 def plan_storage(
-    mode: str, disks: List[Disk], prefer_raid6_on_four: bool = False
+    mode: str,
+    disks: List[Disk],
+    prefer_raid6_on_four: bool = False,
+    ram_gb: int = 16,
 ) -> Dict[str, Any]:
     """Generate storage plan from disks and mode.
 
@@ -142,17 +145,39 @@ def plan_storage(
             plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "ssd"})
             plan["vgs"].append({"name": vg_name, "devices": [name]})
 
-    swap_done = False
+    has_ssd = bool(ssd_buckets)
+
+    # Determine which HDD bucket, if any, should become the swap VG.  We prefer the
+    # smallest suitable bucket instead of the largest.  A bucket is suitable when it
+    # either contains two disks and we have additional HDD capacity or SSDs for data,
+    # or when it contains a single disk but SSDs are present.  The bucket must also
+    # have enough capacity for a swap LV of size ``2 * RAM`` (mirrored size for RAID1
+    # is limited by the smallest disk).
+    swap_bucket_idx: int | None = None
+    required_swap = 2 * ram_gb
+    candidates: List[tuple[int, int]] = []  # (total_size, index)
+    total_buckets = len(hdd_buckets)
+    for idx, bucket in enumerate(hdd_buckets):
+        cond = False
+        if len(bucket) == 2:
+            cond = has_ssd or total_buckets > 1
+        elif len(bucket) == 1:
+            cond = has_ssd
+        if not cond:
+            continue
+        min_size = min(d.size for d in bucket)
+        if min_size < required_swap:
+            continue
+        total_size = sum(d.size for d in bucket)
+        candidates.append((total_size, idx))
+    if candidates:
+        # Pick the smallest total raw size.
+        _, swap_bucket_idx = min(candidates, key=lambda x: x[0])
+
     large_idx = 0
     for idx, bucket in enumerate(hdd_buckets):
-        remaining = len(hdd_buckets) - idx - 1
-        has_ssd = bool(ssd_buckets)
-        if not swap_done and (
-            (len(bucket) == 2 and (has_ssd or remaining > 0))
-            or (len(bucket) == 1 and has_ssd)
-        ):
+        if idx == swap_bucket_idx:
             vg_name = "swap"
-            swap_done = True
         else:
             vg_name = "large" if large_idx == 0 else f"large-{large_idx}"
             large_idx += 1
