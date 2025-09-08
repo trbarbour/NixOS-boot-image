@@ -30,7 +30,7 @@ def test_cli_partition_invoked(monkeypatch):
     called = []
 
     def fake_part(dev, *, with_efi=True, efi_size="512MiB", dry_run=True):
-        called.append((dev, with_efi))
+        called.append((dev, with_efi, dry_run))
         return []
 
     monkeypatch.setattr(pre_nixos.partition, "create_partitions", fake_part)
@@ -41,4 +41,7 @@ def test_cli_partition_invoked(monkeypatch):
         "/dev/sdb",
         "--plan-only",
     ])
-    assert called == [("/dev/sda", True), ("/dev/sdb", False)]
+    assert called == [
+        ("/dev/sda", True, False),
+        ("/dev/sdb", False, False),
+    ]
