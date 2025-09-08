@@ -25,6 +25,11 @@ def main(argv: list[str] | None = None) -> None:
         default=[],
         help="Partition disk with a single LVM partition (can be repeated)",
     )
+    parser.add_argument(
+       "--prefer-raid6-on-four",
+        action="store_true",
+        help="Use RAID6 instead of RAID5 for four-disk HDD groups",
+    )
     args = parser.parse_args(argv)
 
     if args.partition_boot:
@@ -33,7 +38,9 @@ def main(argv: list[str] | None = None) -> None:
         partition.create_partitions(dev, with_efi=False)
 
     disks = inventory.enumerate_disks()
-    plan = planner.plan_storage(args.mode, disks)
+    plan = planner.plan_storage(
+        args.mode, disks, prefer_raid6_on_four=args.prefer_raid6_on_four
+    )
     print(json.dumps(plan, indent=2))
     if not args.plan_only:
         apply.apply_plan(plan)
