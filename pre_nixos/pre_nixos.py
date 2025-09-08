@@ -3,7 +3,7 @@
 import argparse
 import json
 
-from . import inventory, planner, apply, partition
+from . import inventory, planner, apply, partition, network
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -36,6 +36,10 @@ def main(argv: list[str] | None = None) -> None:
         help="Only print commands without executing them",
     )
     args = parser.parse_args(argv)
+
+    # Configure networking before performing storage operations so the machine
+    # becomes remotely reachable as early as possible.
+    network.configure_lan()
 
     if args.partition_boot:
         partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
