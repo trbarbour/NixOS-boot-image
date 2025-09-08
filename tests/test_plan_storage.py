@@ -48,3 +48,13 @@ def test_multiple_hdd_buckets_named_separately() -> None:
     assert "swap" in vg_names and "large" in vg_names
     lv_vgs = {lv["vg"] for lv in plan["lvs"]}
     assert lv_vgs == {"swap", "large"}
+
+def test_prefer_raid6_on_four_disks() -> None:
+    disks = [
+        Disk(name="sda", size=2000, rotational=True),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=2000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks, prefer_raid6_on_four=True)
+    assert any(arr["level"] == "raid6" for arr in plan["arrays"])
