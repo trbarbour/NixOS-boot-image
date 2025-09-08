@@ -3,7 +3,7 @@
 import argparse
 import json
 
-from . import inventory, planner, apply
+from . import inventory, planner, apply, partition
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -13,7 +13,24 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--plan-only", action="store_true", help="Only print the plan and exit"
     )
+    parser.add_argument(
+        "--partition-boot",
+        metavar="DISK",
+        help="Partition boot disk with EFI and LVM",
+    )
+    parser.add_argument(
+        "--partition-lvm",
+        metavar="DISK",
+        action="append",
+        default=[],
+        help="Partition disk with a single LVM partition (can be repeated)",
+    )
     args = parser.parse_args(argv)
+
+    if args.partition_boot:
+        partition.create_partitions(args.partition_boot)
+    for dev in args.partition_lvm:
+        partition.create_partitions(dev, with_efi=False)
 
     disks = inventory.enumerate_disks()
     plan = planner.plan_storage(args.mode, disks)
