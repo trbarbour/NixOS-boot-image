@@ -10,6 +10,7 @@ def test_filesystem_commands_for_lvs() -> None:
         Disk(name="sda", size=1000, rotational=False),
         Disk(name="sdb", size=2000, rotational=True),
         Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=1000, rotational=True),
     ]
     plan = plan_storage("fast", disks)
     commands = apply_plan(plan)
