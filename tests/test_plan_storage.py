@@ -68,6 +68,17 @@ def test_two_hdd_only_becomes_main_with_swap_lv() -> None:
     assert set(plan["partitions"]) == {"sdb", "sdc"}
 
 
+def test_single_hdd_only_becomes_main_with_swap_lv() -> None:
+    disks = [Disk(name="sda", size=2000, rotational=True)]
+    plan = plan_storage("fast", disks)
+    vg_names = {vg["name"] for vg in plan["vgs"]}
+    assert vg_names == {"main"}
+    lv_info = {(lv["name"], lv["vg"]) for lv in plan["lvs"]}
+    assert ("root", "main") in lv_info and ("swap", "main") in lv_info
+    assert plan["arrays"] == []
+    assert set(plan["partitions"]) == {"sda"}
+
+
 def test_single_hdd_with_ssd_gets_swap_vg() -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
@@ -83,6 +94,18 @@ def test_single_hdd_with_ssd_gets_swap_vg() -> None:
     # only the SSD in main VG gets an EFI partition
     assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])
+
+
+def test_ssd_only_has_no_swap() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=1000, rotational=False),
+    ]
+    plan = plan_storage("fast", disks)
+    vg_names = {vg["name"] for vg in plan["vgs"]}
+    lv_names = {lv["name"] for lv in plan["lvs"]}
+    assert "swap" not in vg_names
+    assert "swap" not in lv_names
 
 
 def test_only_one_swap_lv() -> None:
