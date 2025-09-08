@@ -10,6 +10,7 @@ in {
       description = "Pre-NixOS setup";
       wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";
+      environment = { PRE_NIXOS_EXEC = "1"; };
       script = ''
         ${pkgs.pre-nixos}/bin/pre-nixos --plan-only
       '';

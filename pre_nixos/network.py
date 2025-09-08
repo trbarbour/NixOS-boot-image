@@ -11,8 +11,8 @@ from typing import Optional
 def _run(cmd: list[str]) -> None:
     """Execute ``cmd`` when ``PRE_NIXOS_EXEC`` is set to ``1``.
 
-    This best-effort helper allows the module to write configuration files during
-    tests without attempting to invoke missing system utilities such as
+    The bootable image sets this variable so network configuration commands run,
+    while tests can leave it unset to avoid invoking missing utilities such as
     ``systemctl`` or ``ip``.
     """
 
@@ -79,8 +79,8 @@ def configure_lan(
     The interface with an active carrier is renamed to ``lan`` via a persistent
     systemd ``.link`` file and renamed immediately for the running system.  A
     matching ``.network`` file enables DHCP.  When execution is enabled
-    (``PRE_NIXOS_EXEC=1``) the interface is brought up, networkd is restarted and
-    the specified SSH service is enabled.
+    (``PRE_NIXOS_EXEC=1`` – set by the boot ISO) the interface is brought up,
+    networkd is restarted and the specified SSH service is enabled.
 
     Returns the path to the created network file or ``None`` when no LAN
     interface is detected.

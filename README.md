@@ -10,6 +10,10 @@ Generate a storage plan without applying it:
 python -m pre_nixos.pre_nixos --plan-only
 ```
 
+The tool executes system commands only when `PRE_NIXOS_EXEC=1` is set. The
+bootable image sets this variable automatically; set it manually if you want to
+apply changes on a running system.
+
 ## Development
 
 The project uses [pytest](https://pytest.org) for tests.
