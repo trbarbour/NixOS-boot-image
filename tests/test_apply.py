@@ -12,7 +12,7 @@ def test_apply_plan_returns_commands() -> None:
         Disk(name="sdc", size=2000, rotational=True),
     ]
     plan = plan_storage("fast", disks)
-    commands = apply_plan(plan)
+    commands = apply_plan(plan, dry_run=True)
     assert any(cmd.startswith("mdadm") for cmd in commands)
     assert any(cmd.startswith("pvcreate") for cmd in commands)
     assert any("vgcreate main" in cmd for cmd in commands)
@@ -35,7 +35,7 @@ def test_apply_plan_handles_swap() -> None:
             {"name": "swap", "vg": "swap", "size": "100%"}
         ],
     }
-    commands = apply_plan(plan)
+    commands = apply_plan(plan, dry_run=True)
     assert "pvcreate /dev/md0" in commands
     assert "vgcreate swap /dev/md0" in commands
     assert "lvcreate -n swap swap -l 100%" in commands

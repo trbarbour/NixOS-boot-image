@@ -11,7 +11,7 @@ def create_partitions(
     *,
     with_efi: bool = True,
     efi_size: str = "512MiB",
-    dry_run: bool = True,
+    dry_run: bool = False,
 ) -> List[str]:
     """Create a GPT with optional EFI and LVM partitions.
 

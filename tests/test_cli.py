@@ -12,8 +12,8 @@ def test_cli_plan_only(monkeypatch, capsys):
     )
     called = []
 
-    def fake_apply(plan):
-        called.append(True)
+    def fake_apply(plan, dry_run=False):
+        called.append(dry_run)
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
     pre_nixos.main(["--plan-only"])
@@ -30,9 +30,9 @@ def test_cli_apply_called(monkeypatch):
     )
     called = []
 
-    def fake_apply(plan):
-        called.append(True)
+    def fake_apply(plan, dry_run=False):
+        called.append(dry_run)
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
     pre_nixos.main([])
-    assert called == [True]
+    assert called == [False]
