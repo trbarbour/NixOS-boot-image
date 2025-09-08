@@ -28,9 +28,9 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     if args.partition_boot:
-        partition.create_partitions(args.partition_boot)
+        partition.create_partitions(args.partition_boot, dry_run=False)
     for dev in args.partition_lvm:
-        partition.create_partitions(dev, with_efi=False)
+        partition.create_partitions(dev, with_efi=False, dry_run=False)
 
     disks = inventory.enumerate_disks()
     plan = planner.plan_storage(args.mode, disks)
