@@ -38,10 +38,15 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = True) -> List[str]:
         commands.append(f"vgcreate {vg['name']} {devs}")
 
     for lv in plan.get("lvs", []):
+        size = lv["size"]
+        flag = "-l" if size.endswith("%") or size.upper().endswith("FREE") else "-L"
         commands.append(
-            f"lvcreate -n {lv['name']} {lv['vg']} -l {lv['size']}"
+            f"lvcreate -n {lv['name']} {lv['vg']} {flag} {size}"
         )
         lv_path = f"/dev/{lv['vg']}/{lv['name']}"
+        if lv["name"] == "swap":
+            commands.append(f"mkswap {lv_path}")
+            continue
         # The Nix store contains millions of small files. Using a dense
         # inode allocation (1 inode per 2 KiB) prevents running out of
         # inodes long before the LV is full.
@@ -49,8 +54,6 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = True) -> List[str]:
         commands.append(f"e2label {lv_path} {lv['name']}")
         mount_point = "/mnt" if lv["name"] == "root" else f"/mnt/{lv['name']}"
         commands.append(f"mount -L {lv['name']} {mount_point}")
-        if lv["name"] == "swap":
-            commands.append(f"mkswap /dev/{lv['vg']}/{lv['name']}")
 
     if dry_run:
         return commands
