@@ -48,6 +48,8 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         commands.append(f"mkfs.ext4 -i 2048 {lv_path}")
         commands.append(f"e2label {lv_path} {lv['name']}")
         mount_point = "/mnt" if lv["name"] == "root" else f"/mnt/{lv['name']}"
+        if lv["name"] != "root":
+            commands.append(f"mkdir -p {mount_point}")
         commands.append(f"mount -L {lv['name']} {mount_point}")
         if lv["name"] == "swap":
             commands.append(f"mkswap /dev/{lv['vg']}/{lv['name']}")
