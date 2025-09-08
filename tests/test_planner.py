@@ -43,17 +43,21 @@ def test_t4_four_hdd_plus_ssd() -> None:
     groups = group_by_rotational_and_size(disks)
     hdd_group = groups["hdd"][0]
     assert decide_hdd_array(hdd_group)["level"] == "raid5"
+    assert (
+        decide_hdd_array(hdd_group, prefer_raid6_on_four=True)["level"]
+        == "raid6"
+    )
 
 
 def test_t5_mixed_hdd_groups() -> None:
     disks = [Disk(name="sda", size=1000, rotational=False)]
-    disks += [Disk(name=n, size=2000, rotational=True) for n in ["sdb", "sdc", "sdd", "sde"]]
-    disks += [Disk(name="sdf", size=1000, rotational=True), Disk(name="sdg", size=1000, rotational=True)]
+    disks += [Disk(name=n, size=2000, rotational=True) for n in ["sdb", "sdc", "sdd", "sde", "sdf"]]
+    disks += [Disk(name="sdg", size=1000, rotational=True), Disk(name="sdh", size=1000, rotational=True)]
     groups = group_by_rotational_and_size(disks)
     assert len(groups["hdd"]) == 2
     large_group = max(groups["hdd"], key=len)
     small_group = min(groups["hdd"], key=len)
-    assert decide_hdd_array(large_group)["level"] == "raid5"
+    assert decide_hdd_array(large_group)["level"] == "raid6"
     assert decide_hdd_array(small_group)["level"] == "raid1"
 
 

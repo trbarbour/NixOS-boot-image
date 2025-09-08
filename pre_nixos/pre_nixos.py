@@ -13,10 +13,17 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--plan-only", action="store_true", help="Only print the plan and exit"
     )
+    parser.add_argument(
+        "--prefer-raid6-on-four",
+        action="store_true",
+        help="Use RAID6 instead of RAID5 for four-disk HDD groups",
+    )
     args = parser.parse_args(argv)
 
     disks = inventory.enumerate_disks()
-    plan = planner.plan_storage(args.mode, disks)
+    plan = planner.plan_storage(
+        args.mode, disks, prefer_raid6_on_four=args.prefer_raid6_on_four
+    )
     print(json.dumps(plan, indent=2))
     if not args.plan_only:
         apply.apply_plan(plan)
