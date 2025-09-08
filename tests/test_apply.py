@@ -17,7 +17,7 @@ def test_apply_plan_returns_commands() -> None:
     assert any(cmd.startswith("pvcreate") for cmd in commands)
     assert any("vgcreate main" in cmd for cmd in commands)
     assert any("lvcreate -n root" in cmd for cmd in commands)
-
+    assert any(cmd.startswith("mkswap") for cmd in commands)
 
 def test_apply_plan_handles_swap() -> None:
     plan = {

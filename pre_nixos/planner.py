@@ -100,14 +100,21 @@ def plan_storage(
             plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "ssd"})
             plan["vgs"].append({"name": vg_name, "devices": [name]})
 
-    # Handle HDD buckets for VG "large" and suffixed variants
+    # Handle HDD buckets for VG "large" and swap detection
     hdd_buckets = sorted(
         groups["hdd"],
         key=lambda b: sum(d.size for d in b),
         reverse=True,
     )
-    for idx, bucket in enumerate(hdd_buckets):
-        vg_name = "large" if idx == 0 else f"large-{idx}"
+    swap_done = False
+    large_idx = 0
+    for bucket in hdd_buckets:
+        if len(bucket) == 2 and not swap_done:
+            vg_name = "swap"
+            swap_done = True
+        else:
+            vg_name = "large" if large_idx == 0 else f"large-{large_idx}"
+            large_idx += 1
         arr = decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
         devices = arr["devices"]
         if arr["level"] == "single":
@@ -123,5 +130,7 @@ def plan_storage(
         plan["lvs"].append({"name": "root", "vg": "main", "size": "100%"})
     if any(vg["name"] == "large" for vg in plan["vgs"]):
         plan["lvs"].append({"name": "data", "vg": "large", "size": "100%"})
+    if any(vg["name"] == "swap" for vg in plan["vgs"]):
+        plan["lvs"].append({"name": "swap", "vg": "swap", "size": "100%"})
 
     return plan

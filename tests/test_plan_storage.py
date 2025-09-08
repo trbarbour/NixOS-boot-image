@@ -13,9 +13,9 @@ def test_plan_storage_basic() -> None:
     plan = plan_storage("fast", disks)
     assert any(arr["level"] == "raid1" for arr in plan["arrays"])
     vg_names = {vg["name"] for vg in plan["vgs"]}
-    assert {"main", "large"} <= vg_names
+    assert {"main", "swap"} <= vg_names
     lv_names = {lv["name"] for lv in plan["lvs"]}
-    assert {"root", "data"} <= lv_names
+    assert {"root", "swap"} <= lv_names
 
 
 def test_plan_single_disk() -> None:
@@ -45,10 +45,9 @@ def test_multiple_hdd_buckets_named_separately() -> None:
     ]
     plan = plan_storage("fast", disks)
     vg_names = {vg["name"] for vg in plan["vgs"]}
-    assert "large" in vg_names and "large-1" in vg_names
+    assert "swap" in vg_names and "large" in vg_names
     lv_vgs = {lv["vg"] for lv in plan["lvs"]}
-    assert lv_vgs == {"large"}
-
+    assert lv_vgs == {"swap", "large"}
 
 def test_prefer_raid6_on_four_disks() -> None:
     disks = [
