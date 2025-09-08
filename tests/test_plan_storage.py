@@ -14,8 +14,9 @@ def test_plan_storage_basic() -> None:
     assert any(arr["level"] == "raid1" for arr in plan["arrays"])
     vg_names = {vg["name"] for vg in plan["vgs"]}
     assert {"main", "swap"} <= vg_names
-    lv_names = {lv["name"] for lv in plan["lvs"]}
-    assert {"root", "swap"} <= lv_names
+    lv_info = {lv["name"]: lv for lv in plan["lvs"]}
+    assert {"root", "swap"} <= lv_info.keys()
+    assert lv_info["root"]["size"] == "100%FREE"
     assert set(plan["partitions"]) == {"sda", "sdb", "sdc"}
 
 
@@ -63,8 +64,10 @@ def test_two_hdd_only_becomes_main_with_swap_lv() -> None:
     plan = plan_storage("fast", disks)
     vg_names = {vg["name"] for vg in plan["vgs"]}
     assert vg_names == {"main"}
-    lv_info = {(lv["name"], lv["vg"]) for lv in plan["lvs"]}
-    assert ("root", "main") in lv_info and ("swap", "main") in lv_info
+    lv_info = {lv["name"]: lv for lv in plan["lvs"]}
+    assert (lv_info["root"]["vg"], lv_info["swap"]["vg"]) == ("main", "main")
+    assert lv_info["root"]["size"] == "100%FREE"
+    assert lv_info["swap"]["size"].isdigit()
     assert any(arr["level"] == "raid1" for arr in plan["arrays"])
     assert set(plan["partitions"]) == {"sdb", "sdc"}
 
@@ -79,8 +82,9 @@ def test_single_hdd_with_ssd_gets_swap_vg() -> None:
     assert {"main", "swap"} <= vg_names
     swap_vg = next(vg for vg in plan["vgs"] if vg["name"] == "swap")
     assert swap_vg["devices"] == ["sdb1"]
-    lv_info = {(lv["name"], lv["vg"]) for lv in plan["lvs"]}
-    assert ("swap", "swap") in lv_info
+    lv_info = {lv["name"]: lv for lv in plan["lvs"]}
+    assert lv_info["swap"]["vg"] == "swap"
+    assert lv_info["swap"]["size"].isdigit()
     # only the SSD in main VG gets an EFI partition
     assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])

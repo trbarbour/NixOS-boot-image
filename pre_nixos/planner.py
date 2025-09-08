@@ -2,6 +2,23 @@
 
 from typing import List, Dict, Any
 
+
+def _swap_extents() -> int:
+    """Return swap size in logical extents (2×RAM, 4 MiB PE)."""
+    mem_kib = 0
+    try:
+        with open("/proc/meminfo") as meminfo:
+            for line in meminfo:
+                if line.startswith("MemTotal:"):
+                    mem_kib = int(line.split()[1])
+                    break
+    except FileNotFoundError:
+        pass
+    extent_size_kib = 4 * 1024
+    swap_kib = mem_kib * 2
+    extents = swap_kib // extent_size_kib
+    return max(1, extents)
+
 from .inventory import Disk
 
 
@@ -79,6 +96,7 @@ def plan_storage(mode: str, disks: List[Disk]) -> Dict[str, Any]:
     groups = group_by_rotational_and_size(disks)
     plan: Dict[str, Any] = {"arrays": [], "vgs": [], "lvs": [], "partitions": {}}
     array_index = 0
+    swap_size = str(_swap_extents())
 
     def record_partitions(ds: List[Disk], with_efi: bool) -> List[str]:
         devices: List[str] = []
@@ -118,8 +136,8 @@ def plan_storage(mode: str, disks: List[Disk]) -> Dict[str, Any]:
             array_index += 1
             plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "hdd"})
             plan["vgs"].append({"name": "main", "devices": [name]})
-        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%"})
-        plan["lvs"].append({"name": "swap", "vg": "main", "size": "100%"})
+        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
+        plan["lvs"].append({"name": "swap", "vg": "main", "size": swap_size})
         return plan
 
     for idx, bucket in enumerate(ssd_buckets):
@@ -159,10 +177,10 @@ def plan_storage(mode: str, disks: List[Disk]) -> Dict[str, Any]:
             plan["vgs"].append({"name": vg_name, "devices": [name]})
 
     if any(vg["name"] == "main" for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%"})
+        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
     if any(vg["name"] == "large" for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "data", "vg": "large", "size": "100%"})
+        plan["lvs"].append({"name": "data", "vg": "large", "size": "100%FREE"})
     if any(vg["name"] == "swap" for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "swap", "vg": "swap", "size": "100%"})
+        plan["lvs"].append({"name": "swap", "vg": "swap", "size": swap_size})
 
     return plan
