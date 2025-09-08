@@ -108,6 +108,21 @@ def test_ssd_only_has_no_swap() -> None:
     assert "swap" not in lv_names
 
 
+def test_swap_lv_falls_back_to_large_vg() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+        Disk(name="sdd", size=2000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    vg_names = {vg["name"] for vg in plan["vgs"]}
+    assert "swap" not in vg_names
+    assert "large" in vg_names
+    swap_lv = next(lv for lv in plan["lvs"] if lv["name"] == "swap")
+    assert swap_lv["vg"] == "large"
+
+
 def test_only_one_swap_lv() -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),

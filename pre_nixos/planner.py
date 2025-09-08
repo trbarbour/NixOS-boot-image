@@ -195,11 +195,17 @@ def plan_storage(
             plan["vgs"].append({"name": vg_name, "devices": [name]})
 
     swap_size = f"{ram_gb * 2 * 1024}M"
-    if any(vg["name"] == "swap" for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "swap", "vg": "swap", "size": swap_size})
+    swap_vg = next((vg["name"] for vg in plan["vgs"] if vg["name"] == "swap"), None)
+    if swap_vg is None:
+        swap_vg = next(
+            (vg["name"] for vg in plan["vgs"] if vg["name"].startswith("large")),
+            None,
+        )
+    if swap_vg is not None:
+        plan["lvs"].append({"name": "swap", "vg": swap_vg, "size": swap_size})
     if any(vg["name"] == "main" for vg in plan["vgs"]):
         plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
-    if any(vg["name"] == "large" for vg in plan["vgs"]):
+    if any(vg["name"].startswith("large") for vg in plan["vgs"]):
         plan["lvs"].append({"name": "data", "vg": "large", "size": "100%FREE"})
 
     return plan
