@@ -21,6 +21,9 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = True) -> List[str]:
             f"mdadm --create /dev/{array['name']} --level={array['level']} {devices}"
         )
 
+    for array in plan.get("arrays", []):
+        commands.append(f"pvcreate /dev/{array['name']}")
+
     for vg in plan.get("vgs", []):
         devs = " ".join(f"/dev/{d}" for d in vg["devices"])
         commands.append(f"vgcreate {vg['name']} {devs}")
@@ -37,6 +40,8 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = True) -> List[str]:
         commands.append(f"e2label {lv_path} {lv['name']}")
         mount_point = "/mnt" if lv["name"] == "root" else f"/mnt/{lv['name']}"
         commands.append(f"mount -L {lv['name']} {mount_point}")
+        if lv["name"] == "swap":
+            commands.append(f"mkswap /dev/{lv['vg']}/{lv['name']}")
 
     if dry_run:
         return commands
