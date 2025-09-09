@@ -44,3 +44,7 @@
 
 ### v0.9 — 2025-09-09
 - Clarified volume group naming: only the largest SSD/HDD bucket uses `main` or `large`; smaller buckets get suffixed names and remain unmounted.
+
+### v0.10 — 2025-09-09
+- Replaced assumption of external `authorized_keys` with built-in root SSH key.
+- Documented key-only login and requirement to replace the embedded key when building images.

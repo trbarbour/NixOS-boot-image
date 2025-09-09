@@ -9,16 +9,15 @@ from typing import Optional
 
 
 def _run(cmd: list[str]) -> None:
-    """Execute ``cmd`` when ``PRE_NIXOS_EXEC`` is set to ``1``.
+    """Execute ``cmd`` when ``PRE_NIXOS_EXEC`` is ``1``.
 
-    The bootable image sets this variable so network configuration commands run,
-    while tests can leave it unset to avoid invoking missing utilities such as
-    ``systemctl`` or ``ip``.
+    Commands are executed without shell interpretation and failures are not
+    silently ignored.
     """
 
     if os.environ.get("PRE_NIXOS_EXEC") != "1":
         return
-    subprocess.run(cmd, check=False)
+    subprocess.run(cmd, check=True)
 
 
 def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
@@ -69,18 +68,65 @@ def write_lan_rename_rule(
     return rule_path
 
 
+def secure_ssh(
+    ssh_dir: Path,
+    ssh_service: str = "ssh",
+    authorized_key: Optional[Path] = None,
+    root_home: Path = Path("/root"),
+) -> Path:
+    """Disable password authentication and provision a root SSH key.
+
+    The main ``sshd_config`` file is updated to prohibit password logins, the
+    root password is locked, an authorized key is installed for the root
+    account, and the SSH service is enabled and reloaded.
+    """
+
+    ssh_dir.mkdir(parents=True, exist_ok=True)
+    conf_path = ssh_dir / "sshd_config"
+    existing = conf_path.read_text(encoding="utf-8") if conf_path.exists() else ""
+    if conf_path.is_symlink():
+        conf_path.unlink()
+    if existing and not existing.endswith("\n"):
+        existing += "\n"
+    conf_path.write_text(
+        existing + "PermitRootLogin prohibit-password\nPasswordAuthentication no\n",
+        encoding="utf-8",
+    )
+
+    if authorized_key is None:
+        authorized_key = Path(__file__).with_name("root_ed25519.pub")
+    if not authorized_key.exists():
+        raise FileNotFoundError(
+            f"Missing {authorized_key}. Place your public key at this path before building."
+        )
+    root_ssh = root_home / ".ssh"
+    root_ssh.mkdir(parents=True, exist_ok=True)
+    auth_path = root_ssh / "authorized_keys"
+    auth_path.write_text(authorized_key.read_text(), encoding="utf-8")
+    os.chmod(root_ssh, 0o700)
+    os.chmod(auth_path, 0o600)
+
+    _run(["passwd", "-l", "root"])
+    _run(["systemctl", "enable", "--now", ssh_service])
+    _run(["systemctl", "reload", ssh_service])
+    return conf_path
+
+
 def configure_lan(
     net_path: Path = Path("/sys/class/net"),
     network_dir: Path = Path("/etc/systemd/network"),
+    ssh_dir: Path = Path("/etc/ssh"),
     ssh_service: str = "ssh",
+    authorized_key: Optional[Path] = None,
+    root_home: Path = Path("/root"),
 ) -> Optional[Path]:
-    """Configure the active NIC for DHCP and enable SSH access.
+    """Configure the active NIC for DHCP and enable secure SSH access.
 
     The interface with an active carrier is renamed to ``lan`` via a persistent
     systemd ``.link`` file and renamed immediately for the running system.  A
     matching ``.network`` file enables DHCP.  When execution is enabled
     (``PRE_NIXOS_EXEC=1`` – set by the boot ISO) the interface is brought up,
-    networkd is restarted and the specified SSH service is enabled.
+    networkd is restarted and the SSH service is secured and enabled.
 
     Returns the path to the created network file or ``None`` when no LAN
     interface is detected.
@@ -105,6 +151,6 @@ def configure_lan(
     _run(["ip", "link", "set", iface, "name", "lan"])
     _run(["ip", "link", "set", "lan", "up"])
     _run(["systemctl", "restart", "systemd-networkd"])
-    _run(["systemctl", "enable", "--now", ssh_service])
+    secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
 
     return net_path_conf
