@@ -53,3 +53,5 @@ def test_configure_lan_writes_network_file(tmp_path):
     assert "DHCP=yes" in network_file.read_text()
     auth_keys = root_home / ".ssh/authorized_keys"
     assert auth_keys.read_text() == key.read_text()
+    ssh_conf = ssh_dir / "sshd_config"
+    assert "PasswordAuthentication no" in ssh_conf.read_text()

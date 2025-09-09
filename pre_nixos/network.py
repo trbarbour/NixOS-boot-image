@@ -76,22 +76,29 @@ def secure_ssh(
 ) -> Path:
     """Disable password authentication and provision a root SSH key.
 
-    A configuration snippet is written under ``ssh_dir/sshd_config.d`` to
-    prohibit password logins, the root password is locked, an authorized key is
-    installed for the root account, and the SSH service is enabled and
-    reloaded.
+    The main ``sshd_config`` file is updated to prohibit password logins, the
+    root password is locked, an authorized key is installed for the root
+    account, and the SSH service is enabled and reloaded.
     """
 
-    conf_dir = ssh_dir / "sshd_config.d"
-    conf_dir.mkdir(parents=True, exist_ok=True)
-    conf_path = conf_dir / "pre-nixos.conf"
+    ssh_dir.mkdir(parents=True, exist_ok=True)
+    conf_path = ssh_dir / "sshd_config"
+    existing = conf_path.read_text(encoding="utf-8") if conf_path.exists() else ""
+    if conf_path.is_symlink():
+        conf_path.unlink()
+    if existing and not existing.endswith("\n"):
+        existing += "\n"
     conf_path.write_text(
-        "PermitRootLogin prohibit-password\nPasswordAuthentication no\n",
+        existing + "PermitRootLogin prohibit-password\nPasswordAuthentication no\n",
         encoding="utf-8",
     )
 
     if authorized_key is None:
         authorized_key = Path(__file__).with_name("root_ed25519.pub")
+    if not authorized_key.exists():
+        raise FileNotFoundError(
+            f"Missing {authorized_key}. Place your public key at this path before building."
+        )
     root_ssh = root_home / ".ssh"
     root_ssh.mkdir(parents=True, exist_ok=True)
     auth_path = root_ssh / "authorized_keys"
