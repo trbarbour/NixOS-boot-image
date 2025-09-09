@@ -62,13 +62,15 @@ def test_configure_lan_writes_network_file(tmp_path):
     assert "PasswordAuthentication no" in ssh_conf.read_text()
 
 
-def test_secure_ssh_replaces_read_only_symlink(tmp_path):
+def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     ssh_dir = tmp_path / "etc/ssh"
     ssh_dir.mkdir(parents=True)
     store_dir = tmp_path / "nix/store/abcd-sshd"
     store_dir.mkdir(parents=True)
     store_conf = store_dir / "sshd_config"
-    store_conf.write_text("Original\n")
+    store_conf.write_text(
+        "X11Forwarding no\nPasswordAuthentication yes\nPermitRootLogin yes\n"
+    )
     store_conf.chmod(0o444)
     (ssh_dir / "sshd_config").symlink_to(store_conf)
 
@@ -79,4 +81,8 @@ def test_secure_ssh_replaces_read_only_symlink(tmp_path):
     assert conf_path == ssh_dir / "sshd_config"
     assert conf_path.is_file() and not conf_path.is_symlink()
     text = conf_path.read_text()
+    assert "X11Forwarding no" in text
+    assert "PasswordAuthentication yes" not in text
+    assert "PermitRootLogin yes" not in text
     assert "PasswordAuthentication no" in text
+    assert "PermitRootLogin prohibit-password" in text
