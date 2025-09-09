@@ -86,6 +86,23 @@ def secure_ssh(
     existing = conf_path.read_text(encoding="utf-8") if conf_path.exists() else ""
     if conf_path.is_symlink():
         conf_path.unlink()
+
+    # Drop insecure directives from the existing configuration but preserve
+    # everything else to minimise surprises for the user.
+    sanitized: list[str] = []
+    for line in existing.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            sanitized.append(line)
+            continue
+        parts = stripped.split()
+        if len(parts) >= 2 and (
+            (parts[0] == "PasswordAuthentication" and parts[1].lower() == "yes")
+            or (parts[0] == "PermitRootLogin" and parts[1].lower() == "yes")
+        ):
+            continue
+        sanitized.append(line)
+    existing = "\n".join(sanitized)
     if existing and not existing.endswith("\n"):
         existing += "\n"
     conf_path.write_text(
