@@ -1,6 +1,11 @@
 """Tests for network module."""
 
-from pre_nixos.network import identify_lan, write_lan_rename_rule, configure_lan
+from pre_nixos.network import (
+    configure_lan,
+    identify_lan,
+    secure_ssh,
+    write_lan_rename_rule,
+)
 
 
 def test_identify_lan(tmp_path):
@@ -55,3 +60,23 @@ def test_configure_lan_writes_network_file(tmp_path):
     assert auth_keys.read_text() == key.read_text()
     ssh_conf = ssh_dir / "sshd_config"
     assert "PasswordAuthentication no" in ssh_conf.read_text()
+
+
+def test_secure_ssh_replaces_read_only_symlink(tmp_path):
+    ssh_dir = tmp_path / "etc/ssh"
+    ssh_dir.mkdir(parents=True)
+    store_dir = tmp_path / "nix/store/abcd-sshd"
+    store_dir.mkdir(parents=True)
+    store_conf = store_dir / "sshd_config"
+    store_conf.write_text("Original\n")
+    store_conf.chmod(0o444)
+    (ssh_dir / "sshd_config").symlink_to(store_conf)
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    conf_path = secure_ssh(ssh_dir, authorized_key=key, root_home=tmp_path / "root")
+    assert conf_path == ssh_dir / "sshd_config"
+    assert conf_path.is_file() and not conf_path.is_symlink()
+    text = conf_path.read_text()
+    assert "PasswordAuthentication no" in text
