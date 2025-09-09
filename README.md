@@ -26,6 +26,9 @@ this path before building the image (the private key is ignored by git):
 ssh-keygen -t ed25519 -N '' -f pre_nixos/root_ed25519
 ```
 
+After generating the key pair, commit `pre_nixos/root_ed25519.pub` before
+running `nix build`.
+
 Keep `pre_nixos/root_ed25519` secure and uncommitted; its entry in `.gitignore`
 prevents accidental check-in. Use the generated private key to connect once the
 image boots:
