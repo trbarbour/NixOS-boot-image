@@ -7,6 +7,9 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }:
+    let
+      rootPub = builtins.path { path = ./pre_nixos/root_ed25519.pub; };
+    in
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -16,6 +19,9 @@
           src = ./.;
           pyproject = true;
           propagatedBuildInputs = with pkgs; [ gptfdisk mdadm lvm2 ethtool ];
+          postPatch = ''
+            cp ${rootPub} pre_nixos/root_ed25519.pub
+          '';
         };
       in {
         packages.default = pre-nixos;

@@ -2,6 +2,8 @@
 
 This project contains tools to prepare bare-metal machines for a NixOS installation. It discovers hardware, plans a storage layout, configures the active network interface for DHCP (renaming it to `lan`), and can apply that plan. When multiple disk groups qualify for the same tier, only the largest is mounted as `main` or `large`; smaller groups receive suffixed VG names and are left unmounted for manual use after installation.
 
+> **Important:** Before building the boot image, place your SSH public key at `pre_nixos/root_ed25519.pub`. The build fails if the file is missing.
+
 ## Usage
 
 Generate a storage plan without applying it:
@@ -16,9 +18,9 @@ apply changes on a running system.
 
 ## SSH access
 
-The boot image permits root login **only** via the public key embedded in
-`pre_nixos/root_ed25519.pub`. Replace this file with your own public key before
-building the image. Generate a key pair (the private key is ignored by git):
+The boot image permits root login **only** via the public key at
+`pre_nixos/root_ed25519.pub`. Generate a key pair and place the public key at
+this path before building the image (the private key is ignored by git):
 
 ```bash
 ssh-keygen -t ed25519 -N '' -f pre_nixos/root_ed25519
