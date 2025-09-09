@@ -62,6 +62,12 @@ The system must automate the hardware setup process on new servers prior to NixO
 - Identify which NIC is **physically connected to a live network**.
 - Rename the active NIC to `lan` using a predictable naming mechanism (e.g., systemd link file or udev rule).
 
+### 2.7 SSH Access
+
+- Only public key authentication is permitted for the root account.
+- A default public key is embedded into `/root/.ssh/authorized_keys`.
+- Builders must replace the embedded key with their own before creating an image.
+
 ---
 
 ## 3. ⚙️ Non-Functional Requirements
@@ -88,7 +94,6 @@ The system must automate the hardware setup process on new servers prior to NixO
 - Each machine has **at least one SSD**, either standalone or as a pair.
 - Rotating disks may or may not be present.
 - Boot media will be inserted manually at each machine.
-- Remote access via SSH can be established once networking is correctly configured.
 - Machines may differ in disk count and NIC count, but these variations are detectable and predictable at runtime.
 
 ---

@@ -122,7 +122,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - Bring `lan` up with DHCP; log assigned IP.
 
 ### 7.8 SSH exposure
-- Load authorized_keys from boot media, start OpenSSH, disable password login.
+- Install built-in `authorized_keys` for root, start OpenSSH, disable password login.
 - Announce IP + fingerprint via log fan-out.
 
 ### 7.9 Outputs

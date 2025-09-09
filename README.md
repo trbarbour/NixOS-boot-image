@@ -14,6 +14,24 @@ The tool executes system commands only when `PRE_NIXOS_EXEC=1` is set. The
 bootable image sets this variable automatically; set it manually if you want to
 apply changes on a running system.
 
+## SSH access
+
+The boot image permits root login **only** via the public key embedded in
+`pre_nixos/root_ed25519.pub`. Replace this file with your own public key before
+building the image. Generate a key pair (the private key is ignored by git):
+
+```bash
+ssh-keygen -t ed25519 -N '' -f pre_nixos/root_ed25519
+```
+
+Keep `pre_nixos/root_ed25519` secure and uncommitted; its entry in `.gitignore`
+prevents accidental check-in. Use the generated private key to connect once the
+image boots:
+
+```bash
+ssh -i pre_nixos/root_ed25519 root@<ip>
+```
+
 ## Development
 
 The project uses [pytest](https://pytest.org) for tests.

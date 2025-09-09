@@ -41,6 +41,15 @@ def test_configure_lan_writes_network_file(tmp_path):
         (iface / "carrier").write_text(carrier)
 
     network_dir = tmp_path / "etc/systemd/network"
-    network_file = configure_lan(netdir, network_dir)
+    ssh_dir = tmp_path / "etc/ssh"
+    root_home = tmp_path / "root"
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    network_file = configure_lan(
+        netdir, network_dir, ssh_dir, authorized_key=key, root_home=root_home
+    )
     assert network_file == network_dir / "20-lan.network"
     assert "DHCP=yes" in network_file.read_text()
+    auth_keys = root_home / ".ssh/authorized_keys"
+    assert auth_keys.read_text() == key.read_text()
