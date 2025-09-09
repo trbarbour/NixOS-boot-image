@@ -92,6 +92,10 @@ def secure_ssh(
 
     if authorized_key is None:
         authorized_key = Path(__file__).with_name("root_ed25519.pub")
+        if not authorized_key.exists():
+            raise FileNotFoundError(
+                "Missing public key: place your key at pre_nixos/root_ed25519.pub"
+            )
     root_ssh = root_home / ".ssh"
     root_ssh.mkdir(parents=True, exist_ok=True)
     auth_path = root_ssh / "authorized_keys"

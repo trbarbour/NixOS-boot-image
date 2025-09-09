@@ -34,6 +34,7 @@ def test_cli_partition_invoked(monkeypatch):
         return []
 
     monkeypatch.setattr(pre_nixos.partition, "create_partitions", fake_part)
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda *a, **k: None)
     pre_nixos.main([
         "--dry-run",
         "--partition-boot",
