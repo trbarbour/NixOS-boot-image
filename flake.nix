@@ -18,6 +18,7 @@
           version = "0.1.0";
           src = ./.;
           pyproject = true;
+          nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
           propagatedBuildInputs = with pkgs; [ gptfdisk mdadm lvm2 ethtool ];
           postPatch = ''
             cp ${rootPub} pre_nixos/root_ed25519.pub
