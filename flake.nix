@@ -25,8 +25,12 @@
           '';
         };
       in {
-        packages.default = pre-nixos;
-        packages.pre-nixos = pre-nixos;
+        packages = {
+          default = pre-nixos;
+          pre-nixos = pre-nixos;
+        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          bootImage = self.nixosConfigurations.pre-installer.config.system.build.isoImage;
+        };
         devShells.default = pkgs.mkShell {
           buildInputs = [ pkgs.python3 pkgs.python3Packages.pytest ];
         };
