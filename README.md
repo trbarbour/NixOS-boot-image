@@ -2,7 +2,9 @@
 
 This project contains tools to prepare bare-metal machines for a NixOS installation. It discovers hardware, plans a storage layout, configures the active network interface for DHCP (renaming it to `lan`), and can apply that plan. When multiple disk groups qualify for the same tier, only the largest is mounted as `main` or `large`; smaller groups receive suffixed VG names and are left unmounted for manual use after installation.
 
-> **Important:** Before building the boot image, place your SSH public key at `pre_nixos/root_ed25519.pub`. The build fails if the file is missing.
+> **Note:** To enable SSH access on the boot image, place your SSH public key at
+> `pre_nixos/root_ed25519.pub` before building. If the file is absent, the image
+> falls back to the NixOS default of console-only access.
 
 ## Usage
 
@@ -27,7 +29,7 @@ ssh-keygen -t ed25519 -N '' -f pre_nixos/root_ed25519
 ```
 
 After generating the key pair, commit `pre_nixos/root_ed25519.pub` before
-running `nix build`.
+running `nix build` so that the key is embedded in the image.
 
 Keep `pre_nixos/root_ed25519` secure and uncommitted; its entry in `.gitignore`
 prevents accidental check-in. Use the generated private key to connect once the
@@ -47,10 +49,16 @@ pytest
 
 ## Nix flake
 
-Build the CLI as a Nix package:
+Build a bootable ISO that runs `pre-nixos` automatically:
 
 ```bash
 nix build
+```
+
+Build the CLI as a Nix package:
+
+```bash
+nix build .#pre-nixos
 ```
 
 Enter a development shell with dependencies:
@@ -71,16 +79,9 @@ Expose the tool on a system via the flake's NixOS module:
 }
 ```
 
-## ISO image
-
-Build a bootable ISO that runs `pre-nixos` automatically:
+The explicit attribute paths remain available if needed:
 
 ```bash
 nix build .#bootImage
-```
-
-The longer attribute path remains available if needed:
-
-```bash
 nix build .#nixosConfigurations.pre-installer.config.system.build.isoImage
 ```
