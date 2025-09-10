@@ -137,17 +137,22 @@ def configure_lan(
     authorized_key: Optional[Path] = None,
     root_home: Path = Path("/root"),
 ) -> Optional[Path]:
-    """Configure the active NIC for DHCP and enable secure SSH access.
+    """Configure the active NIC for DHCP and optionally enable secure SSH.
 
-    The interface with an active carrier is renamed to ``lan`` via a persistent
-    systemd ``.link`` file and renamed immediately for the running system.  A
-    matching ``.network`` file enables DHCP.  When execution is enabled
-    (``PRE_NIXOS_EXEC=1`` – set by the boot ISO) the interface is brought up,
-    networkd is restarted and the SSH service is secured and enabled.
+    When a root public key is present, the interface with an active carrier is
+    renamed to ``lan`` via a persistent systemd ``.link`` file and renamed
+    immediately for the running system.  A matching ``.network`` file enables
+    DHCP and SSH access is secured with the provided key.  If no key is
+    available, networking and SSH are left in their NixOS boot image defaults.
 
     Returns the path to the created network file or ``None`` when no LAN
-    interface is detected.
+    interface is detected or no key is provided.
     """
+
+    if authorized_key is None:
+        authorized_key = Path(__file__).with_name("root_ed25519.pub")
+    if not authorized_key.exists():
+        return None
 
     iface = identify_lan(net_path)
     if iface is None:
