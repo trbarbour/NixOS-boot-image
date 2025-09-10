@@ -47,10 +47,16 @@ pytest
 
 ## Nix flake
 
-Build the CLI as a Nix package:
+Build a bootable ISO that runs `pre-nixos` automatically:
 
 ```bash
 nix build
+```
+
+Build the CLI as a Nix package:
+
+```bash
+nix build .#pre-nixos
 ```
 
 Enter a development shell with dependencies:
@@ -71,16 +77,9 @@ Expose the tool on a system via the flake's NixOS module:
 }
 ```
 
-## ISO image
-
-Build a bootable ISO that runs `pre-nixos` automatically:
+The explicit attribute paths remain available if needed:
 
 ```bash
 nix build .#bootImage
-```
-
-The longer attribute path remains available if needed:
-
-```bash
 nix build .#nixosConfigurations.pre-installer.config.system.build.isoImage
 ```
