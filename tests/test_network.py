@@ -62,6 +62,24 @@ def test_configure_lan_writes_network_file(tmp_path):
     assert "PasswordAuthentication no" in ssh_conf.read_text()
 
 
+def test_configure_lan_skips_without_key(tmp_path):
+    netdir = tmp_path / "sys/class/net"
+    netdir.mkdir(parents=True)
+    iface = netdir / "eth0"
+    iface.mkdir()
+    (iface / "device").mkdir()
+    (iface / "carrier").write_text("1")
+
+    network_dir = tmp_path / "etc/systemd/network"
+    ssh_dir = tmp_path / "etc/ssh"
+    root_home = tmp_path / "root"
+
+    result = configure_lan(netdir, network_dir, ssh_dir, root_home=root_home)
+    assert result is None
+    assert not (network_dir / "20-lan.network").exists()
+    assert not (root_home / ".ssh/authorized_keys").exists()
+
+
 def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     ssh_dir = tmp_path / "etc/ssh"
     ssh_dir.mkdir(parents=True)

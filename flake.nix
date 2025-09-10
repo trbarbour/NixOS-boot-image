@@ -8,7 +8,12 @@
 
   outputs = { self, nixpkgs, flake-utils, ... }:
     let
-      rootPub = builtins.path { path = ./pre_nixos/root_ed25519.pub; };
+      rootPubPath = "pre_nixos/root_ed25519.pub";
+      rootPub =
+        if builtins.pathExists rootPubPath then
+          builtins.path { path = ./${rootPubPath}; }
+        else
+          null;
     in
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -20,7 +25,7 @@
           pyproject = true;
           nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
           propagatedBuildInputs = with pkgs; [ gptfdisk mdadm lvm2 ethtool ];
-          postPatch = ''
+          postPatch = pkgs.lib.optionalString (rootPub != null) ''
             cp ${rootPub} pre_nixos/root_ed25519.pub
           '';
         };
