@@ -42,3 +42,23 @@ def test_cli_apply_called(monkeypatch):
     pre_nixos.main([])
     assert called == [False]
     assert net_called == [True]
+
+
+def test_cli_writes_console(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(
+        pre_nixos.inventory,
+        "enumerate_disks",
+        lambda: [Disk(name="sda", size=1000, rotational=False)],
+    )
+    fake_console = tmp_path / "console.log"
+    console_file = fake_console.open("w")
+
+    def open_console():
+        return console_file
+
+    monkeypatch.setattr(pre_nixos, "_maybe_open_console", open_console)
+    pre_nixos.main(["--plan-only"])
+    console_file.close()
+    out = capsys.readouterr().out
+    assert "main" in out
+    assert "main" in fake_console.read_text()

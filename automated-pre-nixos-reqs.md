@@ -64,7 +64,8 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 ### 2.7 SSH Access
 
-- Only public key authentication is permitted for the root account.
+- Only public key authentication is permitted for the root account over SSH.
+- The root password must remain set so that login over the serial console is possible.
 - A default public key is embedded into `/root/.ssh/authorized_keys`.
 - Builders must replace the embedded key with their own before creating an image.
 
@@ -73,7 +74,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 ## 3. ⚙️ Non-Functional Requirements
 
 - The setup process must be **fully non-interactive** until remote access is available.
-- Setup must proceed from **bootable removable media** (e.g., USB stick) with **serial console output**. It must still work if serial console is not present or is present but not connected.
+- Setup must proceed from **bootable removable media** (e.g., USB stick) with **serial console output**. This includes providing serial access to the **bootloader** and a login prompt on the serial console. The system must still work if a serial console is absent or disconnected.
 - Setup must be **repeatable**, **deterministic**, and suitable for a **team-managed fleet**, though all installations will be performed by a single operator.
 
 ---
