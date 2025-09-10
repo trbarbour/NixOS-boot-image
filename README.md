@@ -76,5 +76,11 @@ Expose the tool on a system via the flake's NixOS module:
 Build a bootable ISO that runs `pre-nixos` automatically:
 
 ```bash
+nix build .#bootImage
+```
+
+The longer attribute path remains available if needed:
+
+```bash
 nix build .#nixosConfigurations.pre-installer.config.system.build.isoImage
 ```
