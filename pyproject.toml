@@ -6,6 +6,9 @@ authors = [{name = "Unknown"}]
 readme = "README.md"
 requires-python = ">=3.10"
 
+[tool.setuptools]
+packages = ["pre_nixos"]
+
 [project.scripts]
 pre-nixos = "pre_nixos.pre_nixos:main"
 
