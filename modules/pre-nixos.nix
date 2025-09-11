@@ -12,7 +12,6 @@ in {
       terminal_input serial console
       terminal_output serial console
     '';
-    systemd.services."serial-getty@ttyS0".enable = true;
     systemd.services.pre-nixos = {
       description = "Pre-NixOS setup";
       wantedBy = [ "multi-user.target" ];
