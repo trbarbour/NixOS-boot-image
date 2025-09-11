@@ -48,3 +48,8 @@
 ### v0.10 — 2025-09-09
 - Replaced assumption of external `authorized_keys` with built-in root SSH key.
 - Documented key-only login and requirement to replace the embedded key when building images.
+
+### v0.11 — 2025-09-10
+- Clarified serial-console login: bootloader and kernel configured for serial, serial `getty` started.
+- Root password remains usable for console logins while SSH password auth is disabled.
+- Logging fan-out writes to the kernel console instead of a hardcoded serial device.

@@ -74,11 +74,12 @@ def secure_ssh(
     authorized_key: Optional[Path] = None,
     root_home: Path = Path("/root"),
 ) -> Path:
-    """Disable password authentication and provision a root SSH key.
+    """Disable SSH password login and provision a root SSH key.
 
-    The main ``sshd_config`` file is updated to prohibit password logins, the
-    root password is locked, an authorized key is installed for the root
-    account, and the SSH service is enabled and reloaded.
+    The main ``sshd_config`` file is updated to prohibit password logins,
+    an authorized key is installed for the root account, and the SSH service
+    is enabled and reloaded. The root password itself remains usable for
+    console logins.
     """
 
     ssh_dir.mkdir(parents=True, exist_ok=True)
@@ -123,7 +124,6 @@ def secure_ssh(
     os.chmod(root_ssh, 0o700)
     os.chmod(auth_path, 0o600)
 
-    _run(["passwd", "-l", "root"])
     _run(["systemctl", "enable", "--now", ssh_service])
     _run(["systemctl", "reload", ssh_service])
     return conf_path

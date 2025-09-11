@@ -1,9 +1,18 @@
 """CLI entry point for pre-nixos."""
 
 import argparse
+import io
 import json
 
 from . import inventory, planner, apply, partition, network
+
+
+def _maybe_open_console() -> io.TextIOWrapper | None:
+    """Open the kernel console for log fan-out when present."""
+    try:
+        return open("/dev/console", "w", buffering=1)
+    except OSError:
+        return None
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -37,6 +46,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     args = parser.parse_args(argv)
 
+    console = _maybe_open_console()
+
     # Configure networking before performing storage operations so the machine
     # becomes remotely reachable as early as possible.
     network.configure_lan()
@@ -54,9 +65,16 @@ def main(argv: list[str] | None = None) -> None:
         prefer_raid6_on_four=args.prefer_raid6_on_four,
         ram_gb=ram_gb,
     )
-    print(json.dumps(plan, indent=2))
+    output = json.dumps(plan, indent=2)
+    print(output)
+    if console is not None:
+        console.write(output + "\n")
+        console.flush()
     if not args.plan_only:
         apply.apply_plan(plan, dry_run=args.dry_run)
+
+    if console is not None:
+        console.close()
 
 
 if __name__ == "__main__":
