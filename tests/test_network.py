@@ -1,8 +1,12 @@
 """Tests for network module."""
 
+import subprocess
+
 from pre_nixos.network import (
     configure_lan,
     identify_lan,
+    get_ip_address,
+    get_lan_status,
     secure_ssh,
     write_lan_rename_rule,
 )
@@ -104,3 +108,39 @@ def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     assert "PermitRootLogin yes" not in text
     assert "PasswordAuthentication no" in text
     assert "PermitRootLogin prohibit-password" in text
+
+
+def test_get_ip_address_parses_output(monkeypatch):
+    class DummyResult:
+        stdout = "2: lan    inet 192.0.2.5/24 brd 192.0.2.255 scope global lan\n"
+
+    monkeypatch.setattr(
+        subprocess, "run", lambda *a, **k: DummyResult()
+    )
+    assert get_ip_address("lan") == "192.0.2.5"
+
+
+def test_get_lan_status_reports_missing_key(tmp_path):
+    missing = tmp_path / "no_key.pub"
+    assert get_lan_status(authorized_key=missing) == "missing SSH public key"
+
+
+def test_get_lan_status_reports_missing_ip(tmp_path, monkeypatch):
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1 test@local")
+    def raise_err(*args, **kwargs):
+        raise subprocess.CalledProcessError(1, args[0])
+
+    monkeypatch.setattr(subprocess, "run", raise_err)
+    assert get_lan_status(authorized_key=key) == "no IP address"
+
+
+def test_get_lan_status_returns_ip(tmp_path, monkeypatch):
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1 test@local")
+
+    class DummyResult:
+        stdout = "2: lan    inet 203.0.113.9/24 brd 203.0.113.255 scope global lan\n"
+
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: DummyResult())
+    assert get_lan_status(authorized_key=key) == "203.0.113.9"

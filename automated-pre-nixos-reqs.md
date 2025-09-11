@@ -36,6 +36,9 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 ### 2.3 Partitioning
 
+- Disk layout changes must **never** be applied automatically at boot. The boot
+  process only **generates a storage plan**; an operator must review and apply
+  it manually (e.g., via a TUI script).
 - All disks must use a **GPT partition table**.
 - On system (boot) disk or SSD array:
   - Create partitions for UEFI booting (EFI System Partition), and LVM usage.
@@ -68,6 +71,16 @@ The system must automate the hardware setup process on new servers prior to NixO
 - Root login must be possible over the serial console (if functional).
 - A default public key is embedded into `/root/.ssh/authorized_keys`.
 - Builders must replace the embedded key with their own before creating an image.
+- The `sshd` service must remain **disabled** during boot and is only enabled
+  after its configuration is hardened (e.g., by `secure_ssh`).
+
+### 2.8 User Interface
+
+- Provide a curses-based TUI that allows operators to review and apply the
+  storage plan.
+- The TUI must display the machine's current IP address. If SSH was not
+  secured due to a missing public key or the interface has no address, the
+  TUI must indicate that state instead.
 
 ---
 

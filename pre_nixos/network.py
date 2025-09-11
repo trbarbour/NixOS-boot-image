@@ -68,9 +68,66 @@ def write_lan_rename_rule(
     return rule_path
 
 
+def get_ip_address(iface: str = "lan") -> Optional[str]:
+    """Return the IPv4 address of ``iface``.
+
+    Parameters:
+        iface: Name of the network interface to query.
+
+    Returns:
+        The IPv4 address as a string, or ``None`` if the interface has no
+        address or the query fails.
+    """
+
+    try:
+        result = subprocess.run(
+            ["ip", "-o", "-4", "addr", "show", iface],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        return None
+
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 4:
+            return parts[3].split("/")[0]
+    return None
+
+
+def get_lan_status(
+    authorized_key: Optional[Path] = None, iface: str = "lan"
+) -> str:
+    """Return the LAN IP address or diagnostic message for the TUI.
+
+    If the embedded public SSH key is missing, ``secure_ssh`` never ran and
+    the TUI should inform the operator.  When the key exists but no IPv4
+    address is assigned to ``iface``, a different message is returned.
+
+    Parameters:
+        authorized_key: Path to the expected public key; defaults to the
+            built-in key alongside this module.
+        iface: Interface name to query for an IP address.
+
+    Returns:
+        Either the IPv4 address as a string or a message describing why the
+        address is unavailable.
+    """
+
+    if authorized_key is None:
+        authorized_key = Path(__file__).with_name("root_ed25519.pub")
+    if not authorized_key.exists():
+        return "missing SSH public key"
+    ip = get_ip_address(iface)
+    if ip is None:
+        return "no IP address"
+    return ip
+
+
 def secure_ssh(
     ssh_dir: Path,
-    ssh_service: str = "ssh",
+    ssh_service: str = "sshd",
     authorized_key: Optional[Path] = None,
     root_home: Path = Path("/root"),
 ) -> Path:
@@ -133,7 +190,7 @@ def configure_lan(
     net_path: Path = Path("/sys/class/net"),
     network_dir: Path = Path("/etc/systemd/network"),
     ssh_dir: Path = Path("/etc/ssh"),
-    ssh_service: str = "ssh",
+    ssh_service: str = "sshd",
     authorized_key: Optional[Path] = None,
     root_home: Path = Path("/root"),
 ) -> Optional[Path]:
