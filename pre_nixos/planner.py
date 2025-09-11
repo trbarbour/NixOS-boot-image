@@ -4,6 +4,13 @@ from typing import List, Dict, Any
 
 from .inventory import Disk
 
+# Default logical volume sizes.  Using fixed sizes avoids consuming the entire
+# volume group, leaving room for administrators to create additional volumes as
+# needed.  Logical volumes can be grown later but shrinking them is more
+# cumbersome, especially once filesystems are in place.
+ROOT_LV_SIZE = "20G"
+DATA_LV_SIZE = "100G"
+
 
 def _part_name(device: str, part: int) -> str:
     """Return partition name for ``device`` and ``part`` number."""
@@ -133,7 +140,7 @@ def plan_storage(
             plan["vgs"].append({"name": "main", "devices": [name]})
         swap_size = f"{ram_gb * 2 * 1024}M"
         plan["lvs"].append({"name": "swap", "vg": "main", "size": swap_size})
-        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
+        plan["lvs"].append({"name": "root", "vg": "main", "size": ROOT_LV_SIZE})
         return plan
 
     for idx, bucket in enumerate(ssd_buckets):
@@ -204,8 +211,8 @@ def plan_storage(
     if swap_vg is not None:
         plan["lvs"].append({"name": "swap", "vg": swap_vg, "size": swap_size})
     if any(vg["name"] == "main" for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
+        plan["lvs"].append({"name": "root", "vg": "main", "size": ROOT_LV_SIZE})
     if any(vg["name"].startswith("large") for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "data", "vg": "large", "size": "100%FREE"})
+        plan["lvs"].append({"name": "data", "vg": "large", "size": DATA_LV_SIZE})
 
     return plan

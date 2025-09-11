@@ -1,7 +1,7 @@
 """Tests for storage plan generation."""
 
 from pre_nixos.inventory import Disk
-from pre_nixos.planner import plan_storage
+from pre_nixos.planner import plan_storage, ROOT_LV_SIZE
 
 
 def test_plan_storage_basic() -> None:
@@ -16,6 +16,8 @@ def test_plan_storage_basic() -> None:
     assert {"main", "swap"} <= vg_names
     lv_names = {lv["name"] for lv in plan["lvs"]}
     assert {"root", "swap"} <= lv_names
+    root_lv = next(lv for lv in plan["lvs"] if lv["name"] == "root")
+    assert root_lv["size"] == ROOT_LV_SIZE
     assert set(plan["partitions"]) == {"sda", "sdb", "sdc"}
 
 
