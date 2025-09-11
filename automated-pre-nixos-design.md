@@ -1,7 +1,7 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.4  
-**Date:** 2025-09-05 (America/New_York)  
+**Doc status:** Draft v0.8
+**Date:** 2025-09-11 (America/New_York)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
@@ -14,7 +14,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 
 ## 2) Goals (Success criteria)
 - **G1. Non-interactive boot to SSH:** From power-on of removable media to an SSH server reachable on the cabled NIC (renamed `lan`), with IP announced on serial console.
-- **G2. Deterministic disk layout:** Auto-discovery builds an explicit **plan** (printed + logged) then applies: GPT, ESP, mdadm arrays, LVM VGs (`main`, `swap`, `large`), ext4 FS, labels, mount under `/mnt`.
+- **G2. Deterministic disk layout:** Auto-discovery builds an explicit **plan** (printed + logged); an operator can apply it via a TUI that displays the current IP address or a diagnostic message to create GPT, ESP, mdadm arrays, LVM VGs (`main`, `swap`, `large`), ext4 FS, labels, mount under `/mnt`.
 - **G3. Requirements-compliant storage heuristics:**
   - **Equal-size RAID sets only** (tight tolerance, e.g., ≤1%). Do **not** truncate larger disks to smallest; leave mismatched disks unused unless explicitly configured.
   - SSD pair ⇒ **RAID0** by default (or **RAID1** in “careful” mode).
@@ -122,7 +122,8 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - Bring `lan` up with DHCP; log assigned IP.
 
 ### 7.8 SSH exposure
-- Install built-in `authorized_keys` for root, start OpenSSH, and disable SSH password login while keeping the root password for console access.
+- Install built-in `authorized_keys` for root and harden `sshd_config` to disable password logins while preserving the root password for console access.
+- The OpenSSH service remains disabled during boot and is started only after this hardening step.
 - Announce IP + fingerprint via log fan-out.
 
 ### 7.9 Outputs
@@ -143,10 +144,10 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
    - Establish **non-blocking log fan-out**: log to journald, append to `/var/log/pre-nixos/actions.log`, send to `dmesg`, and write to the kernel console (e.g., `printf ... > /dev/console` with timeouts).
    - If no serial console is present/connected, skip console writes silently; never fail the step on serial errors.
    - Mount boot media read-only; import config file if present.
-2. **Network stage:** probe carriers; choose NIC; write persistent rename → `lan`; start DHCP; start sshd; print IP via logging fan-out (serial best-effort/time-bounded).
-3. **Discovery:** enumerate disks; compute candidate RAID groups; dry-run `plan` if `pre.plan.only=1`.
-4. **Apply plan:**
-   - Confirm boot target (SSD/NVMe); wipe signatures (configurable safety).
+2. **Network stage:** probe carriers; choose NIC; write persistent rename → `lan`; start DHCP; if a root key is present, run `secure_ssh` to harden configuration and start `sshd`; otherwise leave `sshd` disabled; print IP via logging fan-out (serial best-effort/time-bounded).
+3. **Discovery:** enumerate disks; compute candidate RAID groups, and write a plan without modifying any disks.
+4. **Apply plan (manual):**
+   - After operator review (e.g., via `pre-nixos-tui`, which shows the current IP or a status message), confirm boot target (SSD/NVMe) and wipe signatures (configurable safety).
    - Partition with `sgdisk`.
    - Create md arrays; wait for sync (background) or `--assume-clean` if blank disks.
    - Create PVs/VGs/LVs; format ext4 with labels; create swap per policy (VG `swap` preferred; fallback to VG `large`; never SSD).

@@ -53,3 +53,14 @@
 - Clarified serial-console login: bootloader and kernel configured for serial, serial `getty` started.
 - Root password remains usable for console logins while SSH password auth is disabled.
 - Logging fan-out writes to the kernel console instead of a hardcoded serial device.
+
+### v0.12 — 2025-09-11
+- Deferred OpenSSH startup until after `secure_ssh` hardens configuration, preventing password-logins during boot.
+- Documented manual disk provisioning workflow via interactive `pre-nixos-tui`.
+
+### v0.13 — 2025-09-11
+- Extended the TUI to display the machine's current IP address.
+
+### v0.14 — 2025-09-11
+- TUI now reports when the embedded SSH key is missing or no IP address is
+  assigned.
