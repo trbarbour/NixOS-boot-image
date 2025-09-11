@@ -4,6 +4,65 @@ from typing import List, Dict, Any
 
 from .inventory import Disk
 
+# Default logical volume sizes.  Using fixed sizes avoids consuming the entire
+# volume group, leaving room for administrators to create additional volumes as
+# needed.  Logical volumes can be grown later but shrinking them is more
+# cumbersome, especially once filesystems are in place.
+ROOT_LV_SIZE = "50G"
+DATA_LV_SIZE = "100G"
+
+
+def _to_bytes(size: int) -> int:
+    """Return ``size`` in bytes.
+
+    Tests often use small integers to represent GiB.  To keep those tests
+    working while still handling real byte counts, values below 1 MiB are
+    interpreted as GiB.
+    """
+
+    return size if size >= 1 << 20 else size * 1024 ** 3
+
+
+def _parse_size(s: str) -> int:
+    """Parse size strings like ``"20G"`` or ``"512M"`` into bytes."""
+
+    s = s.upper()
+    if s.endswith("G"):
+        return int(s[:-1]) * 1024 ** 3
+    if s.endswith("M"):
+        return int(s[:-1]) * 1024 ** 2
+    return int(s)
+
+
+def _format_size(size: int) -> str:
+    """Format ``size`` in bytes as a human readable string."""
+
+    if size % (1024 ** 3) == 0:
+        return f"{size // (1024 ** 3)}G"
+    if size % (1024 ** 2) == 0:
+        return f"{size // (1024 ** 2)}M"
+    return str(size)
+
+
+def _array_capacity(level: str, sizes: List[int]) -> int:
+    """Return usable size in bytes for an array of ``sizes``."""
+
+    n = len(sizes)
+    if n == 0:
+        return 0
+    min_size = min(sizes)
+    if level in {"single", "raid0"}:
+        return sum(sizes)
+    if level == "raid1":
+        return min_size
+    if level == "raid5":
+        return sum(sizes) - min_size
+    if level == "raid6":
+        return sum(sizes) - 2 * min_size
+    if level == "raid10":
+        return sum(sizes) // 2
+    return sum(sizes)
+
 
 def _part_name(device: str, part: int) -> str:
     """Return partition name for ``device`` and ``part`` number."""
@@ -90,6 +149,9 @@ def plan_storage(
     groups = group_by_rotational_and_size(disks)
     plan: Dict[str, Any] = {"arrays": [], "vgs": [], "lvs": [], "partitions": {}}
     array_index = 0
+    device_sizes: Dict[str, int] = {}
+    vg_sizes: Dict[str, int] = {}
+    used_vg_sizes: Dict[str, int] = {}
 
     def record_partitions(ds: List[Disk], with_efi: bool, raid: bool) -> List[str]:
         """Record partitions for ``ds`` and return their data devices.
@@ -110,9 +172,29 @@ def plan_storage(
                 ptype = "linux-raid" if raid else "lvm"
                 parts.append({"name": _part_name(d.name, idx), "type": ptype})
                 plan["partitions"][d.name] = parts
+                device_sizes[part_name] = _to_bytes(d.size)     
             # last partition in the list is always the data one
             devices.append(plan["partitions"][d.name][-1]["name"])
         return devices
+
+    def add_vg(name: str, devices: List[str]) -> None:
+        plan["vgs"].append({"name": name, "devices": devices})
+        vg_sizes[name] = sum(device_sizes[d] for d in devices)
+
+    def add_array(name: str, level: str, devices: List[str], typ: str) -> None:
+        plan["arrays"].append({"name": name, "level": level, "devices": devices, "type": typ})
+        device_sizes[name] = _array_capacity(level, [device_sizes[d] for d in devices])
+
+    def add_lv(name: str, vg: str, size: str) -> None:
+        total = vg_sizes.get(vg, 0)
+        used = used_vg_sizes.get(vg, 0)
+        free = max(total - used, 0)
+        if free <= 0:
+            return
+        req = _parse_size(size)
+        alloc = req if req <= free else free
+        used_vg_sizes[vg] = used + alloc
+        plan["lvs"].append({"name": name, "vg": vg, "size": _format_size(alloc)})
 
     ssd_buckets = sorted(
         groups["ssd"],
@@ -131,17 +213,15 @@ def plan_storage(
         arr = decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
         devices = record_partitions(bucket, with_efi=True, raid=arr["level"] != "single")
         if arr["level"] == "single":
-            plan["vgs"].append({"name": "main", "devices": devices})
+            add_vg("main", devices)
         else:
             name = f"md{array_index}"
             array_index += 1
-            plan["arrays"].append(
-                {"name": name, "level": arr["level"], "devices": devices, "type": "hdd"}
-            )
-            plan["vgs"].append({"name": "main", "devices": [name]})
+            add_array(name, arr["level"], devices, "hdd")
+            add_vg("main", [name])
         swap_size = f"{ram_gb * 2 * 1024}M"
-        plan["lvs"].append({"name": "swap", "vg": "main", "size": swap_size})
-        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
+        add_lv("swap", "main", swap_size)
+        add_lv("root", "main", ROOT_LV_SIZE)
         return plan
 
     for idx, bucket in enumerate(ssd_buckets):
@@ -151,12 +231,12 @@ def plan_storage(
             bucket, with_efi=vg_name == "main", raid=arr["level"] != "single"
         )
         if arr["level"] == "single":
-            plan["vgs"].append({"name": vg_name, "devices": devices})
+            add_vg(vg_name, devices)
         else:
             name = f"md{array_index}"
             array_index += 1
-            plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "ssd"})
-            plan["vgs"].append({"name": vg_name, "devices": [name]})
+            add_array(name, arr["level"], devices, "ssd")
+            add_vg(vg_name, [name])
 
     has_ssd = bool(ssd_buckets)
 
@@ -199,12 +279,12 @@ def plan_storage(
             bucket, with_efi=vg_name == "main", raid=arr["level"] != "single"
         )
         if arr["level"] == "single":
-            plan["vgs"].append({"name": vg_name, "devices": devices})
+            add_vg(vg_name, devices)
         else:
             name = f"md{array_index}"
             array_index += 1
-            plan["arrays"].append({"name": name, "level": arr["level"], "devices": devices, "type": "hdd"})
-            plan["vgs"].append({"name": vg_name, "devices": [name]})
+            add_array(name, arr["level"], devices, "hdd")
+            add_vg(vg_name, [name])
 
     swap_size = f"{ram_gb * 2 * 1024}M"
     swap_vg = next((vg["name"] for vg in plan["vgs"] if vg["name"] == "swap"), None)
@@ -214,10 +294,10 @@ def plan_storage(
             None,
         )
     if swap_vg is not None:
-        plan["lvs"].append({"name": "swap", "vg": swap_vg, "size": swap_size})
+        add_lv("swap", swap_vg, swap_size)
     if any(vg["name"] == "main" for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "root", "vg": "main", "size": "100%FREE"})
+        add_lv("root", "main", ROOT_LV_SIZE)
     if any(vg["name"].startswith("large") for vg in plan["vgs"]):
-        plan["lvs"].append({"name": "data", "vg": "large", "size": "100%FREE"})
+        add_lv("data", "large", DATA_LV_SIZE)
 
     return plan

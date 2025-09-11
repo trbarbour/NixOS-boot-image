@@ -1,7 +1,7 @@
 """Tests for apply module."""
 
 from pre_nixos.inventory import Disk
-from pre_nixos.planner import plan_storage
+from pre_nixos.planner import plan_storage, ROOT_LV_SIZE
 from pre_nixos.apply import apply_plan
 
 
@@ -16,7 +16,7 @@ def test_apply_plan_returns_commands() -> None:
     assert any(cmd.startswith("mdadm") for cmd in commands)
     assert any(cmd.startswith("pvcreate") for cmd in commands)
     assert any("vgcreate main" in cmd for cmd in commands)
-    assert any("lvcreate -n root" in cmd for cmd in commands)
+    assert f"lvcreate -n root main -L {ROOT_LV_SIZE}" in commands
     assert any(cmd.startswith("mkswap") for cmd in commands)
     assert any(cmd.startswith("sgdisk") for cmd in commands)
     # only disks in the main VG should receive an EFI partition
