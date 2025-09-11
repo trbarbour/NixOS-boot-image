@@ -170,9 +170,10 @@ def plan_storage(
                     parts.append({"name": _part_name(d.name, idx), "type": "efi"})
                     idx += 1
                 ptype = "linux-raid" if raid else "lvm"
-                parts.append({"name": _part_name(d.name, idx), "type": ptype})
+                part_name = _part_name(d.name, idx)
+                parts.append({"name": part_name, "type": ptype})
                 plan["partitions"][d.name] = parts
-                device_sizes[part_name] = _to_bytes(d.size)     
+                device_sizes[part_name] = _to_bytes(d.size)
             # last partition in the list is always the data one
             devices.append(plan["partitions"][d.name][-1]["name"])
         return devices

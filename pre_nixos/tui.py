@@ -22,7 +22,7 @@ def _draw_plan(stdscr: curses.window, plan: dict[str, Any]) -> None:
     lines = json.dumps(plan, indent=2).splitlines()
     for idx, line in enumerate(lines[: height - 3]):
         stdscr.addstr(idx + 1, 0, line[: width - 1])
-    stdscr.addstr(height - 2, 0, "[E]dit  [A]pply  [Q]uit")
+    stdscr.addstr(height - 2, 0, "[E]dit  [S]ave  [L]oad  [A]pply  [Q]uit")
     stdscr.refresh()
 
 
@@ -76,6 +76,37 @@ def _edit_plan(stdscr: curses.window, plan: dict[str, Any]) -> None:
     curses.noecho()
 
 
+def _save_plan(stdscr: curses.window, plan: dict[str, Any]) -> None:
+    """Prompt for a path and save the plan as JSON."""
+    curses.echo()
+    stdscr.clear()
+    stdscr.addstr("Save to file: ")
+    path = stdscr.getstr().decode().strip()
+    if path:
+        try:
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(plan, fh, indent=2)
+        except Exception:
+            pass
+    curses.noecho()
+
+
+def _load_plan(stdscr: curses.window, plan: dict[str, Any]) -> dict[str, Any]:
+    """Prompt for a path and load a plan from JSON."""
+    curses.echo()
+    stdscr.clear()
+    stdscr.addstr("Load from file: ")
+    path = stdscr.getstr().decode().strip()
+    curses.noecho()
+    if path:
+        try:
+            with open(path, encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            pass
+    return plan
+
+
 def run() -> None:
     """Launch the interactive provisioning TUI."""
     disks = inventory.enumerate_disks()
@@ -83,6 +114,7 @@ def run() -> None:
     plan = planner.plan_storage("fast", disks, ram_gb=ram_gb)
 
     def _main(stdscr: curses.window) -> None:
+        nonlocal plan
         while True:
             _draw_plan(stdscr, plan)
             ch = stdscr.getkey().lower()
@@ -90,6 +122,10 @@ def run() -> None:
                 break
             if ch == "e":
                 _edit_plan(stdscr, plan)
+            if ch == "s":
+                _save_plan(stdscr, plan)
+            if ch == "l":
+                plan = _load_plan(stdscr, plan)
             if ch == "a":
                 stdscr.clear()
                 stdscr.addstr(0, 0, "Applying plan...\n")

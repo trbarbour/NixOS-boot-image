@@ -25,6 +25,8 @@ embedded SSH key is missing or no address was assigned:
 ```bash
 pre-nixos-tui
 ```
+Within the interface press `S` to save the current plan to a JSON file or `L`
+to load an existing plan.
 
 ## SSH access
 
