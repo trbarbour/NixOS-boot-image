@@ -123,7 +123,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 
 ### 7.8 SSH exposure
 - Install built-in `authorized_keys` for root and harden `sshd_config` to disable password logins while preserving the root password for console access.
-- The OpenSSH service remains disabled during boot and is enabled/started only after this hardening step.
+- The OpenSSH service remains disabled during boot and is started only after this hardening step.
 - Announce IP + fingerprint via log fan-out.
 
 ### 7.9 Outputs
@@ -144,7 +144,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
    - Establish **non-blocking log fan-out**: log to journald, append to `/var/log/pre-nixos/actions.log`, send to `dmesg`, and write to the kernel console (e.g., `printf ... > /dev/console` with timeouts).
    - If no serial console is present/connected, skip console writes silently; never fail the step on serial errors.
    - Mount boot media read-only; import config file if present.
-2. **Network stage:** probe carriers; choose NIC; write persistent rename → `lan`; start DHCP; if a root key is present, run `secure_ssh` to harden configuration and enable `sshd`; otherwise leave `sshd` disabled; print IP via logging fan-out (serial best-effort/time-bounded).
+2. **Network stage:** probe carriers; choose NIC; write persistent rename → `lan`; start DHCP; if a root key is present, run `secure_ssh` to harden configuration and start `sshd`; otherwise leave `sshd` disabled; print IP via logging fan-out (serial best-effort/time-bounded).
 3. **Discovery:** enumerate disks; compute candidate RAID groups, and write a plan without modifying any disks.
 4. **Apply plan (manual):**
    - After operator review (e.g., via `pre-nixos-tui`, which shows the current IP or a status message), confirm boot target (SSD/NVMe) and wipe signatures (configurable safety).

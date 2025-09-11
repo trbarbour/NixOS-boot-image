@@ -96,9 +96,7 @@ def get_ip_address(iface: str = "lan") -> Optional[str]:
     return None
 
 
-def get_lan_status(
-    authorized_key: Optional[Path] = None, iface: str = "lan"
-) -> str:
+def get_lan_status(authorized_key: Optional[Path] = None, iface: str = "lan") -> str:
     """Return the LAN IP address or diagnostic message for the TUI.
 
     If the embedded public SSH key is missing, ``secure_ssh`` never ran and
@@ -135,7 +133,7 @@ def secure_ssh(
 
     The main ``sshd_config`` file is updated to prohibit password logins,
     an authorized key is installed for the root account, and the SSH service
-    is enabled and reloaded. The root password itself remains usable for
+    is started and reloaded. The root password itself remains usable for
     console logins.
     """
 
@@ -181,7 +179,7 @@ def secure_ssh(
     os.chmod(root_ssh, 0o700)
     os.chmod(auth_path, 0o600)
 
-    _run(["systemctl", "enable", "--now", ssh_service])
+    _run(["systemctl", "start", ssh_service])
     _run(["systemctl", "reload", ssh_service])
     return conf_path
 
