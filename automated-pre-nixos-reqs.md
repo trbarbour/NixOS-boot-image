@@ -65,7 +65,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 ### 2.7 SSH Access
 
 - Only public key authentication is permitted for the root account over SSH.
-- The root password must remain set so that login over the serial console is possible.
+- Root login must be possible over the serial console (if functional).
 - A default public key is embedded into `/root/.ssh/authorized_keys`.
 - Builders must replace the embedded key with their own before creating an image.
 
