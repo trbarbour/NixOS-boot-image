@@ -17,6 +17,11 @@ def test_plan_storage_basic() -> None:
     lv_names = {lv["name"] for lv in plan["lvs"]}
     assert {"root", "swap"} <= lv_names
     assert set(plan["partitions"]) == {"sda", "sdb", "sdc"}
+    # sda is a single SSD, sdb and sdc form a RAID1 array
+    assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
+    assert all(p["type"] == "lvm" for p in plan["partitions"]["sda"][1:])
+    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])
+    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdc"])
 
 
 def test_plan_single_disk() -> None:
@@ -40,7 +45,10 @@ def test_multiple_ssd_buckets_named_separately() -> None:
     # only the disks in the main VG should have an EFI partition
     assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
     assert [p["type"] for p in plan["partitions"]["sdb"]][:1] == ["efi"]
-    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdc"])
+    # sda and sdb participate in a RAID array, while sdc is a single disk
+    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sda"][1:])
+    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"][1:])
+    assert all(p["type"] == "lvm" for p in plan["partitions"]["sdc"])
 
 def test_multiple_hdd_buckets_named_separately() -> None:
     disks = [
@@ -77,6 +85,7 @@ def test_single_hdd_only_becomes_main_with_swap_lv() -> None:
     assert ("root", "main") in lv_info and ("swap", "main") in lv_info
     assert plan["arrays"] == []
     assert set(plan["partitions"]) == {"sda"}
+    assert all(p["type"] == "lvm" for p in plan["partitions"]["sda"][1:])
 
 
 def test_single_hdd_with_ssd_gets_swap_vg() -> None:
@@ -93,7 +102,7 @@ def test_single_hdd_with_ssd_gets_swap_vg() -> None:
     assert ("swap", "swap") in lv_info
     # only the SSD in main VG gets an EFI partition
     assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
-    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])
+    assert all(p["type"] == "lvm" for p in plan["partitions"]["sdb"])
 
 
 def test_ssd_only_has_no_swap() -> None:
@@ -157,8 +166,8 @@ def test_efi_partitions_only_for_main_vg() -> None:
     assert {"main", "swap", "large"} <= vg_names
     # verify partition types per disk
     assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
-    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdb"])
-    assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdc"])
+    assert all(p["type"] == "lvm" for p in plan["partitions"]["sdb"])
+    assert all(p["type"] == "lvm" for p in plan["partitions"]["sdc"])
 
 
 def test_prefer_raid6_on_four_disks() -> None:

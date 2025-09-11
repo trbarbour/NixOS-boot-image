@@ -91,18 +91,26 @@ def plan_storage(
     plan: Dict[str, Any] = {"arrays": [], "vgs": [], "lvs": [], "partitions": {}}
     array_index = 0
 
-    def record_partitions(ds: List[Disk], with_efi: bool) -> List[str]:
+    def record_partitions(ds: List[Disk], with_efi: bool, raid: bool) -> List[str]:
+        """Record partitions for ``ds`` and return their data devices.
+
+        The final partition type depends on ``raid``: when ``True`` the
+        partition is marked as ``linux-raid`` (FD00); otherwise it becomes a
+        ``lvm`` partition (8E00).
+        """
+
         devices: List[str] = []
         for d in ds:
             if d.name not in plan["partitions"]:
-                parts = []
+                parts: List[Dict[str, str]] = []
                 idx = 1
                 if with_efi:
                     parts.append({"name": _part_name(d.name, idx), "type": "efi"})
                     idx += 1
-                parts.append({"name": _part_name(d.name, idx), "type": "linux-raid"})
+                ptype = "linux-raid" if raid else "lvm"
+                parts.append({"name": _part_name(d.name, idx), "type": ptype})
                 plan["partitions"][d.name] = parts
-            # last partition in the list is always the linux-raid one
+            # last partition in the list is always the data one
             devices.append(plan["partitions"][d.name][-1]["name"])
         return devices
 
@@ -120,8 +128,8 @@ def plan_storage(
 
     if not ssd_buckets and len(hdd_buckets) == 1 and len(hdd_buckets[0]) <= 2:
         bucket = hdd_buckets[0]
-        devices = record_partitions(bucket, with_efi=True)
         arr = decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
+        devices = record_partitions(bucket, with_efi=True, raid=arr["level"] != "single")
         if arr["level"] == "single":
             plan["vgs"].append({"name": "main", "devices": devices})
         else:
@@ -139,7 +147,9 @@ def plan_storage(
     for idx, bucket in enumerate(ssd_buckets):
         vg_name = "main" if idx == 0 else f"main-{idx}"
         arr = decide_ssd_array(bucket, mode)
-        devices = record_partitions(bucket, with_efi=vg_name == "main")
+        devices = record_partitions(
+            bucket, with_efi=vg_name == "main", raid=arr["level"] != "single"
+        )
         if arr["level"] == "single":
             plan["vgs"].append({"name": vg_name, "devices": devices})
         else:
@@ -184,8 +194,10 @@ def plan_storage(
         else:
             vg_name = "large" if large_idx == 0 else f"large-{large_idx}"
             large_idx += 1
-        devices = record_partitions(bucket, with_efi=vg_name == "main")
         arr = decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
+        devices = record_partitions(
+            bucket, with_efi=vg_name == "main", raid=arr["level"] != "single"
+        )
         if arr["level"] == "single":
             plan["vgs"].append({"name": vg_name, "devices": devices})
         else:
