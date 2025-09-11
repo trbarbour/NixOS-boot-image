@@ -1,7 +1,7 @@
 """Tests for storage plan generation."""
 
 from pre_nixos.inventory import Disk
-from pre_nixos.planner import plan_storage
+from pre_nixos.planner import plan_storage, ROOT_LV_SIZE
 
 
 def test_plan_storage_basic() -> None:
@@ -16,6 +16,8 @@ def test_plan_storage_basic() -> None:
     assert {"main", "swap"} <= vg_names
     lv_names = {lv["name"] for lv in plan["lvs"]}
     assert {"root", "swap"} <= lv_names
+    root_lv = next(lv for lv in plan["lvs"] if lv["name"] == "root")
+    assert root_lv["size"] == ROOT_LV_SIZE
     assert set(plan["partitions"]) == {"sda", "sdb", "sdc"}
 
 
@@ -143,7 +145,7 @@ def test_swap_size_matches_double_ram() -> None:
     ]
     plan = plan_storage("fast", disks, ram_gb=5)
     swap_lv = next(lv for lv in plan["lvs"] if lv["name"] == "swap")
-    assert swap_lv["size"] == f"{5 * 2 * 1024}M"
+    assert swap_lv["size"] == f"{5 * 2}G"
 
 
 def test_efi_partitions_only_for_main_vg() -> None:
@@ -184,3 +186,21 @@ def test_small_hdd_pair_preferred_for_swap() -> None:
     swap_vg = next(vg for vg in plan["vgs"] if vg["name"] == "swap")
     swap_array = next(arr for arr in plan["arrays"] if arr["name"] == swap_vg["devices"][0])
     assert set(swap_array["devices"]) == {"sdd1", "sde1"}
+
+
+def test_root_lv_size_capped() -> None:
+    disks = [Disk(name="sda", size=15, rotational=False)]
+    plan = plan_storage("fast", disks)
+    root_lv = next(lv for lv in plan["lvs"] if lv["name"] == "root")
+    assert root_lv["size"] == "15G"
+
+
+def test_data_lv_size_capped() -> None:
+    disks = [
+        Disk(name="sda", size=100, rotational=False),
+        Disk(name="sdb", size=60, rotational=True),
+        Disk(name="sdc", size=50, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    data_lv = next(lv for lv in plan["lvs"] if lv["name"] == "data")
+    assert data_lv["size"] == "60G"
