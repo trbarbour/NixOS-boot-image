@@ -54,6 +54,8 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
                 efi_parts.append(part["name"])
             elif part["type"] == "linux-raid":
                 cmd = f"sgdisk -n{idx}:0:0 -t{idx}:FD00 /dev/{disk}"
+            elif part["type"] == "lvm":
+                cmd = f"sgdisk -n{idx}:0:0 -t{idx}:8E00 /dev/{disk}"
             else:
                 continue
             commands.append(cmd)
