@@ -8,10 +8,10 @@
 
   outputs = { self, nixpkgs, flake-utils, ... }:
     let
-      rootPubPath = "pre_nixos/root_ed25519.pub";
+      rootPubPath = "${builtins.toString ./.}/pre_nixos/root_ed25519.pub";
       rootPub =
         if builtins.pathExists rootPubPath then
-          builtins.path { path = ./${rootPubPath}; }
+          builtins.path { path = builtins.toPath rootPubPath; }
         else
           null;
     in
