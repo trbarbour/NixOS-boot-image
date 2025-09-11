@@ -8,7 +8,7 @@ from .inventory import Disk
 # volume group, leaving room for administrators to create additional volumes as
 # needed.  Logical volumes can be grown later but shrinking them is more
 # cumbersome, especially once filesystems are in place.
-ROOT_LV_SIZE = "20G"
+ROOT_LV_SIZE = "50G"
 DATA_LV_SIZE = "100G"
 
 
