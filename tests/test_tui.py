@@ -1,9 +1,26 @@
 import json
+from pre_nixos import inventory
 import pre_nixos.tui as tui
 
 
 def test_tui_exposes_run():
     assert callable(tui.run)
+
+
+def _sample_state():
+    plan = {
+        "partitions": {
+            "nvme0n1": [
+                {"name": "nvme0n1p1", "type": "efi"},
+                {"name": "nvme0n1p2", "type": "lvm"},
+            ]
+        },
+        "arrays": [],
+        "vgs": [{"name": "main", "devices": ["nvme0n1p2"]}],
+        "lvs": [{"name": "root", "vg": "main", "size": "50G"}],
+    }
+    disks = [inventory.Disk(name="nvme0n1", rotational=False, nvme=True)]
+    return tui._initial_state(plan, disks)
 
 
 def test_draw_plan_displays_ip(monkeypatch):
@@ -25,8 +42,11 @@ def test_draw_plan_displays_ip(monkeypatch):
 
     win = FakeWin()
     monkeypatch.setattr(tui.network, "get_lan_status", lambda: "203.0.113.7")
-    tui._draw_plan(win, {"a": 1})
+    state = _sample_state()
+    tui._draw_plan(win, state)
     assert "203.0.113.7" in win.lines[0]
+    canvas = [line for y, line in win.lines.items() if y >= 2]
+    assert any("Disk nvme0n1" in line for line in canvas)
 
 
 def test_draw_plan_displays_messages(monkeypatch):
@@ -48,7 +68,8 @@ def test_draw_plan_displays_messages(monkeypatch):
 
     win = FakeWin()
     monkeypatch.setattr(tui.network, "get_lan_status", lambda: "missing SSH public key")
-    tui._draw_plan(win, {"a": 1})
+    state = _sample_state()
+    tui._draw_plan(win, state)
     assert "missing SSH public key" in win.lines[0]
 
 
