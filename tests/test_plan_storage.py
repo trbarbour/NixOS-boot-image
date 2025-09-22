@@ -107,16 +107,16 @@ def test_single_hdd_with_ssd_gets_swap_vg() -> None:
     assert all(p["type"] == "lvm" for p in plan["partitions"]["sdb"])
 
 
-def test_ssd_only_has_no_swap() -> None:
+def test_ssd_only_has_swap_lv_in_main() -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
         Disk(name="sdb", size=1000, rotational=False),
     ]
     plan = plan_storage("fast", disks)
     vg_names = {vg["name"] for vg in plan["vgs"]}
-    lv_names = {lv["name"] for lv in plan["lvs"]}
-    assert "swap" not in vg_names
-    assert "swap" not in lv_names
+    assert vg_names == {"main"}
+    swap_lv = next(lv for lv in plan["lvs"] if lv["name"] == "swap")
+    assert swap_lv["vg"] == "main"
 
 
 def test_swap_lv_falls_back_to_large_vg() -> None:
