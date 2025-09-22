@@ -64,3 +64,23 @@
 ### v0.14 — 2025-09-11
 - TUI now reports when the embedded SSH key is missing or no IP address is
   assigned.
+
+### v0.15 — 2025-09-11
+- Documented a pictorial TUI layout with four-column disk→array→VG→LV flow.
+- Added design for zoomable overview/detailed modes driven by terminal size.
+- Captured requirement to toggle between existing storage state and planned
+  layout, highlighting differences directly in the UI.
+
+### v0.16 — 2025-09-11
+- Refined the TUI density handling to probe the layout off-screen and choose the
+  richest profile that fits the current terminal instead of relying on a static
+  80×24 cutoff.
+- Clarified that manual zoom is anchored on the focused branch so comparisons
+  keep the same subtree centred when switching views.
+
+### v0.17 — 2025-09-11
+- Published detailed ASCII mock frames under `docs/tui-mockups/` covering mixed
+  SSD/HDD plans, the auto-scaled 80×24 minimal profile, and side-by-side
+  existing-versus-planned comparisons.
+- Linked the main design doc to those mocks so implementers have copy-ready
+  targets for rendering behaviour.

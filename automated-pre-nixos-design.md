@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.8
+**Doc status:** Draft v0.17
 **Date:** 2025-09-11 (America/New_York)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -230,6 +230,27 @@ function apply_plan(plan):
   - `/etc/udev/rules.d/90‑lan‑rename.rules` + `.link`
   - `/mnt/etc/nixos/pre‑generated/*.nix`
 - **Key commands:** `sgdisk`, `mdadm`, `lvm2` (`pvcreate/vgcreate/lvcreate`), `mkfs.ext4`, `mkswap`, `udevadm`, `ip`, `ethtool`.
+
+### TUI visualisation & interaction
+
+- **Data sources:**
+  - `planned` lane renders straight from the planner output (current behaviour) so the operator sees the intended end state.
+  - `existing` lane is populated by extending `inventory` with a `describe_existing_layout()` helper that walks `lsblk`, `mdadm --detail`, and `lvs` to build the same disk→array→VG→LV hierarchy for already-present storage. When no layout exists the view collapses to “(no recognised storage)” so the toggle remains usable on blank hosts.
+  - Both snapshots share a normalised schema (disks, partitions, arrays, VGs, LVs) so the UI can diff them cheaply and highlight mismatches.
+- **Screen anatomy:** retain the top status bar (`IP: <value>` or diagnostic) and bottom action strip, and insert a two-line legend just under the header with glyph/colour hints (■ SSD, ● HDD, ☐ EFI, ≡ RAID, underline = live device).
+- **Four-column canvas:** centre of the screen shows a left-to-right flow — `Disks/Partitions → md arrays → VGs → LVs`. Each disk row nests partition blocks like `[☐ EFI][■ nvme0n1p2]`; md boxes sit in the second column with connectors (`┐┴┘`) leading to their source partitions; VGs and LVs indent accordingly. This matches the textual sketch shared during design debate and keeps relationships obvious even without vertical pipes.
+- **Adaptive density & layout probe:**
+  - Each refresh runs the layout engine once off-screen to discover the bounding box (required width and height) for the current dataset and focus state. The renderer picks the richest profile that fits inside the live `curses.getmaxyx()` result, so the decision accounts for both terminal size and how much storage hierarchy needs to be drawn.
+  - Profiles degrade progressively: **detailed** renders per-partition blocks and every LV row; **compact** collapses partitions into single-segment summaries and abbreviates LV metadata; **minimal** collapses non-focused subtrees into counts ("VG main → 3 LVs"). The dry-run buffer is reused for the final paint to avoid duplicate work.
+  - If even the minimal profile would overflow, the view automatically elides the lowest-priority rows (e.g., non-focused offline disks) and surfaces a status hint so the operator knows detail was suppressed. Manual resizing triggers a re-probe, letting detail reappear when space allows.
+- **Existing vs planned toggle:**
+  - `Tab` (or `v`) switches between `Existing` and `Planned` snapshots; the header shows the active state (`View: Planned` / `View: Existing`).
+  - When a component differs between states (e.g., md level mismatch, missing LV, stale partition), the planned view annotates it with a right-margin badge (`← missing on disk`, `← level differs`). The existing view shades non-planned components dimly so the operator can spot cruft before applying.
+  - The toggle preserves the current focus anchor and any enforced zoom on that branch so operators can compare the same subtree across states even on constrained consoles.
+- **Focus, pan, and zoom:** arrow keys move a focus cursor and pan the canvas to keep the focused row visible; `Enter` toggles expansion of that subtree. Pressing `z` zooms relative to the focus by forcing the detailed profile for the focused branch (and its ancestors) or returning it to the automatic profile, so operators zoom on top of the current pan position instead of flipping the entire screen at once.
+- **Action integration:** existing hotkeys remain (`E` edit plan, `S` save, `L` load, `A` apply, `Q` quit). Apply always works on the planned snapshot; attempting to apply while the existing view reveals blockers (e.g., foreign md arrays) prompts the operator to wipe/resolve them first.
+- **Colour/signalling:** degrade states (md arrays rebuilding, missing members) inherited from inventory are rendered in yellow/red. Planned-only items render in cyan so operators can tell they do not yet exist. When the plan matches reality the two views converge, reinforcing idempotency.
+- **Reference mocks:** Concrete ASCII frames for detailed, compact, and minimal layouts live under `docs/tui-mockups/`. They cover mixed-tier plans, 80×24 minimal rendering, and existing-vs-planned toggles with mismatch cues, giving implementers copy-ready targets.
 
 ---
 
