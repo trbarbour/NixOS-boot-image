@@ -221,8 +221,8 @@ def plan_storage(
             add_array(name, arr["level"], devices, "hdd")
             add_vg("main", [name])
         swap_size = f"{ram_gb * 2 * 1024}M"
-        add_lv("swap", "main", swap_size)
         add_lv("root", "main", ROOT_LV_SIZE)
+        add_lv("swap", "main", swap_size)
         return plan
 
     for idx, bucket in enumerate(ssd_buckets):
@@ -294,10 +294,15 @@ def plan_storage(
             (vg["name"] for vg in plan["vgs"] if vg["name"].startswith("large")),
             None,
         )
-    if swap_vg is not None:
-        add_lv("swap", swap_vg, swap_size)
+    if swap_vg is None and not hdd_buckets:
+        swap_vg = next(
+            (vg["name"] for vg in plan["vgs"] if vg["name"] == "main"),
+            None,
+        )
     if any(vg["name"] == "main" for vg in plan["vgs"]):
         add_lv("root", "main", ROOT_LV_SIZE)
+    if swap_vg is not None:
+        add_lv("swap", swap_vg, swap_size)
     if any(vg["name"].startswith("large") for vg in plan["vgs"]):
         add_lv("data", "large", DATA_LV_SIZE)
 
