@@ -753,6 +753,11 @@ def run() -> None:
 
     def _main(stdscr: curses.window) -> None:
         try:
+            stdscr.keypad(True)
+        except curses.error:
+            pass
+
+        try:
             curses.curs_set(0)
         except curses.error:
             pass
