@@ -11,7 +11,7 @@ in {
   options.services.pre-nixos.enable = lib.mkEnableOption "run pre-nixos planning tool";
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.pre-nixos ];
+    environment.systemPackages = [ pkgs.pre-nixos pkgs.util-linux ];
     environment.sessionVariables = preNixosExecEnv;
     environment.interactiveShellInit = preNixosLoginNotice;
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
