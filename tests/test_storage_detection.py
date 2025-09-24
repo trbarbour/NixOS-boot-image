@@ -95,3 +95,4 @@ def test_only_boot_disk_is_ignored() -> None:
     boot_disk = resolve_boot_disk(env)
     assert boot_disk == "/dev/sda"
     assert not has_existing_storage(env, boot_disk=boot_disk)
+
