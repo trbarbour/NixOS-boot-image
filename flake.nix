@@ -22,7 +22,9 @@
               if builtins.pathExists candidate then
                 builtins.toPath candidate
               else
-                throw "PRE_NIXOS_ROOT_KEY does not point to a readable file";
+                builtins.trace
+                  "PRE_NIXOS_ROOT_KEY did not resolve to a readable file; continuing without embedding a root key"
+                  null
             else if builtins.pathExists rootPubPath then
               builtins.toPath rootPubPath
             else

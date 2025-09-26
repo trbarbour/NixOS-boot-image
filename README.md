@@ -4,7 +4,8 @@ This project contains tools to prepare bare-metal machines for a NixOS installat
 
 > **Note:** To enable SSH access on the boot image, supply a public key via the
 > `PRE_NIXOS_ROOT_KEY` environment variable before building. If no key is
-> provided, the image falls back to the NixOS default of console-only access.
+> provided—or the supplied path cannot be read—the image falls back to the
+> NixOS default of console-only access so automated builds still succeed.
 
 ## Usage
 
