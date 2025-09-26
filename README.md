@@ -2,9 +2,9 @@
 
 This project contains tools to prepare bare-metal machines for a NixOS installation. It discovers hardware, plans a storage layout, configures the active network interface for DHCP (renaming it to `lan`), and can apply that plan. The boot image only generates the plan; run `pre-nixos-tui` to partition disks. When multiple disk groups qualify for the same tier, only the largest is mounted as `main` or `large`; smaller groups receive suffixed VG names and are left unmounted for manual use after installation.
 
-> **Note:** To enable SSH access on the boot image, place your SSH public key at
-> `pre_nixos/root_key.pub` before building. If the file is absent, the image
-> falls back to the NixOS default of console-only access.
+> **Note:** To enable SSH access on the boot image, supply a public key via the
+> `PRE_NIXOS_ROOT_KEY` environment variable before building. If no key is
+> provided, the image falls back to the NixOS default of console-only access.
 
 ## Usage
 
@@ -30,19 +30,22 @@ to load an existing plan.
 
 ## SSH access
 
-The boot image permits root login **only** via the public key at
-`pre_nixos/root_key.pub`. Generate a key pair and place the public key at this
-path before building the image (the private key is ignored by git):
+The boot image permits root login **only** via the supplied public key.
+Generate a key pair and point `PRE_NIXOS_ROOT_KEY` at the public half before
+building the image (the private key remains ignored by git):
 
 ```bash
 ssh-keygen -t ed25519 -N '' -f pre_nixos/root_key
+export PRE_NIXOS_ROOT_KEY=$(pwd)/pre_nixos/root_key.pub
+nix build --impure
 ```
 
-After generating the key pair, keep `pre_nixos/root_key.pub` in place before
-running `nix build` so that the key is embedded in the image.
+After generating the key pair, keep `PRE_NIXOS_ROOT_KEY` set (or provide an
+absolute path directly in the environment) before running `nix build --impure`
+so that the key is embedded in the image.
 
 Keep `pre_nixos/root_key` secure and uncommitted; `.gitignore` prevents
-accidental check-in of both the private and public key. Use the generated
+accidental check-in of both halves. Use the generated
 private key to connect once the image boots:
 
 ```bash

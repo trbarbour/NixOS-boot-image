@@ -10,10 +10,26 @@
     let
       inherit (flake-utils.lib) eachDefaultSystem;
 
+      rootPubEnv = builtins.getEnv "PRE_NIXOS_ROOT_KEY";
       rootPubPath = "${builtins.toString ./.}/pre_nixos/root_key.pub";
       rootPub =
-        if builtins.pathExists rootPubPath then
-          builtins.path { path = builtins.toPath rootPubPath; }
+        let
+          resolvedPath =
+            if rootPubEnv != "" then
+              let
+                candidate = builtins.toString rootPubEnv;
+              in
+              if builtins.pathExists candidate then
+                builtins.toPath candidate
+              else
+                throw "PRE_NIXOS_ROOT_KEY does not point to a readable file";
+            else if builtins.pathExists rootPubPath then
+              builtins.toPath rootPubPath
+            else
+              null;
+        in
+        if resolvedPath != null then
+          builtins.path { path = resolvedPath; }
         else
           null;
 
