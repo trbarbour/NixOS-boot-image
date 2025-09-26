@@ -10,7 +10,7 @@
     let
       inherit (flake-utils.lib) eachDefaultSystem;
 
-      rootPubPath = "${builtins.toString ./.}/pre_nixos/root_ed25519.pub";
+      rootPubPath = "${builtins.toString ./.}/pre_nixos/root_key.pub";
       rootPub =
         if builtins.pathExists rootPubPath then
           builtins.path { path = builtins.toPath rootPubPath; }
@@ -33,7 +33,7 @@
           nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
           propagatedBuildInputs = with pkgs; [ gptfdisk mdadm lvm2 ethtool ];
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
-            cp ${rootPub} pre_nixos/root_ed25519.pub
+            cp ${rootPub} pre_nixos/root_key.pub
           '';
         };
 

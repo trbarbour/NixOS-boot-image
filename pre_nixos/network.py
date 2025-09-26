@@ -114,7 +114,7 @@ def get_lan_status(authorized_key: Optional[Path] = None, iface: str = "lan") ->
     """
 
     if authorized_key is None:
-        authorized_key = Path(__file__).with_name("root_ed25519.pub")
+        authorized_key = Path(__file__).with_name("root_key.pub")
     if not authorized_key.exists():
         return "missing SSH public key"
     ip = get_ip_address(iface)
@@ -167,7 +167,7 @@ def secure_ssh(
     )
 
     if authorized_key is None:
-        authorized_key = Path(__file__).with_name("root_ed25519.pub")
+        authorized_key = Path(__file__).with_name("root_key.pub")
     if not authorized_key.exists():
         raise FileNotFoundError(
             f"Missing {authorized_key}. Place your public key at this path before building."
@@ -205,7 +205,7 @@ def configure_lan(
     """
 
     if authorized_key is None:
-        authorized_key = Path(__file__).with_name("root_ed25519.pub")
+        authorized_key = Path(__file__).with_name("root_key.pub")
     if not authorized_key.exists():
         return None
 
