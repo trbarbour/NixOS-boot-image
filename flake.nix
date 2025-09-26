@@ -10,10 +10,28 @@
     let
       inherit (flake-utils.lib) eachDefaultSystem;
 
-      rootPubPath = "${builtins.toString ./.}/pre_nixos/root_ed25519.pub";
+      rootPubEnv = builtins.getEnv "PRE_NIXOS_ROOT_KEY";
+      rootPubPath = "${builtins.toString ./.}/pre_nixos/root_key.pub";
       rootPub =
-        if builtins.pathExists rootPubPath then
-          builtins.path { path = builtins.toPath rootPubPath; }
+        let
+          resolvedPath =
+            if rootPubEnv != "" then
+              let
+                candidate = builtins.toString rootPubEnv;
+              in
+              if builtins.pathExists candidate then
+                builtins.toPath candidate
+              else
+                builtins.trace
+                  "PRE_NIXOS_ROOT_KEY did not resolve to a readable file; continuing without embedding a root key"
+                  null
+            else if builtins.pathExists rootPubPath then
+              builtins.toPath rootPubPath
+            else
+              null;
+        in
+        if resolvedPath != null then
+          builtins.path { path = resolvedPath; }
         else
           null;
 
@@ -33,7 +51,7 @@
           nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
           propagatedBuildInputs = with pkgs; [ gptfdisk mdadm lvm2 ethtool ];
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
-            cp ${rootPub} pre_nixos/root_ed25519.pub
+            cp ${rootPub} pre_nixos/root_key.pub
           '';
         };
 
