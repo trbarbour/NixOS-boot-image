@@ -25,9 +25,9 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - **G4. UEFI + GPT:** Bootable on modern firmware using systemd-boot (or GRUB-UEFI as fallback if required).
 - **G5. Ext4 everywhere:** Tuned mount options and **dense inode profile** for paths prone to many small files (e.g., `/nix`).
 - **G6. Swap policy (with fallback):**
-  - Prefer a dedicated **VG `swap`** backed by **HDD RAID1** (carved from small mirror partitions on two equal-size disks).
-  - If **no `swap` VG** is present/possible, create a swap LV on **VG `large`** (rotating-disk only — RAID5/6 or single-HDD PV). 
-  - **Never** place swap on SSD/NVMe. If neither `swap` nor `large` exist ⇒ **no swap**.
+    - Prefer a dedicated **VG `swap`** backed by **HDD RAID1** (carved from small mirror partitions on two equal-size disks).
+    - If **no `swap` VG** is present/possible, create a swap LV on **VG `large`** (rotating-disk only — RAID5/6 or single-HDD PV).
+    - If no rotating tier exists, provision swap on the SSD-backed **VG `main`** when there is sufficient free capacity so the SSD swap can serve as a safety net when zram is exhausted. If free space is insufficient, omit swap entirely.
 - **G7. Repeatable & idempotent:** Running twice is safe; decisions are logged; same hardware ⇒ same results.
 - **G8. Team-usable artifacts:** Machine-readable **plan JSON**, **audit log**, and generated **NixOS config stubs** for later automation.
 - **G9. Serial-console resilience:** All serial writes must be **best-effort and non-blocking**. If no serial console is present or if the device blocks writes, scripts must **never hang or fail**. Logging always falls back to journald, `/var/log`, and `dmesg`.
@@ -53,7 +53,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ## 5) Definitions
 - **ESP:** EFI System Partition (FAT32), default 1 GiB.
 - **main / swap / large:** LVM **Volume Groups**. `main` on SSD tier; `swap` on HDD RAID1 (if present); `large` on HDD RAID5/6 or single-HDD PV (if present). When multiple SSD or HDD buckets exist, only the largest uses the base name (`main`/`large`); smaller buckets receive numeric suffixes (e.g., `main-1`) and are left unmounted.
-- **swap (policy):** A dedicated **VG `swap`** on **HDD RAID1** when possible; **fallback** is a swap LV on **VG `large`** (HDD-backed). **Never** on SSD/NVMe.
+- **swap (policy):** A dedicated **VG `swap`** on **HDD RAID1** when possible; **fallback** is a swap LV on **VG `large`** (HDD-backed). When no rotating storage is available, use **VG `main`** (SSD/NVMe) if it has enough capacity for the configured swap size; otherwise skip swap entirely.
 - **Careful mode:** Safety-biased decisions (e.g., SSD pair as RAID1, `discard` off by default, conservative `mkfs` options).
 - **Plan:** The computed, human-readable + JSON-serializable description of intended storage and network actions.
 
@@ -84,12 +84,12 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - If **count ≥2**: default **RAID0**; in `careful` mode ⇒ **RAID1** (if exactly 2) or **RAID10** (if ≥4 even). If odd and `careful`, prefer RAID1 across two + hot-spare; leave extras unused.
   - If **count =1**: no md, single PV for `main`.
   - **Naming:** the size bucket with the greatest total capacity becomes **VG `main`**; additional SSD buckets are named `main-1`, `main-2`, … and are left unmounted.
-  - **Never used for swap.**
+  - **Default tier:** SSD capacity drives `main`; when no rotating storage exists, `main` may also host the fallback swap LV if sufficient space remains after primary allocations.
 - **HDD group (per size bucket):**
   - **Swap mirror first:** If **≥2** present, allocate **two equal-size disks** for a small **RAID1** md device dedicated to swap (capacity sized per config; defaults 2 x RAM). This device becomes **VG `swap`** (LV `swap`). Remaining capacity on those disks still contributes to data.
   - **Data array next:** With remaining disks, choose level: **2 ⇒ RAID1**, **3–5 ⇒ RAID5**, **≥6 ⇒ RAID6**. This md becomes PV for **VG `large`**.
   - **Naming:** the largest HDD bucket forms **VG `large`**; additional buckets are named `large-1`, `large-2`, … and remain unused.
-  - **Fallback:** If insufficient HDDs for swap mirror, create VG `large` from available HDDs and put swap LV there.
+  - **Fallbacks:** If insufficient HDDs for a swap mirror, create VG `large` from available HDDs and put the swap LV there. With no rotating tier available, place the swap LV on `main` provided it can accommodate the configured size; otherwise skip swap.
 
 ### 7.3 Partitioning scheme (GPT)
 - **SSD boot device(s):**
@@ -98,7 +98,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - **HDDs:**
   - `HDD-SWAP`: small partitions on two disks → md RAID1 → PV → VG `swap`.
   - `HDD-DATA`: remainders → md RAID (RAID1/5/6) → PV → VG `large`.
-  - Fallback: if no swap mirror, omit `HDD-SWAP` and use all for `large`; swap LV goes on `large`.
+  - Fallbacks: if no swap mirror, omit `HDD-SWAP` and use all for `large`; swap LV goes on `large`. If no rotating tier exists, create the fallback swap LV on `main` when capacity allows.
 
 ### 7.4 LVM layout
 - **VGs:** `main`, `swap` (if present), `large` (if present). Additional SSD/HDD buckets are created as `main-1`, `large-1`, etc., and left without logical volumes.
@@ -106,7 +106,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - `main/root` 20 GiB (ext4).
   - `main/nix` 100–200 GiB.
   - `main/var` 20–50 GiB.
-  - Swap: `swap/swap` on VG `swap`; fallback: `large/swap` on VG `large`. Never on SSD.
+  - Swap: `swap/swap` on VG `swap`; fallback hierarchy: `large/swap` on VG `large`, else `main/swap` on VG `main` when capacity permits.
   - Bulk: `large/data`.
 
 ### 7.5 Filesystems (ext4)
@@ -150,7 +150,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
    - After operator review (e.g., via `pre-nixos-tui`, which shows the current IP or a status message), confirm boot target (SSD/NVMe) and wipe signatures (configurable safety).
    - Partition with `sgdisk`.
    - Create md arrays; wait for sync (background) or `--assume-clean` if blank disks.
-   - Create PVs/VGs/LVs; format ext4 with labels; create swap per policy (VG `swap` preferred; fallback to VG `large`; never SSD).
+   - Create PVs/VGs/LVs; format ext4 with labels; create swap per policy (VG `swap` preferred; fall back to VG `large`, then VG `main` if rotating tiers are absent and capacity allows).
 5. **Mount target:** `/mnt` tree; generate NixOS config stubs; install bootloader into ESP (if `pre.autoinstall=1`, also run `nixos-install`).
 6. **Ready:** leave SSH up; write artifacts; emit summary through log fan-out (serial best-effort/time-bounded).
 
@@ -202,7 +202,7 @@ function apply_plan(plan):
 ## 11) Risks & Mitigations
 - **NIC mis‑selection:** multiple live links. *Mitigation:* speed‑first heuristic + optional `pre.lan.mac=` override.
 - **Mixed disk sizes:** arrays only with equal-size disks.
-- **No HDDs:** no swap.
+- **No HDDs:** swap falls back to SSD (VG `main`) if capacity allows; otherwise swap is omitted.
 - **UEFI quirks:** some firmware rejects 1 GiB ESP. *Mitigation:* configurable ESP size; GRUB fallback.
 - **Serial issues:**  all serial writes wrapped in timeouts and error-ignored; logging always has alternative sinks (journald/file/dmesg).
 
@@ -280,8 +280,8 @@ function apply_plan(plan):
 ---
 
 ## 15) Test Plan / Matrix
-- T1: NVMe only → `main`; no swap.
-- T2: Two same size SSDs → RAID0/1; no swap.
+- T1: NVMe only → `main`; swap LV on `main` if capacity meets configured size, otherwise omit.
+- T2: Two same size SSDs → RAID0/1; swap LV on `main` if capacity meets configured size, otherwise omit.
 - T3: Two same size HDDs + SSD → HDD RAID1 → VG `swap`; SSD → `main`.
 - T4: Four same size HDDs + SSD → HDD RAID6 → `large`; SSD → `main`.
 - T5: Four same size HDDs + two smaller (like-size) HDDs + SSD → HDD RAID6 → `large`; HDD RAID1 → `swap`; SSD → `main`.
@@ -293,7 +293,7 @@ function apply_plan(plan):
 ---
 
 ## 16) Acceptance Criteria
-- On supported hardware, booting the image automatically yields: lan with DHCP; SSH reachable with provided keys; /mnt has labeled ext4 FS per plan; swap provided only when HDD-backed (VG swap preferred, fallback large/swap), never on SSD; config stubs exist; serial console shows summary. No prompts before SSH.
+- On supported hardware, booting the image automatically yields: lan with DHCP; SSH reachable with provided keys; /mnt has labeled ext4 FS per plan; swap provided when a rotating tier exists (VG `swap` preferred, fallback `large/swap`) or, if only SSD/NVMe are available and capacity allows, via `main/swap`; config stubs exist; serial console shows summary. No prompts before SSH.
 - Serial-safe: absence of a serial console or a disconnected/blocked tty never causes a hang or failure; messages still reach journald and the action log.
 
 ---
