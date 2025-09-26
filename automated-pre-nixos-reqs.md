@@ -49,7 +49,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 - Create one **LVM physical volume** per RAID array or standalone disk set.
 - Create **LVM volume groups** corresponding to their class:
   - `main` for the system volume (on SSDs).
-  - `swap` for swap (on rotating RAID-1), if present, otherwise put `swap` LV in `large` VG if present; no swap on SSD.
+  - `swap` for swap (on rotating RAID-1), if present. Otherwise put the swap LV in `large` VG if present, or in `main` (SSD/NVMe) when no rotating tier exists and capacity allows. If there is insufficient capacity anywhere, swap may be omitted.
   - `large` for bulk storage (on RAID-5/6).
 - LVM volumes should be used instead of bare partitions wherever possible and reasonable.
 
