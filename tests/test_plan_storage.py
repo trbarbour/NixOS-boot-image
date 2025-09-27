@@ -1,7 +1,7 @@
 """Tests for storage plan generation."""
 
 from pre_nixos.inventory import Disk
-from pre_nixos.planner import plan_storage, ROOT_LV_SIZE
+from pre_nixos.planner import plan_storage, ROOT_LV_SIZE, _parse_size, _format_size
 
 
 def test_plan_storage_basic() -> None:
@@ -201,7 +201,24 @@ def test_root_lv_size_capped() -> None:
     disks = [Disk(name="sda", size=15, rotational=False)]
     plan = plan_storage("fast", disks)
     root_lv = next(lv for lv in plan["lvs"] if lv["name"] == "root")
-    assert root_lv["size"] == "15G"
+    assert root_lv["size"] == "14G"
+
+
+def test_swap_lv_accounts_for_efi_partition() -> None:
+    disk_size = 500_107_862_016
+    disks = [Disk(name="nvme0n1", size=disk_size, rotational=False, nvme=True)]
+    plan = plan_storage("fast", disks, ram_gb=512)
+    swap_lv = next(lv for lv in plan["lvs"] if lv["name"] == "swap")
+
+    # Capacity available to LVM is the disk size minus the 1G EFI partition.
+    efi = _parse_size("1G")
+    capacity = disk_size - efi
+    # Align down to the nearest MiB to match planner rounding.
+    capacity -= capacity % (1024 ** 2)
+    root_size = _parse_size(ROOT_LV_SIZE)
+    expected_swap = max(capacity - root_size, 0)
+    expected_swap -= expected_swap % (1024 ** 2)
+    assert swap_lv["size"] == _format_size(expected_swap)
 
 
 def test_data_lv_size_capped() -> None:
