@@ -44,6 +44,10 @@ def _format_size(size: int) -> str:
     return str(size)
 
 
+EFI_PARTITION_SIZE = _parse_size("1G")
+MI_BYTE = 1024 ** 2
+
+
 def _array_capacity(level: str, sizes: List[int]) -> int:
     """Return usable size in bytes for an array of ``sizes``."""
 
@@ -173,7 +177,12 @@ def plan_storage(
                 part_name = _part_name(d.name, idx)
                 parts.append({"name": part_name, "type": ptype})
                 plan["partitions"][d.name] = parts
-                device_sizes[part_name] = _to_bytes(d.size)
+                capacity = _to_bytes(d.size)
+                if with_efi:
+                    capacity = max(capacity - EFI_PARTITION_SIZE, 0)
+                if capacity > 0:
+                    capacity -= capacity % MI_BYTE
+                device_sizes[part_name] = capacity
             # last partition in the list is always the data one
             devices.append(plan["partitions"][d.name][-1]["name"])
         return devices
