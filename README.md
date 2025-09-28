@@ -86,7 +86,9 @@ pip install pexpect
 pytest tests/test_boot_image_vm.py
 ```
 
-The tests automatically skip when the required tooling is missing.
+The tests automatically skip when the required tooling is missing. Treat these
+skips as warnings that the VM scenario was not validated; rerun the suite once
+the prerequisites are available.
 
 > **Network requirements:** the build must be able to reach
 > `https://cache.nixos.org` for prebuilt binaries and the GNU mirrors for
