@@ -61,6 +61,39 @@ The project uses [pytest](https://pytest.org) for tests.
 pytest
 ```
 
+### Virtual machine integration tests
+
+The test suite includes end-to-end checks that boot the generated ISO inside a
+QEMU virtual machine, verify that `pre-nixos` provisions a blank disk, and that
+the network interface is renamed to `lan` and receives a DHCP lease. These
+tests require the `nix` CLI to build the boot image, `qemu-system-x86_64` to run
+the VM, and the Python [`pexpect`](https://pexpect.readthedocs.io/) module for
+console automation.
+
+Before running the VM tests ensure your host `nix.conf` enables the flake
+command set:
+
+```bash
+sudo tee -a /etc/nix/nix.conf <<'EOF'
+experimental-features = nix-command flakes
+EOF
+```
+
+Run only the integration tests after installing their dependencies:
+
+```bash
+pip install pexpect
+pytest tests/test_boot_image_vm.py
+```
+
+The tests automatically skip when the required tooling is missing.
+
+> **Network requirements:** the build must be able to reach
+> `https://cache.nixos.org` for prebuilt binaries and the GNU mirrors for
+> source fallbacks. If a corporate proxy blocks these domains Nix will fail
+> while trying to download `bash-5.2.tar.gz`, preventing the VM tests from
+> booting the image.
+
 ## Nix flake
 
 Build a bootable ISO that prints the plan at boot. Run `pre-nixos-tui` manually
