@@ -1,0 +1,240 @@
+"""Integration tests that exercise the boot image inside a virtual machine."""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List
+
+import pytest
+
+try:
+    import pexpect
+except ImportError:  # pragma: no cover - handled by pytest skip
+    pexpect = None  # type: ignore
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SHELL_PROMPT = "PRE-NIXOS> "
+
+
+def _require_executable(executable: str) -> str:
+    path = shutil.which(executable)
+    if path is None:
+        pytest.skip(f"required executable '{executable}' is not available in PATH")
+    return path
+
+
+@pytest.fixture(scope="session")
+def _pexpect() -> "pexpect":
+    if pexpect is None:  # pragma: no cover - environment specific
+        pytest.skip("pexpect is required for VM integration tests")
+    return pexpect
+
+
+@pytest.fixture(scope="session")
+def nix_executable() -> str:
+    return _require_executable("nix")
+
+
+@pytest.fixture(scope="session")
+def qemu_executable() -> str:
+    return _require_executable("qemu-system-x86_64")
+
+
+def _resolve_iso_path(store_path: Path) -> Path:
+    if store_path.is_file() and store_path.suffix == ".iso":
+        return store_path
+    iso_candidates = sorted(store_path.rglob("*.iso"))
+    if not iso_candidates:
+        raise AssertionError(
+            f"no ISO images found under {store_path}; nix output was {store_path}"
+        )
+    if len(iso_candidates) > 1:
+        raise AssertionError(
+            "multiple ISO images discovered; unable to determine boot image uniquely: "
+            + ", ".join(str(candidate) for candidate in iso_candidates)
+        )
+    return iso_candidates[0]
+
+
+@pytest.fixture(scope="session")
+def boot_image_iso(nix_executable: str) -> Path:
+    result = subprocess.run(
+        [
+            nix_executable,
+            "build",
+            ".#bootImage",
+            "--no-link",
+            "--print-out-paths",
+        ],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    paths = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    if not paths:
+        raise AssertionError("nix build did not return a store path")
+    store_path = Path(paths[-1])
+    return _resolve_iso_path(store_path)
+
+
+@pytest.fixture(scope="session")
+def vm_disk_image(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    disk_dir = tmp_path_factory.mktemp("boot-image-disk")
+    disk_path = disk_dir / "disk.img"
+    with disk_path.open("wb") as handle:
+        handle.truncate(4 * 1024 * 1024 * 1024)
+    return disk_path
+
+
+@dataclass
+class BootImageVM:
+    """Minimal controller for interacting with the boot image via serial."""
+
+    child: "pexpect.spawn"
+    log_path: Path
+
+    def __post_init__(self) -> None:
+        self._login()
+
+    def _login(self) -> None:
+        self.child.expect(r"login: ", timeout=600)
+        self.child.sendline("root")
+        prompt_patterns = [r"Password:", r"root@.*# ", r"# "]
+        idx = self.child.expect(prompt_patterns, timeout=180)
+        if idx == 0:
+            self.child.sendline("")
+            self.child.expect([r"root@.*# ", r"# "], timeout=180)
+        self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
+        self.child.expect(SHELL_PROMPT, timeout=60)
+
+    def run(self, command: str, *, timeout: int = 180) -> str:
+        self.child.sendline(command)
+        self.child.expect(SHELL_PROMPT, timeout=timeout)
+        output = self.child.before
+        lines = output.splitlines()
+        if lines and lines[0].strip() == command:
+            lines = lines[1:]
+        return "\n".join(lines).strip()
+
+    def read_storage_status(self) -> Dict[str, str]:
+        status_raw = self.run("cat /run/pre-nixos/storage-status 2>/dev/null || true")
+        status: Dict[str, str] = {}
+        for line in status_raw.splitlines():
+            if "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            status[key.strip()] = value.strip()
+        return status
+
+    def wait_for_storage_status(self, *, timeout: int = 420) -> Dict[str, str]:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            status = self.read_storage_status()
+            if "STATE" in status and "DETAIL" in status:
+                return status
+            time.sleep(5)
+        raise AssertionError("timed out waiting for pre-nixos storage status")
+
+    def wait_for_ipv4(self, iface: str = "lan", *, timeout: int = 240) -> List[str]:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            output = self.run(f"ip -o -4 addr show dev {iface} 2>/dev/null || true")
+            lines = [line for line in output.splitlines() if line.strip()]
+            if any("inet " in line for line in lines):
+                return lines
+            time.sleep(5)
+        raise AssertionError(f"timed out waiting for IPv4 address on {iface}")
+
+    def shutdown(self) -> None:
+        if not self.child.isalive():
+            return
+        try:
+            self.child.sendline("poweroff")
+            self.child.expect(["reboot: Power down", pexpect.EOF], timeout=180)
+        except pexpect.ExceptionPexpect:
+            self.child.close(force=True)
+        else:
+            self.child.expect(pexpect.EOF, timeout=60)
+
+
+@pytest.fixture(scope="session")
+def boot_image_vm(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_iso: Path,
+    vm_disk_image: Path,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> BootImageVM:
+    log_dir = tmp_path_factory.mktemp("boot-image-logs")
+    log_path = log_dir / "serial.log"
+    log_handle = log_path.open("w", encoding="utf-8")
+    cmd = [
+        qemu_executable,
+        "-m",
+        "2048",
+        "-smp",
+        "2",
+        "-display",
+        "none",
+        "-no-reboot",
+        "-boot",
+        "d",
+        "-serial",
+        "stdio",
+        "-cdrom",
+        str(boot_image_iso),
+        "-drive",
+        f"file={vm_disk_image},if=virtio,format=raw",
+        "-device",
+        "virtio-rng-pci",
+        "-netdev",
+        "user,id=net0",
+        "-device",
+        "virtio-net-pci,netdev=net0",
+    ]
+    child = _pexpect.spawn(
+        cmd[0],
+        cmd[1:],
+        encoding="utf-8",
+        codec_errors="ignore",
+        timeout=600,
+    )
+    child.logfile = log_handle
+    vm = BootImageVM(child=child, log_path=log_path)
+    try:
+        yield vm
+    finally:
+        vm.shutdown()
+        log_handle.close()
+
+
+def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
+    status = boot_image_vm.wait_for_storage_status()
+    assert status["STATE"] == "applied"
+    assert status["DETAIL"] == "auto-applied"
+
+    vg_output = boot_image_vm.run(
+        "vgs --noheadings --separator '|' -o vg_name", timeout=120
+    )
+    vg_names = {line.strip() for line in vg_output.splitlines() if line.strip()}
+    assert "main" in vg_names
+
+    lv_output = boot_image_vm.run(
+        "lvs --noheadings --separator '|' -o lv_name,vg_name", timeout=120
+    )
+    lv_pairs = {tuple(part.strip() for part in line.split("|")) for line in lv_output.splitlines() if line.strip()}
+    assert ("root", "main") in lv_pairs
+
+
+def test_boot_image_configures_network(boot_image_vm: BootImageVM) -> None:
+    addr_lines = boot_image_vm.wait_for_ipv4()
+    assert any("inet " in line for line in addr_lines)
+
+    status = boot_image_vm.run("systemctl is-active pre-nixos", timeout=60)
+    assert status == "inactive"
