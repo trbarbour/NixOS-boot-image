@@ -50,7 +50,9 @@
           pyproject = true;
           nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
           propagatedBuildInputs =
-            with pkgs; [ gptfdisk mdadm lvm2 ethtool (pkgs."util-linux") ];
+            pkgs.lib.attrVals
+              [ "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ]
+              pkgs;
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
             cp ${rootPub} pre_nixos/root_key.pub
           '';
