@@ -137,6 +137,19 @@ class BootImageVM:
             lines = lines[1:]
         return "\n".join(lines).strip()
 
+    def assert_commands_available(self, *commands: str) -> None:
+        """Ensure required commands are present in the boot environment."""
+
+        missing: List[str] = []
+        for command in commands:
+            result = self.run(f"command -v {command} >/dev/null 2>&1 && echo OK || echo MISSING")
+            if result != "OK":
+                missing.append(command)
+        if missing:
+            raise AssertionError(
+                "required commands missing from boot image: " + ", ".join(sorted(missing))
+            )
+
     def read_storage_status(self) -> Dict[str, str]:
         status_raw = self.run("cat /run/pre-nixos/storage-status 2>/dev/null || true")
         status: Dict[str, str] = {}
@@ -230,6 +243,7 @@ def boot_image_vm(
 
 
 def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
+    boot_image_vm.assert_commands_available("findmnt", "lsblk", "wipefs")
     status = boot_image_vm.wait_for_storage_status()
     assert status["STATE"] == "applied"
     assert status["DETAIL"] == "auto-applied"
