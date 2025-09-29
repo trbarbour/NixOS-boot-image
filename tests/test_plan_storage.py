@@ -15,9 +15,9 @@ def test_plan_storage_basic() -> None:
     vg_names = {vg["name"] for vg in plan["vgs"]}
     assert {"main", "swap"} <= vg_names
     lv_names = {lv["name"] for lv in plan["lvs"]}
-    assert {"root", "swap"} <= lv_names
-    root_lv = next(lv for lv in plan["lvs"] if lv["name"] == "root")
-    assert root_lv["size"] == ROOT_LV_SIZE
+    assert {"slash", "swap"} <= lv_names
+    slash_lv = next(lv for lv in plan["lvs"] if lv["name"] == "slash")
+    assert slash_lv["size"] == ROOT_LV_SIZE
     assert set(plan["partitions"]) == {"sda", "sdb", "sdc"}
     # sda is a single SSD, sdb and sdc form a RAID1 array
     assert [p["type"] for p in plan["partitions"]["sda"]][:1] == ["efi"]
@@ -73,7 +73,7 @@ def test_two_hdd_only_becomes_main_with_swap_lv() -> None:
     vg_names = {vg["name"] for vg in plan["vgs"]}
     assert vg_names == {"main"}
     lv_info = {(lv["name"], lv["vg"]) for lv in plan["lvs"]}
-    assert ("root", "main") in lv_info and ("swap", "main") in lv_info
+    assert ("slash", "main") in lv_info and ("swap", "main") in lv_info
     assert any(arr["level"] == "raid1" for arr in plan["arrays"])
     assert set(plan["partitions"]) == {"sdb", "sdc"}
 
@@ -84,7 +84,7 @@ def test_single_hdd_only_becomes_main_with_swap_lv() -> None:
     vg_names = {vg["name"] for vg in plan["vgs"]}
     assert vg_names == {"main"}
     lv_info = {(lv["name"], lv["vg"]) for lv in plan["lvs"]}
-    assert ("root", "main") in lv_info and ("swap", "main") in lv_info
+    assert ("slash", "main") in lv_info and ("swap", "main") in lv_info
     assert plan["arrays"] == []
     assert set(plan["partitions"]) == {"sda"}
     assert all(p["type"] == "lvm" for p in plan["partitions"]["sda"][1:])
@@ -197,11 +197,11 @@ def test_small_hdd_pair_preferred_for_swap() -> None:
     assert set(swap_array["devices"]) == {"sdd1", "sde1"}
 
 
-def test_root_lv_size_capped() -> None:
+def test_slash_lv_size_capped() -> None:
     disks = [Disk(name="sda", size=15, rotational=False)]
     plan = plan_storage("fast", disks)
-    root_lv = next(lv for lv in plan["lvs"] if lv["name"] == "root")
-    assert root_lv["size"] == "14G"
+    slash_lv = next(lv for lv in plan["lvs"] if lv["name"] == "slash")
+    assert slash_lv["size"] == "14G"
 
 
 def test_swap_lv_accounts_for_efi_partition() -> None:
@@ -215,8 +215,8 @@ def test_swap_lv_accounts_for_efi_partition() -> None:
     capacity = disk_size - efi
     # Align down to the nearest MiB to match planner rounding.
     capacity -= capacity % (1024 ** 2)
-    root_size = _parse_size(ROOT_LV_SIZE)
-    expected_swap = max(capacity - root_size, 0)
+    slash_size = _parse_size(ROOT_LV_SIZE)
+    expected_swap = max(capacity - slash_size, 0)
     expected_swap -= expected_swap % (1024 ** 2)
     assert swap_lv["size"] == _format_size(expected_swap)
 

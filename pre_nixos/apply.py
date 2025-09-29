@@ -107,8 +107,8 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         cmd = f"e2label {lv_path} {lv['name']}"
         commands.append(cmd)
         _run(cmd, execute)
-        mount_point = "/mnt" if lv["name"] == "root" else f"/mnt/{lv['name']}"
-        if lv["name"] != "root":
+        mount_point = "/mnt" if lv["name"] == "slash" else f"/mnt/{lv['name']}"
+        if lv["name"] != "slash":
             cmd = f"mkdir -p {mount_point}"
             commands.append(cmd)
             _run(cmd, execute)

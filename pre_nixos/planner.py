@@ -230,7 +230,7 @@ def plan_storage(
             add_array(name, arr["level"], devices, "hdd")
             add_vg("main", [name])
         swap_size = f"{ram_gb * 2 * 1024}M"
-        add_lv("root", "main", ROOT_LV_SIZE)
+        add_lv("slash", "main", ROOT_LV_SIZE)
         add_lv("swap", "main", swap_size)
         return plan
 
@@ -309,7 +309,7 @@ def plan_storage(
             None,
         )
     if any(vg["name"] == "main" for vg in plan["vgs"]):
-        add_lv("root", "main", ROOT_LV_SIZE)
+        add_lv("slash", "main", ROOT_LV_SIZE)
     if swap_vg is not None:
         add_lv("swap", swap_vg, swap_size)
     if any(vg["name"].startswith("large") for vg in plan["vgs"]):

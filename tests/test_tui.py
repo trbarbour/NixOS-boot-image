@@ -60,7 +60,7 @@ def sample_plan() -> dict:
             {"name": "bulk", "devices": ["sda2"]},
         ],
         "lvs": [
-            {"name": "root", "vg": "main", "size": "50G"},
+            {"name": "slash", "vg": "main", "size": "50G"},
             {"name": "home", "vg": "main", "size": "100G"},
             {"name": "data", "vg": "bulk", "size": "1T"},
         ],
@@ -92,7 +92,7 @@ def test_tui_exposes_run():
 def test_plan_renderer_prefers_detailed_profile(renderer):
     render = renderer.render(100, 20, None, "auto", expanded=())
     assert render.profile == "detailed"
-    assert render.focusables[0] == ("lv", "main", "root")
+    assert render.focusables[0] == ("lv", "main", "slash")
     assert render.lines[0].startswith("Disk nvme0n1")
 
 
@@ -107,7 +107,7 @@ def test_minimal_layout_expands_focus(renderer):
     focus = ("vg", "main", None)
     render = renderer.render(40, 10, focus, "minimal", expanded={focus})
     assert any("⇒ VG main" in line for line in render.lines)
-    assert any("root 50G" in line for line in render.lines)
+    assert any("slash 50G" in line for line in render.lines)
     assert focus in render.focusables
 
 

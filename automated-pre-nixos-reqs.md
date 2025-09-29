@@ -20,7 +20,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 - Detect all block devices present on the machine.
 - Classify them by type, size and function:
-  - SSD(s): designated for system/root volume.
+  - SSD(s): designated for the system `slash` volume.
   - For each group of (approximately) same-sized rotating disks:
     - If exactly two → use for swap on RAID-1.
     - If three or more → use for bulk storage on RAID-5 or RAID-6, depending on count.
