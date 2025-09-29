@@ -103,13 +103,28 @@ class BootImageVM:
         self._login()
 
     def _login(self) -> None:
-        self.child.expect(r"login: ", timeout=600)
-        self.child.sendline("root")
-        prompt_patterns = [r"Password:", r"root@.*# ", r"# "]
-        idx = self.child.expect(prompt_patterns, timeout=180)
+        login_patterns = [
+            r"login: ",
+            r"\[nixos@[^]]+\]\$ ",
+            r"root@.*# ",
+            r"# ",
+        ]
+        idx = self.child.expect(login_patterns, timeout=600)
         if idx == 0:
-            self.child.sendline("")
-            self.child.expect([r"root@.*# ", r"# "], timeout=180)
+            self.child.sendline("root")
+            prompt_patterns = [r"Password:", r"root@.*# ", r"# "]
+            idx = self.child.expect(prompt_patterns, timeout=180)
+            if idx == 0:
+                self.child.sendline("")
+                self.child.expect([r"root@.*# ", r"# "], timeout=180)
+        elif idx == 1:
+            self.child.sendline("sudo -i")
+            sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ", r"# "]
+            idx = self.child.expect(sudo_patterns, timeout=180)
+            if idx == 0:
+                self.child.sendline("")
+                self.child.expect([r"root@.*# ", r"# "], timeout=180)
+        # idx 2 or 3 already indicates a root prompt.
         self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
         self.child.expect(SHELL_PROMPT, timeout=60)
 

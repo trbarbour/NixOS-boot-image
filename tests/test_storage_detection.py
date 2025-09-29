@@ -96,3 +96,15 @@ def test_only_boot_disk_is_ignored() -> None:
     assert boot_disk == "/dev/sda"
     assert not has_existing_storage(env, boot_disk=boot_disk)
 
+
+def test_missing_device_during_inspection_is_ignored() -> None:
+    commands = {
+        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
+            stdout="/dev/sdd disk\n", returncode=0
+        ),
+        ("lsblk", "-rno", "TYPE", "/dev/sdd"): CommandOutput(stdout="", returncode=32),
+        ("wipefs", "-n", "/dev/sdd"): CommandOutput(stdout="", returncode=32),
+    }
+    env = make_env(commands)
+    assert not has_existing_storage(env, boot_disk=None)
+
