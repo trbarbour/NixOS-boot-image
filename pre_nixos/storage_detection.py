@@ -160,6 +160,11 @@ def has_existing_storage(
             continue
         type_result = env.run(["lsblk", "-rno", "TYPE", device])
         if type_result.returncode in _IGNORABLE_RETURN_CODES:
+            if env.path_exists(device):
+                raise RuntimeError(
+                    f"command lsblk -rno TYPE {device} exited with status "
+                    f"{type_result.returncode} while device still present"
+                )
             continue
         if type_result.returncode != 0:
             raise RuntimeError(
@@ -172,6 +177,11 @@ def has_existing_storage(
             return True
         wipefs_result = env.run(["wipefs", "-n", device])
         if wipefs_result.returncode in _IGNORABLE_RETURN_CODES:
+            if env.path_exists(device):
+                raise RuntimeError(
+                    f"command wipefs -n {device} exited with status "
+                    f"{wipefs_result.returncode} while device still present"
+                )
             continue
         if wipefs_result.returncode != 0:
             raise RuntimeError(
