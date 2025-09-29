@@ -81,7 +81,7 @@ _IGNORED_DEVICE_PREFIXES = (
 # discovery and inspection.  Treat these transient errors as ignorable so that
 # storage detection remains resilient to short-lived devices, mirroring the
 # behaviour of udev when devices are unplugged mid-operation.
-_IGNORABLE_RETURN_CODES = {32}
+_DISAPPEARED_DEVICE_RETURN_CODES = {32}
 
 
 def _run_command(
@@ -159,7 +159,7 @@ def has_existing_storage(
         if boot_disk and resolved == boot_disk:
             continue
         type_result = env.run(["lsblk", "-rno", "TYPE", device])
-        if type_result.returncode in _IGNORABLE_RETURN_CODES:
+        if type_result.returncode in _DISAPPEARED_DEVICE_RETURN_CODES:
             if env.path_exists(device):
                 raise RuntimeError(
                     f"command lsblk -rno TYPE {device} exited with status "
@@ -176,7 +176,7 @@ def has_existing_storage(
         if len(type_lines) > 1:
             return True
         wipefs_result = env.run(["wipefs", "-n", device])
-        if wipefs_result.returncode in _IGNORABLE_RETURN_CODES:
+        if wipefs_result.returncode in _DISAPPEARED_DEVICE_RETURN_CODES:
             if env.path_exists(device):
                 raise RuntimeError(
                     f"command wipefs -n {device} exited with status "
