@@ -91,19 +91,22 @@
             pre-nixos = preNixosPackage;
           };
         checks = {
-          pre-nixos-propagates-util-linux =
+          pre-nixos-propagates-required-tools =
             let
+              requiredTools = [ "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ];
               propagatedNames =
                 builtins.map
                   (drv:
                     if drv ? pname then drv.pname else (builtins.parseDrvName drv.name).name)
                   preNixosPackage.propagatedBuildInputs;
+              missingTools =
+                pkgs.lib.filter (tool: !(pkgs.lib.elem tool propagatedNames)) requiredTools;
               _ =
                 pkgs.lib.assertMsg
-                  (pkgs.lib.elem "util-linux" propagatedNames)
-                  "pre-nixos must propagate util-linux in propagatedBuildInputs";
+                  (missingTools == [])
+                  "pre-nixos must propagate required tools: ${builtins.toString missingTools}";
             in
-            pkgs.runCommand "pre-nixos-propagates-util-linux" {} ''
+            pkgs.runCommand "pre-nixos-propagates-required-tools" {} ''
               touch $out
             '';
         };

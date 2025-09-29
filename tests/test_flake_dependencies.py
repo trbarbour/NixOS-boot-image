@@ -32,9 +32,21 @@ def _extract_propagated_inputs() -> set[str]:
     raise AssertionError("propagatedBuildInputs block not found in flake.nix")
 
 
-def test_pre_nixos_runtime_dependencies_include_util_linux() -> None:
+def test_pre_nixos_runtime_dependencies_include_required_tools() -> None:
     propagated = _extract_propagated_inputs()
-    # ``pre-nixos`` relies on util-linux tools such as ``findmnt`` for storage
-    # detection.  Ensure the package continues to propagate util-linux so the
-    # commands are available within the boot environment.
-    assert "util-linux" in propagated
+    required_tools = {
+        # Storage partitioning utilities
+        "gptfdisk",
+        "mdadm",
+        "lvm2",
+        # Network diagnostics
+        "ethtool",
+        # General system tooling used during installation (e.g. findmnt)
+        "util-linux",
+    }
+
+    missing = required_tools - propagated
+    assert not missing, (
+        "pre-nixos must propagate the expected tool packages for the boot "
+        f"environment (missing: {sorted(missing)})"
+    )
