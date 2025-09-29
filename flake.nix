@@ -90,6 +90,23 @@
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
           };
+        checks = {
+          pre-nixos-propagates-util-linux =
+            let
+              propagatedNames =
+                builtins.map
+                  (drv:
+                    if drv ? pname then drv.pname else (builtins.parseDrvName drv.name).name)
+                  preNixosPackage.propagatedBuildInputs;
+              _ =
+                pkgs.lib.assertMsg
+                  (pkgs.lib.elem "util-linux" propagatedNames)
+                  "pre-nixos must propagate util-linux in propagatedBuildInputs";
+            in
+            pkgs.runCommand "pre-nixos-propagates-util-linux" {} ''
+              touch $out
+            '';
+        };
         devShells.default = pkgs.mkShell {
           buildInputs = [ pkgs.python3 pkgs.python3Packages.pytest ];
         };
