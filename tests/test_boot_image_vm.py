@@ -258,7 +258,7 @@ def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
         "lvs --noheadings --separator '|' -o lv_name,vg_name", timeout=120
     )
     lv_pairs = {tuple(part.strip() for part in line.split("|")) for line in lv_output.splitlines() if line.strip()}
-    assert ("root", "main") in lv_pairs
+    assert ("slash", "main") in lv_pairs
 
 
 def test_boot_image_configures_network(boot_image_vm: BootImageVM) -> None:

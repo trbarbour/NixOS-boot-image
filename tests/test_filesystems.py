@@ -17,9 +17,9 @@ def test_filesystem_commands_for_lvs() -> None:
 
     # mkfs.ext4 uses a 2 KiB bytes-per-inode ratio to avoid inode exhaustion
     # in the Nix store which contains many small files.
-    assert f"mkfs.ext4 -i 2048 /dev/main/root" in commands
-    assert f"e2label /dev/main/root root" in commands
-    assert f"mount -L root /mnt" in commands
+    assert f"mkfs.ext4 -i 2048 /dev/main/slash" in commands
+    assert f"e2label /dev/main/slash slash" in commands
+    assert f"mount -L slash /mnt" in commands
 
     assert f"mkfs.ext4 -i 2048 /dev/large/data" in commands
     assert f"e2label /dev/large/data data" in commands
@@ -30,7 +30,7 @@ def test_filesystem_commands_for_lvs() -> None:
     assert "mount -L EFI /mnt/boot" in commands
 
 
-def test_mount_points_created_for_non_root_lvs() -> None:
+def test_mount_points_created_for_non_slash_lvs() -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
         Disk(name="sdb", size=2000, rotational=True),
@@ -41,7 +41,7 @@ def test_mount_points_created_for_non_root_lvs() -> None:
     commands = apply_plan(plan)
 
     for lv in plan["lvs"]:
-        if lv["name"] in {"root", "swap"}:
+        if lv["name"] in {"slash", "swap"}:
             continue
         mount_point = f"/mnt/{lv['name']}"
         mkdir_cmd = f"mkdir -p {mount_point}"
