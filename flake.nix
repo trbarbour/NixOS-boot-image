@@ -49,7 +49,10 @@
           src = ./.;
           pyproject = true;
           nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
-          propagatedBuildInputs = with pkgs; [ gptfdisk mdadm lvm2 ethtool ];
+          propagatedBuildInputs =
+            pkgs.lib.attrVals
+              [ "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ]
+              pkgs;
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
             cp ${rootPub} pre_nixos/root_key.pub
           '';
@@ -87,6 +90,26 @@
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
           };
+        checks = {
+          pre-nixos-propagates-required-tools =
+            let
+              requiredTools = [ "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ];
+              propagatedNames =
+                builtins.map
+                  (drv:
+                    if drv ? pname then drv.pname else (builtins.parseDrvName drv.name).name)
+                  preNixosPackage.propagatedBuildInputs;
+              missingTools =
+                pkgs.lib.filter (tool: !(pkgs.lib.elem tool propagatedNames)) requiredTools;
+              _ =
+                pkgs.lib.assertMsg
+                  (missingTools == [])
+                  "pre-nixos must propagate required tools: ${builtins.toString missingTools}";
+            in
+            pkgs.runCommand "pre-nixos-propagates-required-tools" {} ''
+              touch $out
+            '';
+        };
         devShells.default = pkgs.mkShell {
           buildInputs = [ pkgs.python3 pkgs.python3Packages.pytest ];
         };

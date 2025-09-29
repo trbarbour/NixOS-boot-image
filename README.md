@@ -105,6 +105,22 @@ to apply it:
 nix build
 ```
 
+### Running flake checks locally
+
+The flake defines a regression check that ensures `pre-nixos` continues to
+propagate the storage and networking utilities it requires at runtime. When
+using the single-user Nix installer, source the profile script and enable the
+experimental command set before invoking the check:
+
+```bash
+. "$HOME/.nix-profile/etc/profile.d/nix.sh"
+export NIX_CONFIG='experimental-features = nix-command flakes'
+nix flake check
+```
+
+The configuration environment variable is optional when `nix.conf` already
+enables flakes and the modern CLI.
+
 Build the CLI as a Nix package:
 
 ```bash
