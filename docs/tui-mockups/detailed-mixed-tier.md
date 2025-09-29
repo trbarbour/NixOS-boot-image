@@ -6,7 +6,7 @@ This mock illustrates the **detailed** density profile on an 110×34 terminal. A
 IP: 198.51.100.42 (lan)    View: Planned (detailed)           Focus: VG large          Legend: ■ SSD  ● HDD  ☐ EFI  ≡ RAID  ✱ mismatch
 
 Disk nvme0n1  ⟟ ─[☐ EFI]─[■ nvme0n1p2]─────────────┐
-                                                ├── md0 ≡ RAID1 (SSD) ── VG main ── root 40G (ext4)
+                                                ├── md0 ≡ RAID1 (SSD) ── VG main ── slash 40G (ext4)
 Disk nvme1n1  ⟟ ───────────────[■ nvme1n1p1]───────┘                         └─ nix 120G (ext4, dense)
                                                                              └─ var 30G (ext4)
 Disk nvme2n1  ⟟ ───────────────[■ (unused)]             (spare SSD bucket → VG main-1, unmounted)

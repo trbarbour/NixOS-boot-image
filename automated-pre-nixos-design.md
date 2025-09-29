@@ -103,7 +103,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ### 7.4 LVM layout
 - **VGs:** `main`, `swap` (if present), `large` (if present). Additional SSD/HDD buckets are created as `main-1`, `large-1`, etc., and left without logical volumes.
 - **LVs:**
-  - `main/root` 20 GiB (ext4).
+  - `main/slash` 20 GiB (ext4).
   - `main/nix` 100–200 GiB.
   - `main/var` 20–50 GiB.
   - Swap: `swap/swap` on VG `swap`; fallback hierarchy: `large/swap` on VG `large`, else `main/swap` on VG `main` when capacity permits.

@@ -7,7 +7,7 @@ The following pair of frames demonstrates how the UI reuses the same focus ancho
 IP: 192.0.2.45 (lan)  View: Existing (compact)  Focus: LV data         Legend: ■ SSD  ● HDD  ☐ EFI  ≡ RAID  ░ dim=not in plan
 
 Disk nvme0n1  ⟟ ─[☐ EFI]─[■ nvme0n1p2]──────────┐
-                                              ├── md0 ≡ RAID1 (SSD) ── VG main ── root 35G
+                                              ├── md0 ≡ RAID1 (SSD) ── VG main ── slash 35G
 Disk nvme1n1  ⟟ ───────────────[■ nvme1n1p1]────┘                         └─ nix 90G (fragmented)
 
 Disk sda      ◎ ─[● sda1 data]──────────────┐
@@ -20,7 +20,7 @@ Disk sdb      ◎ ─[● sdb1 data]──────────────�
 IP: 192.0.2.45 (lan)  View: Planned (compact)   Focus: LV data         Legend: ■ SSD  ● HDD  ☐ EFI  ≡ RAID  ✱ mismatch
 
 Disk nvme0n1  ⟟ ─[☐ EFI]─[■ nvme0n1p2]──────────┐
-                                              ├── md0 ≡ RAID1 (SSD) ── VG main ── root 40G (ext4)
+                                              ├── md0 ≡ RAID1 (SSD) ── VG main ── slash 40G (ext4)
 Disk nvme1n1  ⟟ ───────────────[■ nvme1n1p1]────┘                         └─ nix 120G (ext4, dense)
 
 Disk sda      ◎ ─[● sda1 data]──────────────┐
