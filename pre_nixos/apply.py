@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shlex
 import shutil
 import subprocess
-from typing import Dict, Any, List
+import textwrap
+from pathlib import Path
+from typing import Any, Dict, List
+
+DISKO_CONFIG_PATH = Path("/var/log/pre-nixos/disko-config.nix")
 
 
 def _run(cmd: str, execute: bool) -> None:
@@ -30,104 +35,33 @@ def _run(cmd: str, execute: bool) -> None:
 
 
 def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
-    """Apply a storage plan.
+    """Apply a storage plan."""
 
-    Parameters:
-        plan: Plan dictionary produced by :func:`pre_nixos.planner.plan_storage`.
-        dry_run: If ``True``, commands are returned without execution.
-
-    Returns:
-        A list of shell command strings in the order they would be executed.
-    """
     commands: List[str] = []
     execute = not dry_run and os.environ.get("PRE_NIXOS_EXEC") == "1"
 
-    efi_parts: List[str] = []
+    devices = plan.get("disko") or {}
+    if not devices:
+        return commands
 
-    for disk, parts in plan.get("partitions", {}).items():
-        cmd = f"sgdisk -Z /dev/{disk}"
-        commands.append(cmd)
-        _run(cmd, execute)
-        for idx, part in enumerate(parts, start=1):
-            if part["type"] == "efi":
-                cmd = f"sgdisk -n{idx}:0:+1G -t{idx}:EF00 /dev/{disk}"
-                efi_parts.append(part["name"])
-            elif part["type"] == "linux-raid":
-                cmd = f"sgdisk -n{idx}:0:0 -t{idx}:FD00 /dev/{disk}"
-            elif part["type"] == "lvm":
-                cmd = f"sgdisk -n{idx}:0:0 -t{idx}:8E00 /dev/{disk}"
-            else:
-                continue
-            commands.append(cmd)
-            _run(cmd, execute)
-        # Inform the kernel of partition table changes and wait for udev to
-        # settle so that subsequent commands see the new devices.
-        for cmd in (f"partprobe /dev/{disk}", "udevadm settle"):
-            commands.append(cmd)
-            _run(cmd, execute)
+    config_text = _render_disko_config(devices)
+    config_path = Path(plan.get("disko_config_path", DISKO_CONFIG_PATH))
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(config_text, encoding="utf-8")
 
-    for array in plan.get("arrays", []):
-        devices = " ".join(f"/dev/{d}" for d in array["devices"])
-        cmd = (
-            f"mdadm --create /dev/{array['name']} --level={array['level']} {devices}"
-        )
-        commands.append(cmd)
-        _run(cmd, execute)
-
-    pv_devices = {d for vg in plan.get("vgs", []) for d in vg["devices"]}
-    for dev in pv_devices:
-        cmd = f"pvcreate /dev/{dev}"
-        commands.append(cmd)
-        _run(cmd, execute)
-
-    for vg in plan.get("vgs", []):
-        devs = " ".join(f"/dev/{d}" for d in vg["devices"])
-        cmd = f"vgcreate {vg['name']} {devs}"
-        commands.append(cmd)
-        _run(cmd, execute)
-
-    for lv in plan.get("lvs", []):
-        size = lv["size"]
-        flag = "-l" if size.endswith("%") or size.upper().endswith("FREE") else "-L"
-        cmd = f"lvcreate -n {lv['name']} {lv['vg']} {flag} {size}"
-        commands.append(cmd)
-        _run(cmd, execute)
-        lv_path = f"/dev/{lv['vg']}/{lv['name']}"
-        if lv["name"] == "swap":
-            cmd = f"mkswap -L swap {lv_path}"
-            commands.append(cmd)
-            _run(cmd, execute)
-            continue
-        # The Nix store contains millions of small files. Using a dense
-        # inode allocation (1 inode per 2 KiB) prevents running out of
-        # inodes long before the LV is full.
-        cmd = f"mkfs.ext4 -i 2048 {lv_path}"
-        commands.append(cmd)
-        _run(cmd, execute)
-        cmd = f"e2label {lv_path} {lv['name']}"
-        commands.append(cmd)
-        _run(cmd, execute)
-        mount_point = "/mnt" if lv["name"] == "slash" else f"/mnt/{lv['name']}"
-        if lv["name"] != "slash":
-            cmd = f"mkdir -p {mount_point}"
-            commands.append(cmd)
-            _run(cmd, execute)
-        cmd = f"mount -L {lv['name']} {mount_point}"
-        commands.append(cmd)
-        _run(cmd, execute)
-
-    if efi_parts:
-        for idx, part in enumerate(efi_parts):
-            label = "EFI" if idx == 0 else f"EFI{idx+1}"
-            cmd = f"mkfs.vfat -F 32 -n {label} /dev/{part}"
-            commands.append(cmd)
-            _run(cmd, execute)
-        # Mount the first EFI partition for the NixOS install environment.
-        cmd = "mkdir -p /mnt/boot"
-        commands.append(cmd)
-        _run(cmd, execute)
-        cmd = "mount -L EFI /mnt/boot"
-        commands.append(cmd)
-        _run(cmd, execute)
+    cmd = (
+        "disko --yes-wipe-all-disks --mode destroy,format,mount "
+        f"--root-mountpoint /mnt {config_path}"
+    )
+    commands.append(cmd)
+    _run(cmd, execute)
 
     return commands
+
+
+def _render_disko_config(devices: Dict[str, Any]) -> str:
+    """Return a Nix expression for ``disko.devices``."""
+
+    json_blob = json.dumps(devices, indent=2, sort_keys=True)
+    body = textwrap.indent(json_blob, "    ")
+    return "{\n  disko.devices = builtins.fromJSON ''\n" + body + "\n  '';\n}\n"

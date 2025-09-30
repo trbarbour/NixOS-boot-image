@@ -248,3 +248,31 @@ def test_data_lv_size_capped() -> None:
     plan = plan_storage("fast", disks)
     data_lv = next(lv for lv in plan["lvs"] if lv["name"] == "data")
     assert data_lv["size"] == "60G"
+
+
+def test_plan_emits_disko_config() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    devices = plan["disko"]
+    assert devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]["mountpoint"] == "/boot"
+    md0 = devices["mdadm"]["md0"]
+    assert md0["level"] == 1
+    assert md0["content"]["vg"] == "swap"
+    slash = devices["lvm_vg"]["main"]["lvs"]["slash"]
+    assert slash["content"]["mountpoint"] == "/"
+    swap = devices["lvm_vg"]["swap"]["lvs"]["swap"]
+    assert swap["content"]["type"] == "swap"
+
+
+def test_secondary_efi_partition_not_mounted() -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=1000, rotational=False),
+    ]
+    plan = plan_storage("fast", disks)
+    partitions = plan["disko"]["disk"]["sdb"]["content"]["partitions"]
+    assert "mountpoint" not in partitions["sdb1"]["content"]

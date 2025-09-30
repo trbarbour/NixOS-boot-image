@@ -1,4 +1,5 @@
 """Storage planning heuristics."""
+from __future__ import annotations
 
 from typing import List, Dict, Any
 
@@ -151,7 +152,7 @@ def plan_storage(
     grows.
     """
     groups = group_by_rotational_and_size(disks)
-    plan: Dict[str, Any] = {"arrays": [], "vgs": [], "lvs": [], "partitions": {}}
+    plan: Dict[str, Any] = {"arrays": [], "vgs": [], "lvs": [], "partitions": {}, "disko": {}}
     array_index = 0
     device_sizes: Dict[str, int] = {}
     vg_sizes: Dict[str, int] = {}
@@ -336,4 +337,106 @@ def plan_storage(
     if any(vg["name"].startswith("large") for vg in plan["vgs"]):
         add_lv("data", "large", DATA_LV_SIZE)
 
+    plan["disko"] = _plan_to_disko_devices(plan)
     return plan
+
+
+def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
+    """Translate an internal plan to ``disko.devices``."""
+
+    devices: Dict[str, Any] = {"disk": {}, "mdadm": {}, "lvm_vg": {}}
+
+    arrays_by_name = {arr["name"]: arr for arr in plan.get("arrays", [])}
+    partition_to_array: Dict[str, str] = {}
+    for arr in plan.get("arrays", []):
+        for dev in arr.get("devices", []):
+            partition_to_array[dev] = arr["name"]
+
+    partition_to_vg: Dict[str, str] = {}
+    for vg in plan.get("vgs", []):
+        for dev in vg.get("devices", []):
+            if dev not in arrays_by_name:
+                partition_to_vg[dev] = vg["name"]
+
+    efi_count = 0
+    for disk, parts in plan.get("partitions", {}).items():
+        partitions: Dict[str, Any] = {}
+        for part in parts:
+            ptype = part.get("type")
+            name = part.get("name")
+            if not name:
+                continue
+            if ptype == "efi":
+                label = "EFI" if efi_count == 0 else f"EFI{efi_count + 1}"
+                efi_count += 1
+                content: Dict[str, Any] = {
+                    "type": "filesystem",
+                    "format": "vfat",
+                    "label": label,
+                }
+                if label == "EFI":
+                    content["mountpoint"] = "/boot"
+                    content["mountOptions"] = ["umask=0077"]
+                partitions[name] = {
+                    "size": "1G",
+                    "type": "EF00",
+                    "content": content,
+                }
+                continue
+            entry: Dict[str, Any] = {"size": "100%"}
+            array_name = partition_to_array.get(name)
+            if array_name:
+                entry["content"] = {"type": "mdraid", "name": array_name}
+            else:
+                vg_name = partition_to_vg.get(name)
+                if vg_name:
+                    entry["content"] = {"type": "lvm_pv", "vg": vg_name}
+            partitions[name] = entry
+        devices["disk"][disk] = {
+            "type": "disk",
+            "device": f"/dev/{disk}",
+            "content": {"type": "gpt", "partitions": partitions},
+        }
+
+    array_to_vg: Dict[str, str] = {}
+    for vg in plan.get("vgs", []):
+        for dev in vg.get("devices", []):
+            if dev in arrays_by_name:
+                array_to_vg[dev] = vg["name"]
+
+    level_map = {"raid0": 0, "raid1": 1, "raid5": 5, "raid6": 6, "raid10": 10}
+    for name, arr in arrays_by_name.items():
+        entry: Dict[str, Any] = {
+            "type": "mdadm",
+            "level": level_map.get(arr.get("level", ""), arr.get("level")),
+        }
+        target_vg = array_to_vg.get(name)
+        if target_vg:
+            entry["content"] = {"type": "lvm_pv", "vg": target_vg}
+        devices["mdadm"][name] = entry
+
+    lvs_by_vg: Dict[str, Dict[str, Any]] = {}
+    for lv in plan.get("lvs", []):
+        vg = lv.get("vg")
+        if not vg:
+            continue
+        lvs = lvs_by_vg.setdefault(vg, {})
+        size = lv.get("size")
+        if size is None:
+            continue
+        if lv.get("name") == "swap":
+            content = {"type": "swap"}
+        else:
+            mountpoint = "/" if lv.get("name") == "slash" else f"/{lv.get('name')}"
+            content = {
+                "type": "filesystem",
+                "format": "ext4",
+                "mountpoint": mountpoint,
+                "mountOptions": ["noatime"],
+            }
+        lvs[lv["name"]] = {"size": size, "content": content}
+
+    for vg, lvs in lvs_by_vg.items():
+        devices["lvm_vg"][vg] = {"type": "lvm_vg", "lvs": lvs}
+
+    return devices
