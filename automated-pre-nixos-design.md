@@ -128,11 +128,18 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 
 ### 7.9 Outputs
 - `/var/log/pre‑nixos/plan.json` — full machine‑readable plan.
+- `/var/log/pre‑nixos/disko-config.nix` — declarative layout for the disko CLI (generated from the plan's `disko.devices`).
 - `/var/log/pre‑nixos/actions.log` — stepwise logs.
 - `/mnt/etc/nixos/pre‑generated/` — config snippets:
   - `hardware‑disk.nix` (by‑label mounts, mdadm arrays, LVM VGs/LVs).
   - `network‑lan.nix` (udev rename → `lan`, DHCP on `lan`).
   - `bootloader.nix` (systemd‑boot config).
+
+### 7.10 Disko orchestration
+- The planner promotes its internal partition/array/VG/LV graph into a `disko.devices` attrset. Physical disks become `disk.<name>` entries with GPT partitions; EFI partitions gain FAT32 filesystems and only the primary ESP is mounted at `/boot`.
+- RAID sets map to `mdadm.<name>` with integer `level` values and `content = { type = "lvm_pv"; vg = "…"; }` so Disko turns arrays directly into PVs. Single devices stay as `lvm_pv` content on their partitions.
+- LVM volume groups surface as `lvm_vg.<name>.lvs`. Logical volumes render as either `filesystem` (ext4, `noatime`, mountpoints such as `/` and `/data`) or `swap` content. This mirrors today's manual mkfs/mkswap labelling policy.
+- The applier serialises the structure via `builtins.fromJSON` to keep the config legible, then shells out to Disko to execute the destroy/format/mount pipeline in one idempotent step.
 
 ---
 
@@ -147,10 +154,10 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 2. **Network stage:** probe carriers; choose NIC; write persistent rename → `lan`; start DHCP; if a root key is present, run `secure_ssh` to harden configuration and start `sshd`; otherwise leave `sshd` disabled; print IP via logging fan-out (serial best-effort/time-bounded).
 3. **Discovery:** enumerate disks; compute candidate RAID groups, and write a plan without modifying any disks.
 4. **Apply plan (manual):**
-   - After operator review (e.g., via `pre-nixos-tui`, which shows the current IP or a status message), confirm boot target (SSD/NVMe) and wipe signatures (configurable safety).
-   - Partition with `sgdisk`.
-   - Create md arrays; wait for sync (background) or `--assume-clean` if blank disks.
-   - Create PVs/VGs/LVs; format ext4 with labels; create swap per policy (VG `swap` preferred; fall back to VG `large`, then VG `main` if rotating tiers are absent and capacity allows).
+   - After operator review (e.g., via `pre-nixos-tui`, which shows the current IP or a status message), confirm boot target (SSD/NVMe) and acknowledge the wipe gate.
+   - The planner's `disko.devices` map is rendered to `/var/log/pre-nixos/disko-config.nix` using `builtins.fromJSON` so humans can audit the intended layout.
+   - `pre-nixos` invokes `disko --yes-wipe-all-disks --mode destroy,format,mount --root-mountpoint /mnt /var/log/pre-nixos/disko-config.nix`. Disko orchestrates GPT creation, mdadm arrays, LVM VGs/LVs, filesystem formatting, swap provisioning, and mounts everything relative to `/mnt`.
+   - Disko's stdout/stderr are streamed through the usual log fan-out; failures bubble up as a single error surface.
 5. **Mount target:** `/mnt` tree; generate NixOS config stubs; install bootloader into ESP (if `pre.autoinstall=1`, also run `nixos-install`).
 6. **Ready:** leave SSH up; write artifacts; emit summary through log fan-out (serial best-effort/time-bounded).
 
@@ -176,17 +183,14 @@ function plan_storage(mode):
   groups = group_by_rotational_and_size(disks)
   ssd_md = decide_ssd_array(groups.ssd, mode)
   hdd_md = decide_hdd_array(groups.hdd)
-  return {ssd_md, hdd_md, partitions, vgs, lvs, fs}
+  plan = {ssd_md, hdd_md, partitions, vgs, lvs}
+  plan.disko = plan_to_disko_devices(plan)
+  return plan
 
 function apply_plan(plan):
-  for dev in plan.to_wipe: wipe_signatures(dev)
-  for part in plan.gpt: sgdisk_create(part)
-  for md in plan.md: mdadm_create(md)
-  for pv in plan.pvs: pvcreate(pv)
-  for vg in plan.vgs: vgcreate(vg)
-  for lv in plan.lvs: lvcreate(lv)
-  for fs in plan.fs: mkfs(fs)
-  mount_all_by_label(plan)
+  cfg_path = "/var/log/pre-nixos/disko-config.nix"
+  write_file(cfg_path, render_disko(plan.disko))
+  run("disko --yes-wipe-all-disks --mode destroy,format,mount --root-mountpoint /mnt " + cfg_path)
   gen_nixos_stubs(plan)
 ```
 
@@ -229,7 +233,7 @@ function apply_plan(plan):
   - `/usr/local/lib/pre‑nixos/apply` (applier)
   - `/etc/udev/rules.d/90‑lan‑rename.rules` + `.link`
   - `/mnt/etc/nixos/pre‑generated/*.nix`
-- **Key commands:** `sgdisk`, `mdadm`, `lvm2` (`pvcreate/vgcreate/lvcreate`), `mkfs.ext4`, `mkswap`, `udevadm`, `ip`, `ethtool`.
+- **Key commands:** `disko` (destroy/format/mount), `udevadm`, `ip`, `ethtool`.
 
 ### TUI visualisation & interaction
 
