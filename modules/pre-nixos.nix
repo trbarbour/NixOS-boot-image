@@ -26,6 +26,19 @@ in {
       wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";
       environment = preNixosExecEnv;
+      path = with pkgs; [
+        coreutils
+        dosfstools
+        e2fsprogs
+        ethtool
+        gptfdisk
+        iproute2
+        lvm2
+        mdadm
+        parted
+        systemd
+        util-linux
+      ];
       script = preNixosServiceScript;
     };
 
