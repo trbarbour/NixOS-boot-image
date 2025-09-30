@@ -64,6 +64,24 @@ def test_multiple_hdd_buckets_named_separately() -> None:
     lv_vgs = {lv["vg"] for lv in plan["lvs"]}
     assert lv_vgs == {"swap", "large"}
 
+
+def test_hdd_only_promotes_main_with_efi() -> None:
+    disks = [
+        Disk(name="sda", size=2000, rotational=True),
+        Disk(name="sdb", size=2000, rotational=True),
+        Disk(name="sdc", size=2000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    vg_names = {vg["name"] for vg in plan["vgs"]}
+    assert "main" in vg_names
+    slash_lv = next(lv for lv in plan["lvs"] if lv["name"] == "slash")
+    assert slash_lv["vg"] == "main"
+    assert any(arr["level"] == "raid5" for arr in plan["arrays"])
+    for disk in ["sda", "sdb", "sdc"]:
+        parts = plan["partitions"][disk]
+        assert parts[0]["type"] == "efi"
+        assert parts[1]["type"] == "linux-raid"
+
 def test_two_hdd_only_becomes_main_with_swap_lv() -> None:
     disks = [
         Disk(name="sdb", size=2000, rotational=True),

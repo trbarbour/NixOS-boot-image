@@ -277,14 +277,35 @@ def plan_storage(
         # Pick the smallest total raw size.
         _, swap_bucket_idx = min(candidates, key=lambda x: x[0])
 
+    hdd_arrays = [
+        decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
+        for bucket in hdd_buckets
+    ]
+
+    main_bucket_idx: int | None = None
+    if not ssd_buckets and hdd_buckets:
+        for idx, arr in enumerate(hdd_arrays):
+            if arr["level"] == "raid1":
+                main_bucket_idx = idx
+                break
+        if main_bucket_idx is None:
+            for idx, arr in enumerate(hdd_arrays):
+                if arr["level"] != "single":
+                    main_bucket_idx = idx
+                    break
+        if main_bucket_idx is None:
+            main_bucket_idx = 0
+
     large_idx = 0
     for idx, bucket in enumerate(hdd_buckets):
         if idx == swap_bucket_idx:
             vg_name = "swap"
+        elif idx == main_bucket_idx:
+            vg_name = "main"
         else:
             vg_name = "large" if large_idx == 0 else f"large-{large_idx}"
             large_idx += 1
-        arr = decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
+        arr = hdd_arrays[idx]
         devices = record_partitions(
             bucket, with_efi=vg_name == "main", raid=arr["level"] != "single"
         )
