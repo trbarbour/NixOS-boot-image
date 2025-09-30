@@ -110,15 +110,26 @@ def test_cli_writes_console(monkeypatch, tmp_path, capsys):
         "enumerate_disks",
         lambda: [Disk(name="sda", size=1000, rotational=False)],
     )
-    fake_console = tmp_path / "console.log"
-    console_file = fake_console.open("w")
+    import io
+
+    class FakeConsole(io.StringIO):
+        def close(self) -> None:  # type: ignore[override]
+            # Keep the buffer accessible after ``pre_nixos.main`` closes the
+            # console handle.
+            self.flush()
+
+    fake_console = FakeConsole()
 
     def open_console():
-        return console_file
+        return fake_console
 
     monkeypatch.setattr(pre_nixos, "_maybe_open_console", open_console)
     pre_nixos.main(["--plan-only"])
-    console_file.close()
     out = capsys.readouterr().out
     assert "main" in out
-    assert "main" in fake_console.read_text()
+    console_output = fake_console.getvalue()
+    assert console_output.endswith("\r\n")
+    # There should be no bare line feeds, ensuring console output renders
+    # correctly on terminals that require carriage returns.
+    assert "\n" not in console_output.replace("\r\n", "")
+    assert "main" in console_output

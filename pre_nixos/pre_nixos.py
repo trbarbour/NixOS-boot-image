@@ -99,7 +99,12 @@ def main(argv: list[str] | None = None) -> None:
         output = json.dumps(plan, indent=2)
         print(output)
         if console is not None:
-            console.write(output + "\n")
+            # ``/dev/console`` expects carriage return + line feed for proper
+            # rendering on some terminals. Ensure each newline in the JSON
+            # output resets the cursor to the start of the line before
+            # returning control to the caller.
+            console_output = output.replace("\n", "\r\n") + "\r\n"
+            console.write(console_output)
             console.flush()
 
         will_modify_storage = (
