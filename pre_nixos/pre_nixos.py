@@ -3,6 +3,8 @@
 import argparse
 import io
 import json
+import os
+import sys
 
 from . import inventory, planner, apply, partition, network
 
@@ -13,6 +15,34 @@ def _maybe_open_console() -> io.TextIOWrapper | None:
         return open("/dev/console", "w", buffering=1)
     except OSError:
         return None
+
+
+def _is_interactive() -> bool:
+    """Return ``True`` when the CLI is connected to an interactive terminal."""
+
+    try:
+        return sys.stdin.isatty() and sys.stdout.isatty()
+    except Exception:  # pragma: no cover - extremely defensive
+        return False
+
+
+def _confirm_storage_reset() -> bool:
+    """Request confirmation before destroying existing storage."""
+
+    prompt = (
+        "This will erase and reinitialize all detected storage. Continue? [y/N]: "
+    )
+    while True:
+        try:
+            response = input(prompt)
+        except EOFError:
+            return False
+        choice = response.strip().lower()
+        if choice in {"y", "yes"}:
+            return True
+        if choice in {"", "n", "no"}:
+            return False
+        print("Please respond with 'yes' or 'no'.")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -48,33 +78,45 @@ def main(argv: list[str] | None = None) -> None:
 
     console = _maybe_open_console()
 
-    # Configure networking before performing storage operations so the machine
-    # becomes remotely reachable as early as possible.
-    network.configure_lan()
+    try:
+        # Configure networking before performing storage operations so the machine
+        # becomes remotely reachable as early as possible.
+        network.configure_lan()
 
-    if args.partition_boot:
-        partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
-    for dev in args.partition_lvm:
-        partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
+        if args.partition_boot:
+            partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
+        for dev in args.partition_lvm:
+            partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
 
-    disks = inventory.enumerate_disks()
-    ram_gb = inventory.detect_ram_gb()
-    plan = planner.plan_storage(
-        args.mode,
-        disks,
-        prefer_raid6_on_four=args.prefer_raid6_on_four,
-        ram_gb=ram_gb,
-    )
-    output = json.dumps(plan, indent=2)
-    print(output)
-    if console is not None:
-        console.write(output + "\n")
-        console.flush()
-    if not args.plan_only:
-        apply.apply_plan(plan, dry_run=args.dry_run)
+        disks = inventory.enumerate_disks()
+        ram_gb = inventory.detect_ram_gb()
+        plan = planner.plan_storage(
+            args.mode,
+            disks,
+            prefer_raid6_on_four=args.prefer_raid6_on_four,
+            ram_gb=ram_gb,
+        )
+        output = json.dumps(plan, indent=2)
+        print(output)
+        if console is not None:
+            console.write(output + "\n")
+            console.flush()
 
-    if console is not None:
-        console.close()
+        will_modify_storage = (
+            not args.plan_only
+            and not args.dry_run
+            and os.environ.get("PRE_NIXOS_EXEC") == "1"
+        )
+        if will_modify_storage and _is_interactive():
+            if not _confirm_storage_reset():
+                print("Aborting without modifying storage.")
+                return
+
+        if not args.plan_only:
+            apply.apply_plan(plan, dry_run=args.dry_run)
+    finally:
+        if console is not None:
+            console.close()
 
 
 if __name__ == "__main__":
