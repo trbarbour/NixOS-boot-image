@@ -47,6 +47,12 @@ After generating the key pair, keep `PRE_NIXOS_ROOT_KEY` set (or provide an
 absolute path directly in the environment) before running `nix build --impure`
 so that the key is embedded in the image.
 
+During the first boot the `pre-nixos` service copies the embedded public key to
+`/root/.ssh/authorized_keys` and rewrites `/etc/ssh/sshd_config` to disable
+password authentication. This hardening happens even if no network interface is
+connected yet, so you can plug in the LAN cable afterwards and connect with the
+prepared private key.
+
 Keep `pre_nixos/root_key` secure and uncommitted; `.gitignore` prevents
 accidental check-in of both halves. Use the generated
 private key to connect once the image boots:
