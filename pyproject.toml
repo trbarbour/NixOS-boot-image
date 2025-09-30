@@ -1,0 +1,22 @@
+[project]
+name = "pre-nixos"
+version = "0.1.0"
+description = "Pre-NixOS setup tool"
+authors = [{name = "Unknown"}]
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["pre_nixos"]
+
+[project.scripts]
+pre-nixos = "pre_nixos.pre_nixos:main"
+pre-nixos-detect-storage = "pre_nixos.storage_detection:main"
+pre-nixos-tui = "pre_nixos.tui:run"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
