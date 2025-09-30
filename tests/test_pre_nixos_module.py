@@ -22,7 +22,7 @@ def _extract_service_path_packages() -> set[str]:
     block = module_text[start:end]
     match = re.search(r"path\s*=\s*with pkgs;\s*\[(?P<body>[^\]]+)\];", block, re.DOTALL)
     if match is None:
-        raise AssertionError("systemd.services.pre-nixos.path definition missing")
+        raise AssertionError("systemd.services.pre-nixos path definition missing")
 
     body = match.group("body")
     tokens = {

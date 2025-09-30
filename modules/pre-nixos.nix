@@ -7,11 +7,12 @@ let
   preNixosExecEnv = { PRE_NIXOS_EXEC = "1"; };
   preNixosLoginNotice = builtins.readFile ./pre-nixos/login-notice.sh;
   preNixosServiceScript = import ./pre-nixos/service-script.nix { inherit pkgs; };
+  utilLinux = lib.getAttrFromPath [ "util-linux" ] pkgs;
 in {
   options.services.pre-nixos.enable = lib.mkEnableOption "run pre-nixos planning tool";
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.pre-nixos pkgs.util-linux pkgs.minicom ];
+    environment.systemPackages = with pkgs; [ pre-nixos utilLinux minicom ];
     environment.sessionVariables = preNixosExecEnv;
     environment.interactiveShellInit = preNixosLoginNotice;
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
