@@ -84,6 +84,27 @@ def test_configure_lan_skips_without_key(tmp_path):
     assert not (root_home / ".ssh/authorized_keys").exists()
 
 
+def test_configure_lan_secures_ssh_without_detected_iface(tmp_path):
+    netdir = tmp_path / "sys/class/net"
+    netdir.mkdir(parents=True)
+
+    network_dir = tmp_path / "etc/systemd/network"
+    ssh_dir = tmp_path / "etc/ssh"
+    root_home = tmp_path / "root"
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    result = configure_lan(
+        netdir, network_dir, ssh_dir, authorized_key=key, root_home=root_home
+    )
+    assert result is None
+    auth_keys = root_home / ".ssh/authorized_keys"
+    assert auth_keys.read_text() == key.read_text()
+    ssh_conf = ssh_dir / "sshd_config"
+    assert "PasswordAuthentication no" in ssh_conf.read_text()
+
+
 def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     ssh_dir = tmp_path / "etc/ssh"
     ssh_dir.mkdir(parents=True)

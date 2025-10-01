@@ -211,6 +211,7 @@ def configure_lan(
 
     iface = identify_lan(net_path)
     if iface is None:
+        secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
         return None
 
     write_lan_rename_rule(net_path, network_dir)
