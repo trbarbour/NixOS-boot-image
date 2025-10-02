@@ -12,4 +12,10 @@ def test_import_package() -> None:
 
 
 def test_import_modules() -> None:
-    from pre_nixos import inventory, planner, apply, network  # noqa: F401
+    from pre_nixos import apply, inventory, network, planner  # noqa: F401
+
+
+def test_import_cli_entrypoint() -> None:
+    """Ensure the CLI module imports without missing dependencies."""
+
+    __import__("pre_nixos.pre_nixos")

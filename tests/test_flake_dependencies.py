@@ -36,6 +36,7 @@ def test_pre_nixos_runtime_dependencies_include_required_tools() -> None:
     propagated = _extract_propagated_inputs()
     required_tools = {
         # Storage partitioning utilities
+        "disko",
         "gptfdisk",
         "mdadm",
         "lvm2",
