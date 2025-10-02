@@ -11,10 +11,14 @@ DRY.
 Do not make assumptions about technical matters (e.g. language properties).
 When in doubt, verify, by an experiment if necessary. An experiment should test the particular matter in isolation, so far as possible.
 
-Test end-to-end; leave nothing to chance. Never silently skip tests.
+Test end-to-end; leave nothing to chance. Never skip tests; if a test cannot run, count it as a failure. A test that takes a long time (e.g. 15 minutes) is better than not testing adequately.
+Write a comprehensive test plan (include it in the project), that starts with downloading and installing tools. Write scripts (preferably nix) to do so, and add them to the project.
+You should have sufficient Internet access to download any tools you need. If not, add the extra DNS domains you need to the list in the test plan, and ask for access.
 If you really cannot test properly (e.g. because of missing tools/dependencies), ask for help.
+
 When troubleshooting, you must first reproduce the bug in a specific test case (if you cannot, report this and stop); the test is to be a permanent part of the test suite.
 Always do root-cause analysis of failures; *never* *assume* the cause, *prove* it via the scientific method.
+
 When given a ticket (Github issue) for a fault, record your tests, actions, observations, hypotheses, and conclusions on the ticket (if you cannot update the ticket, put them in a report linked to the ticket).
 When you encounter a fault without a ticket, create one.
 
