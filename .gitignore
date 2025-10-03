@@ -1,4 +1,5 @@
 __pycache__/
 *.pyc
+.venv/
 pre_nixos/root_key
 pre_nixos/root_key.pub
