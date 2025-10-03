@@ -16,6 +16,8 @@ Write a comprehensive test plan (include it in the project), that starts with do
 You should have sufficient Internet access to download any tools you need. If not, add the extra DNS domains you need to the list in the test plan, and ask for access.
 If you really cannot test properly (e.g. because of missing tools/dependencies), ask for help.
 
+Make tests pass by changing the code under test, *not* by changing the test. The *only* time you may change a test is if you establish that the test itself is contrary to requirements, or (rarely) technically infeasible. If you change a test, you must report doing so.
+
 When troubleshooting, you must first reproduce the bug in a specific test case (if you cannot, report this and stop); the test is to be a permanent part of the test suite.
 Always do root-cause analysis of failures; *never* *assume* the cause, *prove* it via the scientific method.
 
