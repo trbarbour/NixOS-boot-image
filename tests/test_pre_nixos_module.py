@@ -37,6 +37,7 @@ def test_service_path_includes_runtime_utilities() -> None:
     packages = _extract_service_path_packages()
     required = {
         "coreutils",
+        "disko",
         "dosfstools",
         "e2fsprogs",
         "ethtool",

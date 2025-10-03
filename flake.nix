@@ -51,7 +51,7 @@
           nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
           propagatedBuildInputs =
             pkgs.lib.attrVals
-              [ "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ]
+              [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ]
               pkgs;
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
             cp ${rootPub} pre_nixos/root_key.pub
@@ -93,7 +93,7 @@
         checks = {
           pre-nixos-propagates-required-tools =
             let
-              requiredTools = [ "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ];
+              requiredTools = [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ];
               propagatedNames =
                 builtins.map
                   (drv:
@@ -110,8 +110,19 @@
               touch $out
             '';
         };
-        devShells.default = pkgs.mkShell {
-          buildInputs = [ pkgs.python3 pkgs.python3Packages.pytest ];
+        devShells = {
+          default = pkgs.mkShell {
+            buildInputs = [ pkgs.python3 pkgs.python3Packages.pytest ];
+          };
+          bootImageTest = pkgs.mkShell {
+            buildInputs = [
+              pkgs.python3
+              pkgs.python3Packages.pytest
+              pkgs.python3Packages.pexpect
+              pkgs.qemu
+              pkgs.nix
+            ];
+          };
         };
       }) // {
       nixosModules.pre-nixos = preNixosModule;

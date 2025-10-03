@@ -11,7 +11,7 @@ in {
   options.services.pre-nixos.enable = lib.mkEnableOption "run pre-nixos planning tool";
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.pre-nixos pkgs.util-linux pkgs.minicom ];
+    environment.systemPackages = [ pkgs.pre-nixos pkgs.disko pkgs.util-linux pkgs.minicom ];
     environment.sessionVariables = preNixosExecEnv;
     environment.interactiveShellInit = preNixosLoginNotice;
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
@@ -28,6 +28,7 @@ in {
       environment = preNixosExecEnv;
       path = with pkgs; [
         coreutils
+        disko
         dosfstools
         e2fsprogs
         ethtool

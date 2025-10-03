@@ -243,7 +243,7 @@ def boot_image_vm(
 
 
 def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
-    boot_image_vm.assert_commands_available("findmnt", "lsblk", "wipefs")
+    boot_image_vm.assert_commands_available("disko", "findmnt", "lsblk", "wipefs")
     status = boot_image_vm.wait_for_storage_status()
     assert status["STATE"] == "applied"
     assert status["DETAIL"] == "auto-applied"
