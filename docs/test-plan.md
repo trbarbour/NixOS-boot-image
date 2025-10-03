@@ -6,9 +6,21 @@ prepare the environment, and lists the mandatory test suites.
 
 ## 1. Toolchain Installation
 
-1. Install the Nix package manager following the official instructions at
-   <https://nixos.org/download>.
-2. Enter the dedicated development shell that provides all runtime test
+1. Run the automation helper from the repository root to provision the tooling
+   used by the Codex environment:
+
+   ```bash
+   ./scripts/codex-setup.sh
+   ```
+
+   The script installs required APT packages, provisions the Python virtual
+   environment in `.venv`, installs `pytest` and `pexpect`, and bootstraps the
+   single-user Nix CLI. Subsequent container starts execute
+   `scripts/codex-maintenance.sh`, which refreshes Python dependencies and keeps
+   the Nix profile sourced automatically.
+2. Install the Nix package manager following the official instructions at
+   <https://nixos.org/download> if the automated setup is skipped or fails.
+3. Enter the dedicated development shell that provides all runtime test
    dependencies (Python, pytest, pexpect, QEMU, and the Nix CLI):
 
    ```bash
@@ -17,7 +29,7 @@ prepare the environment, and lists the mandatory test suites.
 
    The `bootImageTest` shell is defined in `flake.nix` and guarantees a
    consistent toolchain across developer laptops and CI agents.
-3. Ensure network access to the public Nix binary cache and source mirrors:
+4. Ensure network access to the public Nix binary cache and source mirrors:
    `https://cache.nixos.org/` and `https://ftpmirror.gnu.org/`.  These hosts are
    required for building the boot image.
 
