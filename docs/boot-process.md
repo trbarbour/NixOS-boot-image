@@ -1,0 +1,7 @@
+The boot loader menu does not require pressing Enter, it will boot automatically after 5 seconds.
+
+When I use the boot-image to boot a mini-PC, it takes about 30 seconds from power-on to a nixos@nixos shell (the nixos user automatically logged in on a system provisionally named "nixos"). I don't have to type anything. I see the nixos user auto-logged in on all VTs, although when I switch VT (e.g. <ctrl>-<alt>-<F2>), there is a delay of a second or two before I see the nixos@nixos shell. To get a root shell, I just type "sudo su -" and press Enter (no password needed). The mini-PC does not have  a serial port.
+
+I have also used the boot image to boot a server. After power-on, the UEFI takes about 50 seconds, then it asks me (on the serial console) to type 't' if I want to use the serial console. A few seconds after typing 't' I see a boot-loader prompt on the serial console. The boot loader will boot automatically after 5 more seconds. While the kernel boots, I can see output on a VT, but not on the serial port. It takes about another 40 seconds for the boot process to complete, then (on the serial console) I get advice and the pre-nixos output, then the nixos user is automatically logged in, and I get a shell prompt "nixos@nixos" on the serial console. Again, I can get a root shell by typing "sudo su -".
+
+Thus the boot process can vary from around 30s for a mini-PC to around 90s for a server (on real hardware, not a qemu VM).
