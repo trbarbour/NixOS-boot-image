@@ -36,6 +36,21 @@
 - **Action:** Reworked `BootImageVM._login` to detect the auto-login banner, skip issuing `root` when the `nixos` account is already authenticated, and add an explicit `id -u` probe that escalates to root with `sudo -i` whenever the shell remains a non-root user. The escalation path now verifies success and fails fast if root cannot be acquired.
 - **Status:** The QEMU boot/build pipeline is lengthy (~10 minutes per attempt) and interrupts were required while iterating. A full green run is still pending and should be re-attempted once the nix build artefacts are cached for faster feedback.
 
+### Session 6 - Full `time pytest tests/test_boot_image_vm.py -rs`
+- **Date:** 2025-10-06
+- **Command:** `time pytest tests/test_boot_image_vm.py -rs`
+- **Result:** Both integration tests error during fixture setup. `pexpect` times out waiting for any of the login/banner prompts after 600s. The VM serial log captures the ISOLINUX menu, countdown, and kernel/initrd load acknowledgement, but no subsequent login shell output.
+- **Durations:**
+  - Wall clock for the full pytest invocation: 25m23s.
+  - Approximate `nix build .#bootImage` time (from process start 06:25 to serial log birth 06:41): ~16m.
+  - QEMU runtime before timeout: ~10m (process elapsed 06:41-06:51).
+- **Artifacts:** Saved a cleaned serial log snapshot at `docs/boot-logs/2025-10-06T0641Z-serial-log.txt` for future comparison. The raw log lives under `/tmp/pytest-of-root/pytest-0/boot-image-logs0/serial.log` while the test is running.
+- **Observations:** Kernel parameters may be missing a `console=ttyS0,115200` hand-off, so once control transfers from ISOLINUX to the NixOS kernel the serial output ceases. Without a serial console the login matcher cannot succeed. Need to confirm which profile the boot ISO selects and whether we can append serial console flags via `nix build` arguments or `grub.cfg` overlays.
+- **Next Steps:**
+  - Inspect the ISO's boot loader configuration to confirm kernel append parameters include serial console redirection.
+  - Identify a hook (e.g., `extraKernelParams` or `boot.loader.grub.extraEntries`) we can modify in the NixOS configuration to guarantee serial console output.
+  - Re-run the test after adjusting the boot parameters; expect QEMU boot logs to include systemd and login messages.
+
 ## Conclusions
 - Progressed from generic skip to identifying missing shell integration for preinstalled tooling (`nix`).
 - Resolved the `nix` visibility issue by patching the maintenance script; future shells expose the CLI automatically, and manual recovery steps are documented.
