@@ -110,21 +110,44 @@ class BootImageVM:
             r"# ",
         ]
         idx = self.child.expect(login_patterns, timeout=600)
+
         if idx == 0:
-            self.child.sendline("root")
-            prompt_patterns = [r"Password:", r"root@.*# ", r"# "]
-            idx = self.child.expect(prompt_patterns, timeout=180)
-            if idx == 0:
-                self.child.sendline("")
-                self.child.expect([r"root@.*# ", r"# "], timeout=180)
-        elif idx == 1:
+            automatic_login = False
+            try:
+                auto_idx = self.child.expect([r"\(automatic login\)"], timeout=1)
+                automatic_login = auto_idx == 0
+            except pexpect.TIMEOUT:
+                automatic_login = False
+
+            if not automatic_login:
+                self.child.sendline("root")
+                prompt_patterns = [r"Password:", r"root@.*# ", r"# "]
+                idx = self.child.expect(prompt_patterns, timeout=180)
+                if idx == 0:
+                    self.child.sendline("")
+                    self.child.expect([r"root@.*# ", r"# "], timeout=180)
+
+        root_check = 'if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi'
+        self.child.sendline(root_check)
+        marker_idx = self.child.expect([r"__ROOT__", r"__USER__"], timeout=60)
+        self.child.expect([r"root@.*# ", r"# ", r"nixos@.*\$ "], timeout=60)
+
+        if marker_idx == 1:
             self.child.sendline("sudo -i")
             sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ", r"# "]
             idx = self.child.expect(sudo_patterns, timeout=180)
             if idx == 0:
                 self.child.sendline("")
                 self.child.expect([r"root@.*# ", r"# "], timeout=180)
-        # idx 2 or 3 already indicates a root prompt.
+            else:
+                self.child.expect([r"root@.*# ", r"# "], timeout=180)
+
+            self.child.sendline(root_check)
+            marker_idx = self.child.expect([r"__ROOT__", r"__USER__"], timeout=60)
+            self.child.expect([r"root@.*# ", r"# "], timeout=60)
+            if marker_idx != 0:
+                raise AssertionError("failed to acquire root shell")
+
         self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
         self.child.expect(SHELL_PROMPT, timeout=60)
 
