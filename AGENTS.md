@@ -13,6 +13,7 @@ When in doubt, verify, by an experiment if necessary. An experiment should test 
 
 Test end-to-end; leave nothing to chance. Never skip tests; if a test cannot run, count it as a failure. A test that takes a long time (e.g. 15 minutes) is better than not testing adequately.
 Write a comprehensive test plan (include it in the project), that starts with downloading and installing tools. Write scripts (preferably nix) to do so, and add them to the project.
+Check the output from these scripts, in case some measure (e.g. source a file) is needed to bring tools into scope.
 You should have sufficient Internet access to download any tools you need. If not, add the extra DNS domains you need to the list in the test plan, and ask for access.
 If you really cannot test properly (e.g. because of missing tools/dependencies), write a report about the difficulties and ask for help.
 
@@ -29,6 +30,13 @@ If you find separate tickets, or other documents, concerning the same topic, lin
 When you have difficulty making progress, consider how many unknowns you are dealing with, and how to reduce the number of unknowns. Use divide-and-conquer to separate the unknowns so that you can solve them individually. You can write a toy project to resolve one particular unknown in isolation from others. When each unknown has been resolved individually, the combination will be more tractable. At least, record a list of the unknowns, and make a plan for resolving each of them.
 
 It is important not to flounder or get stuck in a loop. Every time you undertake a task, aim to produce at least some useful output. If you could not achieve the goal this time, at least record what you have done, what worked, what did not, and your ideas about why; then someone can take the work forward, instead of it being wasted.
+
+Document your major activities in files in the project, so that you can tell if you are repeating inefficient/fruitless behaviour. Include the actual date-time in each filename, so you can easily view them in chronlogical order.
+If you find recurring infelicities (e.g. a build taking too long), make a plan for improving it, and record the plan.
+
+If something is expensive to compute, and you need it as input into code you are experimenting with, don't recompute it for each experiment, save a copy and use it for several experiments (until you get the code right).
+
+Don't rush. Take time to understand, and do things the right way. Do it once, do it right!
 
 === For Codex Agent Only ===
 The Codex environment exposes two optional automation hooks outside the repository itself: a Setup script that runs whenever the project workspace is first created (or restored from cache) and a Maintenance script that runs on every subsequent container start. Write/maintain suitable setup and maintenance helper scripts (in the repository), and I will point the hooks at them. You can configure these scripts so that they will set up everything you need before you start work (next time) on a task for this project. When the scripts run, they have full network access, so can install all necessary tools and dependencies.
