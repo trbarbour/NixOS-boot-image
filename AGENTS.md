@@ -13,7 +13,7 @@ When in doubt, verify, by an experiment if necessary. An experiment should test 
 
 NEVER SKIP TESTS! Never let tests be skipped! If a test cannot run, count it as a failure, and record the failure so that it will be addressed.
 
-Test end-to-end; leave nothing to chance. Never skip tests; if a test cannot run, count it as a failure. A test that takes a long time (e.g. 15 minutes) is better than not testing adequately.
+Test end-to-end; leave nothing to chance. A test that takes a long time (e.g. 15 minutes) is better than not testing adequately.
 Write a comprehensive test plan (include it in the project), that starts with downloading and installing tools. Write scripts (preferably nix) to do so, and add them to the project.
 Check the output from these scripts, in case some measure (e.g. source a file) is needed to bring tools into scope.
 You should have sufficient Internet access to download any tools you need. If not, add the extra DNS domains you need to the list in the test plan, and ask for access.
