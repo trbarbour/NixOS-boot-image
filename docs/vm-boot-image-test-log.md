@@ -56,3 +56,22 @@
 - Resolved the `nix` visibility issue by patching the maintenance script; future shells expose the CLI automatically, and manual recovery steps are documented.
 - Clarified that Python dependencies are present inside `.venv` and must be consumed by activating the virtual environment before running the VM suite.
 - Hardened the VM login routine with an `id -u` guard so that future debugging operates from a guaranteed root shell; further end-to-end validation is outstanding because of long-running nix builds.
+
+### Session 7 - Baseline with Serial Capture and Timing Metrics
+- **Date:** 2025-10-06
+- **Command:** `time ./.venv/bin/pytest tests/test_boot_image_vm.py -rs`
+- **Result:** Both tests error during `BootImageVM` login. The shell remains the auto-logged-in `nixos` user; `_login` never matches a root prompt within 600s and aborts.
+- **Durations:**
+  - Wall clock for full pytest invocation: 10m21s (`real 10m21.327s`).
+  - Observed `nix build` phase (PID 5477) ran for ~8m before QEMU launched (`mksquashfs` CPU time peaked around 9m elapsed).
+  - QEMU stayed up for ~10m until the login timeout triggered.
+- **Artifacts:**
+  - Pytest transcript stored at `docs/test-reports/2025-10-06T15-54-30Z-boot-image-vm-test.log`.
+  - Serial console log archived as `docs/boot-logs/2025-10-06T15-54-30Z-serial.log` showing automatic login, failed root escalation, and pre-nixos storage warning.
+- **Observations:**
+  - Serial log includes banner `[nixos@nixos:~]$` after automatic login and prints `__USER__`, confirming we never acquire root.
+  - The image emits `pre-nixos: Storage detection encountered an error; provisioning ran in plan-only mode.` indicating provisioning did not run fully.
+- **Next Steps:**
+  - Inspect sudo availability and prompt handling to ensure `_login` escalates successfully.
+  - Review pre-nixos systemd journal to understand the storage error and why provisioning stops early.
+  - Audit boot configuration for serial console persistence beyond login to aid future captures.
