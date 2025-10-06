@@ -34,9 +34,14 @@ It is important not to flounder or get stuck in a loop. Every time you undertake
 Document your major activities in files in the project, so that you can tell if you are repeating inefficient/fruitless behaviour. Include the actual date-time in each filename, so you can easily view them in chronlogical order.
 If you find recurring infelicities (e.g. a build taking too long), make a plan for improving it, and record the plan.
 
+If an anomaly occurs, either address it immediately, or make a record of it, so you can address it later. Do not ignore it.
+
 If something is expensive to compute, and you need it as input into code you are experimenting with, don't recompute it for each experiment, save a copy and use it for several experiments (until you get the code right).
 
 Don't rush. Take time to understand, and do things the right way. Do it once, do it right!
+
+Keep track of all tasks, so they get done, not skipped/lost. Maintain a queue of tasks to perform. When you see something you need to do, either do it immediately (if straightforward), or document it and put it on the queue.
+Each time you start work (on a user query), first check the queue of tasks. If the queue is non-empty, put the user's task on the back of the queue (and tell the user), then work through the queued tasks.
 
 === For Codex Agent Only ===
 The Codex environment exposes two optional automation hooks outside the repository itself: a Setup script that runs whenever the project workspace is first created (or restored from cache) and a Maintenance script that runs on every subsequent container start. Write/maintain suitable setup and maintenance helper scripts (in the repository), and I will point the hooks at them. You can configure these scripts so that they will set up everything you need before you start work (next time) on a task for this project. When the scripts run, they have full network access, so can install all necessary tools and dependencies.
