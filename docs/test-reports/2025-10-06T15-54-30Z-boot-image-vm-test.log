@@ -1,0 +1,266 @@
+===================================================== test session starts ======================================================
+platform linux -- Python 3.11.12, pytest-8.4.2, pluggy-1.6.0
+rootdir: /workspace/NixOS-boot-image
+configfile: pyproject.toml
+collected 2 items
+
+tests/test_boot_image_vm.py EE                                                                                           [100%]
+
+============================================================ ERRORS ============================================================
+___________________________________ ERROR at setup of test_boot_image_provisions_clean_disk ____________________________________
+
+_pexpect = <module 'pexpect' from '/workspace/NixOS-boot-image/.venv/lib/python3.11/site-packages/pexpect/__init__.py'>
+qemu_executable = '/usr/bin/qemu-system-x86_64'
+boot_image_iso = PosixPath('/nix/store/dy1kxcpa5cc94pmy43hy5kk5phgnmpj7-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso')
+vm_disk_image = PosixPath('/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img')
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7f288fd53b10>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-0'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="session")
+    def boot_image_vm(
+        _pexpect: "pexpect",
+        qemu_executable: str,
+        boot_image_iso: Path,
+        vm_disk_image: Path,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> BootImageVM:
+        log_dir = tmp_path_factory.mktemp("boot-image-logs")
+        log_path = log_dir / "serial.log"
+        log_handle = log_path.open("w", encoding="utf-8")
+        cmd = [
+            qemu_executable,
+            "-m",
+            "2048",
+            "-smp",
+            "2",
+            "-display",
+            "none",
+            "-no-reboot",
+            "-boot",
+            "d",
+            "-serial",
+            "stdio",
+            "-cdrom",
+            str(boot_image_iso),
+            "-drive",
+            f"file={vm_disk_image},if=virtio,format=raw",
+            "-device",
+            "virtio-rng-pci",
+            "-netdev",
+            "user,id=net0",
+            "-device",
+            "virtio-net-pci,netdev=net0",
+        ]
+        child = _pexpect.spawn(
+            cmd[0],
+            cmd[1:],
+            encoding="utf-8",
+            codec_errors="ignore",
+            timeout=600,
+        )
+        child.logfile = log_handle
+>       vm = BootImageVM(child=child, log_path=log_path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_boot_image_vm.py:260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+<string>:5: in __init__
+    ???
+tests/test_boot_image_vm.py:103: in __post_init__
+    self._login()
+tests/test_boot_image_vm.py:133: in _login
+    self.child.expect([r"root@.*# ", r"# ", r"nixos@.*\$ "], timeout=60)
+.venv/lib/python3.11/site-packages/pexpect/spawnbase.py:354: in expect
+    return self.expect_list(compiled_pattern_list,
+.venv/lib/python3.11/site-packages/pexpect/spawnbase.py:383: in expect_list
+    return exp.expect_loop(timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/pexpect/expect.py:181: in expect_loop
+    return self.timeout(e)
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pexpect.expect.Expecter object at 0x7f288fac67d0>, err = TIMEOUT('Timeout exceeded.')
+
+    def timeout(self, err=None):
+        spawn = self.spawn
+    
+        spawn.before = spawn._before.getvalue()
+        spawn.after = TIMEOUT
+        index = self.searcher.timeout_index
+        if index >= 0:
+            spawn.match = TIMEOUT
+            spawn.match_index = index
+            return index
+        else:
+            spawn.match = None
+            spawn.match_index = None
+            msg = str(spawn)
+            msg += '\nsearcher: %s' % self.searcher
+            if err is not None:
+                msg = str(err) + '\n' + msg
+    
+            exc = TIMEOUT(msg)
+            exc.__cause__ = None    # in Python 3.x we can use "raise exc from None"
+>           raise exc
+E           pexpect.exceptions.TIMEOUT: Timeout exceeded.
+E           <pexpect.pty_spawn.spawn object at 0x7f288fb312d0>
+E           command: /usr/bin/qemu-system-x86_64
+E           args: [b'/usr/bin/qemu-system-x86_64', b'-m', b'2048', b'-smp', b'2', b'-display', b'none', b'-no-reboot', b'-boot', b'd', b'-serial', b'stdio', b'-cdrom', b'/nix/store/dy1kxcpa5cc94pmy43hy5kk5phgnmpj7-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso', b'-drive', b'file=/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img,if=virtio,format=raw', b'-device', b'virtio-rng-pci', b'-netdev', b'user,id=net0', b'-device', b'virtio-net-pci,netdev=net0']
+E           buffer (last 100 chars): ' echo __USER__; fi\r\r\n\x1b[?2004l\r__USER__\r\r\n\x1b[?2004h\r\r\r\n\x1b[1;32m[\x1b]0;nixos@nixos: ~\x07nixos@nixos:~]$\x1b[0m '
+E           before (last 100 chars): ' echo __USER__; fi\r\r\n\x1b[?2004l\r__USER__\r\r\n\x1b[?2004h\r\r\r\n\x1b[1;32m[\x1b]0;nixos@nixos: ~\x07nixos@nixos:~]$\x1b[0m '
+E           after: <class 'pexpect.exceptions.TIMEOUT'>
+E           match: None
+E           match_index: None
+E           exitstatus: None
+E           flag_eof: False
+E           pid: 12701
+E           child_fd: 14
+E           closed: False
+E           timeout: 600
+E           delimiter: <class 'pexpect.exceptions.EOF'>
+E           logfile: <_io.TextIOWrapper name='/tmp/pytest-of-root/pytest-0/boot-image-logs0/serial.log' mode='w' encoding='utf-8'>
+E           logfile_read: None
+E           logfile_send: None
+E           maxread: 2000
+E           ignorecase: False
+E           searchwindowsize: None
+E           delaybeforesend: 0.05
+E           delayafterclose: 0.1
+E           delayafterterminate: 0.1
+E           searcher: searcher_re:
+E               0: re.compile('root@.*# ')
+E               1: re.compile('# ')
+E               2: re.compile('nixos@.*\\$ ')
+
+.venv/lib/python3.11/site-packages/pexpect/expect.py:144: TIMEOUT
+_____________________________________ ERROR at setup of test_boot_image_configures_network _____________________________________
+
+_pexpect = <module 'pexpect' from '/workspace/NixOS-boot-image/.venv/lib/python3.11/site-packages/pexpect/__init__.py'>
+qemu_executable = '/usr/bin/qemu-system-x86_64'
+boot_image_iso = PosixPath('/nix/store/dy1kxcpa5cc94pmy43hy5kk5phgnmpj7-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso')
+vm_disk_image = PosixPath('/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img')
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7f288fd53b10>, _basetemp=PosixPath('/tmp/pytest-of-root/pytest-0'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="session")
+    def boot_image_vm(
+        _pexpect: "pexpect",
+        qemu_executable: str,
+        boot_image_iso: Path,
+        vm_disk_image: Path,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> BootImageVM:
+        log_dir = tmp_path_factory.mktemp("boot-image-logs")
+        log_path = log_dir / "serial.log"
+        log_handle = log_path.open("w", encoding="utf-8")
+        cmd = [
+            qemu_executable,
+            "-m",
+            "2048",
+            "-smp",
+            "2",
+            "-display",
+            "none",
+            "-no-reboot",
+            "-boot",
+            "d",
+            "-serial",
+            "stdio",
+            "-cdrom",
+            str(boot_image_iso),
+            "-drive",
+            f"file={vm_disk_image},if=virtio,format=raw",
+            "-device",
+            "virtio-rng-pci",
+            "-netdev",
+            "user,id=net0",
+            "-device",
+            "virtio-net-pci,netdev=net0",
+        ]
+        child = _pexpect.spawn(
+            cmd[0],
+            cmd[1:],
+            encoding="utf-8",
+            codec_errors="ignore",
+            timeout=600,
+        )
+        child.logfile = log_handle
+>       vm = BootImageVM(child=child, log_path=log_path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_boot_image_vm.py:260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+<string>:5: in __init__
+    ???
+tests/test_boot_image_vm.py:103: in __post_init__
+    self._login()
+tests/test_boot_image_vm.py:133: in _login
+    self.child.expect([r"root@.*# ", r"# ", r"nixos@.*\$ "], timeout=60)
+.venv/lib/python3.11/site-packages/pexpect/spawnbase.py:354: in expect
+    return self.expect_list(compiled_pattern_list,
+.venv/lib/python3.11/site-packages/pexpect/spawnbase.py:383: in expect_list
+    return exp.expect_loop(timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/pexpect/expect.py:181: in expect_loop
+    return self.timeout(e)
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pexpect.expect.Expecter object at 0x7f288fac67d0>, err = TIMEOUT('Timeout exceeded.')
+
+    def timeout(self, err=None):
+        spawn = self.spawn
+    
+        spawn.before = spawn._before.getvalue()
+        spawn.after = TIMEOUT
+        index = self.searcher.timeout_index
+        if index >= 0:
+            spawn.match = TIMEOUT
+            spawn.match_index = index
+            return index
+        else:
+            spawn.match = None
+            spawn.match_index = None
+            msg = str(spawn)
+            msg += '\nsearcher: %s' % self.searcher
+            if err is not None:
+                msg = str(err) + '\n' + msg
+    
+            exc = TIMEOUT(msg)
+            exc.__cause__ = None    # in Python 3.x we can use "raise exc from None"
+>           raise exc
+E           pexpect.exceptions.TIMEOUT: Timeout exceeded.
+E           <pexpect.pty_spawn.spawn object at 0x7f288fb312d0>
+E           command: /usr/bin/qemu-system-x86_64
+E           args: [b'/usr/bin/qemu-system-x86_64', b'-m', b'2048', b'-smp', b'2', b'-display', b'none', b'-no-reboot', b'-boot', b'd', b'-serial', b'stdio', b'-cdrom', b'/nix/store/dy1kxcpa5cc94pmy43hy5kk5phgnmpj7-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso', b'-drive', b'file=/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img,if=virtio,format=raw', b'-device', b'virtio-rng-pci', b'-netdev', b'user,id=net0', b'-device', b'virtio-net-pci,netdev=net0']
+E           buffer (last 100 chars): ' echo __USER__; fi\r\r\n\x1b[?2004l\r__USER__\r\r\n\x1b[?2004h\r\r\r\n\x1b[1;32m[\x1b]0;nixos@nixos: ~\x07nixos@nixos:~]$\x1b[0m '
+E           before (last 100 chars): ' echo __USER__; fi\r\r\n\x1b[?2004l\r__USER__\r\r\n\x1b[?2004h\r\r\r\n\x1b[1;32m[\x1b]0;nixos@nixos: ~\x07nixos@nixos:~]$\x1b[0m '
+E           after: <class 'pexpect.exceptions.TIMEOUT'>
+E           match: None
+E           match_index: None
+E           exitstatus: None
+E           flag_eof: False
+E           pid: 12701
+E           child_fd: 14
+E           closed: False
+E           timeout: 600
+E           delimiter: <class 'pexpect.exceptions.EOF'>
+E           logfile: <_io.TextIOWrapper name='/tmp/pytest-of-root/pytest-0/boot-image-logs0/serial.log' mode='w' encoding='utf-8'>
+E           logfile_read: None
+E           logfile_send: None
+E           maxread: 2000
+E           ignorecase: False
+E           searchwindowsize: None
+E           delaybeforesend: 0.05
+E           delayafterclose: 0.1
+E           delayafterterminate: 0.1
+E           searcher: searcher_re:
+E               0: re.compile('root@.*# ')
+E               1: re.compile('# ')
+E               2: re.compile('nixos@.*\\$ ')
+
+.venv/lib/python3.11/site-packages/pexpect/expect.py:144: TIMEOUT
+================================================ 2 errors in 620.66s (0:10:20) =================================================
+
+real	10m21.327s
+user	13m22.287s
+sys	2m13.705s
