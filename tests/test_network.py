@@ -1,5 +1,6 @@
 """Tests for network module."""
 
+import json
 import subprocess
 
 from pre_nixos.network import (
@@ -133,12 +134,33 @@ def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
 
 def test_get_ip_address_parses_output(monkeypatch):
     class DummyResult:
-        stdout = "2: lan    inet 192.0.2.5/24 brd 192.0.2.255 scope global lan\n"
+        stdout = json.dumps(
+            [
+                {
+                    "ifname": "lan",
+                    "addr_info": [
+                        {"family": "inet", "local": "192.0.2.5", "prefixlen": 24}
+                    ],
+                }
+            ]
+        )
 
     monkeypatch.setattr(
         subprocess, "run", lambda *a, **k: DummyResult()
     )
     assert get_ip_address("lan") == "192.0.2.5"
+
+
+def test_get_ip_address_returns_none_for_malformed_json(monkeypatch):
+    class DummyResult:
+        stdout = "{not-json}"
+
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *a, **k: DummyResult(),
+    )
+    assert get_ip_address("lan") is None
 
 
 def test_get_lan_status_reports_missing_key(tmp_path):
@@ -161,7 +183,16 @@ def test_get_lan_status_returns_ip(tmp_path, monkeypatch):
     key.write_text("ssh-ed25519 AAAAB3NzaC1 test@local")
 
     class DummyResult:
-        stdout = "2: lan    inet 203.0.113.9/24 brd 203.0.113.255 scope global lan\n"
+        stdout = json.dumps(
+            [
+                {
+                    "ifname": "lan",
+                    "addr_info": [
+                        {"family": "inet", "local": "203.0.113.9", "prefixlen": 24}
+                    ],
+                }
+            ]
+        )
 
     monkeypatch.setattr(subprocess, "run", lambda *a, **k: DummyResult())
     assert get_lan_status(authorized_key=key) == "203.0.113.9"

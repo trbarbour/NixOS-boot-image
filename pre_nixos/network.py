@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -81,7 +82,7 @@ def get_ip_address(iface: str = "lan") -> Optional[str]:
 
     try:
         result = subprocess.run(
-            ["ip", "-o", "-4", "addr", "show", iface],
+            ["ip", "-j", "-4", "addr", "show", iface],
             capture_output=True,
             text=True,
             check=True,
@@ -89,10 +90,25 @@ def get_ip_address(iface: str = "lan") -> Optional[str]:
     except subprocess.CalledProcessError:
         return None
 
-    for line in result.stdout.splitlines():
-        parts = line.split()
-        if len(parts) >= 4:
-            return parts[3].split("/")[0]
+    try:
+        payload = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(payload, list):
+        return None
+
+    for entry in payload:
+        if not isinstance(entry, dict):
+            continue
+        for addr in entry.get("addr_info", []):
+            if not isinstance(addr, dict):
+                continue
+            if addr.get("family") != "inet":
+                continue
+            local = addr.get("local")
+            if isinstance(local, str) and local:
+                return local
     return None
 
 
