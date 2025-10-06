@@ -35,7 +35,12 @@ def enumerate_disks(sys_block: Path = Path("/sys/block")) -> List[Disk]:
         A list of :class:`Disk` objects for non-removable, non-virtual devices.
     """
     disks: List[Disk] = []
-    for entry in sys_block.iterdir():
+    try:
+        entries = list(sys_block.iterdir())
+    except (FileNotFoundError, NotADirectoryError, PermissionError):
+        return disks
+
+    for entry in entries:
         name = entry.name
         if name.startswith(("loop", "ram", "dm", "sr", "md")):
             continue
