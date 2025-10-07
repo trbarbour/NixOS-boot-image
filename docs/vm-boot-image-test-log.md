@@ -75,3 +75,10 @@
   - Inspect sudo availability and prompt handling to ensure `_login` escalates successfully.
   - Review pre-nixos systemd journal to understand the storage error and why provisioning stops early.
   - Audit boot configuration for serial console persistence beyond login to aid future captures.
+
+### Session 8 - Prompt Regex Root-Cause Analysis
+- **Date:** 2025-10-07
+- **Method:** Offline analysis of archived serial log and pytest failure buffer.
+- **Findings:** Serial bytes surrounding the `_login` timeout contain ANSI colour and bracketed-paste escape sequences (`\x1b[1;32m`, `\x1b]0;...`, `\x1b[?2004h`). These wrappers prevent the existing regex `nixos@.*\$ ` from matching, so the fixture never executes `sudo -i`.
+- **Artifacts:** Investigation notes recorded at `docs/work-notes/2025-10-07T01-11-00Z-boot-image-vm-root-prompt-analysis.md`.
+- **Follow-up:** Implement the prompt-handling fix, then re-run the VM test to validate the hypothesis. If timeouts persist, resume the serial-console and storage-provisioning investigations documented in earlier sessions.
