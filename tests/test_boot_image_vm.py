@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
+import socket
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pytest
 
@@ -60,6 +62,50 @@ def qemu_executable() -> str:
     return _require_executable("qemu-system-x86_64")
 
 
+@pytest.fixture(scope="session")
+def ssh_keygen_executable() -> str:
+    return _require_executable("ssh-keygen")
+
+
+@pytest.fixture(scope="session")
+def ssh_executable() -> str:
+    return _require_executable("ssh")
+
+
+@pytest.fixture(scope="session")
+def boot_ssh_key_pair(
+    tmp_path_factory: pytest.TempPathFactory,
+    ssh_keygen_executable: str,
+) -> SSHKeyPair:
+    key_dir = tmp_path_factory.mktemp("boot-image-ssh-key")
+    private_key = key_dir / "id_ed25519"
+    public_key = key_dir / "id_ed25519.pub"
+    subprocess.run(
+        [
+            ssh_keygen_executable,
+            "-t",
+            "ed25519",
+            "-N",
+            "",
+            "-C",
+            "boot-image-vm-test",
+            "-f",
+            str(private_key),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return SSHKeyPair(private_key=private_key, public_key=public_key)
+
+
+@pytest.fixture(scope="session")
+def ssh_forward_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
 def _resolve_iso_path(store_path: Path) -> Path:
     if store_path.is_file() and store_path.suffix == ".iso":
         return store_path
@@ -77,12 +123,18 @@ def _resolve_iso_path(store_path: Path) -> Path:
 
 
 @pytest.fixture(scope="session")
-def boot_image_iso(nix_executable: str) -> Path:
+def boot_image_iso(
+    nix_executable: str,
+    boot_ssh_key_pair: SSHKeyPair,
+) -> Path:
+    env = os.environ.copy()
+    env["PRE_NIXOS_ROOT_KEY"] = str(boot_ssh_key_pair.public_key)
     result = subprocess.run(
         [
             nix_executable,
             "build",
             ".#bootImage",
+            "--impure",
             "--no-link",
             "--print-out-paths",
         ],
@@ -90,6 +142,7 @@ def boot_image_iso(nix_executable: str) -> Path:
         check=True,
         capture_output=True,
         text=True,
+        env=env,
     )
     paths = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if not paths:
@@ -107,12 +160,23 @@ def vm_disk_image(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return disk_path
 
 
+@dataclass(frozen=True)
+class SSHKeyPair:
+    """Filesystem paths for a generated SSH key pair."""
+
+    private_key: Path
+    public_key: Path
+
+
 @dataclass
 class BootImageVM:
-    """Minimal controller for interacting with the boot image via serial."""
+    """Minimal controller for interacting with the boot image via serial and SSH."""
 
     child: "pexpect.spawn"
     log_path: Path
+    ssh_port: int
+    ssh_host: str
+    ssh_executable: str
 
     def __post_init__(self) -> None:
         self._login()
@@ -187,9 +251,17 @@ class BootImageVM:
         self.child.expect(SHELL_PROMPT, timeout=timeout)
         output = self.child.before.replace("\r", "")
         lines = output.splitlines()
-        if lines and self._strip_ansi(lines[0]).strip() == command:
-            lines = lines[1:]
-        cleaned = [self._strip_ansi(line) for line in lines]
+        cleaned: List[str] = []
+        for raw_line in lines:
+            stripped = self._strip_ansi(raw_line)
+            if stripped.startswith(SHELL_PROMPT):
+                stripped = stripped[len(SHELL_PROMPT) :]
+            stripped = stripped.strip()
+            if not stripped:
+                continue
+            cleaned.append(stripped)
+        if cleaned and cleaned[0] == command:
+            cleaned = cleaned[1:]
         return "\n".join(cleaned).strip()
 
     def collect_journal(self, unit: str, *, since_boot: bool = True) -> str:
@@ -207,7 +279,8 @@ class BootImageVM:
         missing: List[str] = []
         for command in commands:
             result = self.run(f"command -v {command} >/dev/null 2>&1 && echo OK || echo MISSING")
-            if result != "OK":
+            lines = [line.strip() for line in result.splitlines() if line.strip()]
+            if any(line.endswith("MISSING") for line in lines):
                 missing.append(command)
         if missing:
             raise AssertionError(
@@ -254,6 +327,59 @@ class BootImageVM:
         else:
             self.child.expect(pexpect.EOF, timeout=60)
 
+    def run_ssh(
+        self,
+        *,
+        private_key: Path,
+        command: str,
+        port: Optional[int] = None,
+        user: str = "root",
+        timeout: int = 240,
+        interval: float = 5.0,
+    ) -> str:
+        """Execute a command over SSH, retrying until success or timeout."""
+
+        target_port = self.ssh_port if port is None else port
+        deadline = time.monotonic() + timeout
+        last_stdout = ""
+        last_stderr = ""
+
+        ssh_cmd = [
+            self.ssh_executable,
+            "-i",
+            str(private_key),
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-o",
+            "UserKnownHostsFile=/dev/null",
+            "-o",
+            "ConnectTimeout=10",
+            "-p",
+            str(target_port),
+            f"{user}@{self.ssh_host}",
+            command,
+        ]
+
+        while time.monotonic() < deadline:
+            result = subprocess.run(
+                ssh_cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()
+            last_stdout = result.stdout
+            last_stderr = result.stderr
+            time.sleep(interval)
+
+        raise AssertionError(
+            "SSH command failed after retries: "
+            f"stdout={last_stdout!r} stderr={last_stderr!r}"
+        )
+
 
 @pytest.fixture(scope="session")
 def boot_image_vm(
@@ -262,6 +388,8 @@ def boot_image_vm(
     boot_image_iso: Path,
     vm_disk_image: Path,
     tmp_path_factory: pytest.TempPathFactory,
+    ssh_executable: str,
+    ssh_forward_port: int,
 ) -> BootImageVM:
     log_dir = tmp_path_factory.mktemp("boot-image-logs")
     log_path = log_dir / "serial.log"
@@ -286,7 +414,7 @@ def boot_image_vm(
         "-device",
         "virtio-rng-pci",
         "-netdev",
-        "user,id=net0",
+        f"user,id=net0,hostfwd=tcp:127.0.0.1:{ssh_forward_port}-:22",
         "-device",
         "virtio-net-pci,netdev=net0",
     ]
@@ -298,7 +426,13 @@ def boot_image_vm(
         timeout=600,
     )
     child.logfile = log_handle
-    vm = BootImageVM(child=child, log_path=log_path)
+    vm = BootImageVM(
+        child=child,
+        log_path=log_path,
+        ssh_port=ssh_forward_port,
+        ssh_host="127.0.0.1",
+        ssh_executable=ssh_executable,
+    )
     try:
         yield vm
     finally:
@@ -330,9 +464,18 @@ def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
     assert ("slash", "main") in lv_pairs
 
 
-def test_boot_image_configures_network(boot_image_vm: BootImageVM) -> None:
+def test_boot_image_configures_network(
+    boot_image_vm: BootImageVM,
+    boot_ssh_key_pair: SSHKeyPair,
+) -> None:
     addr_lines = boot_image_vm.wait_for_ipv4()
     assert any("inet " in line for line in addr_lines)
 
     status = boot_image_vm.run("systemctl is-active pre-nixos", timeout=60)
     assert status == "inactive"
+
+    ssh_identity = boot_image_vm.run_ssh(
+        private_key=boot_ssh_key_pair.private_key,
+        command="id -un",
+    )
+    assert ssh_identity == "root"
