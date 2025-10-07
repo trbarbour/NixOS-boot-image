@@ -56,6 +56,22 @@ pytest tests/test_boot_image_vm.py
 
 These tests require hardware virtualisation support and may take several
 minutes.  They are non-optional: failures or skips indicate inadequate testing.
+Before running the suite:
+
+1. Generate a disposable SSH key pair and export the public key so Nix can
+   embed it into the boot image:
+
+   ```bash
+   ssh-keygen -t ed25519 -N '' -f /tmp/pre-nixos-test-key
+   export PRE_NIXOS_ROOT_KEY=/tmp/pre-nixos-test-key.pub
+   ```
+
+2. Invoke `nix build --impure` (the test harness does this automatically) so
+   `builtins.getEnv` can read `PRE_NIXOS_ROOT_KEY` during flake evaluation.  The
+   integration tests generate their own ephemeral key pair per run, forward the
+   VM's SSH port to the host, and assert that `ssh -i` connects as `root` using
+   the generated private key.
+
 Inspect the generated serial console log (stored under
 `/tmp/pytest-of-*/boot-image-logs/serial.log`) when debugging regressions.
 
