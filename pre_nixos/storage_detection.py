@@ -73,6 +73,7 @@ _IGNORED_DEVICE_PREFIXES = (
     "/dev/ram",
     "/dev/dm",
     "/dev/md",
+    "/dev/fd",
     "/dev/sr",
 )
 

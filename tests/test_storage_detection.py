@@ -108,3 +108,15 @@ def test_missing_device_during_inspection_is_ignored() -> None:
     env = make_env(commands)
     assert not has_existing_storage(env, boot_disk=None)
 
+
+def test_floppy_device_is_ignored_during_detection() -> None:
+    """Legacy floppy controllers should not trigger detection errors."""
+
+    commands = {
+        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(stdout="/dev/fd0 disk\n/dev/vda disk\n"),
+        ("lsblk", "-rno", "TYPE", "/dev/vda"): CommandOutput(stdout="disk\n"),
+        ("wipefs", "-n", "/dev/vda"): CommandOutput(stdout=""),
+    }
+
+    env = make_env(commands, path_exists=lambda _path: True, realpath=lambda path: path)
+    assert not has_existing_storage(env, boot_disk=None)

@@ -177,14 +177,29 @@ class BootImageVM:
         self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
         self._expect_normalised([SHELL_PROMPT], timeout=60)
 
+    def _strip_ansi(self, text: str) -> str:
+        """Remove ANSI escape sequences from command output."""
+
+        return ANSI_ESCAPE_PATTERN.sub("", text)
+
     def run(self, command: str, *, timeout: int = 180) -> str:
         self.child.sendline(command)
         self.child.expect(SHELL_PROMPT, timeout=timeout)
-        output = self.child.before
+        output = self.child.before.replace("\r", "")
         lines = output.splitlines()
-        if lines and lines[0].strip() == command:
+        if lines and self._strip_ansi(lines[0]).strip() == command:
             lines = lines[1:]
-        return "\n".join(lines).strip()
+        cleaned = [self._strip_ansi(line) for line in lines]
+        return "\n".join(cleaned).strip()
+
+    def collect_journal(self, unit: str, *, since_boot: bool = True) -> str:
+        """Return the journal for a systemd unit."""
+
+        args = ["journalctl", "--no-pager", "-u", unit]
+        if since_boot:
+            args.append("-b")
+        command = " ".join(args) + " || true"
+        return self.run(command, timeout=240)
 
     def assert_commands_available(self, *commands: str) -> None:
         """Ensure required commands are present in the boot environment."""
@@ -294,8 +309,13 @@ def boot_image_vm(
 def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
     boot_image_vm.assert_commands_available("disko", "findmnt", "lsblk", "wipefs")
     status = boot_image_vm.wait_for_storage_status()
-    assert status["STATE"] == "applied"
-    assert status["DETAIL"] == "auto-applied"
+    if status.get("STATE") != "applied" or status.get("DETAIL") != "auto-applied":
+        journal = boot_image_vm.collect_journal("pre-nixos.service")
+        pytest.fail(
+            "pre-nixos did not auto-apply provisioning:\n"
+            f"status={status}\n"
+            f"journalctl -u pre-nixos.service:\n{journal}"
+        )
 
     vg_output = boot_image_vm.run(
         "vgs --noheadings --separator '|' -o vg_name", timeout=120
