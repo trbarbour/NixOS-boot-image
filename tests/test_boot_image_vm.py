@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import time
@@ -19,6 +20,20 @@ except ImportError:  # pragma: no cover - handled by pytest skip
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SHELL_PROMPT = "PRE-NIXOS> "
+
+ANSI_ESCAPE_PATTERN = re.compile(
+    r"""
+    \x1B(
+        \[[0-?]*[ -/]*[@-~]      # CSI sequences, including bracketed paste toggles
+        |\][^\x07]*(?:\x07|\x1b\\)  # OSC sequences for terminal title updates
+        |P[^\x07\x1b]*(?:\x07|\x1b\\)  # DCS sequences
+        |[@-Z\\-_]                 # 2-character sequences (e.g. ESCc)
+        |_[^\x07]*(?:\x07|\x1b\\)    # APC sequences
+        |\^[^\x07]*(?:\x07|\x1b\\)   # PM sequences
+    )
+    """,
+    re.VERBOSE,
+)
 
 
 def _require_executable(executable: str) -> str:
@@ -102,54 +117,65 @@ class BootImageVM:
     def __post_init__(self) -> None:
         self._login()
 
+    def _expect_normalised(self, patterns: List[str], *, timeout: int) -> int:
+        compiled = self.child.compile_pattern_list([*patterns, ANSI_ESCAPE_PATTERN])
+        deadline = time.monotonic() + timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise pexpect.TIMEOUT("timeout exceeded while waiting for pattern")
+            idx = self.child.expect_list(compiled, timeout=remaining)
+            if idx < len(patterns):
+                return idx
+
     def _login(self) -> None:
         login_patterns = [
             r"login: ",
-            r"\[nixos@[^]]+\]\$ ",
-            r"root@.*# ",
-            r"# ",
+            r"\[nixos@[^]]+\]\$ ?",
+            r"root@.*# ?",
+            r"# ?",
         ]
-        idx = self.child.expect(login_patterns, timeout=600)
+        idx = self._expect_normalised(login_patterns, timeout=600)
 
         if idx == 0:
             automatic_login = False
             try:
-                auto_idx = self.child.expect([r"\(automatic login\)"], timeout=1)
+                auto_idx = self._expect_normalised([r"\(automatic login\)"], timeout=1)
                 automatic_login = auto_idx == 0
             except pexpect.TIMEOUT:
                 automatic_login = False
 
             if not automatic_login:
                 self.child.sendline("root")
-                prompt_patterns = [r"Password:", r"root@.*# ", r"# "]
-                idx = self.child.expect(prompt_patterns, timeout=180)
+                prompt_patterns = [r"Password:", r"root@.*# ?", r"# ?"]
+                idx = self._expect_normalised(prompt_patterns, timeout=180)
                 if idx == 0:
                     self.child.sendline("")
-                    self.child.expect([r"root@.*# ", r"# "], timeout=180)
+                    self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
 
         root_check = 'if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi'
         self.child.sendline(root_check)
-        marker_idx = self.child.expect([r"__ROOT__", r"__USER__"], timeout=60)
-        self.child.expect([r"root@.*# ", r"# ", r"nixos@.*\$ "], timeout=60)
+        marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
+        self._expect_normalised([r"root@.*# ?", r"# ?", r"nixos@.*\$ ?"], timeout=60)
 
         if marker_idx == 1:
             self.child.sendline("sudo -i")
-            sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ", r"# "]
-            idx = self.child.expect(sudo_patterns, timeout=180)
+            sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ?", r"# ?"]
+            idx = self._expect_normalised(sudo_patterns, timeout=180)
             if idx == 0:
                 self.child.sendline("")
-                self.child.expect([r"root@.*# ", r"# "], timeout=180)
+                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
             else:
-                self.child.expect([r"root@.*# ", r"# "], timeout=180)
+                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
 
             self.child.sendline(root_check)
-            marker_idx = self.child.expect([r"__ROOT__", r"__USER__"], timeout=60)
-            self.child.expect([r"root@.*# ", r"# "], timeout=60)
+            marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
+            self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=60)
             if marker_idx != 0:
                 raise AssertionError("failed to acquire root shell")
 
         self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
-        self.child.expect(SHELL_PROMPT, timeout=60)
+        self._expect_normalised([SHELL_PROMPT], timeout=60)
 
     def run(self, command: str, *, timeout: int = 180) -> str:
         self.child.sendline(command)
