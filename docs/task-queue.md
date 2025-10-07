@@ -1,9 +1,12 @@
 # Task Queue
 
-_Last updated: 2025-10-06T16-05-17Z_
+_Last updated: 2025-10-07T00-56-30Z_
 
 ## Active Tasks
 
+1. **Audit boot-image VM test prerequisites.**
+   - Follow the condition checklist in `docs/work-notes/2025-10-07T00-56-30Z-boot-image-vm-condition-plan.md` to confirm host tooling, ISO contents, and VM runtime behaviour all satisfy test expectations.
+   - Record pass/fail for each condition and capture supporting logs to unblock subsequent fixes.
 1. **Investigate root escalation failure in boot-image VM test.**
    - Captured serial log shows automatic login leaves shell as `nixos` user and `_login` escalates but never observes root prompt.
    - Identify why `sudo -i` path does not yield `root@` prompt even though it should; confirm whether `sudo` is present in image and whether `pexpect` prompt patterns need adjustment.
