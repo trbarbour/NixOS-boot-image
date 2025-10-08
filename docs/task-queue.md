@@ -1,14 +1,23 @@
 # Task Queue
 
-_Last updated: 2025-10-07T04-01-53Z_
+_Last updated: 2025-10-07T15-07-59Z_
 
 ## Active Tasks
 
 1. **Capture follow-up boot timings after configuration adjustments.**
    - Once fixes are implemented, re-run the VM test to measure improved timings and compare against current 10m21s wall clock.
 2. **Embed or simulate root SSH key for LAN configuration.**
-   - Provide a `pre_nixos/root_key.pub` or set `PRE_NIXOS_ROOT_KEY` during ISO build/testing so `configure_lan` can rename the NIC to `lan` and enable DHCP.
-   - Document temporary key management or adjust the module to permit DHCP without SSH hardening for automated tests.
+   - Copy the generated public key into the Python package during `nix build --impure` so `pre_nixos/network.py` sees `root_key.pub` at runtime.
+   - Investigate the current `pre-nixos: Provisioning failed` journal entry to confirm the key is honoured and that LAN renaming/DHCP proceed afterwards.
+3. **Automate ephemeral SSH key injection for VM tests.**
+   - Generate a disposable SSH key pair within the test harness, export the public key via `PRE_NIXOS_ROOT_KEY`, and verify the private key grants SSH access once networking is healthy.
+   - Capture and document the key lifecycle so future runs do not depend on persisted keys.
+4. **Root-cause the new VM provisioning failure.**
+   - Collect `journalctl -u pre-nixos` from the serial log or via the harness to understand why the service now exits with "Provisioning failed".
+   - Once the provisioning regression is fixed, rerun the suite to confirm LAN renaming and SSH connectivity using the ephemeral key.
+5. **Ensure the full test suite runs without skips (especially `test_boot_image_vm`).**
+   - Audit pytest skips and environment prerequisites; install or document missing dependencies so the VM test executes rather than skipping.
+   - Maintain scripts or nix expressions that exercise the entire suite as part of CI/regression testing.
 
 ## Recently Completed
 
