@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -42,6 +43,22 @@ def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
     return None
 
 
+def wait_for_lan(
+    net_path: Path = Path("/sys/class/net"),
+    *,
+    attempts: int = 30,
+    delay: float = 2.0,
+) -> Optional[str]:
+    """Poll for an active LAN interface and return its name when detected."""
+
+    for _ in range(attempts):
+        iface = identify_lan(net_path)
+        if iface is not None:
+            return iface
+        time.sleep(delay)
+    return None
+
+
 def write_lan_rename_rule(
     net_path: Path = Path("/sys/class/net"),
     rules_dir: Path = Path("/etc/systemd/network"),
@@ -56,7 +73,7 @@ def write_lan_rename_rule(
         Path to the written rule file or ``None`` if no active interface is found.
     """
 
-    iface = identify_lan(net_path)
+    iface = wait_for_lan(net_path)
     if iface is None:
         return None
 
@@ -225,11 +242,16 @@ def configure_lan(
     if not authorized_key.exists():
         return None
 
-    iface = identify_lan(net_path)
+    iface = wait_for_lan(net_path)
     if iface is None:
+        print(
+            "configure_lan: no interface with carrier detected; skipping LAN setup",
+            flush=True,
+        )
         secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
         return None
 
+    print(f"configure_lan: detected active interface '{iface}'", flush=True)
     write_lan_rename_rule(net_path, network_dir)
 
     network_dir.mkdir(parents=True, exist_ok=True)
