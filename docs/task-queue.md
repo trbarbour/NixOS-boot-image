@@ -1,14 +1,15 @@
 # Task Queue
 
-_Last updated: 2025-10-08T07-36-29Z_
+_Last updated: 2025-10-08T13-56-18Z_
 
 ## Active Tasks
 
 1. **Rebuild the boot image with the network fixes and rerun the VM regression.**
-   - 2025-10-08T07-36-29Z run (`pytest tests/test_boot_image_vm.py`) still failed: both tests reported missing storage tools and no IPv4 assignment even though the ISO was rebuilt from `4hsa8bvg3d073am0pp9ajv056rhqsfr4-...` with a fresh root key (see `docs/test-reports/2025-10-08T07-36-29Z-boot-image-vm-test.md`).
-   - Collect `journalctl -u pre-nixos.service` on the next attempt to confirm whether `_systemctl(..., ignore_missing=True)` executed and why provisioning aborts.
-   - Verify `pre-nixos` ultimately provisions the blank disk, obtains DHCP on `lan`, and accepts SSH.
-   - Capture updated serial logs and promote them to `docs/boot-logs/` together with a fresh test report once the run succeeds.
+   - 2025-10-08T13-51-16Z run (`pytest tests/test_boot_image_vm.py`) still fails: `test_boot_image_provisions_clean_disk` flagged `disko`, `lsblk`, and `wipefs` as missing and `test_boot_image_configures_network` timed out without an IPv4 lease. The captured journal shows `pre_nixos.network.identify_lan` raising `OSError: [Errno 22] Invalid argument` when reading the NIC carrier file (see `docs/test-reports/2025-10-08T13-51-16Z-boot-image-vm-test.md`).
+   - Prior run (2025-10-08T07-36-29Z) exhibited the same symptoms on the earlier ISO build; see `docs/test-reports/2025-10-08T07-36-29Z-boot-image-vm-test.md` for historical context.
+   - Implement a fix for the carrier read failure (e.g. guard `identify_lan` against `OSError` and confirm the interface detection logic tolerates virtio NICs without link state).
+   - Stabilise the command-availability probe so the first `command -v` execution does not race the prompt update.
+   - Rebuild the ISO, rerun the VM regression, and confirm provisioning, DHCP, and SSH succeed. Promote fresh serial/journal logs to `docs/boot-logs/` together with an updated test report when the run passes.
 2. **Capture follow-up boot timings after configuration adjustments.**
    - The latest run (2025-10-08T00-41-32Z) still failed after 1000.26s because provisioning aborted; rerun once the networking fix is validated to measure meaningful timings.
 3. **Ensure the full test suite runs without skips (especially `test_boot_image_vm`).**
