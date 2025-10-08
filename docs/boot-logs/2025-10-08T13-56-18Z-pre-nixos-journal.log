@@ -1,0 +1,58 @@
+[?2004l
+poweroff
+
+Oct 08 13:57:48 nixos systemd[1]: Starting Pre-NixOS setup...
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]: Traceback (most recent call last):
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:   File "/nix/store/qsgibl8hmy6yhjm5p8gvnrjfklimk61b-pre-nixos-0.1.0/bin/.pre-nixos-wrapped", line 9, in <module>
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:     sys.exit(main())
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:              ^^^^^^
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:   File "/nix/store/qsgibl8hmy6yhjm5p8gvnrjfklimk61b-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/pre_nixos.py", line 84, in main
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:     network.configure_lan()
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:   File "/nix/store/qsgibl8hmy6yhjm5p8gvnrjfklimk61b-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/network.py", line 260, in configure_lan
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:     iface = wait_for_lan(net_path)
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:             ^^^^^^^^^^^^^^^^^^^^^^
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:   File "/nix/store/qsgibl8hmy6yhjm5p8gvnrjfklimk61b-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/network.py", line 70, in wait_for_lan
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:     iface = identify_lan(net_path)
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:             ^^^^^^^^^^^^^^^^^^^^^^
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:   File "/nix/store/qsgibl8hmy6yhjm5p8gvnrjfklimk61b-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/network.py", line 53, in identify_lan
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:     carrier = (iface / "carrier").read_text().strip()
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:   File "/nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/lib/python3.11/pathlib.py", line 1059, in read_text
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:     return f.read()
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]:            ^^^^^^^^
+
+Oct 08 13:58:01 nixos pre-nixos-start[870]: OSError: [Errno 22] Invalid argument
+
+Oct 08 13:58:01 nixos systemd[1]: [0;1;39m[0;1;31m[0;1;39mpre-nixos.service: Main process exited, code=exited, status=1/FAILURE[0m
+
+Oct 08 13:58:01 nixos systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mpre-nixos.service: Failed with result 'exit-code'.[0m
+
+Oct 08 13:58:01 nixos systemd[1]: [0;1;31m[0;1;39m[0;1;31mFailed to start Pre-NixOS setup.[0m
+
+Oct 08 13:58:01 nixos systemd[1]: pre-nixos.service: Consumed 5.608s CPU time, no IP traffic.
+
+[?2004hPRE-NIXOS> poweroff
+
+[?2004l
+[0;1;31mCall to PowerOff failed: Interactive authentication required.[0m
+
+
+[?2004hPRE-NIXOS>
