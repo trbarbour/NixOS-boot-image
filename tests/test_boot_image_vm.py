@@ -349,6 +349,8 @@ class BootImageVM:
             "-i",
             str(private_key),
             "-o",
+            "IdentitiesOnly=yes",
+            "-o",
             "BatchMode=yes",
             "-o",
             "StrictHostKeyChecking=no",
