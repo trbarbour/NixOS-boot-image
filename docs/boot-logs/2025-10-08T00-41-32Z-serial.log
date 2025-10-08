@@ -1,0 +1,296 @@
+
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot/bzImage... ok
+
+Loading /boot/initrd...ok
+
+
+
+
+
+
+[1;32m<<< Welcome to NixOS 24.05.20241230.b134951 (x86_64) - ttyS0 >>>[0m
+
+The "nixos" and "root" accounts have empty passwords.
+
+
+
+To log in over ssh you must set a password for either "nixos" or "root"
+
+with `passwd` (prefix with `sudo` for "root"), or add your public key to
+
+/home/nixos/.ssh/authorized_keys or /root/.ssh/authorized_keys.
+
+
+
+If you need a wireless connection, type
+
+`sudo systemctl start wpa_supplicant` and configure a
+
+network using `wpa_cli`. See the NixOS manual for details.
+
+
+
+
+
+Run 'nixos-help' for the NixOS manual.
+
+
+
+nixos login: nixos (automatic login)
+
+
+
+
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+
+pre-nixos: Provisioning failed.
+
+             Inspect 'journalctl -u pre-nixos' for failure details.
+
+[?2004h
+
+
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+
+[?2004l
+export PS1='PRE-NIXOS> '
+
+command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+
+__USER__
+
+[?2004h
+
+
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '
+
+[?2004l
+command -v findmnt >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004hPRE-NIXOS> command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+
+[?2004l
+OK
+
+[?2004hPRE-NIXOS> command -v lsblk >/dev/null 2>&1 && echo OK || echo MISSING
+command -v wipefs >/dev/null 2>&1 && echo OK || echo MISSING
+command -v findmnt >/dev/null 2>&1 && echo OK || echo MISSING
+
+[?2004l
+OK
+
+[?2004hPRE-NIXOS> command -v lsblk >/dev/null 2>&1 && echo OK || echo MISSING
+
+[?2004l
+OK
+
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+command -v wipefs >/dev/null 2>&1 && echo OK || echo MISSING
+
+[?2004l
+OK
+
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> poweroff
+ip -o -4 addr show dev lan 2>/dev/null || true
+
+[?2004l
+[?2004hPRE-NIXOS> poweroff
+
+[?2004l
+[0;1;31mCall to PowerOff failed: Interactive authentication required.[0m
+
+
+[?2004hPRE-NIXOS> 
