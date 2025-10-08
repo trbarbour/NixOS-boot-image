@@ -14,6 +14,10 @@ in {
     environment.systemPackages = [ pkgs.pre-nixos pkgs.disko pkgs.util-linux pkgs.minicom ];
     environment.sessionVariables = preNixosExecEnv;
     environment.interactiveShellInit = preNixosLoginNotice;
+    systemd.network.enable = true;
+    networking.useNetworkd = lib.mkForce true;
+    networking.useDHCP = lib.mkForce false;
+    networking.networkmanager.enable = lib.mkForce false;
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
     boot.loader.grub.memtest86.enable = true;
     boot.loader.grub.extraConfig = ''
