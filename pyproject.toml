@@ -8,6 +8,10 @@ requires-python = ">=3.10"
 
 [tool.setuptools]
 packages = ["pre_nixos"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+pre_nixos = ["root_key.pub"]
 
 [project.scripts]
 pre-nixos = "pre_nixos.pre_nixos:main"
