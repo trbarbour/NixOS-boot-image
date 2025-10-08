@@ -22,6 +22,21 @@ def _run(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
+def _systemctl(args: list[str], *, ignore_missing: bool = False) -> None:
+    """Invoke ``systemctl`` with optional missing-unit tolerance."""
+
+    if os.environ.get("PRE_NIXOS_EXEC") != "1":
+        return
+    result = subprocess.run(["systemctl", *args], check=False)
+    if result.returncode == 5 and ignore_missing:
+        print(
+            "systemctl {}: unit missing; skipping".format(" ".join(args)),
+            flush=True,
+        )
+        return
+    result.check_returncode()
+
+
 def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
     """Identify the NIC with link and return its name.
 
@@ -212,8 +227,8 @@ def secure_ssh(
     os.chmod(root_ssh, 0o700)
     os.chmod(auth_path, 0o600)
 
-    _run(["systemctl", "start", ssh_service])
-    _run(["systemctl", "reload", ssh_service])
+    _systemctl(["start", ssh_service])
+    _systemctl(["reload", ssh_service])
     return conf_path
 
 
@@ -266,7 +281,7 @@ def configure_lan(
     _run(["ip", "link", "set", iface, "down"])
     _run(["ip", "link", "set", iface, "name", "lan"])
     _run(["ip", "link", "set", "lan", "up"])
-    _run(["systemctl", "restart", "systemd-networkd"])
+    _systemctl(["restart", "systemd-networkd"], ignore_missing=True)
     secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
 
     return net_path_conf

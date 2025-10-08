@@ -54,3 +54,11 @@ def test_service_path_includes_runtime_utilities() -> None:
         "pre-nixos service path must include runtime tools required for storage "
         f"and networking automation (missing: {sorted(missing)})"
     )
+
+
+def test_module_enables_systemd_networkd() -> None:
+    module_text = Path("modules/pre-nixos.nix").read_text(encoding="utf-8")
+    assert "systemd.network.enable = true;" in module_text
+    assert "networking.useNetworkd = lib.mkForce true;" in module_text
+    assert "networking.useDHCP = lib.mkForce false;" in module_text
+    assert "networking.networkmanager.enable = lib.mkForce false;" in module_text
