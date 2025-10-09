@@ -276,11 +276,24 @@ class BootImageVM:
     def assert_commands_available(self, *commands: str) -> None:
         """Ensure required commands are present in the boot environment."""
 
+        # Issue a no-op to ensure the prompt is stable before issuing probes.
+        self.run(":")
+
         missing: List[str] = []
+        retry_attempts = 3
+        retry_delay = 2.0
         for command in commands:
-            result = self.run(f"command -v {command} >/dev/null 2>&1 && echo OK || echo MISSING")
-            lines = [line.strip() for line in result.splitlines() if line.strip()]
-            if any(line.endswith("MISSING") for line in lines):
+            for attempt in range(retry_attempts):
+                result = self.run(
+                    f"command -v {command} >/dev/null 2>&1 && echo OK || echo MISSING"
+                )
+                lines = [line.strip() for line in result.splitlines() if line.strip()]
+                has_missing = any(line.endswith("MISSING") for line in lines)
+                if not has_missing:
+                    break
+                if attempt + 1 < retry_attempts:
+                    time.sleep(retry_delay)
+            else:
                 missing.append(command)
         if missing:
             raise AssertionError(
