@@ -1,7 +1,9 @@
 """Tests for network module."""
 
+import errno
 import json
 import subprocess
+from pathlib import Path
 
 from pre_nixos.network import (
     configure_lan,
@@ -20,6 +22,32 @@ def test_identify_lan(tmp_path):
         (iface / "device").mkdir()
         (iface / "carrier").write_text(carrier)
     assert identify_lan(tmp_path) == "eth1"
+
+
+def test_identify_lan_uses_operstate_on_transient_carrier_error(tmp_path, monkeypatch):
+    netdir = tmp_path / "net"
+    netdir.mkdir()
+
+    iface = netdir / "eth0"
+    iface.mkdir()
+    (iface / "device").mkdir()
+    (iface / "operstate").write_text("up")
+
+    other = netdir / "eth1"
+    other.mkdir()
+    (other / "device").mkdir()
+    (other / "carrier").write_text("0")
+
+    original_read_text = Path.read_text
+
+    def fake_read_text(self, *args, **kwargs):
+        if self == iface / "carrier":
+            raise OSError(errno.EINVAL, "Invalid argument")
+        return original_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read_text)
+
+    assert identify_lan(netdir) == "eth0"
 
 
 def test_write_lan_rename_rule(tmp_path):

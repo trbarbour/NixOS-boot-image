@@ -11,6 +11,27 @@ from pathlib import Path
 from typing import Optional
 
 
+_TRANSIENT_SYSFS_ERRNOS = {
+    errno.EINVAL,
+    errno.ENODEV,
+    errno.ENXIO,
+}
+
+
+def _is_transient_sysfs_error(error: OSError) -> bool:
+    """Return ``True`` for ignorable sysfs read errors."""
+
+    err_no = error.errno
+    if err_no in _TRANSIENT_SYSFS_ERRNOS:
+        return True
+    # Some kernels surface transient sysfs read failures with ``errno`` unset
+    # (``None``) or ``0``.  Treat these as soft failures so the caller can
+    # retry or fall back to alternative signals.
+    if err_no in (None, 0):
+        return True
+    return False
+
+
 def _run(cmd: list[str]) -> None:
     """Execute ``cmd`` when ``PRE_NIXOS_EXEC`` is ``1``.
 
@@ -51,17 +72,33 @@ def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
         if not (iface / "device").exists():
             continue
         try:
-            carrier = (iface / "carrier").read_text().strip()
+            carrier_path = iface / "carrier"
+            carrier = carrier_path.read_text().strip()
+        except FileNotFoundError:
+            carrier = None
+        except OSError as error:
+            if _is_transient_sysfs_error(error):
+                carrier = None
+            else:
+                raise
+        if carrier == "1":
+            return iface.name
+        if carrier is not None:
+            continue
+
+        # Some virtual interfaces (notably virtio) briefly reject ``carrier``
+        # reads while still exposing link state via ``operstate``.  When the
+        # carrier cannot be determined, fall back to ``operstate`` to avoid
+        # crashing during provisioning.
+        try:
+            operstate = (iface / "operstate").read_text().strip().lower()
         except FileNotFoundError:
             continue
         except OSError as error:
-            if error.errno in {errno.EINVAL, errno.ENODEV, errno.ENXIO}:
-                # Some virtual NICs (notably virtio) report ``EINVAL`` when the
-                # carrier file is read before the link is fully initialised.
-                # Treat this as "no carrier" and continue probing.
+            if _is_transient_sysfs_error(error):
                 continue
             raise
-        if carrier == "1":
+        if operstate == "up":
             return iface.name
     return None
 

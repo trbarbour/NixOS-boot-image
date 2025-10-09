@@ -288,8 +288,9 @@ class BootImageVM:
                     f"command -v {command} >/dev/null 2>&1 && echo OK || echo MISSING"
                 )
                 lines = [line.strip() for line in result.splitlines() if line.strip()]
-                has_missing = any(line.endswith("MISSING") for line in lines)
-                if not has_missing:
+                results = [line for line in lines if line in {"OK", "MISSING"}]
+                has_missing = any(line == "MISSING" for line in results)
+                if results and not has_missing:
                     break
                 if attempt + 1 < retry_attempts:
                     time.sleep(retry_delay)
