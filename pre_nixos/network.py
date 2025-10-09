@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 import subprocess
@@ -53,6 +54,13 @@ def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
             carrier = (iface / "carrier").read_text().strip()
         except FileNotFoundError:
             continue
+        except OSError as error:
+            if error.errno in {errno.EINVAL, errno.ENODEV, errno.ENXIO}:
+                # Some virtual NICs (notably virtio) report ``EINVAL`` when the
+                # carrier file is read before the link is fully initialised.
+                # Treat this as "no carrier" and continue probing.
+                continue
+            raise
         if carrier == "1":
             return iface.name
     return None
