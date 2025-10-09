@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import datetime
+import json
 import os
 import re
 import shutil
 import socket
 import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -123,10 +125,11 @@ def _resolve_iso_path(store_path: Path) -> Path:
 
 
 @pytest.fixture(scope="session")
-def boot_image_iso(
+def boot_image_build(
     nix_executable: str,
     boot_ssh_key_pair: SSHKeyPair,
-) -> Path:
+    ssh_keygen_executable: str,
+) -> BootImageBuild:
     env = os.environ.copy()
     env["PRE_NIXOS_ROOT_KEY"] = str(boot_ssh_key_pair.public_key)
     result = subprocess.run(
@@ -148,7 +151,56 @@ def boot_image_iso(
     if not paths:
         raise AssertionError("nix build did not return a store path")
     store_path = Path(paths[-1])
-    return _resolve_iso_path(store_path)
+    iso_path = _resolve_iso_path(store_path)
+
+    info_proc = subprocess.run(
+        [
+            nix_executable,
+            "path-info",
+            "--json",
+            str(store_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    deriver: Optional[str] = None
+    nar_hash: Optional[str] = None
+    info_text = info_proc.stdout.strip()
+    if info_text:
+        info_json = json.loads(info_text)
+        if info_json:
+            entry = info_json[0]
+            deriver = entry.get("deriver")
+            nar_hash = entry.get("narHash")
+
+    fingerprint_proc = subprocess.run(
+        [
+            ssh_keygen_executable,
+            "-lf",
+            str(boot_ssh_key_pair.public_key),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    fingerprint_lines = [
+        line.strip() for line in fingerprint_proc.stdout.splitlines() if line.strip()
+    ]
+    fingerprint = fingerprint_lines[0] if fingerprint_lines else ""
+
+    return BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver=deriver,
+        nar_hash=nar_hash,
+        root_key_fingerprint=fingerprint,
+    )
+
+
+@pytest.fixture(scope="session")
+def boot_image_iso(boot_image_build: BootImageBuild) -> Path:
+    return boot_image_build.iso_path
 
 
 @pytest.fixture(scope="session")
@@ -168,38 +220,89 @@ class SSHKeyPair:
     public_key: Path
 
 
+@dataclass(frozen=True)
+class BootImageBuild:
+    """Metadata describing the built boot image artifact."""
+
+    iso_path: Path
+    store_path: Path
+    deriver: Optional[str]
+    nar_hash: Optional[str]
+    root_key_fingerprint: str
+
+
 @dataclass
 class BootImageVM:
     """Minimal controller for interacting with the boot image via serial and SSH."""
 
     child: "pexpect.spawn"
     log_path: Path
+    harness_log_path: Path
     ssh_port: int
     ssh_host: str
     ssh_executable: str
+    artifact: BootImageBuild
+    _transcript: List[str] = field(default_factory=list, init=False, repr=False)
 
     def __post_init__(self) -> None:
+        self._log_step(
+            "Boot image details: "
+            f"iso={self.artifact.iso_path} store={self.artifact.store_path} "
+            f"deriver={self.artifact.deriver} narHash={self.artifact.nar_hash}"
+        )
+        self._log_step(
+            "Embedded root key fingerprint: "
+            f"{self.artifact.root_key_fingerprint}"
+        )
         self._login()
+
+    def _log_step(self, message: str) -> None:
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        entry = f"[{timestamp}] {message}"
+        self._transcript.append(entry)
+        with self.harness_log_path.open("a", encoding="utf-8") as handle:
+            handle.write(entry + "\n")
+
+    def _raise_with_transcript(self, message: str) -> None:
+        transcript = "\n".join(self._transcript)
+        details = [message]
+        if transcript:
+            details.append("Login transcript:")
+            details.append(transcript)
+        details.append(f"Harness log: {self.harness_log_path}")
+        details.append(f"Serial log: {self.log_path}")
+        raise AssertionError("\n".join(details))
 
     def _expect_normalised(self, patterns: List[str], *, timeout: int) -> int:
         compiled = self.child.compile_pattern_list([*patterns, ANSI_ESCAPE_PATTERN])
         deadline = time.monotonic() + timeout
+        self._log_step(
+            "Awaiting patterns: " + ", ".join(patterns) + f" (timeout={timeout}s)"
+        )
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
+                self._log_step("Timeout exceeded while waiting for patterns")
                 raise pexpect.TIMEOUT("timeout exceeded while waiting for pattern")
             idx = self.child.expect_list(compiled, timeout=remaining)
             if idx < len(patterns):
+                self._log_step(f"Matched pattern: {patterns[idx]!r}")
                 return idx
 
     def _login(self) -> None:
+        self._log_step("Starting login sequence")
         login_patterns = [
             r"login: ",
             r"\[nixos@[^]]+\]\$ ?",
             r"root@.*# ?",
             r"# ?",
         ]
-        idx = self._expect_normalised(login_patterns, timeout=600)
+        try:
+            idx = self._expect_normalised(login_patterns, timeout=600)
+        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+            self._raise_with_transcript(
+                f"Timed out waiting for initial login prompt: {exc}"
+            )
 
         if idx == 0:
             automatic_login = False
@@ -210,36 +313,64 @@ class BootImageVM:
                 automatic_login = False
 
             if not automatic_login:
+                self._log_step("Sending username 'root'")
                 self.child.sendline("root")
                 prompt_patterns = [r"Password:", r"root@.*# ?", r"# ?"]
-                idx = self._expect_normalised(prompt_patterns, timeout=180)
+                try:
+                    idx = self._expect_normalised(prompt_patterns, timeout=180)
+                except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+                    self._raise_with_transcript(
+                        f"Timed out waiting for password prompt: {exc}"
+                    )
                 if idx == 0:
+                    self._log_step("Submitting empty root password")
                     self.child.sendline("")
                     self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
 
         root_check = 'if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi'
+        self._log_step("Verifying current user ID")
         self.child.sendline(root_check)
-        marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
-        self._expect_normalised([r"root@.*# ?", r"# ?", r"nixos@.*\$ ?"], timeout=60)
+        try:
+            marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
+            self._expect_normalised([r"root@.*# ?", r"# ?", r"nixos@.*\$ ?"], timeout=60)
+        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+            self._raise_with_transcript(
+                f"Timed out while confirming initial user privileges: {exc}"
+            )
 
         if marker_idx == 1:
+            self._log_step("Attempting to escalate with sudo -i")
             self.child.sendline("sudo -i")
             sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ?", r"# ?"]
-            idx = self._expect_normalised(sudo_patterns, timeout=180)
+            try:
+                idx = self._expect_normalised(sudo_patterns, timeout=180)
+            except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+                self._raise_with_transcript(
+                    f"Timed out waiting for sudo escalation to complete: {exc}"
+                )
             if idx == 0:
+                self._log_step("Submitting empty sudo password")
                 self.child.sendline("")
                 self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
             else:
                 self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
 
             self.child.sendline(root_check)
-            marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
-            self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=60)
+            try:
+                marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
+                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=60)
+            except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+                self._raise_with_transcript(
+                    f"Timed out verifying sudo escalation result: {exc}"
+                )
             if marker_idx != 0:
-                raise AssertionError("failed to acquire root shell")
+                self._raise_with_transcript(
+                    "Failed to acquire root shell via sudo -i"
+                )
 
         self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
         self._expect_normalised([SHELL_PROMPT], timeout=60)
+        self._log_step("Shell prompt configured for interaction")
 
     def _strip_ansi(self, text: str) -> str:
         """Remove ANSI escape sequences from command output."""
@@ -247,8 +378,14 @@ class BootImageVM:
         return ANSI_ESCAPE_PATTERN.sub("", text)
 
     def run(self, command: str, *, timeout: int = 180) -> str:
+        self._log_step(f"Running command: {command}")
         self.child.sendline(command)
-        self.child.expect(SHELL_PROMPT, timeout=timeout)
+        try:
+            self.child.expect(SHELL_PROMPT, timeout=timeout)
+        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+            self._raise_with_transcript(
+                f"Timed out while running command '{command}': {exc}"
+            )
         output = self.child.before.replace("\r", "")
         lines = output.splitlines()
         cleaned: List[str] = []
@@ -318,7 +455,18 @@ class BootImageVM:
             if "STATE" in status and "DETAIL" in status:
                 return status
             time.sleep(5)
-        raise AssertionError("timed out waiting for pre-nixos storage status")
+        journal = self.collect_journal("pre-nixos.service")
+        unit_status = self.run(
+            "systemctl status pre-nixos --no-pager 2>&1 || true", timeout=240
+        )
+        self._log_step("Timed out waiting for pre-nixos storage status")
+        raise AssertionError(
+            "timed out waiting for pre-nixos storage status\n"
+            f"journalctl -u pre-nixos.service -b:\n{journal}\n"
+            f"systemctl status pre-nixos:\n{unit_status}\n"
+            f"Harness log: {self.harness_log_path}\n"
+            f"Serial log: {self.log_path}"
+        )
 
     def wait_for_ipv4(self, iface: str = "lan", *, timeout: int = 240) -> List[str]:
         deadline = time.time() + timeout
@@ -328,7 +476,18 @@ class BootImageVM:
             if any("inet " in line for line in lines):
                 return lines
             time.sleep(5)
-        raise AssertionError(f"timed out waiting for IPv4 address on {iface}")
+        journal = self.collect_journal("pre-nixos.service")
+        unit_status = self.run(
+            "systemctl status pre-nixos --no-pager 2>&1 || true", timeout=240
+        )
+        self._log_step(f"Timed out waiting for IPv4 on interface {iface}")
+        raise AssertionError(
+            f"timed out waiting for IPv4 address on {iface}\n"
+            f"journalctl -u pre-nixos.service -b:\n{journal}\n"
+            f"systemctl status pre-nixos:\n{unit_status}\n"
+            f"Harness log: {self.harness_log_path}\n"
+            f"Serial log: {self.log_path}"
+        )
 
     def shutdown(self) -> None:
         if not self.child.isalive():
@@ -399,7 +558,7 @@ class BootImageVM:
 def boot_image_vm(
     _pexpect: "pexpect",
     qemu_executable: str,
-    boot_image_iso: Path,
+    boot_image_build: BootImageBuild,
     vm_disk_image: Path,
     tmp_path_factory: pytest.TempPathFactory,
     ssh_executable: str,
@@ -407,6 +566,8 @@ def boot_image_vm(
 ) -> BootImageVM:
     log_dir = tmp_path_factory.mktemp("boot-image-logs")
     log_path = log_dir / "serial.log"
+    harness_log_path = log_dir / "harness.log"
+    harness_log_path.write_text("", encoding="utf-8")
     log_handle = log_path.open("w", encoding="utf-8")
     cmd = [
         qemu_executable,
@@ -422,7 +583,7 @@ def boot_image_vm(
         "-serial",
         "stdio",
         "-cdrom",
-        str(boot_image_iso),
+        str(boot_image_build.iso_path),
         "-drive",
         f"file={vm_disk_image},if=virtio,format=raw",
         "-device",
@@ -443,9 +604,11 @@ def boot_image_vm(
     vm = BootImageVM(
         child=child,
         log_path=log_path,
+        harness_log_path=harness_log_path,
         ssh_port=ssh_forward_port,
         ssh_host="127.0.0.1",
         ssh_executable=ssh_executable,
+        artifact=boot_image_build,
     )
     try:
         yield vm

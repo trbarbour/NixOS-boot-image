@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2025-10-09T03-45-00Z_
+_Last updated: 2025-10-09T15-30-00Z_
 
 ## Active Tasks
 
@@ -8,6 +8,7 @@ _Last updated: 2025-10-09T03-45-00Z_
    - Extend the login helper with step-by-step logging, fail fast when `sudo -i` does not yield a root shell, and surface the captured transcript in assertion messages so we can observe why escalation stalls.
    - Automatically collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever storage provisioning or DHCP waits time out, ensuring every failure includes the relevant journal excerpts.
    - Emit the booted ISO derivation path, hash, and embedded root key fingerprints in the harness logs to rule out stale artefacts or mismatched images during investigations.
+   - 2025-10-09T15-30-00Z - BootImageVM harness now records step-by-step transcripts, journals on storage/network timeouts, and ISO metadata (`tests/test_boot_image_vm.py`). `pytest tests/test_boot_image_vm.py` was interrupted after 4m46s because `nix build .#bootImage` continued compiling dependencies; rerun once the derivation has finished building to validate the changes end-to-end.
 2. **Validate host-side assumptions with a known-good ISO and add an interactive debug mode.**
    - Boot a minimal reference NixOS ISO with the current QEMU invocation (`-netdev user,hostfwd=...`) to confirm DHCP/networking work outside the custom image.
    - Provide a `pytest --boot-image-debug` or similar flag that drops into `pexpect.interact()` so we can manually inspect the guest before teardown when future regressions appear.
