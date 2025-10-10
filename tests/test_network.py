@@ -134,6 +134,35 @@ def test_configure_lan_secures_ssh_without_detected_iface(tmp_path):
     assert "PasswordAuthentication no" in ssh_conf.read_text()
 
 
+def test_configure_lan_emits_structured_logs(tmp_path, monkeypatch, capsys):
+    netdir = tmp_path / "sys/class/net"
+    netdir.mkdir(parents=True)
+    iface = netdir / "eth0"
+    iface.mkdir()
+    (iface / "device").mkdir()
+    (iface / "carrier").write_text("1")
+
+    network_dir = tmp_path / "etc/systemd/network"
+    ssh_dir = tmp_path / "etc/ssh"
+    root_home = tmp_path / "root"
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "0")
+
+    configure_lan(
+        netdir, network_dir, ssh_dir, authorized_key=key, root_home=root_home
+    )
+
+    captured = capsys.readouterr()
+    events = [json.loads(line)["event"] for line in captured.err.splitlines() if line.strip()]
+    assert "pre_nixos.network.configure_lan.start" in events
+    assert "pre_nixos.network.configure_lan.detected_interface" in events
+    assert "pre_nixos.network.configure_lan.finished" in events
+    assert "pre_nixos.network.command.skip" in events
+
+
 def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     ssh_dir = tmp_path / "etc/ssh"
     ssh_dir.mkdir(parents=True)

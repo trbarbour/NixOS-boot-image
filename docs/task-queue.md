@@ -20,6 +20,7 @@ _Last updated: 2025-10-09T15-30-00Z_
 3. **Instrument pre-nixos internals for precise progress tracking.**
    - Add structured logging around `pre_nixos.network.configure_lan`, `pre_nixos.apply.apply_plan`, and related steps so journals clearly mark start/end of each action and record command exit codes.
    - Build focused unit tests (using fake sysfs/device trees) that exercise the LAN identification and storage planning paths to catch regressions without full VM boots.
+   - 2025-10-10T01-35-20Z - Added JSON structured logging helpers and instrumented `pre_nixos.network` and `pre_nixos.apply` command execution paths. Extended the unit test suite with log assertions for LAN configuration and storage application flows.
 4. **Run targeted in-VM experiments to converge on the provisioning stall.**
    - Re-run `pre-nixos` manually inside the VM (`systemd-run` or direct execution) while tailing its journal to pinpoint the exact blocking operation.
    - Capture `networkctl status lan`, `systemctl status systemd-networkd`, and compare the generated storage plan with the virtual devices (`/dev/vda` vs `/dev/sda`) to confirm naming matches expectations.

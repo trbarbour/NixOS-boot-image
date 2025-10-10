@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from .logging_utils import log_event
+
 
 _TRANSIENT_SYSFS_ERRNOS = {
     errno.EINVAL,
@@ -33,30 +35,60 @@ def _is_transient_sysfs_error(error: OSError) -> bool:
 
 
 def _run(cmd: list[str]) -> None:
-    """Execute ``cmd`` when ``PRE_NIXOS_EXEC`` is ``1``.
+    """Execute ``cmd`` when ``PRE_NIXOS_EXEC`` is ``1``."""
 
-    Commands are executed without shell interpretation and failures are not
-    silently ignored.
-    """
-
+    log_event("pre_nixos.network.command.start", command=cmd)
     if os.environ.get("PRE_NIXOS_EXEC") != "1":
+        log_event(
+            "pre_nixos.network.command.skip",
+            command=cmd,
+            reason="execution disabled",
+        )
         return
-    subprocess.run(cmd, check=True)
+
+    result = subprocess.run(cmd, check=False)
+    status = "success" if result.returncode == 0 else "error"
+    log_event(
+        "pre_nixos.network.command.finished",
+        command=cmd,
+        status=status,
+        returncode=result.returncode,
+    )
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, cmd)
 
 
 def _systemctl(args: list[str], *, ignore_missing: bool = False) -> None:
     """Invoke ``systemctl`` with optional missing-unit tolerance."""
 
+    command = ["systemctl", *args]
+    log_event("pre_nixos.network.systemctl.start", command=command, ignore_missing=ignore_missing)
     if os.environ.get("PRE_NIXOS_EXEC") != "1":
-        return
-    result = subprocess.run(["systemctl", *args], check=False)
-    if result.returncode == 5 and ignore_missing:
-        print(
-            "systemctl {}: unit missing; skipping".format(" ".join(args)),
-            flush=True,
+        log_event(
+            "pre_nixos.network.systemctl.skip",
+            command=command,
+            reason="execution disabled",
         )
         return
-    result.check_returncode()
+
+    result = subprocess.run(command, check=False)
+    if result.returncode == 5 and ignore_missing:
+        log_event(
+            "pre_nixos.network.systemctl.ignored",
+            command=command,
+            returncode=result.returncode,
+        )
+        return
+
+    status = "success" if result.returncode == 0 else "error"
+    log_event(
+        "pre_nixos.network.systemctl.finished",
+        command=command,
+        status=status,
+        returncode=result.returncode,
+    )
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, command)
 
 
 def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
@@ -82,6 +114,11 @@ def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
             else:
                 raise
         if carrier == "1":
+            log_event(
+                "pre_nixos.network.identify_lan.detected",
+                interface=iface.name,
+                signal="carrier",
+            )
             return iface.name
         if carrier is not None:
             continue
@@ -99,6 +136,11 @@ def identify_lan(net_path: Path = Path("/sys/class/net")) -> Optional[str]:
                 continue
             raise
         if operstate == "up":
+            log_event(
+                "pre_nixos.network.identify_lan.detected",
+                interface=iface.name,
+                signal="operstate",
+            )
             return iface.name
     return None
 
@@ -111,11 +153,22 @@ def wait_for_lan(
 ) -> Optional[str]:
     """Poll for an active LAN interface and return its name when detected."""
 
+    log_event(
+        "pre_nixos.network.wait_for_lan.start",
+        attempts=attempts,
+        delay_seconds=delay,
+        net_path=net_path,
+    )
     for _ in range(attempts):
         iface = identify_lan(net_path)
         if iface is not None:
+            log_event(
+                "pre_nixos.network.wait_for_lan.detected",
+                interface=iface,
+            )
             return iface
         time.sleep(delay)
+    log_event("pre_nixos.network.wait_for_lan.timeout", attempts=attempts, delay_seconds=delay)
     return None
 
 
@@ -133,8 +186,18 @@ def write_lan_rename_rule(
         Path to the written rule file or ``None`` if no active interface is found.
     """
 
+    log_event(
+        "pre_nixos.network.write_lan_rename_rule.start",
+        net_path=net_path,
+        rules_dir=rules_dir,
+    )
+
     iface = wait_for_lan(net_path)
     if iface is None:
+        log_event(
+            "pre_nixos.network.write_lan_rename_rule.skipped",
+            reason="no interface detected",
+        )
         return None
 
     rules_dir.mkdir(parents=True, exist_ok=True)
@@ -142,6 +205,11 @@ def write_lan_rename_rule(
     rule_path.write_text(
         f"[Match]\nOriginalName={iface}\n\n[Link]\nName=lan\n",
         encoding="utf-8",
+    )
+    log_event(
+        "pre_nixos.network.write_lan_rename_rule.finished",
+        interface=iface,
+        rule_path=rule_path,
     )
     return rule_path
 
@@ -230,6 +298,13 @@ def secure_ssh(
     console logins.
     """
 
+    log_event(
+        "pre_nixos.network.secure_ssh.start",
+        ssh_dir=ssh_dir,
+        ssh_service=ssh_service,
+        authorized_key=authorized_key,
+    )
+
     ssh_dir.mkdir(parents=True, exist_ok=True)
     conf_path = ssh_dir / "sshd_config"
     existing = conf_path.read_text(encoding="utf-8") if conf_path.exists() else ""
@@ -262,6 +337,11 @@ def secure_ssh(
     if authorized_key is None:
         authorized_key = Path(__file__).with_name("root_key.pub")
     if not authorized_key.exists():
+        log_event(
+            "pre_nixos.network.secure_ssh.error",
+            reason="missing authorized key",
+            authorized_key=authorized_key,
+        )
         raise FileNotFoundError(
             f"Missing {authorized_key}. Place your public key at this path before building."
         )
@@ -272,8 +352,17 @@ def secure_ssh(
     os.chmod(root_ssh, 0o700)
     os.chmod(auth_path, 0o600)
 
+    log_event(
+        "pre_nixos.network.secure_ssh.authorized_key_written",
+        authorized_keys_path=auth_path,
+    )
+
     _systemctl(["start", ssh_service])
     _systemctl(["reload", ssh_service])
+    log_event(
+        "pre_nixos.network.secure_ssh.finished",
+        authorized_keys_path=auth_path,
+    )
     return conf_path
 
 
@@ -297,21 +386,39 @@ def configure_lan(
     interface is detected or no key is provided.
     """
 
+    log_event(
+        "pre_nixos.network.configure_lan.start",
+        net_path=net_path,
+        network_dir=network_dir,
+        ssh_dir=ssh_dir,
+        ssh_service=ssh_service,
+        authorized_key=authorized_key,
+        root_home=root_home,
+    )
+
     if authorized_key is None:
         authorized_key = Path(__file__).with_name("root_key.pub")
     if not authorized_key.exists():
+        log_event(
+            "pre_nixos.network.configure_lan.skipped",
+            reason="missing authorized key",
+            authorized_key=authorized_key,
+        )
         return None
 
     iface = wait_for_lan(net_path)
     if iface is None:
-        print(
-            "configure_lan: no interface with carrier detected; skipping LAN setup",
-            flush=True,
+        log_event(
+            "pre_nixos.network.configure_lan.no_interface",
+            message="no interface with carrier detected",
         )
         secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
         return None
 
-    print(f"configure_lan: detected active interface '{iface}'", flush=True)
+    log_event(
+        "pre_nixos.network.configure_lan.detected_interface",
+        interface=iface,
+    )
     write_lan_rename_rule(net_path, network_dir)
 
     network_dir.mkdir(parents=True, exist_ok=True)
@@ -319,6 +426,10 @@ def configure_lan(
     net_path_conf.write_text(
         "[Match]\nName=lan\n\n[Network]\nDHCP=yes\n",
         encoding="utf-8",
+    )
+    log_event(
+        "pre_nixos.network.configure_lan.network_file_written",
+        network_file=net_path_conf,
     )
 
     # Rename the interface for the current session and ensure networking/SSH
@@ -329,4 +440,9 @@ def configure_lan(
     _systemctl(["restart", "systemd-networkd"], ignore_missing=True)
     secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
 
+    log_event(
+        "pre_nixos.network.configure_lan.finished",
+        interface=iface,
+        network_file=net_path_conf,
+    )
     return net_path_conf
