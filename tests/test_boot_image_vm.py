@@ -169,8 +169,15 @@ def boot_image_build(
     info_text = info_proc.stdout.strip()
     if info_text:
         info_json = json.loads(info_text)
-        if info_json:
-            entry = info_json[0]
+        if isinstance(info_json, list):
+            info_entries: List[Dict[str, str]] = info_json
+        elif isinstance(info_json, dict):
+            info_entries = [value for value in info_json.values() if isinstance(value, dict)]
+        else:
+            info_entries = []
+
+        if info_entries:
+            entry = info_entries[0]
             deriver = entry.get("deriver")
             nar_hash = entry.get("narHash")
 
@@ -263,6 +270,18 @@ class BootImageVM:
         with self.harness_log_path.open("a", encoding="utf-8") as handle:
             handle.write(entry + "\n")
 
+    def _record_child_output(self) -> None:
+        buffer = self.child.before.replace("\r", "") if self.child.before else ""
+        if not buffer:
+            return
+        for raw_line in buffer.splitlines():
+            line = self._strip_ansi(raw_line).strip()
+            if not line:
+                continue
+            if line == SHELL_PROMPT.strip():
+                continue
+            self._log_step(f"Serial output: {line}")
+
     def _raise_with_transcript(self, message: str) -> None:
         transcript = "\n".join(self._transcript)
         details = [message]
@@ -284,7 +303,13 @@ class BootImageVM:
             if remaining <= 0:
                 self._log_step("Timeout exceeded while waiting for patterns")
                 raise pexpect.TIMEOUT("timeout exceeded while waiting for pattern")
-            idx = self.child.expect_list(compiled, timeout=remaining)
+            try:
+                idx = self.child.expect_list(compiled, timeout=remaining)
+            except pexpect.TIMEOUT:
+                self._record_child_output()
+                self._log_step("pexpect reported TIMEOUT while awaiting patterns")
+                raise
+            self._record_child_output()
             if idx < len(patterns):
                 self._log_step(f"Matched pattern: {patterns[idx]!r}")
                 return idx
@@ -326,6 +351,10 @@ class BootImageVM:
                     self._log_step("Submitting empty root password")
                     self.child.sendline("")
                     self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
+                else:
+                    self._log_step("Root prompt detected without password entry")
+            else:
+                self._log_step("Automatic login banner observed")
 
         root_check = 'if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi'
         self._log_step("Verifying current user ID")
@@ -337,6 +366,9 @@ class BootImageVM:
             self._raise_with_transcript(
                 f"Timed out while confirming initial user privileges: {exc}"
             )
+
+        if marker_idx == 0:
+            self._log_step("Initial shell already has root privileges")
 
         if marker_idx == 1:
             self._log_step("Attempting to escalate with sudo -i")
@@ -367,6 +399,7 @@ class BootImageVM:
                 self._raise_with_transcript(
                     "Failed to acquire root shell via sudo -i"
                 )
+            self._log_step("Successfully escalated privileges with sudo -i")
 
         self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
         self._expect_normalised([SHELL_PROMPT], timeout=60)
