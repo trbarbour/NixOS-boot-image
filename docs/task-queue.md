@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2025-10-10T02-08-04Z_
+_Last updated: 2025-10-10T13-05-00Z_
 
 ## Active Tasks
 
@@ -10,19 +10,16 @@ _Last updated: 2025-10-10T02-08-04Z_
    - Copy the interactive transcripts (`harness.log`, `serial.log`, and captured shell output) into `docs/work-notes/` so the investigation can continue offline.
    - 2025-10-10T02-08-04Z - Harness enhancements are in place but unvalidated; next run must prioritise capturing the in-VM state before shutdown so we understand the storage/DHCP stall.
    - 2025-10-10T04-47-41Z - Manual debug session captured the requested evidence (`docs/work-notes/2025-10-10T04-47-41Z-boot-image-vm-debug-session/`). `pre-nixos.service` remains `activating` while `pre_nixos.network.wait_for_lan` loops, `networkctl status lan` reports `Interface "lan" not found`, and `ip -o link` shows only `lo` and a downed `ens4` interface. BootImageVM also failed to maintain root privileges, so the login flow needs attention before the next run.
-2. **Verify pre-nixos logging actually reaches journald.**
-   - From the debug session, confirm JSON `log_event` lines from `pre_nixos.network`/`pre_nixos.apply` appear in `journalctl`; if they are missing, inspect environment variables and unit configuration for buffering issues.
-   - Decide whether to tweak the service or harness so journal dumps contain the structured logs instead of just echoed commands.
-3. **Audit network bring-up inside the failing VM.**
+2. **Audit network bring-up inside the failing VM.**
    - While still attached via the debug hook, run `networkctl status lan`, `journalctl -u systemd-networkd -b`, and `ip -o link` to verify the interface rename, carrier state, and DHCP behaviour.
    - Record findings alongside the harness logs for comparison with earlier failures.
-4. **Audit storage provisioning progress.**
+3. **Audit storage provisioning progress.**
    - Inspect `/var/log/pre-nixos/disko-config.nix`, list running `disko`/`wipefs` processes, and (if safe) rerun the expected `disko --yes-wipe-all-disks …` command under `PRE_NIXOS_EXEC=1` to see whether it blocks on udev or exits.
    - Capture stderr/stdout so we can identify whether storage planning or execution is stalled.
-5. **Fold captured findings back into fixes and regression tests.**
+4. **Fold captured findings back into fixes and regression tests.**
    - Update this queue and relevant docs with the evidence from the debug session, then implement whichever code changes the evidence demands (e.g., restarting `systemd-networkd`, handling blocked `disko`).
    - After applying fixes, rerun the VM regression end-to-end to confirm both boot-image tests pass and archive the successful logs in `docs/boot-logs/` and `docs/test-reports/`.
-6. **Harden BootImageVM root escalation and capture richer failure context.**
+5. **Harden BootImageVM root escalation and capture richer failure context.**
    - Extend the login helper with step-by-step logging, fail fast when `sudo -i` does not yield a root shell, and surface the captured transcript in assertion messages so we can observe why escalation stalls.
    - Automatically collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever storage provisioning or DHCP waits time out, ensuring every failure includes the relevant journal excerpts.
    - Emit the booted ISO derivation path, hash, and embedded root key fingerprints in the harness logs to rule out stale artefacts or mismatched images during investigations.
@@ -31,32 +28,33 @@ _Last updated: 2025-10-10T02-08-04Z_
    - 2025-10-10T00-07-04Z - Testing policy updated: `pytest tests/test_boot_image_vm.py -vv` must be allowed to run without interruption for at least 30 minutes to capture the full provisioning behaviour before declaring failure.
    - 2025-10-10T00-17-07Z - Latest pytest run completed fixture setup after 9m38s and failed with `KeyError: 0` because `nix path-info --json` returned a mapping; documented results in `docs/work-notes/2025-10-10T00-17-07Z-boot-image-vm-test-attempt.md`.
    - 2025-10-10T00-47-08Z - Pytest ran for 22m51s without interruption; both VM tests failed waiting for storage status and IPv4 despite new logging. Full notes in `docs/work-notes/2025-10-10T00-47-08Z-boot-image-vm-test-attempt.md`.
-7. **Validate host-side assumptions with a known-good ISO and add an interactive debug mode.**
+6. **Validate host-side assumptions with a known-good ISO and add an interactive debug mode.**
    - Boot a minimal reference NixOS ISO with the current QEMU invocation (`-netdev user,hostfwd=...`) to confirm DHCP/networking work outside the custom image.
    - Provide a `pytest --boot-image-debug` or similar flag that drops into `pexpect.interact()` so we can manually inspect the guest before teardown when future regressions appear.
    - 2025-10-10T01-14-04Z - Added `--boot-image-debug` pytest flag that pauses teardown after VM test failures and opens an interactive `pexpect` session. Harness transcript logs the entry/exit timestamps for the manual debugging window.
-8. **Instrument pre-nixos internals for precise progress tracking.**
+7. **Instrument pre-nixos internals for precise progress tracking.**
    - Add structured logging around `pre_nixos.network.configure_lan`, `pre_nixos.apply.apply_plan`, and related steps so journals clearly mark start/end of each action and record command exit codes.
    - Build focused unit tests (using fake sysfs/device trees) that exercise the LAN identification and storage planning paths to catch regressions without full VM boots.
    - 2025-10-10T01-35-20Z - Added JSON structured logging helpers and instrumented `pre_nixos.network` and `pre_nixos.apply` command execution paths. Extended the unit test suite with log assertions for LAN configuration and storage application flows.
-9. **Run targeted in-VM experiments to converge on the provisioning stall.**
+8. **Run targeted in-VM experiments to converge on the provisioning stall.**
    - Re-run `pre-nixos` manually inside the VM (`systemd-run` or direct execution) while tailing its journal to pinpoint the exact blocking operation.
    - Capture `networkctl status lan`, `systemctl status systemd-networkd`, and compare the generated storage plan with the virtual devices (`/dev/vda` vs `/dev/sda`) to confirm naming matches expectations.
-10. **Rebuild the boot image with the network fixes and rerun the VM regression.**
+9. **Rebuild the boot image with the network fixes and rerun the VM regression.**
    - 2025-10-08T13-51-16Z run (`pytest tests/test_boot_image_vm.py`) still fails: `test_boot_image_provisions_clean_disk` flagged `disko`, `lsblk`, and `wipefs` as missing and `test_boot_image_configures_network` timed out without an IPv4 lease. The captured journal shows `pre_nixos.network.identify_lan` raising `OSError: [Errno 22] Invalid argument` when reading the NIC carrier file (see `docs/test-reports/2025-10-08T13-51-16Z-boot-image-vm-test.md`).
    - Prior run (2025-10-08T07-36-29Z) exhibited the same symptoms on the earlier ISO build; see `docs/test-reports/2025-10-08T07-36-29Z-boot-image-vm-test.md` for historical context.
    - Implement a fix for the carrier read failure (e.g. guard `identify_lan` against `OSError` and confirm the interface detection logic tolerates virtio NICs without link state).
    - Stabilise the command-availability probe so the first `command -v` execution does not race the prompt update.
    - Rebuild the ISO, rerun the VM regression, and confirm provisioning, DHCP, and SSH succeed. Promote fresh serial/journal logs to `docs/boot-logs/` together with an updated test report when the run passes.
    - 2025-10-09T01-32-01Z run exercised the updated carrier handling and command probe (`pytest tests/test_boot_image_vm.py`). Command checks now report `OK`, and `identify_lan` no longer crashes, but provisioning still timed out waiting for `pre-nixos` to populate `/run/pre-nixos/storage-status` and no IPv4 lease appeared on `lan`. See `docs/test-reports/2025-10-09T01-32-01Z-boot-image-vm-test.md` and the new serial log at `docs/boot-logs/2025-10-09T01-32-01Z-serial.log`.
-11. **Capture follow-up boot timings after configuration adjustments.**
+10. **Capture follow-up boot timings after configuration adjustments.**
    - The latest run (2025-10-08T00-41-32Z) still failed after 1000.26s because provisioning aborted; rerun once the networking fix is validated to measure meaningful timings.
-12. **Ensure the full test suite runs without skips (especially `test_boot_image_vm`).**
+11. **Ensure the full test suite runs without skips (especially `test_boot_image_vm`).**
    - Audit pytest skips and environment prerequisites; install or document missing dependencies so the VM test executes rather than skipping.
    - Maintain scripts or nix expressions that exercise the entire suite as part of CI/regression testing.
 
 ## Recently Completed
 
+- 2025-10-10T13-05-00Z - Confirmed structured `pre_nixos` journal entries are present in the debug session logs (former queue item 2). No logging configuration changes required; see `docs/work-notes/2025-10-10T13-05-00Z-pre-nixos-journalctl-verification.md` for details.
 - 2025-10-08T06-10-00Z - Confirmed the boot image crashed because `systemd-networkd.service` is absent, captured `journalctl -u pre-nixos.service`, and planned fixes (enable networkd + guard restarts). See `docs/work-notes/2025-10-08T06-10-00Z-pre-nixos-networkd-investigation.md` and new serial log `docs/boot-logs/2025-10-08T06-10-00Z-serial.log`.
 - 2025-10-07T04-01-53Z - Verified `boot.kernelParams` for the pre-installer ISO include `console=ttyS0,115200n8` and `console=tty0`; no further changes required for persistent serial logging. See `docs/work-notes/2025-10-07T04-01-53Z-serial-console-verification.md`.
 - 2025-10-07T03-58-17Z - Identified `wipefs -n /dev/fd0` failures as the source of the storage detection error, taught the detector to ignore `/dev/fd*`, and ensured VM tests print `journalctl -u pre-nixos.service` on provisioning failures; see `docs/work-notes/2025-10-07T03-58-17Z-pre-nixos-storage-detection.md`.
