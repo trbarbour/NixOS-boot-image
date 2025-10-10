@@ -405,6 +405,17 @@ class BootImageVM:
         self._expect_normalised([SHELL_PROMPT], timeout=60)
         self._log_step("Shell prompt configured for interaction")
 
+    def interact(self) -> None:
+        """Drop into an interactive session with the running VM."""
+
+        self._log_step(
+            "Entering interactive debug session (Ctrl-] to terminate)"
+        )
+        try:
+            self.child.interact(escape_character=chr(29))
+        finally:
+            self._log_step("Exited interactive debug session")
+
     def _strip_ansi(self, text: str) -> str:
         """Remove ANSI escape sequences from command output."""
 
@@ -596,6 +607,7 @@ def boot_image_vm(
     tmp_path_factory: pytest.TempPathFactory,
     ssh_executable: str,
     ssh_forward_port: int,
+    request: pytest.FixtureRequest,
 ) -> BootImageVM:
     log_dir = tmp_path_factory.mktemp("boot-image-logs")
     log_path = log_dir / "serial.log"
@@ -643,9 +655,16 @@ def boot_image_vm(
         ssh_executable=ssh_executable,
         artifact=boot_image_build,
     )
+    initial_failures = request.session.testsfailed
+    debug_enabled = bool(request.config.getoption("boot_image_debug"))
     try:
         yield vm
     finally:
+        should_debug = debug_enabled and (
+            request.session.testsfailed > initial_failures
+        )
+        if should_debug:
+            vm.interact()
         vm.shutdown()
         log_handle.close()
 

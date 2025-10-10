@@ -74,6 +74,9 @@ Before running the suite:
 
 Inspect the generated serial console log (stored under
 `/tmp/pytest-of-*/boot-image-logs/serial.log`) when debugging regressions.
+Pass `--boot-image-debug` to `pytest` to keep the VM alive after a test failure
+and drop into an interactive console (`Ctrl-]` to exit) before teardown.  The
+harness transcript records the debug session boundaries for later analysis.
 
 ## 4. Manual Smoke Tests (optional but recommended)
 

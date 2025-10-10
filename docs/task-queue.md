@@ -16,6 +16,7 @@ _Last updated: 2025-10-09T15-30-00Z_
 2. **Validate host-side assumptions with a known-good ISO and add an interactive debug mode.**
    - Boot a minimal reference NixOS ISO with the current QEMU invocation (`-netdev user,hostfwd=...`) to confirm DHCP/networking work outside the custom image.
    - Provide a `pytest --boot-image-debug` or similar flag that drops into `pexpect.interact()` so we can manually inspect the guest before teardown when future regressions appear.
+   - 2025-10-10T01-14-04Z - Added `--boot-image-debug` pytest flag that pauses teardown after VM test failures and opens an interactive `pexpect` session. Harness transcript logs the entry/exit timestamps for the manual debugging window.
 3. **Instrument pre-nixos internals for precise progress tracking.**
    - Add structured logging around `pre_nixos.network.configure_lan`, `pre_nixos.apply.apply_plan`, and related steps so journals clearly mark start/end of each action and record command exit codes.
    - Build focused unit tests (using fake sysfs/device trees) that exercise the LAN identification and storage planning paths to catch regressions without full VM boots.
