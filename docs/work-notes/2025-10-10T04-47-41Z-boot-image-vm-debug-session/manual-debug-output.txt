@@ -1,0 +1,60 @@
+Captured at 2025-10-10T04:47:04.596548+00:00
+
+## storage_status
+'
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+__USER__
+[nixos@nixos:~]$ export PS1='
+
+## systemctl_status
+'
+
+## journalctl
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+systemctl status pre-nixos --no-pager 2>&1 || true
+journalctl --no-pager -u pre-nixos.service -b || true
+
+## ps_pre_nixos
+systemctl status pre-nixos --no-pager 2>&1 || true
+ps -ef | grep pre-nixos || true
+● pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: enabled)
+Active: activating (start) since Fri 2025-10-10 04:43:03 UTC; 55s ago
+Main PID: 678 (pre-nixos-start)
+IP: 0B in, 0B out
+IO: 42.2M read, 0B written
+Tasks: 2 (limit: 2329)
+Memory: 38.6M (peak: 39.7M)
+CPU: 16.619s
+CGroup: /system.slice/pre-nixos.service
+├─678 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…
+└─806 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/…
+Oct 10 04:43:03 nixos systemd[1]: Starting Pre-NixOS setup...
+Oct 10 04:43:39 nixos pre-nixos-start[806]: {"authorized_key": null, "event"…0"}
+Oct 10 04:43:39 nixos pre-nixos-start[806]: {"attempts": 30, "delay_seconds"…0"}
+Hint: Some lines were ellipsized, use -l to show in full.
+
+## networkctl
+journalctl --no-pager -u pre-nixos.service -b || true
+networkctl status lan || true
+Oct 10 04:43:03 nixos systemd[1]: Starting Pre-NixOS setup...
+Oct 10 04:43:39 nixos pre-nixos-start[806]: {"authorized_key": null, "event": "pre_nixos.network.configure_lan.start", "net_path": "/sys/class/net", "network_dir": "/etc/systemd/network", "root_home": "/root", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-10T04:43:39.099923+00:00"}
+Oct 10 04:43:39 nixos pre-nixos-start[806]: {"attempts": 30, "delay_seconds": 2.0, "event": "pre_nixos.network.wait_for_lan.start", "net_path": "/sys/class/net", "timestamp": "2025-10-10T04:43:39.196719+00:00"}
+
+## networkd_journal
+ps -ef | grep pre-nixos || true
+journalctl --no-pager -u systemd-networkd -b || true
+root         678       1  1 04:43 ?        00:00:00 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/bash /nix/store/nzmk8k4sbqq69x8s1g8q2cszq66z0xmp-unit-script-pre-nixos-start/bin/pre-nixos-start
+root         806     678 21 04:43 ?        00:00:06 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/bin/python3.11 /nix/store/fw8jkw830f33ykfxaip1g4mz061yc6bi-pre-nixos-0.1.0/bin/.pre-nixos-wrapped
+nixos        910     889  0 04:44 ttyS0    00:00:00 grep pre-nixos
+
+## ip_link
+networkctl status lan || true
+ip -o link || true
+Interface "lan" not found.
+
+## ip_addr
+ournalctl --no-pager -u systemd-networkd -b || true
+-bash: ournalctl: command not found
+ip -o -4 addr show dev lan 2>/dev/null || true
+

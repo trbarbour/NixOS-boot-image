@@ -9,6 +9,7 @@ _Last updated: 2025-10-10T02-08-04Z_
    - Collect `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, `ps -ef | grep pre-nixos`, and `cat /run/pre-nixos/storage-status` to see where provisioning stalls.
    - Copy the interactive transcripts (`harness.log`, `serial.log`, and captured shell output) into `docs/work-notes/` so the investigation can continue offline.
    - 2025-10-10T02-08-04Z - Harness enhancements are in place but unvalidated; next run must prioritise capturing the in-VM state before shutdown so we understand the storage/DHCP stall.
+   - 2025-10-10T04-47-41Z - Manual debug session captured the requested evidence (`docs/work-notes/2025-10-10T04-47-41Z-boot-image-vm-debug-session/`). `pre-nixos.service` remains `activating` while `pre_nixos.network.wait_for_lan` loops, `networkctl status lan` reports `Interface "lan" not found`, and `ip -o link` shows only `lo` and a downed `ens4` interface. BootImageVM also failed to maintain root privileges, so the login flow needs attention before the next run.
 2. **Verify pre-nixos logging actually reaches journald.**
    - From the debug session, confirm JSON `log_event` lines from `pre_nixos.network`/`pre_nixos.apply` appear in `journalctl`; if they are missing, inspect environment variables and unit configuration for buffering issues.
    - Decide whether to tweak the service or harness so journal dumps contain the structured logs instead of just echoed commands.
