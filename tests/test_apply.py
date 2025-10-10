@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from pre_nixos.inventory import Disk
 from pre_nixos.planner import plan_storage
@@ -86,4 +87,29 @@ def test_pv_created_for_each_array(tmp_path: Path) -> None:
     mdadm_devices = devices["mdadm"].keys()
     expected = {arr["name"] for arr in plan["arrays"]}
     assert expected <= set(mdadm_devices)
+
+
+def test_apply_plan_logs_command_execution(tmp_path: Path, monkeypatch, capsys) -> None:
+    plan = {"disko": {"disk": {}}}
+    config_path = tmp_path / "logged-disko.nix"
+    plan["disko_config_path"] = str(config_path)
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr("pre_nixos.apply.shutil.which", lambda exe: f"/run/{exe}")
+
+    calls: list[str] = []
+
+    def fake_run(cmd, shell=False, check=False):  # type: ignore[override]
+        calls.append(cmd)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr("pre_nixos.apply.subprocess.run", fake_run)
+
+    apply_plan(plan, dry_run=False)
+
+    captured = capsys.readouterr()
+    events = [json.loads(line) for line in captured.err.splitlines() if line.strip()]
+    assert any(entry["event"] == "pre_nixos.apply.command.finished" for entry in events)
+    assert any(entry["event"] == "pre_nixos.apply.apply_plan.finished" for entry in events)
+    assert calls and isinstance(calls[0], str)
 
