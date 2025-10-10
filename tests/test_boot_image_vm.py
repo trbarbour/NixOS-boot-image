@@ -646,26 +646,57 @@ def boot_image_vm(
         timeout=600,
     )
     child.logfile = log_handle
-    vm = BootImageVM(
-        child=child,
-        log_path=log_path,
-        harness_log_path=harness_log_path,
-        ssh_port=ssh_forward_port,
-        ssh_host="127.0.0.1",
-        ssh_executable=ssh_executable,
-        artifact=boot_image_build,
-    )
-    initial_failures = request.session.testsfailed
     debug_enabled = bool(request.config.getoption("boot_image_debug"))
+    initial_failures = request.session.testsfailed
+    vm: Optional[BootImageVM] = None
+    debug_session_started = False
+
+    def _log_debug(message: str) -> None:
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        with harness_log_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{timestamp}] {message}\n")
+
     try:
-        yield vm
-    finally:
-        should_debug = debug_enabled and (
-            request.session.testsfailed > initial_failures
+        vm = BootImageVM(
+            child=child,
+            log_path=log_path,
+            harness_log_path=harness_log_path,
+            ssh_port=ssh_forward_port,
+            ssh_host="127.0.0.1",
+            ssh_executable=ssh_executable,
+            artifact=boot_image_build,
         )
-        if should_debug:
-            vm.interact()
-        vm.shutdown()
+        try:
+            yield vm
+        finally:
+            should_debug = debug_enabled and (
+                request.session.testsfailed > initial_failures
+            )
+            if should_debug and not debug_session_started:
+                vm.interact()
+                debug_session_started = True
+    except Exception:
+        if debug_enabled and not debug_session_started:
+            if vm is not None:
+                vm.interact()
+            else:
+                _log_debug(
+                    "Entering interactive debug session (setup failure)"
+                )
+                try:
+                    child.interact(escape_character=chr(29))
+                finally:
+                    _log_debug("Exited interactive debug session")
+            debug_session_started = True
+        raise
+    finally:
+        if vm is not None:
+            vm.shutdown()
+        else:
+            try:
+                child.close(force=True)
+            except Exception:
+                pass
         log_handle.close()
 
 
