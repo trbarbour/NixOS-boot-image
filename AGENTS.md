@@ -11,7 +11,7 @@ DRY.
 Do not make assumptions about technical matters (e.g. language properties).
 When in doubt, verify, by an experiment if necessary. An experiment should test the particular matter in isolation, so far as possible.
 
-NEVER SKIP TESTS! Never let tests be skipped! If a test cannot run, count it as a failure, and record the failure so that it will be addressed.
+NEVER SKIP TESTS! Never let tests be skipped! Never abort a test, unless it seems unlikely to finish (allow it at least 30 minutes). If a test cannot run, or did not complete, count it as a failure, and record the failure so that it will be addressed.
 
 Test end-to-end; leave nothing to chance. A test that takes a long time (e.g. 15 minutes) is better than not testing adequately.
 Write a comprehensive test plan (include it in the project), that starts with downloading and installing tools. Write scripts (preferably nix) to do so, and add them to the project.
