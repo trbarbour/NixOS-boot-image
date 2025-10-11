@@ -7,6 +7,7 @@ _Last updated: 2025-10-11T02-57-09Z_
 1. **Pre-build boot image before VM regressions.**
    - Run `nix build .#bootImage --impure --print-out-paths` before invoking pytest so the build phase is explicit and timestamps can be recorded in the work notes.
    - Capture the resulting store path and completion time in the associated investigation log to ensure future reruns use the same artefact unless code changes require a rebuild.
+   - 2025-10-11T03-44-19Z - Cold `nix build` completed after ~35 minutes; recorded `/nix/store/4iyqq7b17l7pnpmwrpzcwhspdbybqfmf-nixos-24.05.20241230.b134951-x86_64-linux.iso` in `docs/work-notes/2025-10-11T03-44-19Z-boot-image-prebuild.md` for reuse.
 
 2. **Reproduce the boot-image VM failure with maximum visibility.**
    - After the ISO build finishes, execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and remain in the interactive session to inspect the guest instead of tearing it down immediately.
