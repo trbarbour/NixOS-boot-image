@@ -48,7 +48,7 @@ If you find recurring infelicities (e.g. a build taking too long), make a plan f
 If an anomaly occurs, either address it immediately, or make a record of it, so you can address it later. Do not ignore it.
 
 Keep track of all tasks, so they get done, not skipped/lost. Maintain a queue of tasks to perform. When you see something you need to do, either do it immediately (if straightforward), or document it and put it on the queue.
-Each time you start work (on a user query), first check the queue of tasks. If the queue is non-empty, put the user's task on the back of the queue (and tell the user), then work through the queued tasks.
+Each time you start work (on a user query), first check the queue of tasks. If the queue is non-empty, put the user's task on the back of the queue (and tell the user), then work through the queued tasks. Each time you successfully complete a task, move it off the queue.
 
 Do not alter historical entries in changelog.
 
