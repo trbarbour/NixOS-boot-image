@@ -153,6 +153,9 @@ def wait_for_lan(
 ) -> Optional[str]:
     """Poll for an active LAN interface and return its name when detected."""
 
+    exec_enabled = os.environ.get("PRE_NIXOS_EXEC") == "1"
+    sleep_interval = delay if exec_enabled else min(delay, 0.1)
+
     log_event(
         "pre_nixos.network.wait_for_lan.start",
         attempts=attempts,
@@ -160,6 +163,17 @@ def wait_for_lan(
         net_path=net_path,
     )
     for _ in range(attempts):
+        if exec_enabled:
+            for candidate in sorted(net_path.iterdir()):
+                if not (candidate / "device").exists():
+                    continue
+                try:
+                    _run(["ip", "link", "set", candidate.name, "up"])
+                except subprocess.CalledProcessError:
+                    # ``_run`` already logged the failure; continue probing the
+                    # remaining interfaces so a transient error does not abort the
+                    # wait loop.
+                    continue
         iface = identify_lan(net_path)
         if iface is not None:
             log_event(
@@ -167,7 +181,7 @@ def wait_for_lan(
                 interface=iface,
             )
             return iface
-        time.sleep(delay)
+        time.sleep(sleep_interval)
     log_event("pre_nixos.network.wait_for_lan.timeout", attempts=attempts, delay_seconds=delay)
     return None
 
