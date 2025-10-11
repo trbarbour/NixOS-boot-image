@@ -17,6 +17,8 @@ Always deal appropriately with exceptional conditions, and errors, unless specif
 
 ## Troubleshooting / Debugging
 
+It is okay to start by "milking the front-panel", but if the bug(s) are stubborn you should plan to systematically use *half-splitting*. How can you tell if bugs are stubborn ? If you have already tried and failed to find them. How can you tell if you have already tried ? By keeping records of your test runs and their outcomes.
+
 When troubleshooting, you must first reproduce the bug in a specific test case (if you cannot, report this and stop); the test is to be a permanent part of the test suite.
 
 Always do root-cause analysis of failures; *never* *assume* the cause, *prove* it via the scientific method.

@@ -8,5 +8,6 @@ Check the output from these scripts, in case some measure (e.g. source a file) i
 You should have sufficient Internet access to download any tools you need. If not, add the extra DNS domains you need to the list in the test plan, and ask for access.
 If you really cannot test properly (e.g. because of missing tools/dependencies), write a report about the difficulties and ask for help.
 
-Make tests pass by changing the code under test, *not* by changing the test. The *only* time you may change a test is if you establish that the test itself is contrary to requirements, or (rarely) technically infeasible. If you change a test, you must report doing so.
+Make tests pass by changing the code under test, **not** by changing the test. The **only** time you may change a test is if you establish that the test itself is contrary to requirements, or (rarely) technically infeasible. If you change a test, you must report doing so.
 
+If bug(s) are stubborn you should use *half-splitting*.
