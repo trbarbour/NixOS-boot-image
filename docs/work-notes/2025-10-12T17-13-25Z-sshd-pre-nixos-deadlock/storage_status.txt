@@ -1,0 +1,1 @@
+cat /run/pre-nixos/storage-status 2>/dev/null || true

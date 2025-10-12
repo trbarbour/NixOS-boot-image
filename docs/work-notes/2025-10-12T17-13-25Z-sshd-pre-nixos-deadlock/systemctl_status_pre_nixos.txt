@@ -1,0 +1,25 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl status pre-nixos --no-pager
+● pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: enabled)
+Active: activating (start) since Sun 2025-10-12 17:25:02 UTC; 32s ago
+Main PID: 701 (pre-nixos-start)
+IP: 0B in, 0B out
+IO: 43.1M read, 0B written
+Tasks: 3 (limit: 2329)
+Memory: 41.9M (peak: 42.1M)
+CPU: 9.665s
+CGroup: /system.slice/pre-nixos.service
+├─701 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…
+├─831 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/…
+└─901 systemctl start sshd
+Oct 12 17:25:21 nixos pre-nixos-start[831]: {"command": ["ip", "link", "set"…0"}
+Oct 12 17:25:21 nixos pre-nixos-start[831]: {"command": ["ip", "link", "set"…0"}
+Oct 12 17:25:22 nixos pre-nixos-start[831]: {"command": ["ip", "link", "set"…0"}
+Oct 12 17:25:22 nixos pre-nixos-start[831]: {"command": ["ip", "link", "set"…0"}
+Oct 12 17:25:22 nixos pre-nixos-start[831]: {"command": ["ip", "link", "set"…0"}
+Oct 12 17:25:22 nixos pre-nixos-start[831]: {"command": ["systemctl", "resta…0"}
+Oct 12 17:25:27 nixos pre-nixos-start[831]: {"command": ["systemctl", "resta…0"}
+Oct 12 17:25:27 nixos pre-nixos-start[831]: {"authorized_key": "/nix/store/h…0"}
+Oct 12 17:25:27 nixos pre-nixos-start[831]: {"authorized_keys_path": "/root/…0"}
+Oct 12 17:25:27 nixos pre-nixos-start[831]: {"command": ["systemctl", "start…0"}
+Hint: Some lines were ellipsized, use -l to show in full.

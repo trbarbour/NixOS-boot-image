@@ -135,7 +135,16 @@ def collect_outputs(vm: BootImageVM) -> Dict[str, str]:
     }
     outputs: Dict[str, str] = {}
     for key, command in commands.items():
-        outputs[key] = vm.run(command, timeout=240)
+        if command.startswith(("systemctl", "journalctl", "networkctl")):
+            command = (
+                "SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX "
+                "PAGER=cat "
+                + command
+            )
+        output_text = vm.run(command, timeout=240)
+        if output_text and not output_text.endswith("\n"):
+            output_text = output_text + "\n"
+        outputs[key] = output_text
     return outputs
 
 

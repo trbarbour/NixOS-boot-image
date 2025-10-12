@@ -8,6 +8,7 @@ _Last updated: 2025-10-12T05-15-00Z_
    - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once the failure reproduces.
    - From the debug shell, capture `systemctl show -p After sshd`, `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `networkctl status lan` to prove the `sshd` start job is waiting on `pre-nixos.service` even though DHCP succeeded.
    - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, cross-linking any prior evidence that shows the missing `/run/pre-nixos/storage-status` file.
+   - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` recorded the required systemd evidence and journal excerpts (`docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`).
 
 2. **Remove the dependency cycle so `pre-nixos.service` can finish.**
    - Edit `modules/pre-nixos.nix` to drop the `systemd.services.sshd.after = [ "pre-nixos.service" ];` override.
