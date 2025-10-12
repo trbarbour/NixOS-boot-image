@@ -48,6 +48,8 @@ in {
     };
 
     # Keep OpenSSH disabled until secure_ssh hardens the configuration.
+    # ``wantedBy = []`` ensures no other units pull ``sshd`` in automatically,
+    # so only ``secure_ssh`` queues the non-blocking restart once the config is safe.
     services.openssh.enable = true;
     systemd.services.sshd.wantedBy = lib.mkForce [ ];
     systemd.services.sshd.after = [ "pre-nixos.service" ];

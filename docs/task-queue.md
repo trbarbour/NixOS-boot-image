@@ -1,19 +1,18 @@
 # Task Queue
 
-_Last updated: 2025-10-12T05-15-00Z_
+_Last updated: 2025-10-13T00-00-00Z_
 
 ## Active Tasks
 
-1. **Document the `sshd`/`pre-nixos` ordering deadlock in a fresh debug run.**
-   - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once the failure reproduces.
-   - From the debug shell, capture `systemctl show -p After sshd`, `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `networkctl status lan` to prove the `sshd` start job is waiting on `pre-nixos.service` even though DHCP succeeded.
-   - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, cross-linking any prior evidence that shows the missing `/run/pre-nixos/storage-status` file.
-   - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` recorded the required systemd evidence and journal excerpts (`docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`).
+1. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
+   - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once networking is configured.
+   - From the debug shell, capture `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `systemctl status sshd` to confirm the sshd job no longer waits on `pre-nixos.service` now that `secure_ssh` uses `systemctl reload-or-restart --no-block`.
+   - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, noting whether `/run/pre-nixos/storage-status` reports `STATE=applied`/`DETAIL=auto-applied`.
+   - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` still documents the pre-change deadlock evidence in `docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`; repeat the capture once the updated ISO is available for comparison.
 
-2. **Remove the dependency cycle so `pre-nixos.service` can finish.**
-   - Edit `modules/pre-nixos.nix` to drop the `systemd.services.sshd.after = [ "pre-nixos.service" ];` override.
-   - Update `pre_nixos/network.py` (specifically `secure_ssh`) so it invokes `systemctl start --no-block sshd` and omits the redundant reload, ensuring the oneshot does not block on the service start.
-   - Rebuild the ISO via `nix build .#bootImage`, rerun the VM debug test, and record whether `/run/pre-nixos/storage-status` now reports `STATE=applied`/`DETAIL=auto-applied` with `pre-nixos.service` transitioning to `inactive`.
+2. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
+   - Audit any additional units (e.g., console helpers) that expect to pull `sshd.service` in via `WantedBy` and ensure they explicitly order themselves after `secure_ssh` if necessary.
+   - During the VM verification run, check `systemctl list-dependencies sshd` to confirm nothing else attempts to start the service before `secure_ssh` finishes provisioning.
 
 3. **If the hang persists, bisect between plan generation and application.**
    - With the updated ISO booted in debug mode, inspect `journalctl -u pre-nixos.service -b` and `/run/pre-nixos/storage-status` to see whether execution stalls before or after `apply.apply_plan`.
@@ -84,7 +83,8 @@ _Last updated: 2025-10-12T05-15-00Z_
 
 ## Recently Completed
 
-- 2025-10-11T04-10-39Z - Pre-built the boot image ahead of VM regressions, recording `/nix/store/d8xvgbl51svz0axi2n0xzrij330hw6i4-nixos-24.05.20241230.b134951-x86_64-linux.iso` in `docs/work-notes/2025-10-11T04-10-39Z-boot-image-prebuild.md` for reuse.
+ - 2025-10-13T00-00-00Z - `secure_ssh` now invokes `systemctl reload-or-restart --no-block sshd` with unit coverage guarding against regressions; follow-up VM runs will confirm the oneshot no longer blocks on sshd.
+ - 2025-10-11T04-10-39Z - Pre-built the boot image ahead of VM regressions, recording `/nix/store/d8xvgbl51svz0axi2n0xzrij330hw6i4-nixos-24.05.20241230.b134951-x86_64-linux.iso` in `docs/work-notes/2025-10-11T04-10-39Z-boot-image-prebuild.md` for reuse.
 - 2025-10-10T13-05-00Z - Confirmed structured `pre_nixos` journal entries are present in the debug session logs (former queue item 2). No logging configuration changes required; see `docs/work-notes/2025-10-10T13-05-00Z-pre-nixos-journalctl-verification.md` for details.
 - 2025-10-08T06-10-00Z - Confirmed the boot image crashed because `systemd-networkd.service` is absent, captured `journalctl -u pre-nixos.service`, and planned fixes (enable networkd + guard restarts). See `docs/work-notes/2025-10-08T06-10-00Z-pre-nixos-networkd-investigation.md` and new serial log `docs/boot-logs/2025-10-08T06-10-00Z-serial.log`.
 - 2025-10-07T04-01-53Z - Verified `boot.kernelParams` for the pre-installer ISO include `console=ttyS0,115200n8` and `console=tty0`; no further changes required for persistent serial logging. See `docs/work-notes/2025-10-07T04-01-53Z-serial-console-verification.md`.

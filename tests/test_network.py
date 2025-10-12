@@ -189,6 +189,25 @@ def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     assert "PermitRootLogin prohibit-password" in text
 
 
+def test_secure_ssh_queues_non_blocking_restart(tmp_path, monkeypatch):
+    ssh_dir = tmp_path / "etc/ssh"
+    ssh_dir.mkdir(parents=True)
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    calls: list[tuple[list[str], bool]] = []
+
+    def fake_systemctl(args, *, ignore_missing=False):
+        calls.append((list(args), ignore_missing))
+
+    monkeypatch.setattr("pre_nixos.network._systemctl", fake_systemctl)
+
+    secure_ssh(ssh_dir, authorized_key=key, root_home=tmp_path / "root")
+
+    assert calls == [(["reload-or-restart", "--no-block", "sshd"], False)]
+
+
 def test_get_ip_address_parses_output(monkeypatch):
     class DummyResult:
         stdout = json.dumps(
