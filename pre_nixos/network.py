@@ -308,7 +308,8 @@ def secure_ssh(
 
     The main ``sshd_config`` file is updated to prohibit password logins,
     an authorized key is installed for the root account, and the SSH service
-    is started and reloaded. The root password itself remains usable for
+    is started in the background to avoid blocking oneshot service completion.
+    The root password itself remains usable for
     console logins.
     """
 
@@ -371,8 +372,7 @@ def secure_ssh(
         authorized_keys_path=auth_path,
     )
 
-    _systemctl(["start", ssh_service])
-    _systemctl(["reload", ssh_service])
+    _systemctl(["start", "--no-block", ssh_service])
     log_event(
         "pre_nixos.network.secure_ssh.finished",
         authorized_keys_path=auth_path,

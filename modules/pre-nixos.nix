@@ -50,7 +50,6 @@ in {
     # Keep OpenSSH disabled until secure_ssh hardens the configuration.
     services.openssh.enable = true;
     systemd.services.sshd.wantedBy = lib.mkForce [ ];
-    systemd.services.sshd.after = [ "pre-nixos.service" ];
     systemd.services.sshd.serviceConfig.ExecStart =
       lib.mkForce "${pkgs.openssh}/sbin/sshd -D -e -f /etc/ssh/sshd_config";
   };
