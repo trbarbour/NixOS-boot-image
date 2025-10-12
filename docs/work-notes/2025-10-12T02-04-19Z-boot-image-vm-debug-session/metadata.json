@@ -1,0 +1,9 @@
+{
+  "iso_path": "/nix/store/kvq4171744ijg5n0mnna39rw29incypz-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "store_path": "/nix/store/kvq4171744ijg5n0mnna39rw29incypz-nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "deriver": "/nix/store/4f4qc7hg2r28z2m2rwywba6qpbdac3lc-nixos-24.05.20241230.b134951-x86_64-linux.iso.drv",
+  "nar_hash": "sha256-MqYfvkYvoKaalRzD/wwRvaNg4Wg4ifAY8S0T7nJ5ZEY=",
+  "root_key_fingerprint": "256 SHA256:FAxJkbWuRqASdzlsVASKQlyAfZIXlkPla6hVPYPsehE boot-image-vm-debug (ED25519)",
+  "ssh_forward_port": 44377,
+  "tmp_root": "/tmp/boot-image-debug-benuucno"
+}

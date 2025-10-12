@@ -1,0 +1,27 @@
+<error: End Of File (EOF). Exception style platform.
+<pexpect.pty_spawn.spawn object at 0x7f8bb66e83d0>
+command: /usr/bin/qemu-system-x86_64
+args: [b'/usr/bin/qemu-system-x86_64', b'-m', b'2048', b'-smp', b'2', b'-display', b'none', b'-no-reboot', b'-boot', b'd', b'-serial', b'stdio', b'-cdrom', b'/nix/store/kvq4171744ijg5n0mnna39rw29incypz-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso', b'-drive', b'file=/tmp/boot-image-debug-benuucno/disk/disk.img,if=virtio,format=raw', b'-device', b'virtio-rng-pci', b'-netdev', b'user,id=net0,hostfwd=tcp:127.0.0.1:44377-:22', b'-device', b'virtio-net-pci,netdev=net0']
+buffer (last 100 chars): ''
+before (last 100 chars): 'ines 13-35/35 (END)\x1b[27m\x1b[Kqemu-system-x86_64: terminating on signal 15 from pid 16649 (/bin/bash)\r\n'
+after: <class 'pexpect.exceptions.EOF'>
+match: None
+match_index: None
+exitstatus: None
+flag_eof: True
+pid: 16970
+child_fd: 6
+closed: False
+timeout: 600
+delimiter: <class 'pexpect.exceptions.EOF'>
+logfile: <_io.TextIOWrapper name='/tmp/boot-image-debug-benuucno/logs/serial.log' mode='w' encoding='utf-8'>
+logfile_read: None
+logfile_send: None
+maxread: 2000
+ignorecase: False
+searchwindowsize: None
+delaybeforesend: 0.05
+delayafterclose: 0.1
+delayafterterminate: 0.1
+searcher: searcher_re:
+    0: re.compile('PRE-NIXOS> ')>

@@ -1,0 +1,4 @@
+'
+systemctl status pre-nixos --no-pager
+__USER__
+[nixos@nixos:~]$ export PS1='

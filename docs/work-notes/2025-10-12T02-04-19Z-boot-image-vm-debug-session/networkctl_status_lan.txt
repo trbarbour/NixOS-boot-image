@@ -1,0 +1,27 @@
+systemctl status pre-nixos --no-pager
+journalctl --no-pager -u pre-nixos.service -b || true
+networkctl status lan || true
+● pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: enabled)
+Active: activating (start) since Sun 2025-10-12 02:10:16 UTC; 17s ago
+Main PID: 739 (pre-nixos-start)
+IP: 0B in, 0B out
+IO: 40.3M read, 0B written
+Tasks: 3 (limit: 2329)
+Memory: 41.2M (peak: 41.5M)
+CPU: 6.237s
+CGroup: /system.slice/pre-nixos.service
+├─739 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…
+├─817 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/…
+└─832 systemctl start sshd
+Oct 12 02:10:25 nixos pre-nixos-start[817]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:10:25 nixos pre-nixos-start[817]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:10:26 nixos pre-nixos-start[817]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:10:26 nixos pre-nixos-start[817]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:10:26 nixos pre-nixos-start[817]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:10:26 nixos pre-nixos-start[817]: {"command": ["systemctl", "resta…0"}
+Oct 12 02:10:27 nixos pre-nixos-start[817]: {"command": ["systemctl", "resta…0"}
+Oct 12 02:10:27 nixos pre-nixos-start[817]: {"authorized_key": "/nix/store/n…0"}
+Oct 12 02:10:27 nixos pre-nixos-start[817]: {"authorized_keys_path": "/root/…0"}
+Oct 12 02:10:27 nixos pre-nixos-start[817]: {"command": ["systemctl", "start…0"}
+Hint: Some lines were ellipsized, use -l to show in full.
