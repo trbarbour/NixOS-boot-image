@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2025-10-11T04-35-00Z_
+_Last updated: 2025-10-12T00-31-04Z_
 
 ## Active Tasks
 
@@ -22,6 +22,7 @@ _Last updated: 2025-10-11T04-35-00Z_
 4. **Establish a known-good baseline with an upstream minimal NixOS ISO.**
    - Build `nixpkgs#nixosConfigurations.installerMinimal.x86_64-linux.config.system.build.isoImage` (or similar) and boot it with the same QEMU parameters used by the harness.
    - Verify DHCP, storage visibility, and console interaction work under the harness to validate host-side assumptions.
+   - 2025-10-12T00-31-04Z - Documented the overarching half-splitting plan and noted that the first draft of an upstream ISO probe harness still blocks waiting for the VM login prompt (`docs/work-notes/2025-10-12T00-31-04Z-half-splitting-plan.md`).
 
 5. **Compare harness and service toggles to isolate the regression.**
    - Boot the baseline ISO, install the `pre-nixos` package manually, and execute `pre-nixos --plan-only` to observe behaviour without the systemd unit.
