@@ -1,0 +1,12 @@
+{
+  "iso_path": "/nix/store/ss1n5r410q2n4fsaiii82bxaywf92qhj-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "store_path": "/nix/store/ss1n5r410q2n4fsaiii82bxaywf92qhj-nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "deriver": "/nix/store/iiza7wf5fib2x3ra01gbnhr0w6wvmc14-nixos-24.05.20241230.b134951-x86_64-linux.iso.drv",
+  "nar_hash": "sha256-Crya6AMH4FX0OEX3gWlOBEPro4PSiyJ4qFOwTa06VDk=",
+  "root_key_fingerprint": "256 SHA256:kGxCoysPseWOn2Le7JCFXhjzSW1ve3dSrRc5cByR4Vo boot-image-vm-test (ED25519)",
+  "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGrl6x0U5NBhr+lOHxlZnYd/v0u1XFh/rFnTm/jGatuh boot-image-vm-test",
+  "public_key_path": "/tmp/pytest-of-root/pytest-0/boot-image-ssh-key0/id_ed25519.pub",
+  "public_key_generated": false,
+  "temporary_directory": "/tmp/boot-image-debug-tg8_qm6_",
+  "failure": null
+}

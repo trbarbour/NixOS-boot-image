@@ -1,0 +1,7 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl list-jobs
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl list-jobs
+JOB UNIT              TYPE  STATE
+1   multi-user.target start waiting
+500 sshd.service      start waiting
+69  pre-nixos.service start running
+3 jobs listed.

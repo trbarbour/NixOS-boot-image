@@ -1,0 +1,2 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl show -p After sshd
+After=pre-nixos.service network.target systemd-journald.socket system.slice basic.target sysinit.target
