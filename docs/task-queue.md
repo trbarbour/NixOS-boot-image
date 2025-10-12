@@ -7,6 +7,7 @@ _Last updated: 2025-10-12T00-31-04Z_
 1. **Reproduce the boot-image VM failure with maximum visibility.**
    - After the ISO build finishes, execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and remain in the interactive session to inspect the guest instead of tearing it down immediately.
    - Collect `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, `networkctl status lan`, `ip -o link`, and `/run/pre-nixos/storage-status` from the debug shell, then archive the transcripts (`harness.log`, `serial.log`, and shell captures) under `docs/work-notes/`.
+   - 2025-10-12T02-04-19Z - Archived a fresh VM run in `docs/work-notes/2025-10-12T02-04-19Z-boot-image-vm-debug-session/`. `pre-nixos.service` stayed `activating` even though `networkctl status lan` showed `lan` with DHCP `10.0.2.15`; `/run/pre-nixos/storage-status` remained empty. 【F:docs/work-notes/2025-10-12T02-04-19Z-boot-image-vm-debug-session/serial.log†L40-L131】
    - Cross-reference the captured evidence with earlier runs to highlight changes in behaviour as fixes land.
    - 2025-10-10T04-47-41Z - Manual debug session gathered the requested evidence (`docs/work-notes/2025-10-10T04-47-41Z-boot-image-vm-debug-session/`). `pre-nixos.service` remained `activating` while `pre_nixos.network.wait_for_lan` looped; `networkctl status lan` reported `Interface "lan" not found`, and `ip -o link` listed only `lo` plus a downed `ens4`. BootImageVM also failed to escalate to root; future reproductions must capture the sudo transcript.
 
