@@ -1,0 +1,1 @@
+(pre-nixos did not populate /run/pre-nixos/storage-status; repeated reads returned an empty response.)

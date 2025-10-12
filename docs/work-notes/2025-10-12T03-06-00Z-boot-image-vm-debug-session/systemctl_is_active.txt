@@ -1,0 +1,2 @@
+activating
+Call to PowerOff failed: Interactive authentication required.
