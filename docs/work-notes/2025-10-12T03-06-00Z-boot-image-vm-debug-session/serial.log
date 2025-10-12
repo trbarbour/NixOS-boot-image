@@ -1,0 +1,295 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot/bzImage... ok
+Loading /boot/initrd...ok
+
+
+[1;32m<<< Welcome to NixOS 24.05.20241230.b134951 (x86_64) - ttyS0 >>>[0m
+The "nixos" and "root" accounts have empty passwords.
+
+To log in over ssh you must set a password for either "nixos" or "root"
+with `passwd` (prefix with `sudo` for "root"), or add your public key to
+/home/nixos/.ssh/authorized_keys or /root/.ssh/authorized_keys.
+
+If you need a wireless connection, type
+`sudo systemctl start wpa_supplicant` and configure a
+network using `wpa_cli`. See the NixOS manual for details.
+
+
+Run 'nixos-help' for the NixOS manual.
+
+nixos login: nixos (automatic login)
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+[?2004lexport PS1='PRE-NIXOS> ':
+
+:
+__USER__
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '
+command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004l[?2004hPRE-NIXOS> :
+[?2004l[?2004hPRE-NIXOS> command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v findmnt >/dev/null 2>&1 && echo OK || echo MISSING
+command -v lsblk >/dev/null 2>&1 && echo OK || echo MISSING
+command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v findmnt >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v wipefs >/dev/null 2>&1 && echo OK || echo MISSING
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+command -v lsblk >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v wipefs >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+journalctl --no-pager -u pre-nixos.service -b || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> systemctl status pre-nixos --no-pager 2>&1 || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+journalctl --no-pager -u pre-nixos.service -b || true
+[?2004lsystemctl status pre-nixos --no-pager 2>&1 || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+Oct 12 02:56:51 nixos systemd[1]: Starting Pre-NixOS setup...
+Oct 12 02:57:24 nixos pre-nixos-start[800]: {"authorized_key": null, "event": "pre_nixos.network.configure_lan.start", "net_path": "/sys/class/net", "network_dir": "/etc/systemd/network", "root_home": "/root", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-12T02:57:24.939339+00:00"}
+Oct 12 02:57:24 nixos pre-nixos-start[800]: {"attempts": 30, "delay_seconds": 2.0, "event": "pre_nixos.network.wait_for_lan.start", "net_path": "/sys/class/net", "timestamp": "2025-10-12T02:57:24.981434+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T02:57:24.994428+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T02:57:25.349357+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.identify_lan.detected", "interface": "ens4", "signal": "carrier", "timestamp": "2025-10-12T02:57:25.372205+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.wait_for_lan.detected", "interface": "ens4", "timestamp": "2025-10-12T02:57:25.374511+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.configure_lan.detected_interface", "interface": "ens4", "timestamp": "2025-10-12T02:57:25.375405+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.write_lan_rename_rule.start", "net_path": "/sys/class/net", "rules_dir": "/etc/systemd/network", "timestamp": "2025-10-12T02:57:25.379169+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"attempts": 30, "delay_seconds": 2.0, "event": "pre_nixos.network.wait_for_lan.start", "net_path": "/sys/class/net", "timestamp": "2025-10-12T02:57:25.382321+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T02:57:25.386383+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T02:57:25.523005+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.identify_lan.detected", "interface": "ens4", "signal": "carrier", "timestamp": "2025-10-12T02:57:25.539169+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.wait_for_lan.detected", "interface": "ens4", "timestamp": "2025-10-12T02:57:25.543239+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.write_lan_rename_rule.finished", "interface": "ens4", "rule_path": "/etc/systemd/network/10-lan.link", "timestamp": "2025-10-12T02:57:25.556039+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"event": "pre_nixos.network.configure_lan.network_file_written", "network_file": "/etc/systemd/network/20-lan.network", "timestamp": "2025-10-12T02:57:25.566189+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "down"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T02:57:25.568488+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "down"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T02:57:25.757613+00:00"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T02:57:25.766621+00:00"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T02:57:26.045124+00:00"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T02:57:26.050459+00:00"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T02:57:26.262949+00:00"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": true, "timestamp": "2025-10-12T02:57:26.269271+00:00"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T02:57:34.391183+00:00"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"authorized_key": "/nix/store/lb108z95dkhg5m48zszmw3b8287w93f2-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/root_key.pub", "event": "pre_nixos.network.secure_ssh.start", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-12T02:57:34.423408+00:00"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"authorized_keys_path": "/root/.ssh/authorized_keys", "event": "pre_nixos.network.secure_ssh.authorized_key_written", "timestamp": "2025-10-12T02:57:34.924482+00:00"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"command": ["systemctl", "start", "sshd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": false, "timestamp": "2025-10-12T02:57:34.927359+00:00"}
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+systemctl status pre-nixos --no-pager 2>&1 || true
+[?2004l● pre-nixos.service - Pre-NixOS setup
+     Loaded: loaded (]8;;file://nixos/etc/systemd/system/pre-nixos.service/etc/systemd/system/pre-nixos.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: activating (start) since Sun 2025-10-12 02:56:51 UTC; 8min ago
+   Main PID: 676 (pre-nixos-start)
+         IP: 0B in, 0B out
+         IO: 44.9M read, 0B written
+      Tasks: 3 (limit: 2329)
+     Memory: 42.8M (peak: 43.1M)
+        CPU: 17.730s
+     CGroup: /system.slice/pre-nixos.service
+             ├─[0;38;5;245m676 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…[0m
+             ├─[0;38;5;245m800 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/…[0m
+             └─[0;38;5;245m868 systemctl start sshd[0m
+
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:57:25 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["ip", "link", "set"…0"}
+Oct 12 02:57:26 nixos pre-nixos-start[800]: {"command": ["systemctl", "resta…0"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"command": ["systemctl", "resta…0"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"authorized_key": "/nix/store/l…0"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"authorized_keys_path": "/root/…0"}
+Oct 12 02:57:34 nixos pre-nixos-start[800]: {"command": ["systemctl", "start…0"}
+Hint: Some lines were ellipsized, use -l to show in full.
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+[?2004l2: lan    inet [35m10.0.2.15[0m/24 metric 1024 brd [35m10.0.2.255 [0mscope global dynamic lan\       valid_lft 85954sec preferred_lft 85954sec
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+systemctl is-active pre-nixos
+ip -o -4 addr show dev lan 2>/dev/null || true
+[?2004l2: lan    inet [35m10.0.2.15[0m/24 metric 1024 brd [35m10.0.2.255 [0mscope global dynamic lan\       valid_lft 85950sec preferred_lft 85950sec
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+[?2004lpoweroff
+systemctl is-active pre-nixos
+2: lan    inet [35m10.0.2.15[0m/24 metric 1024 brd [35m10.0.2.255 [0mscope global dynamic lan\       valid_lft 85945sec preferred_lft 85945sec
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos
+[?2004lactivating
+[?2004hPRE-NIXOS> poweroff
+[?2004l[0;1;31mCall to PowerOff failed: Interactive authentication required.[0m
+[?2004hPRE-NIXOS> 

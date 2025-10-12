@@ -1,0 +1,9 @@
+{
+  "pytest_command": "pytest tests/test_boot_image_vm.py -vv --boot-image-debug",
+  "iso_path": "/nix/store/87ckvjwh7s8l30pgs4rbzykiwis0gvwa-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "store_path": "/nix/store/87ckvjwh7s8l30pgs4rbzykiwis0gvwa-nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "deriver": "/nix/store/jkxdqlw09pwggqjgzi634wkw8khm5rhm-nixos-24.05.20241230.b134951-x86_64-linux.iso.drv",
+  "nar_hash": "sha256-EfpCCdaH2jEvFbSskQ89vELKwnaFqpPido4BGzt1J2s=",
+  "root_key_fingerprint": "256 SHA256:0Lx0HVVxEWUDfnJ0bBAtRSut3DPWxfVXsKMuDZo9uBA boot-image-vm-test (ED25519)",
+  "notes": "Tests failed after ~26 minutes: storage status never appeared and pre-nixos.service remained activating despite lan obtaining DHCP."
+}

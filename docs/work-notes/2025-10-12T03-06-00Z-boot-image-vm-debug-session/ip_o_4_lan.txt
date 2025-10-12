@@ -1,0 +1,3 @@
+2: lan    inet 10.0.2.15/24 metric 1024 brd 10.0.2.255 scope global dynamic lan\       valid_lft 85954sec preferred_lft 85954sec
+2: lan    inet 10.0.2.15/24 metric 1024 brd 10.0.2.255 scope global dynamic lan\       valid_lft 85950sec preferred_lft 85950sec
+2: lan    inet 10.0.2.15/24 metric 1024 brd 10.0.2.255 scope global dynamic lan\       valid_lft 85945sec preferred_lft 85945sec

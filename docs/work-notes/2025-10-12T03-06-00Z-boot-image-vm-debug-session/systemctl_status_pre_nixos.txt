@@ -1,0 +1,13 @@
+â pre-nixos.service - Pre-NixOS setup
+     Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: enabled)
+     Active: activating (start) since Sun 2025-10-12 02:56:51 UTC; 8min ago
+   Main PID: 676 (pre-nixos-start)
+         IP: 0B in, 0B out
+         IO: 44.9M read, 0B written
+      Tasks: 3 (limit: 2329)
+     Memory: 42.8M (peak: 43.1M)
+        CPU: 17.730s
+     CGroup: /system.slice/pre-nixos.service
+             ââ676 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/bash /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/bash -c /nix/store/l6xmk2gy7cf0yl36770wzyv3dyr2yc5h-unit-script-pre-nixos-start-start
+             ââ800 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/bin/python3.11 /nix/store/qy7fbv2q6v1m5bn8kikcgsfpq8ap0qrv-pre-nixos-0.1.0/bin/pre-nixos-start
+             ââ868 systemctl start sshd
