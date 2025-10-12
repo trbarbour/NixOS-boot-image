@@ -1,8 +1,25 @@
 # Task Queue
 
-_Last updated: 2025-10-12T00-31-04Z_
+_Last updated: 2025-10-12T05-15-00Z_
 
 ## Active Tasks
+
+1. **Document the `sshd`/`pre-nixos` ordering deadlock in a fresh debug run.**
+   - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once the failure reproduces.
+   - From the debug shell, capture `systemctl show -p After sshd`, `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `networkctl status lan` to prove the `sshd` start job is waiting on `pre-nixos.service` even though DHCP succeeded.
+   - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, cross-linking any prior evidence that shows the missing `/run/pre-nixos/storage-status` file.
+
+2. **Remove the dependency cycle so `pre-nixos.service` can finish.**
+   - Edit `modules/pre-nixos.nix` to drop the `systemd.services.sshd.after = [ "pre-nixos.service" ];` override.
+   - Update `pre_nixos/network.py` (specifically `secure_ssh`) so it invokes `systemctl start --no-block sshd` and omits the redundant reload, ensuring the oneshot does not block on the service start.
+   - Rebuild the ISO via `nix build .#bootImage`, rerun the VM debug test, and record whether `/run/pre-nixos/storage-status` now reports `STATE=applied`/`DETAIL=auto-applied` with `pre-nixos.service` transitioning to `inactive`.
+
+3. **If the hang persists, bisect between plan generation and application.**
+   - With the updated ISO booted in debug mode, inspect `journalctl -u pre-nixos.service -b` and `/run/pre-nixos/storage-status` to see whether execution stalls before or after `apply.apply_plan`.
+   - Capture the storage plan (`pre-nixos --plan-only`), any running `disko` processes, and related logs so we can split the investigation between plan creation and disk application on subsequent runs.
+   - Promote any new discoveries into focused follow-up tasks and update this queue accordingly.
+
+## Backlog (previously active items)
 
 1. **Reproduce the boot-image VM failure with maximum visibility.**
    - After the ISO build finishes, execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and remain in the interactive session to inspect the guest instead of tearing it down immediately.
