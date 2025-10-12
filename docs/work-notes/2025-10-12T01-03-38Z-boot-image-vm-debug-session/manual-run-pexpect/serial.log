@@ -1,0 +1,158 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot/bzImage... ok
+Loading /boot/initrd...ok
+
+
+[1;32m<<< Welcome to NixOS 24.05.20241230.b134951 (x86_64) - ttyS0 >>>[0m
+The "nixos" and "root" accounts have empty passwords.
+
+To log in over ssh you must set a password for either "nixos" or "root"
+with `passwd` (prefix with `sudo` for "root"), or add your public key to
+/home/nixos/.ssh/authorized_keys or /root/.ssh/authorized_keys.
+
+If you need a wireless connection, type
+`sudo systemctl start wpa_supplicant` and configure a
+network using `wpa_cli`. See the NixOS manual for details.
+
+
+Run 'nixos-help' for the NixOS manual.
+
+nixos login: nixos (automatic login)
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '
+if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+[?2004lexport PS1='PRE-NIXOS> '
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+__USER__
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> 'systemctl status pre-nixos --no-pager -l 2>&1 || true
+
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004ljournalctl --no-pager -u pre-nixos.service -b || true
+systemctl status pre-nixos --no-pager -l 2>&1 || true
+journalctl --no-pager -u pre-nixos.service -b || true
+[?2004hPRE-NIXOS> networkctl status lan || true
+systemctl status pre-nixos --no-pager -l 2>&1 || true
+[?2004lnetworkctl status lan || true
+● pre-nixos.service - Pre-NixOS setup
+     Loaded: loaded (]8;;file://nixos/etc/systemd/system/pre-nixos.service/etc/systemd/system/pre-nixos.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: activating (start) since Sun 2025-10-12 01:16:00 UTC; 39s ago
+   Main PID: 676 (pre-nixos-start)
+         IP: 0B in, 0B out
+         IO: 43.0M read, 0B written
+      Tasks: 3 (limit: 2329)
+     Memory: 42.5M (peak: 42.7M)
+        CPU: 11.111s
+     CGroup: /system.slice/pre-nixos.service
+             ├─[0;38;5;245m676 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/bash /nix/store/7v090d6lml35kj94gybk8ma5vi8m1148-unit-script-pre-nixos-start/bin/pre-nixos-start[0m
+             ├─[0;38;5;245m803 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/bin/python3.11 /nix/store/9wziy04f2i8d887wrp76kya3p1jqafvn-pre-nixos-0.1.0/bin/.pre-nixos-wrapped[0m
+             └─[0;38;5;245m872 systemctl start sshd[0m
+
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "down"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:22.282878+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T01:16:22.285577+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:22.461772+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T01:16:22.463910+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:22.560491+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": true, "timestamp": "2025-10-12T01:16:22.569717+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:28.395757+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"authorized_key": "/nix/store/9wziy04f2i8d887wrp76kya3p1jqafvn-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/root_key.pub", "event": "pre_nixos.network.secure_ssh.start", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-12T01:16:28.415885+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"authorized_keys_path": "/root/.ssh/authorized_keys", "event": "pre_nixos.network.secure_ssh.authorized_key_written", "timestamp": "2025-10-12T01:16:28.885675+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"command": ["systemctl", "start", "sshd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": false, "timestamp": "2025-10-12T01:16:28.914413+00:00"}
+[?2004hPRE-NIXOS> ip -o link || true
+journalctl --no-pager -u pre-nixos.service -b || true
+[?2004lip -o link || true
+Oct 12 01:16:00 nixos systemd[1]: Starting Pre-NixOS setup...
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"authorized_key": null, "event": "pre_nixos.network.configure_lan.start", "net_path": "/sys/class/net", "network_dir": "/etc/systemd/network", "root_home": "/root", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-12T01:16:21.463250+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"attempts": 30, "delay_seconds": 2.0, "event": "pre_nixos.network.wait_for_lan.start", "net_path": "/sys/class/net", "timestamp": "2025-10-12T01:16:21.502817+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T01:16:21.512652+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:21.903745+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.identify_lan.detected", "interface": "ens4", "signal": "carrier", "timestamp": "2025-10-12T01:16:21.923469+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.wait_for_lan.detected", "interface": "ens4", "timestamp": "2025-10-12T01:16:21.926719+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.configure_lan.detected_interface", "interface": "ens4", "timestamp": "2025-10-12T01:16:21.927805+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.write_lan_rename_rule.start", "net_path": "/sys/class/net", "rules_dir": "/etc/systemd/network", "timestamp": "2025-10-12T01:16:21.931086+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"attempts": 30, "delay_seconds": 2.0, "event": "pre_nixos.network.wait_for_lan.start", "net_path": "/sys/class/net", "timestamp": "2025-10-12T01:16:21.931891+00:00"}
+Oct 12 01:16:21 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T01:16:21.940128+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:22.091520+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.identify_lan.detected", "interface": "ens4", "signal": "carrier", "timestamp": "2025-10-12T01:16:22.107400+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.wait_for_lan.detected", "interface": "ens4", "timestamp": "2025-10-12T01:16:22.109188+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.write_lan_rename_rule.finished", "interface": "ens4", "rule_path": "/etc/systemd/network/10-lan.link", "timestamp": "2025-10-12T01:16:22.117663+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"event": "pre_nixos.network.configure_lan.network_file_written", "network_file": "/etc/systemd/network/20-lan.network", "timestamp": "2025-10-12T01:16:22.121704+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "down"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T01:16:22.127412+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "down"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:22.282878+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T01:16:22.285577+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:22.461772+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-12T01:16:22.463910+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:22.560491+00:00"}
+Oct 12 01:16:22 nixos pre-nixos-start[803]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": true, "timestamp": "2025-10-12T01:16:22.569717+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-12T01:16:28.395757+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"authorized_key": "/nix/store/9wziy04f2i8d887wrp76kya3p1jqafvn-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/root_key.pub", "event": "pre_nixos.network.secure_ssh.start", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-12T01:16:28.415885+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"authorized_keys_path": "/root/.ssh/authorized_keys", "event": "pre_nixos.network.secure_ssh.authorized_key_written", "timestamp": "2025-10-12T01:16:28.885675+00:00"}
+Oct 12 01:16:28 nixos pre-nixos-start[803]: {"command": ["systemctl", "start", "sshd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": false, "timestamp": "2025-10-12T01:16:28.914413+00:00"}
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+networkctl status lan || true
+[?2004lip -o -4 addr show dev lan 2>/dev/null || true
+[0;1;32m●[0m 2: lan[m
+[0;94m                   Link File:[0m /nix/store/rhq3rwyghbqq4lnkmdf4vsrazr2aa5a7-syste[m[7m>[27m
+[0;94m                Network File:[0m /etc/systemd/network/20-lan.network[m
+[0;94m                       State:[0m [0;1;32mroutable[0m ([0;1;32mconfigured[0m)[m
+[0;94m                Online state:[0m [0;1;32monline                                           [m[7m>[27m
+[0;94m                        Type:[0m ether[m
+[0;94m                        Path:[0m pci-0000:00:04.0[m
+[0;94m                      Driver:[0m virtio_net[m
+[0;94m                      Vendor:[0m Red Hat, Inc.[m
+[0;94m                       Model:[0m Virtio network device[m
+[0;94m           Alternative Names:[0m enp0s4[m
+[0;94m            Hardware Address:[0m 52:54:00:12:34:56[m
+[0;94m                         MTU:[0m 1500 (min: 68, max: 65535)[m
+[0;94m                       QDisc:[0m fq_codel[m
+[0;94mIPv6 Address Generation Mode:[0m eui64[m
+[0;94m    Number of Queues (Tx/Rx):[0m 1/1[m
+[0;94m            Auto negotiation:[0m no[m
+[0;94m                     Address:[0m 10.0.2.15 (DHCP4 via 10.0.2.2)[m
+[0;94m                             [0m fec0::5054:ff:fe12:3456[m
+[0;94m                             [0m fe80::5054:ff:fe12:3456[m
+[0;94m                     Gateway:[0m 10.0.2.2[m
+[0;94m                             [0m fe80::2[m
+[0;94m                         DNS:[0m 10.0.2.3[m
+[7mlines 1-23[27m[K[K[7mlines 1-23[27m[K[K[K[7mDetermining length of file... (interrupt to abort)[27m[K[K[7mWaiting for data... (^X or interrupt to abort)[27m[K[K[0;94m           Activation Policy:[0m up[m
+[0;94m         Required For Online:[0m yes[m
+[0;94m             DHCP4 Client ID:[0m IAID:0x405663a2/DUID[m
+[0;94m           DHCP6 Client DUID:[0m DUID-EN/Vendor:0000ab1193a324d178a86e48[m
+[m
+Oct 12 01:16:22 nixos systemd-networkd[764]: lan: Link UP[m
+Oct 12 01:16:22 nixos systemd-networkd[764]: lan: Gained carrier[m
+Oct 12 01:16:27 nixos systemd-networkd[859]: lan: Link UP[m
+Oct 12 01:16:27 nixos systemd-networkd[859]: lan: Gained carrier[m
+Oct 12 01:16:27 nixos systemd-networkd[859]: lan: Gained IPv6LL[m
+Oct 12 01:16:28 nixos systemd-networkd[859]: lan: Configuring with /etc/systemd[m[7m>[27m
+Oct 12 01:16:29 nixos systemd-networkd[859]: lan: DHCPv4 address 10.0.2.15/24, [m[7m>[27m
+[K-[Klog file: [K  [Kll[Kii[Knn[Kkk[K  [K||[K||[K  [Ktt[Krr[Kuu[Kee[K[K[7mlines 13-35/35 (END)[27m[K[K[7mlines 13-35/35 (END)[27m[K[K[HM[0;94m            Hardware Address:[0m 52:54:00:12:34:56[m
+[HM[0;94m           Alternative Names:[0m enp0s4[m
+[HM[0;94m                       Model:[0m Virtio network device[m
+[HM[0;94m                      Vendor:[0m Red Hat, Inc.[m
+[HM[0;94m                      Driver:[0m virtio_net[m
+[HM[0;94m                        Path:[0m pci-0000:00:04.0[m
+[HM[0;94m                        Type:[0m ether[m
+[HM[0;94m                Online state:[0m [0;1;32monline                                           [m[7m>[27m
+[HM[0;94m                       State:[0m [0;1;32mroutable[0m ([0;1;32mconfigured[0m)[m
+[HM[0;94m                Network File:[0m /etc/systemd/network/20-lan.network[m
+[HM[0;94m                   Link File:[0m /nix/store/rhq3rwyghbqq4lnkmdf4vsrazr2aa5a7-syste[m[7m>[27m
+[HM[0;1;32m●[0m 2: lan[m
+[24;1H[K[7mlines 1-23/35 66%[27m[K[K[0;94m           Activation Policy:[0m up[m
+[0;94m         Required For Online:[0m yes[m
+[0;94m             DHCP4 Client ID:[0m IAID:0x405663a2/DUID[m
+[0;94m           DHCP6 Client DUID:[0m DUID-EN/Vendor:0000ab1193a324d178a86e48[m
+[m
+Oct 12 01:16:22 nixos systemd-networkd[764]: lan: Link UP[m
+Oct 12 01:16:22 nixos systemd-networkd[764]: lan: Gained carrier[m
+Oct 12 01:16:27 nixos systemd-networkd[859]: lan: Link UP[m
+Oct 12 01:16:27 nixos systemd-networkd[859]: lan: Gained carrier[m
+Oct 12 01:16:27 nixos systemd-networkd[859]: lan: Gained IPv6LL[m
+Oct 12 01:16:28 nixos systemd-networkd[859]: lan: Configuring with /etc/systemd[m[7m>[27m
+Oct 12 01:16:29 nixos systemd-networkd[859]: lan: DHCPv4 address 10.0.2.15/24, [m[7m>[27m
+[7mlines 13-35/35 (END)[27m[K[K-[Klog file: [K  [K--[K44[K  [Kaa[Kdd[Kdd[Krr[K  [Kss[Khh[Koo[Kww[K  [Kdd[Kee[Kvv[K  [Kll[Kaa[Knn[K  [K22[K>>[K//[Kdd[Kee[Kvv[K//[Knn[Kuu[Kll[Kll[K  [K||[K||[K  [Ktt[Krr[Kuu[Kee[K[K[7mLog file is already in use  (press RETURN)[27mqemu-system-x86_64: terminating on signal 15 from pid 10411 (/bin/bash)
