@@ -14,6 +14,7 @@ _Last updated: 2025-10-12T05-15-00Z_
    - Edit `modules/pre-nixos.nix` to drop the `systemd.services.sshd.after = [ "pre-nixos.service" ];` override.
    - Update `pre_nixos/network.py` (specifically `secure_ssh`) so it invokes `systemctl start --no-block sshd` and omits the redundant reload, ensuring the oneshot does not block on the service start.
    - Rebuild the ISO via `nix build .#bootImage`, rerun the VM debug test, and record whether `/run/pre-nixos/storage-status` now reports `STATE=applied`/`DETAIL=auto-applied` with `pre-nixos.service` transitioning to `inactive`.
+   - 2025-10-12T18-46-57Z - Dropped the sshd ordering dependency and rebuilt the ISO (`/nix/store/wa0h4fac7pnn6g1310kg18ichymn2j6d-nixos-24.05.20241230.b134951-x86_64-linux.iso`). Debug run shows `/run/pre-nixos/storage-status` now contains `STATE=applied`/`DETAIL=auto-applied` and `systemctl is-active pre-nixos` eventually returns `inactive`, but `vgs` still fails with non-root warnings so the harness asserts that the `main` volume group is missing. Logs captured in `docs/work-notes/2025-10-12T18-46-57Z-boot-image-vm-cycle-removal/`.
 
 3. **If the hang persists, bisect between plan generation and application.**
    - With the updated ISO booted in debug mode, inspect `journalctl -u pre-nixos.service -b` and `/run/pre-nixos/storage-status` to see whether execution stalls before or after `apply.apply_plan`.
