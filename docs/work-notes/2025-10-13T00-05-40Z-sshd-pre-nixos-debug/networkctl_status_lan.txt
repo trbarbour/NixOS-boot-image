@@ -1,0 +1,20 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl status pre-nixos --no-pager
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat networkctl status lan
+○ pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: enabled)
+Active: inactive (dead) since Mon 2025-10-13 00:07:25 UTC; 7s ago
+Process: 755 ExecStart=/nix/store/943sqn9yn6wmg0f1q2zqy1nhz9mvw3l8-unit-script-pre-nixos-start/bin/pre-nixos-start (code=exited, status=0/SUCCESS)
+Main PID: 755 (code=exited, status=0/SUCCESS)
+IP: 0B in, 0B out
+CPU: 5.777s
+Oct 13 00:07:25 nixos pre-nixos-start[836]:         "name": "vda2",
+Oct 13 00:07:25 nixos pre-nixos-start[836]:         "type": "lvm"
+Oct 13 00:07:25 nixos pre-nixos-start[836]:       }
+Oct 13 00:07:25 nixos pre-nixos-start[836]:     ]
+Oct 13 00:07:25 nixos pre-nixos-start[836]:   },
+Oct 13 00:07:25 nixos pre-nixos-start[836]:   "disko": {}
+Oct 13 00:07:25 nixos pre-nixos-start[836]: }
+Oct 13 00:07:25 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Oct 13 00:07:25 nixos systemd[1]: Finished Pre-NixOS setup.
+Oct 13 00:07:25 nixos systemd[1]: pre-nixos.service: Consumed 5.777s CPU ti…fic.
+Hint: Some lines were ellipsized, use -l to show in full.

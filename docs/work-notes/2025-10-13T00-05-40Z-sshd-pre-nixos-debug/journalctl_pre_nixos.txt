@@ -1,0 +1,5 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl list-jobs
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat journalctl --no-pager -u pre-nixos.service -b
+JOB UNIT         TYPE  STATE
+274 sshd.service start running
+1 jobs listed.

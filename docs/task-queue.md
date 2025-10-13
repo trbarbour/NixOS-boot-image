@@ -8,6 +8,7 @@ _Last updated: 2025-10-13T00-00-00Z_
    - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once networking is configured.
    - From the debug shell, capture `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `systemctl status sshd` to confirm the sshd job no longer waits on `pre-nixos.service` now that `secure_ssh` uses `systemctl reload-or-restart --no-block`.
    - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, noting whether `/run/pre-nixos/storage-status` reports `STATE=applied`/`DETAIL=auto-applied`.
+   - 2025-10-13T00-05-40Z - Pytest run still fails before SSH checks (`termios.error` prevents interactive debug) but automated capture shows `pre-nixos.service` finishing in 5.8s while `systemctl list-jobs` continues to list `sshd.service` in `start running`. See `docs/work-notes/2025-10-13T00-05-40Z-sshd-pre-nixos-debug/` for harness/serial logs and command outputs.
    - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` still documents the pre-change deadlock evidence in `docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`; repeat the capture once the updated ISO is available for comparison.
 
 2. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
