@@ -1,0 +1,5 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl list-jobs
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl status sshd --no-pager
+JOB UNIT         TYPE  STATE
+262 sshd.service start running
+1 jobs listed.

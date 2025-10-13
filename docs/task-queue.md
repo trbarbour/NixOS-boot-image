@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2025-10-13T00-00-00Z_
+_Last updated: 2025-10-14T00-00-00Z_
 
 ## Active Tasks
 
@@ -10,6 +10,7 @@ _Last updated: 2025-10-13T00-00-00Z_
    - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, noting whether `/run/pre-nixos/storage-status` reports `STATE=applied`/`DETAIL=auto-applied`.
    - 2025-10-13T00-05-40Z - Pytest run still fails before SSH checks (`termios.error` prevents interactive debug) but automated capture shows `pre-nixos.service` finishing in 5.8s while `systemctl list-jobs` continues to list `sshd.service` in `start running`. See `docs/work-notes/2025-10-13T00-05-40Z-sshd-pre-nixos-debug/` for harness/serial logs and command outputs.
    - 2025-10-13T13-06-59Z - `collect_sshd_pre_nixos_debug.py` confirms `pre-nixos.service` exits cleanly and storage status reports `STATE=applied`/`DETAIL=auto-applied`, but `systemctl list-jobs` still shows the `sshd.service` start job active and `systemctl status sshd` remains in `start-pre` under `sshd-pre-start`. Artefacts in `docs/work-notes/2025-10-13T13-06-59Z-sshd-pre-nixos-debug/`. 【F:docs/work-notes/2025-10-13T13-06-59Z-sshd-pre-nixos-debug/serial.log†L55-L200】
+   - 2025-10-14T00-00-00Z - Latest capture confirms `pre-nixos.service` finishes with `/run/pre-nixos/storage-status` reporting `STATE=applied`/`DETAIL=auto-applied`, while `systemctl status sshd` continues in `start-pre` generating host keys. Evidence in `docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/`. 【F:docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/serial.log†L70-L141】
    - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` still documents the pre-change deadlock evidence in `docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`; repeat the capture once the updated ISO is available for comparison.
 
 2. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
