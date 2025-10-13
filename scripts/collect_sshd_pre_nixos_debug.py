@@ -125,10 +125,15 @@ def reserve_ssh_port() -> int:
 
 
 def collect_outputs(vm: BootImageVM) -> Dict[str, str]:
+    # Issue a no-op first to ensure any prompt reconfiguration artefacts are
+    # flushed before we start capturing command output.
+    vm.run(":")
+
     commands = {
         "systemctl_show_sshd": "systemctl show -p After sshd",
         "systemctl_list_jobs": "systemctl list-jobs",
         "systemctl_status_pre_nixos": "systemctl status pre-nixos --no-pager",
+        "systemctl_status_sshd": "systemctl status sshd --no-pager",
         "journalctl_pre_nixos": "journalctl --no-pager -u pre-nixos.service -b",
         "networkctl_status_lan": "networkctl status lan",
         "storage_status": "cat /run/pre-nixos/storage-status 2>/dev/null || true",
@@ -168,6 +173,8 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
             pub_key_path = public_key
             if not pub_key_path.exists():
                 raise FileNotFoundError(f"public key not found: {pub_key_path}")
+
+        pub_key_path = pub_key_path.resolve()
 
         public_key_text = Path(pub_key_path).read_text(encoding="utf-8").strip()
         build = build_boot_image(pub_key_path)

@@ -1,0 +1,15 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat systemctl status sshd --no-pager
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat networkctl status lan
+● sshd.service - SSH Daemon
+Loaded: loaded (/etc/systemd/system/sshd.service; linked; preset: enabled)
+Active: activating (start-pre) since Mon 2025-10-13 13:13:49 UTC; 8s ago
+Cntrl PID: 882 (sshd-pre-start)
+IP: 0B in, 0B out
+IO: 1.3M read, 0B written
+Tasks: 2 (limit: 2329)
+Memory: 3.9M (peak: 4.3M)
+CPU: 6.704s
+CGroup: /system.slice/sshd.service
+├─882 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…
+└─890 ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N
+Oct 13 13:13:49 nixos systemd[1]: Starting SSH Daemon...

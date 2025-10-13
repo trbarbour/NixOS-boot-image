@@ -1,0 +1,68 @@
+SYSTEMD_COLORS=0 SYSTEMD_PAGER='cat' SYSTEMD_LESS=FRSX PAGER=cat journalctl --no-pager -u pre-nixos.service -b
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+Oct 13 13:13:33 nixos systemd[1]: Starting Pre-NixOS setup...
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"authorized_key": null, "event": "pre_nixos.network.configure_lan.start", "net_path": "/sys/class/net", "network_dir": "/etc/systemd/network", "root_home": "/root", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-13T13:13:46.688910+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"attempts": 30, "delay_seconds": 2.0, "event": "pre_nixos.network.wait_for_lan.start", "net_path": "/sys/class/net", "timestamp": "2025-10-13T13:13:46.709320+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-13T13:13:46.715337+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-13T13:13:46.903200+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.identify_lan.detected", "interface": "ens4", "signal": "carrier", "timestamp": "2025-10-13T13:13:46.933652+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.wait_for_lan.detected", "interface": "ens4", "timestamp": "2025-10-13T13:13:46.947153+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.configure_lan.detected_interface", "interface": "ens4", "timestamp": "2025-10-13T13:13:46.952505+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.write_lan_rename_rule.start", "net_path": "/sys/class/net", "rules_dir": "/etc/systemd/network", "timestamp": "2025-10-13T13:13:46.953315+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"attempts": 30, "delay_seconds": 2.0, "event": "pre_nixos.network.wait_for_lan.start", "net_path": "/sys/class/net", "timestamp": "2025-10-13T13:13:46.958953+00:00"}
+Oct 13 13:13:46 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-13T13:13:46.964891+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-13T13:13:47.111267+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.identify_lan.detected", "interface": "ens4", "signal": "carrier", "timestamp": "2025-10-13T13:13:47.115696+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.wait_for_lan.detected", "interface": "ens4", "timestamp": "2025-10-13T13:13:47.116370+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.write_lan_rename_rule.finished", "interface": "ens4", "rule_path": "/etc/systemd/network/10-lan.link", "timestamp": "2025-10-13T13:13:47.118496+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.configure_lan.network_file_written", "network_file": "/etc/systemd/network/20-lan.network", "timestamp": "2025-10-13T13:13:47.124032+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "down"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-13T13:13:47.124547+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "down"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-13T13:13:47.224389+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-13T13:13:47.226711+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "ens4", "name", "lan"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-13T13:13:47.300308+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.start", "timestamp": "2025-10-13T13:13:47.302582+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["ip", "link", "set", "lan", "up"], "event": "pre_nixos.network.command.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-13T13:13:47.398215+00:00"}
+Oct 13 13:13:47 nixos pre-nixos-start[826]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": true, "timestamp": "2025-10-13T13:13:47.399370+00:00"}
+Oct 13 13:13:48 nixos pre-nixos-start[826]: {"command": ["systemctl", "restart", "systemd-networkd"], "event": "pre_nixos.network.systemctl.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-13T13:13:48.601331+00:00"}
+Oct 13 13:13:48 nixos pre-nixos-start[826]: {"authorized_key": "/nix/store/f9kk5avzl61vs1a3q37jkrwxn9lckbni-pre-nixos-0.1.0/lib/python3.11/site-packages/pre_nixos/root_key.pub", "event": "pre_nixos.network.secure_ssh.start", "ssh_dir": "/etc/ssh", "ssh_service": "sshd", "timestamp": "2025-10-13T13:13:48.607057+00:00"}
+Oct 13 13:13:48 nixos pre-nixos-start[826]: {"authorized_keys_path": "/root/.ssh/authorized_keys", "event": "pre_nixos.network.secure_ssh.authorized_key_written", "timestamp": "2025-10-13T13:13:48.687033+00:00"}
+Oct 13 13:13:48 nixos pre-nixos-start[826]: {"command": ["systemctl", "reload-or-restart", "--no-block", "sshd"], "event": "pre_nixos.network.systemctl.start", "ignore_missing": false, "timestamp": "2025-10-13T13:13:48.690401+00:00"}
+Oct 13 13:13:49 nixos pre-nixos-start[826]: {"command": ["systemctl", "reload-or-restart", "--no-block", "sshd"], "event": "pre_nixos.network.systemctl.finished", "returncode": 0, "status": "success", "timestamp": "2025-10-13T13:13:49.143394+00:00"}
+Oct 13 13:13:49 nixos pre-nixos-start[826]: {"authorized_keys_path": "/root/.ssh/authorized_keys", "event": "pre_nixos.network.secure_ssh.finished", "timestamp": "2025-10-13T13:13:49.144529+00:00"}
+Oct 13 13:13:49 nixos pre-nixos-start[826]: {"event": "pre_nixos.network.configure_lan.finished", "interface": "ens4", "network_file": "/etc/systemd/network/20-lan.network", "timestamp": "2025-10-13T13:13:49.146500+00:00"}
+Oct 13 13:13:49 nixos pre-nixos-start[826]: {"dry_run": false, "event": "pre_nixos.apply.apply_plan.start", "execute": true, "timestamp": "2025-10-13T13:13:49.285104+00:00"}
+Oct 13 13:13:49 nixos pre-nixos-start[826]: {"event": "pre_nixos.apply.apply_plan.no_devices", "timestamp": "2025-10-13T13:13:49.286256+00:00"}
+Oct 13 13:13:49 nixos pre-nixos-start[826]: {
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   "arrays": [],
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   "vgs": [
+Oct 13 13:13:49 nixos pre-nixos-start[826]:     {
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       "name": "main",
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       "devices": [
+Oct 13 13:13:49 nixos pre-nixos-start[826]:         "vda2"
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       ]
+Oct 13 13:13:49 nixos pre-nixos-start[826]:     }
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   ],
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   "lvs": [
+Oct 13 13:13:49 nixos pre-nixos-start[826]:     {
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       "name": "slash",
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       "vg": "main",
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       "size": "3G"
+Oct 13 13:13:49 nixos pre-nixos-start[826]:     }
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   ],
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   "partitions": {
+Oct 13 13:13:49 nixos pre-nixos-start[826]:     "vda": [
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       {
+Oct 13 13:13:49 nixos pre-nixos-start[826]:         "name": "vda1",
+Oct 13 13:13:49 nixos pre-nixos-start[826]:         "type": "efi"
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       },
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       {
+Oct 13 13:13:49 nixos pre-nixos-start[826]:         "name": "vda2",
+Oct 13 13:13:49 nixos pre-nixos-start[826]:         "type": "lvm"
+Oct 13 13:13:49 nixos pre-nixos-start[826]:       }
+Oct 13 13:13:49 nixos pre-nixos-start[826]:     ]
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   },
+Oct 13 13:13:49 nixos pre-nixos-start[826]:   "disko": {}
+Oct 13 13:13:49 nixos pre-nixos-start[826]: }
+Oct 13 13:13:49 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Oct 13 13:13:49 nixos systemd[1]: Finished Pre-NixOS setup.
+Oct 13 13:13:49 nixos systemd[1]: pre-nixos.service: Consumed 7.031s CPU time, no IP traffic.
