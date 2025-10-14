@@ -50,10 +50,22 @@ def test_apply_plan_handles_hdd_only_plan(tmp_path: Path) -> None:
     )
     assert commands == [expected_cmd]
     devices = _read_devices(config_path)
-    assert devices["disk"], "expected at least one disk in generated disko config"
+    disks_cfg = devices["disk"]
+    assert set(disks_cfg) == {"sda", "sdb"}
+    for disk_name in ("sda", "sdb"):
+        partitions = disks_cfg[disk_name]["content"]["partitions"]
+        assert set(partitions) == {f"{disk_name}1", f"{disk_name}2"}
+        assert partitions[f"{disk_name}2"]["content"]["name"] == "md0"
+    boot_partition = disks_cfg["sda"]["content"]["partitions"]["sda1"]["content"]
+    assert boot_partition["mountpoint"] == "/boot"
+    assert boot_partition["format"] == "vfat"
+    mirror_boot = disks_cfg["sdb"]["content"]["partitions"]["sdb1"]["content"]
+    assert mirror_boot["format"] == "vfat"
     assert "md0" in devices["mdadm"], "root RAID array missing from HDD-only plan"
     md0 = devices["mdadm"]["md0"]
     assert md0["content"] == {"type": "lvm_pv", "vg": "main"}
+    assert md0["devices"] == ["sda2", "sdb2"]
+    assert set(devices["lvm_vg"]["main"]["lvs"]) == {"slash", "swap"}
     slash_lv = devices["lvm_vg"]["main"]["lvs"]["slash"]
     assert slash_lv["content"]["mountpoint"] == "/"
 

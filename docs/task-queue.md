@@ -1,18 +1,14 @@
 # Task Queue
 
-_Last updated: 2025-10-14T04-30-00Z_
+_Last updated: 2025-10-14T05-00-00Z_
 
 ## Active Tasks
 
-1. **Exercise HDD-only plans in the applier.**
-   - Feed the HDD-only plan into `apply_plan(dry_run=True)` (new or existing coverage in `tests/test_apply.py`).
-   - Assert the `disko --yes-wipe-all-disks …` command is scheduled instead of logging `no_devices`.
-
-2. **Validate the fix end-to-end in the VM regression.**
+1. **Validate the fix end-to-end in the VM regression.**
    - Rebuild the ISO with the storage fix applied.
    - Rerun `pytest tests/test_boot_image_vm.py` and confirm storage provisioning, networking, and SSH succeed.
 
-3. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
+2. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
    - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once networking is configured.
    - From the debug shell, capture `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `systemctl status sshd` to confirm the sshd job no longer waits on `pre-nixos.service` now that `secure_ssh` uses `systemctl reload-or-restart --no-block`.
    - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, noting whether `/run/pre-nixos/storage-status` reports `STATE=applied`/`DETAIL=auto-applied`.
@@ -21,11 +17,11 @@ _Last updated: 2025-10-14T04-30-00Z_
    - 2025-10-14T00-00-00Z - Latest capture confirms `pre-nixos.service` finishes with `/run/pre-nixos/storage-status` reporting `STATE=applied`/`DETAIL=auto-applied`, while `systemctl status sshd` continues in `start-pre` generating host keys. Evidence in `docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/`. 【F:docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/serial.log†L70-L141】
    - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` still documents the pre-change deadlock evidence in `docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`; repeat the capture once the updated ISO is available for comparison.
 
-4. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
+3. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
    - Audit any additional units (e.g., console helpers) that expect to pull `sshd.service` in via `WantedBy` and ensure they explicitly order themselves after `secure_ssh` if necessary.
    - During the VM verification run, check `systemctl list-dependencies sshd` to confirm nothing else attempts to start the service before `secure_ssh` finishes provisioning.
 
-5. **If the hang persists, bisect between plan generation and application.**
+4. **If the hang persists, bisect between plan generation and application.**
    - With the updated ISO booted in debug mode, inspect `journalctl -u pre-nixos.service -b` and `/run/pre-nixos/storage-status` to see whether execution stalls before or after `apply.apply_plan`.
    - Capture the storage plan (`pre-nixos --plan-only`), any running `disko` processes, and related logs so we can split the investigation between plan creation and disk application on subsequent runs.
    - Promote any new discoveries into focused follow-up tasks and update this queue accordingly.
@@ -94,6 +90,7 @@ _Last updated: 2025-10-14T04-30-00Z_
 
 ## Recently Completed
 
+- 2025-10-14T05-00-00Z - Added HDD-only regression coverage in `tests/test_apply.py` that asserts the generated disko configuration provisions both disks, keeps `md0` bound to the `main` volume group, and retains the slash LV mount at root.
 - 2025-10-14T01-01-49Z - HDD-only plans now populate `plan["disko"]` and the single-disk regression test asserts the emitted disk/LVM layout (`pre_nixos/planner.py`, `tests/test_plan_storage.py`).
 - 2025-10-13T00-00-00Z - `secure_ssh` now invokes `systemctl reload-or-restart --no-block sshd` with unit coverage guarding against regressions; follow-up VM runs will confirm the oneshot no longer blocks on sshd.
  - 2025-10-11T04-10-39Z - Pre-built the boot image ahead of VM regressions, recording `/nix/store/d8xvgbl51svz0axi2n0xzrij330hw6i4-nixos-24.05.20241230.b134951-x86_64-linux.iso` in `docs/work-notes/2025-10-11T04-10-39Z-boot-image-prebuild.md` for reuse.
