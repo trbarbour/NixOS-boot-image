@@ -8,6 +8,7 @@ _Last updated: 2025-10-14T05-00-00Z_
    - Rebuild the ISO with the storage fix applied.
    - Rerun `pytest tests/test_boot_image_vm.py` and confirm storage provisioning, networking, and SSH succeed.
    - 2025-10-14T02-09-43Z - `pytest tests/test_boot_image_vm.py -vv` still fails: `pre-nixos.service` exits with `STATE=failed` after `disko --yes-wipe-all-disks --mode destroy,format,mount` returns usage/exit code 1, leaving `systemctl is-active pre-nixos` buffered behind the IPv4 output. Captured harness and serial logs in `docs/work-notes/2025-10-14T02-09-43Z-boot-image-vm-regression/`.
+   - 2025-10-14T05-30-00Z - `pre_nixos.apply` now invokes `disko --mode disko`; rebuild the ISO and rerun the VM regression to confirm the usage failure no longer occurs.
 
 2. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
    - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once networking is configured.

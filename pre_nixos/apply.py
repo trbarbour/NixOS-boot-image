@@ -74,7 +74,7 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     )
 
     cmd = (
-        "disko --yes-wipe-all-disks --mode destroy,format,mount "
+        "disko --yes-wipe-all-disks --mode disko "
         f"--root-mountpoint /mnt {config_path}"
     )
     commands.append(cmd)
