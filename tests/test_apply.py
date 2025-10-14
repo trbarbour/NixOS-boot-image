@@ -50,8 +50,12 @@ def test_apply_plan_handles_hdd_only_plan(tmp_path: Path) -> None:
     )
     assert commands == [expected_cmd]
     devices = _read_devices(config_path)
-    assert devices["disk"]
-    assert devices["lvm_vg"]["main"]["lvs"]["slash"]["content"]["mountpoint"] == "/"
+    assert devices["disk"], "expected at least one disk in generated disko config"
+    assert "md0" in devices["mdadm"], "root RAID array missing from HDD-only plan"
+    md0 = devices["mdadm"]["md0"]
+    assert md0["content"] == {"type": "lvm_pv", "vg": "main"}
+    slash_lv = devices["lvm_vg"]["main"]["lvs"]["slash"]
+    assert slash_lv["content"]["mountpoint"] == "/"
 
 
 def test_apply_plan_handles_swap(tmp_path: Path) -> None:
