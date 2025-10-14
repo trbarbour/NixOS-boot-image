@@ -35,6 +35,25 @@ def test_apply_plan_returns_commands(tmp_path: Path) -> None:
     assert "disk" in devices and "mdadm" in devices and "lvm_vg" in devices
 
 
+def test_apply_plan_handles_hdd_only_plan(tmp_path: Path) -> None:
+    disks = [
+        Disk(name="sda", size=2000, rotational=True),
+        Disk(name="sdb", size=2000, rotational=True),
+    ]
+    plan = plan_storage("fast", disks)
+    config_path = tmp_path / "hdd-only-disko.nix"
+    plan["disko_config_path"] = str(config_path)
+    commands = apply_plan(plan, dry_run=True)
+    expected_cmd = (
+        "disko --yes-wipe-all-disks --mode destroy,format,mount "
+        f"--root-mountpoint /mnt {config_path}"
+    )
+    assert commands == [expected_cmd]
+    devices = _read_devices(config_path)
+    assert devices["disk"]
+    assert devices["lvm_vg"]["main"]["lvs"]["slash"]["content"]["mountpoint"] == "/"
+
+
 def test_apply_plan_handles_swap(tmp_path: Path) -> None:
     config_path = tmp_path / "swap-disko.nix"
     plan = {
