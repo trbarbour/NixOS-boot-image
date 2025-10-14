@@ -71,6 +71,9 @@ Before running the suite:
    integration tests generate their own ephemeral key pair per run, forward the
    VM's SSH port to the host, and assert that `ssh -i` connects as `root` using
    the generated private key.
+3. Confirm the boot environment exposes the storage tooling by running
+   `command -v disko` inside the VM; the automated tests assert the command is
+   available so provisioning never begins without the required binary.
 
 Inspect the generated serial console log (stored under
 `/tmp/pytest-of-*/boot-image-logs/serial.log`) when debugging regressions.

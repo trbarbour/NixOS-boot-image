@@ -156,7 +156,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 4. **Apply plan (manual):**
    - After operator review (e.g., via `pre-nixos-tui`, which shows the current IP or a status message), confirm boot target (SSD/NVMe) and acknowledge the wipe gate.
    - The planner's `disko.devices` map is rendered to `/var/log/pre-nixos/disko-config.nix` using `builtins.fromJSON` so humans can audit the intended layout.
-   - `pre-nixos` invokes `disko --yes-wipe-all-disks --mode disko --root-mountpoint /mnt /var/log/pre-nixos/disko-config.nix`. Disko orchestrates GPT creation, mdadm arrays, LVM VGs/LVs, filesystem formatting, swap provisioning, and mounts everything relative to `/mnt`.
+   - `pre-nixos` probes `disko --help` to decide between the legacy `--mode disko` path and the newer combined `--mode destroy,format,mount` invocation (adding `--yes-wipe-all-disks` only when supported) before running the command against `/var/log/pre-nixos/disko-config.nix`. Disko orchestrates GPT creation, mdadm arrays, LVM VGs/LVs, filesystem formatting, swap provisioning, and mounts everything relative to `/mnt`.
    - Disko's stdout/stderr are streamed through the usual log fan-out; failures bubble up as a single error surface.
 5. **Mount target:** `/mnt` tree; generate NixOS config stubs; install bootloader into ESP (if `pre.autoinstall=1`, also run `nixos-install`).
 6. **Ready:** leave SSH up; write artifacts; emit summary through log fan-out (serial best-effort/time-bounded).
@@ -190,7 +190,11 @@ function plan_storage(mode):
 function apply_plan(plan):
   cfg_path = "/var/log/pre-nixos/disko-config.nix"
   write_file(cfg_path, render_disko(plan.disko))
-  run("disko --yes-wipe-all-disks --mode disko --root-mountpoint /mnt " + cfg_path)
+  mode, can_wipe = detect_disko_mode()
+  cmd = ["disko", "--mode", mode, "--root-mountpoint", "/mnt", cfg_path]
+  if can_wipe and mode == "destroy,format,mount":
+    cmd.insert(3, "--yes-wipe-all-disks")
+  run(" ".join(cmd))
   gen_nixos_stubs(plan)
 ```
 

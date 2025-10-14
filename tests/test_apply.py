@@ -1,9 +1,16 @@
 """Tests for apply module."""
 
+from __future__ import annotations
+
+import os
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Callable
 
+import pytest
+
+import pre_nixos.apply as apply_module
 from pre_nixos.inventory import Disk
 from pre_nixos.planner import plan_storage
 from pre_nixos.apply import apply_plan
@@ -16,8 +23,46 @@ def _read_devices(config_path: Path) -> dict:
     return json.loads(text[start:end])
 
 
-def test_apply_plan_returns_commands(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+@pytest.fixture
+def fake_disko(
+    monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory
+) -> Callable[[str], None]:
+    """Provide a configurable ``disko`` shim for exercising mode detection."""
+
+    bin_dir = tmp_path_factory.mktemp("fake-disko")
+    script_path = bin_dir / "disko"
+
+    def configure(help_text: str) -> None:
+        script_body = "\n".join(
+            [
+                "#!/bin/sh",
+                'if [ "$1" = "--help" ]; then',
+                "    cat <<'EOF'",
+                help_text.rstrip(),
+                "EOF",
+                "    exit 0",
+                "fi",
+                "exit 0",
+            ]
+        )
+        script_path.write_text(script_body, encoding="utf-8")
+        script_path.chmod(0o755)
+        apply_module.reset_disko_mode_cache()
+
+    monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
+
+    configure(
+        """Usage: disko [options] disk-config.nix
+--mode disko
+"""
+    )
+
+    yield configure
+
+    apply_module.reset_disko_mode_cache()
+
+
+def test_apply_plan_returns_commands(tmp_path: Path, fake_disko) -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
         Disk(name="sdb", size=2000, rotational=True),
@@ -33,8 +78,7 @@ def test_apply_plan_returns_commands(tmp_path: Path, monkeypatch) -> None:
     assert "disk" in devices and "mdadm" in devices and "lvm_vg" in devices
 
 
-def test_apply_plan_handles_hdd_only_plan(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+def test_apply_plan_handles_hdd_only_plan(tmp_path: Path, fake_disko) -> None:
     disks = [
         Disk(name="sda", size=2000, rotational=True),
         Disk(name="sdb", size=2000, rotational=True),
@@ -66,8 +110,7 @@ def test_apply_plan_handles_hdd_only_plan(tmp_path: Path, monkeypatch) -> None:
     assert slash_lv["content"]["mountpoint"] == "/"
 
 
-def test_apply_plan_handles_swap(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+def test_apply_plan_handles_swap(tmp_path: Path, fake_disko) -> None:
     config_path = tmp_path / "swap-disko.nix"
     plan = {
         "disko": {
@@ -94,8 +137,7 @@ def test_apply_plan_handles_swap(tmp_path: Path, monkeypatch) -> None:
     assert devices["lvm_vg"]["swap"]["lvs"]["swap"]["content"]["type"] == "swap"
 
 
-def test_pv_created_for_each_array(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+def test_pv_created_for_each_array(tmp_path: Path, fake_disko) -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
         Disk(name="sdb", size=1000, rotational=False),
@@ -119,13 +161,14 @@ def test_pv_created_for_each_array(tmp_path: Path, monkeypatch) -> None:
     assert expected <= set(mdadm_devices)
 
 
-def test_apply_plan_logs_command_execution(tmp_path: Path, monkeypatch, capsys) -> None:
+def test_apply_plan_logs_command_execution(
+    tmp_path: Path, fake_disko, monkeypatch, capsys
+) -> None:
     plan = {"disko": {"disk": {}}}
     config_path = tmp_path / "logged-disko.nix"
     plan["disko_config_path"] = str(config_path)
 
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
-    monkeypatch.setattr("pre_nixos.apply.shutil.which", lambda exe: f"/run/{exe}")
 
     calls: list[str] = []
 
@@ -146,13 +189,15 @@ def test_apply_plan_logs_command_execution(tmp_path: Path, monkeypatch, capsys) 
     assert calls and isinstance(calls[0], str)
 
 
-def test_apply_plan_prefers_combined_mode_when_supported(tmp_path: Path, monkeypatch) -> None:
+def test_apply_plan_prefers_combined_mode_when_supported(tmp_path: Path, fake_disko) -> None:
     config_path = tmp_path / "combined-disko.nix"
     plan = {"disko": {"disk": {}}, "disko_config_path": str(config_path)}
 
-    monkeypatch.setattr(
-        "pre_nixos.apply._select_disko_mode",
-        lambda: ("destroy,format,mount", True),
+    fake_disko(
+        """Usage: disko [options] disk-config.nix
+--mode destroy,format,mount
+--yes-wipe-all-disks
+"""
     )
 
     commands = apply_plan(plan, dry_run=True)
@@ -161,4 +206,22 @@ def test_apply_plan_prefers_combined_mode_when_supported(tmp_path: Path, monkeyp
         f"--root-mountpoint /mnt {config_path}"
     )
     assert commands == [expected_cmd]
+
+
+def test_select_disko_mode_prefers_legacy_when_combined_missing(fake_disko) -> None:
+    mode, supports_yes = apply_module._select_disko_mode()
+    assert mode == "disko"
+    assert not supports_yes
+
+
+def test_select_disko_mode_detects_combined_support(fake_disko) -> None:
+    fake_disko(
+        """Usage: disko [options] disk-config.nix
+--mode destroy,format,mount
+--yes-wipe-all-disks
+"""
+    )
+    mode, supports_yes = apply_module._select_disko_mode()
+    assert mode == "destroy,format,mount"
+    assert supports_yes
 

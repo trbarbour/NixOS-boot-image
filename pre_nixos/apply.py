@@ -106,6 +106,15 @@ def _render_disko_config(devices: Dict[str, Any]) -> str:
 def _select_disko_mode() -> Tuple[str, bool]:
     """Return the preferred disko mode and whether ``--yes-wipe-all-disks`` is supported."""
 
+    # The disko CLI switched from the legacy ``--mode disko`` flag to a combined
+    # ``--mode destroy,format,mount`` entry point that additionally accepts
+    # ``--yes-wipe-all-disks``. Boot images built from different channels can
+    # therefore ship mutually incompatible disko binaries; issuing the wrong
+    # mode causes disko to print usage information and exit with status 1,
+    # leaving the storage plan unapplied. We inspect the live ``disko --help``
+    # output so the same ISO remains compatible with both generations without
+    # hard-coding specific package revisions.
+
     global _DISKO_MODE_CACHE
     if _DISKO_MODE_CACHE is not None:
         return _DISKO_MODE_CACHE
@@ -151,3 +160,10 @@ def _select_disko_mode() -> Tuple[str, bool]:
     )
     _DISKO_MODE_CACHE = (mode, supports_yes)
     return _DISKO_MODE_CACHE
+
+
+def reset_disko_mode_cache() -> None:
+    """Clear the cached disko mode detection result (used by tests)."""
+
+    global _DISKO_MODE_CACHE
+    _DISKO_MODE_CACHE = None
