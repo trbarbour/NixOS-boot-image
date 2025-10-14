@@ -233,6 +233,7 @@ def plan_storage(
         swap_size = f"{ram_gb * 2 * 1024}M"
         add_lv("slash", "main", ROOT_LV_SIZE)
         add_lv("swap", "main", swap_size)
+        plan["disko"] = _plan_to_disko_devices(plan)
         return plan
 
     for idx, bucket in enumerate(ssd_buckets):
