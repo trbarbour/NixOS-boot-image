@@ -108,6 +108,24 @@ def test_single_hdd_only_becomes_main_with_swap_lv() -> None:
     assert all(p["type"] == "lvm" for p in plan["partitions"]["sda"][1:])
 
 
+def test_hdd_only_plan_populates_disko_devices() -> None:
+    disks = [Disk(name="sda", size=2000, rotational=True)]
+    plan = plan_storage("fast", disks)
+    disko = plan["disko"]
+    disk_cfg = disko["disk"]["sda"]
+    partitions = disk_cfg["content"]["partitions"]
+    efi = partitions["sda1"]
+    assert efi["type"] == "EF00"
+    assert efi["content"]["mountpoint"] == "/boot"
+    data = partitions["sda2"]
+    assert data["content"] == {"type": "lvm_pv", "vg": "main"}
+    vg_cfg = disko["lvm_vg"]["main"]
+    lvs = vg_cfg["lvs"]
+    assert set(lvs) == {"slash", "swap"}
+    assert lvs["slash"]["content"]["mountpoint"] == "/"
+    assert lvs["swap"]["content"]["type"] == "swap"
+
+
 def test_single_hdd_with_ssd_gets_swap_vg() -> None:
     disks = [
         Disk(name="sda", size=1000, rotational=False),
