@@ -2,7 +2,7 @@
 
 This project contains tools to prepare bare-metal machines for a NixOS installation. It discovers hardware, plans a storage layout, configures the active network interface for DHCP (renaming it to `lan`), and can apply that plan. The boot image only generates the plan; run `pre-nixos-tui` to partition disks. When multiple disk groups qualify for the same tier, only the largest is mounted as `main` or `large`; smaller groups receive suffixed VG names and are left unmounted for manual use after installation.
 
-Storage execution is delegated to [disko](https://github.com/nix-community/disko). The planner emits a `disko.devices` description alongside the traditional RAID/VG/LV view, and the applier writes `/var/log/pre-nixos/disko-config.nix` before invoking `disko --yes-wipe-all-disks --mode destroy,format,mount --root-mountpoint /mnt`. This keeps the low-level sequencing in a well-tested tool and leaves an auditable config behind for reuse.
+Storage execution is delegated to [disko](https://github.com/nix-community/disko). The planner emits a `disko.devices` description alongside the traditional RAID/VG/LV view, and the applier writes `/var/log/pre-nixos/disko-config.nix` before invoking `disko --yes-wipe-all-disks --mode disko --root-mountpoint /mnt`. This keeps the low-level sequencing in a well-tested tool and leaves an auditable config behind for reuse.
 
 > **Note:** To enable SSH access on the boot image, supply a public key via the
 > `PRE_NIXOS_ROOT_KEY` environment variable before building. If no key is

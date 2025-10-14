@@ -27,7 +27,7 @@ def test_apply_plan_returns_commands(tmp_path: Path) -> None:
     plan["disko_config_path"] = str(config_path)
     commands = apply_plan(plan, dry_run=True)
     expected_cmd = (
-        "disko --yes-wipe-all-disks --mode destroy,format,mount "
+        "disko --yes-wipe-all-disks --mode disko "
         f"--root-mountpoint /mnt {config_path}"
     )
     assert commands == [expected_cmd]
@@ -45,7 +45,7 @@ def test_apply_plan_handles_hdd_only_plan(tmp_path: Path) -> None:
     plan["disko_config_path"] = str(config_path)
     commands = apply_plan(plan, dry_run=True)
     expected_cmd = (
-        "disko --yes-wipe-all-disks --mode destroy,format,mount "
+        "disko --yes-wipe-all-disks --mode disko "
         f"--root-mountpoint /mnt {config_path}"
     )
     assert commands == [expected_cmd]
@@ -92,7 +92,7 @@ def test_apply_plan_handles_swap(tmp_path: Path) -> None:
     }
     commands = apply_plan(plan, dry_run=True)
     expected_cmd = (
-        "disko --yes-wipe-all-disks --mode destroy,format,mount "
+        "disko --yes-wipe-all-disks --mode disko "
         f"--root-mountpoint /mnt {config_path}"
     )
     assert commands == [expected_cmd]
