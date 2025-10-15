@@ -71,8 +71,12 @@ def test_module_enables_systemd_networkd() -> None:
 def test_module_sets_nix_path_for_pre_nixos_environment() -> None:
     module_text = Path("modules/pre-nixos.nix").read_text(encoding="utf-8")
     service_block = _extract_service_block()
-    assert "preNixosEnv = preNixosExecEnv // {" in module_text
+    assert "preNixosServiceEnv = preNixosExecEnv // {" in module_text
     assert 'NIX_PATH = "nixpkgs=${pkgs.path}";' in module_text
     assert 'PRE_NIXOS_NIXPKGS = "${pkgs.path}";' in module_text
-    assert "environment.sessionVariables = preNixosEnv;" in module_text
-    assert "environment = preNixosEnv;" in service_block
+    assert "environment.sessionVariables = lib.mkMerge [" in module_text
+    assert 'preNixosExecEnv' in module_text
+    assert (
+        '{ NIX_PATH = lib.mkForce "nixpkgs=${pkgs.path}"; }' in module_text
+    )
+    assert "environment = preNixosServiceEnv;" in service_block

@@ -11,7 +11,7 @@ let
     PRE_NIXOS_EXEC = "1";
     PRE_NIXOS_NIXPKGS = "${pkgs.path}";
   };
-  preNixosEnv = preNixosExecEnv // {
+  preNixosServiceEnv = preNixosExecEnv // {
     NIX_PATH = "nixpkgs=${pkgs.path}";
   };
   preNixosLoginNotice = builtins.readFile ./pre-nixos/login-notice.sh;
@@ -21,7 +21,10 @@ in {
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ pkgs.pre-nixos pkgs.disko pkgs.util-linux pkgs.minicom ];
-    environment.sessionVariables = preNixosEnv;
+    environment.sessionVariables = lib.mkMerge [
+      preNixosExecEnv
+      { NIX_PATH = lib.mkForce "nixpkgs=${pkgs.path}"; }
+    ];
     environment.interactiveShellInit = preNixosLoginNotice;
     systemd.network.enable = true;
     networking.useNetworkd = lib.mkForce true;
@@ -38,7 +41,7 @@ in {
       description = "Pre-NixOS setup";
       wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";
-      environment = preNixosEnv;
+      environment = preNixosServiceEnv;
       path = with pkgs; [
         coreutils
         disko
