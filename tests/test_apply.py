@@ -172,7 +172,14 @@ def test_apply_plan_logs_command_execution(
 
     calls: list[str] = []
 
-    def fake_run(cmd, shell=False, check=False, capture_output=False, text=False):  # type: ignore[override]
+    def fake_run(
+        cmd,
+        shell=False,
+        check=False,
+        capture_output=False,
+        text=False,
+        env=None,
+    ):  # type: ignore[override]
         if isinstance(cmd, list) and "--help" in cmd:
             return SimpleNamespace(returncode=0, stdout="", stderr="")
         calls.append(cmd)
@@ -180,6 +187,7 @@ def test_apply_plan_logs_command_execution(
 
     monkeypatch.setattr("pre_nixos.apply.subprocess.run", fake_run)
 
+    monkeypatch.setenv("PRE_NIXOS_NIXPKGS", "/nix/store/test-nixpkgs")
     apply_plan(plan, dry_run=False)
 
     captured = capsys.readouterr()
@@ -187,6 +195,39 @@ def test_apply_plan_logs_command_execution(
     assert any(entry["event"] == "pre_nixos.apply.command.finished" for entry in events)
     assert any(entry["event"] == "pre_nixos.apply.apply_plan.finished" for entry in events)
     assert calls and isinstance(calls[0], str)
+
+
+def test_apply_plan_injects_nix_path_from_pre_nixos_env(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plan = {"disko": {"disk": {}}}
+    config_path = tmp_path / "env-disko.nix"
+    plan["disko_config_path"] = str(config_path)
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.delenv("NIX_PATH", raising=False)
+    monkeypatch.setenv("PRE_NIXOS_NIXPKGS", "/nix/store/fallback-nixpkgs")
+    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+    monkeypatch.setattr("pre_nixos.apply.shutil.which", lambda exe: "/nix/store/disko")
+
+    captured_env: dict[str, str] = {}
+
+    def fake_run(
+        cmd,
+        shell=False,
+        check=False,
+        capture_output=False,
+        text=False,
+        env=None,
+    ):  # type: ignore[override]
+        captured_env.update(env or {})
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr("pre_nixos.apply.subprocess.run", fake_run)
+
+    apply_plan(plan, dry_run=False)
+
+    assert captured_env.get("NIX_PATH") == "nixpkgs=/nix/store/fallback-nixpkgs"
 
 
 def test_apply_plan_prefers_combined_mode_when_supported(tmp_path: Path, fake_disko) -> None:

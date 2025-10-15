@@ -17,6 +17,34 @@ DISKO_CONFIG_PATH = Path("/var/log/pre-nixos/disko-config.nix")
 _DISKO_MODE_CACHE: Tuple[str, bool] | None = None
 
 
+def _prepare_command_environment() -> Dict[str, str]:
+    """Return the environment for command execution.
+
+    ``disko`` evaluates Nix expressions that expect ``nixpkgs`` to be present on
+    ``$NIX_PATH``. Systemd injects the variable via the module, but we also ship
+    ``PRE_NIXOS_NIXPKGS`` so that CLI invocations (or unexpected environment
+    stripping) can recover automatically.
+    """
+
+    env = os.environ.copy()
+    nix_path = env.get("NIX_PATH")
+    if nix_path and nix_path.strip():
+        return env
+
+    nixpkgs_path = env.get("PRE_NIXOS_NIXPKGS")
+    if nixpkgs_path:
+        injected = f"nixpkgs={nixpkgs_path}"
+        env["NIX_PATH"] = injected
+        log_event(
+            "pre_nixos.apply.command.nix_path_injected",
+            nix_path=injected,
+        )
+    else:
+        log_event("pre_nixos.apply.command.nix_path_missing")
+
+    return env
+
+
 def _run(cmd: str, execute: bool) -> None:
     """Run ``cmd`` when ``execute`` is ``True``."""
 
@@ -36,7 +64,8 @@ def _run(cmd: str, execute: bool) -> None:
             reason="executable not found",
         )
         return
-    result = subprocess.run(cmd, shell=True, check=False)
+    env = _prepare_command_environment()
+    result = subprocess.run(cmd, shell=True, check=False, env=env)
     status = "success" if result.returncode == 0 else "error"
     log_event(
         "pre_nixos.apply.command.finished",
