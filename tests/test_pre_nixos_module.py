@@ -73,5 +73,6 @@ def test_module_sets_nix_path_for_pre_nixos_environment() -> None:
     service_block = _extract_service_block()
     assert "preNixosEnv = preNixosExecEnv // {" in module_text
     assert 'NIX_PATH = "nixpkgs=${pkgs.path}";' in module_text
+    assert 'PRE_NIXOS_NIXPKGS = "${pkgs.path}";' in module_text
     assert "environment.sessionVariables = preNixosEnv;" in module_text
     assert "environment = preNixosEnv;" in service_block
