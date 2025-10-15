@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 
-def _extract_service_path_packages() -> set[str]:
+def _extract_service_block() -> str:
     module_text = Path("modules/pre-nixos.nix").read_text(encoding="utf-8")
     try:
         start = module_text.index("systemd.services.pre-nixos = {")
@@ -15,11 +15,15 @@ def _extract_service_path_packages() -> set[str]:
             "systemd.services.pre-nixos definition missing from module"
         ) from exc
 
-    end = module_text.find("};", start)
+    end = module_text.find("\n    };", start)
     if end == -1:
         raise AssertionError("systemd.services.pre-nixos block not terminated")
 
-    block = module_text[start:end]
+    return module_text[start:end]
+
+
+def _extract_service_path_packages() -> set[str]:
+    block = _extract_service_block()
     match = re.search(r"path\s*=\s*with pkgs;\s*\[(?P<body>[^\]]+)\];", block, re.DOTALL)
     if match is None:
         raise AssertionError("systemd.services.pre-nixos.path definition missing")
@@ -62,3 +66,12 @@ def test_module_enables_systemd_networkd() -> None:
     assert "networking.useNetworkd = lib.mkForce true;" in module_text
     assert "networking.useDHCP = lib.mkForce false;" in module_text
     assert "networking.networkmanager.enable = lib.mkForce false;" in module_text
+
+
+def test_module_sets_nix_path_for_pre_nixos_environment() -> None:
+    module_text = Path("modules/pre-nixos.nix").read_text(encoding="utf-8")
+    service_block = _extract_service_block()
+    assert "preNixosEnv = preNixosExecEnv // {" in module_text
+    assert 'NIX_PATH = "nixpkgs=${pkgs.path}";' in module_text
+    assert "environment.sessionVariables = preNixosEnv;" in module_text
+    assert "environment = preNixosEnv;" in service_block

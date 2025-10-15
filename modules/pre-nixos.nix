@@ -3,8 +3,14 @@ let
   cfg = config.services.pre-nixos;
   # ``pre-nixos`` only executes disk and network commands when PRE_NIXOS_EXEC is
   # set.  Propagate it to login shells for the TUI and to the systemd unit so the
-  # boot-time invocation can configure networking.
+  # boot-time invocation can configure networking.  ``disko`` relies on
+  # ``nixpkgs`` being available on ``$NIX_PATH`` when executing the generated
+  # configuration, so expose the evaluated nixpkgs path alongside the execution
+  # flag.
   preNixosExecEnv = { PRE_NIXOS_EXEC = "1"; };
+  preNixosEnv = preNixosExecEnv // {
+    NIX_PATH = "nixpkgs=${pkgs.path}";
+  };
   preNixosLoginNotice = builtins.readFile ./pre-nixos/login-notice.sh;
   preNixosServiceScript = import ./pre-nixos/service-script.nix { inherit pkgs; };
 in {
@@ -12,7 +18,7 @@ in {
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ pkgs.pre-nixos pkgs.disko pkgs.util-linux pkgs.minicom ];
-    environment.sessionVariables = preNixosExecEnv;
+    environment.sessionVariables = preNixosEnv;
     environment.interactiveShellInit = preNixosLoginNotice;
     systemd.network.enable = true;
     networking.useNetworkd = lib.mkForce true;
@@ -29,7 +35,7 @@ in {
       description = "Pre-NixOS setup";
       wantedBy = [ "multi-user.target" ];
       serviceConfig.Type = "oneshot";
-      environment = preNixosExecEnv;
+      environment = preNixosEnv;
       path = with pkgs; [
         coreutils
         disko
