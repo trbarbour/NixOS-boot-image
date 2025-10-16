@@ -130,8 +130,6 @@ def _render_disko_config(devices: Dict[str, Any]) -> str:
     json_blob = json.dumps(devices, indent=2, sort_keys=True)
     body = textwrap.indent(json_blob, "    ")
     return "{\n  disko.devices = builtins.fromJSON ''\n" + body + "\n  '';\n}\n"
-
-
 def _select_disko_mode() -> Tuple[str, bool]:
     """Return the preferred disko mode and whether ``--yes-wipe-all-disks`` is supported."""
 

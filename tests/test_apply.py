@@ -110,6 +110,22 @@ def test_apply_plan_handles_hdd_only_plan(tmp_path: Path, fake_disko) -> None:
     assert slash_lv["content"]["mountpoint"] == "/"
 
 
+def test_apply_plan_preserves_filesystem_labels(tmp_path: Path, fake_disko) -> None:
+    plan = plan_storage(
+        "standard",
+        [Disk(name="sda", size=128, rotational=False)],
+        ram_gb=4,
+    )
+    config_path = tmp_path / "labeled-filesystems.nix"
+    plan["disko_config_path"] = str(config_path)
+
+    apply_plan(plan, dry_run=True)
+
+    devices = _read_devices(config_path)
+    boot_content = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
+    assert boot_content.get("label") == "EFI"
+
+
 def test_apply_plan_handles_swap(tmp_path: Path, fake_disko) -> None:
     config_path = tmp_path / "swap-disko.nix"
     plan = {
@@ -232,7 +248,12 @@ def test_apply_plan_injects_nix_path_from_pre_nixos_env(
 
 def test_apply_plan_prefers_combined_mode_when_supported(tmp_path: Path, fake_disko) -> None:
     config_path = tmp_path / "combined-disko.nix"
-    plan = {"disko": {"disk": {}}, "disko_config_path": str(config_path)}
+    plan = plan_storage(
+        "standard",
+        [Disk(name="sda", size=128, rotational=False)],
+        ram_gb=4,
+    )
+    plan["disko_config_path"] = str(config_path)
 
     fake_disko(
         """Usage: disko [options] disk-config.nix
@@ -247,6 +268,10 @@ def test_apply_plan_prefers_combined_mode_when_supported(tmp_path: Path, fake_di
         f"--root-mountpoint /mnt {config_path}"
     )
     assert commands == [expected_cmd]
+
+    devices = _read_devices(config_path)
+    boot_content = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
+    assert boot_content["label"] == "EFI"
 
 
 def test_select_disko_mode_prefers_legacy_when_combined_missing(fake_disko) -> None:
