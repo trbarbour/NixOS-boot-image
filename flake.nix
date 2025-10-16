@@ -4,9 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
     flake-utils.url = "github:numtide/flake-utils";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
+  outputs = { self, nixpkgs, flake-utils, disko, ... }:
     let
       inherit (flake-utils.lib) eachDefaultSystem;
 
@@ -35,7 +37,15 @@
         else
           null;
 
-      pkgsFor = system: nixpkgs.legacyPackages.${system};
+      diskoOverlay = final: _: {
+        disko = disko.packages.${final.system}.disko;
+      };
+
+      pkgsFor = system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ diskoOverlay ];
+        };
 
       preNixosModule = import ./modules/pre-nixos.nix;
 
@@ -65,7 +75,7 @@
       preInstallerConfig = nixpkgs.lib.nixosSystem {
         system = preInstallerSystem;
         modules = [
-          ({ ... }: { nixpkgs.overlays = [ preInstallerOverlay ]; })
+          ({ ... }: { nixpkgs.overlays = [ diskoOverlay preInstallerOverlay ]; })
           preNixosModule
           "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
           "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
