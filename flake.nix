@@ -61,7 +61,7 @@
           nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
           propagatedBuildInputs =
             pkgs.lib.attrVals
-              [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ]
+              [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" "kmod" ]
               pkgs;
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
             cp ${rootPub} pre_nixos/root_key.pub
@@ -103,7 +103,7 @@
         checks = {
           pre-nixos-propagates-required-tools =
             let
-              requiredTools = [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" ];
+              requiredTools = [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" "kmod" ];
               propagatedNames =
                 builtins.map
                   (drv:

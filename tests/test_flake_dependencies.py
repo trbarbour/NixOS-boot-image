@@ -40,6 +40,7 @@ def test_pre_nixos_runtime_dependencies_include_required_tools() -> None:
         "gptfdisk",
         "mdadm",
         "lvm2",
+        "kmod",
         # Network diagnostics
         "ethtool",
         # General system tooling used during installation (e.g. findmnt)

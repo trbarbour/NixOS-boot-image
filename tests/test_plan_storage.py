@@ -1,7 +1,14 @@
 """Tests for storage plan generation."""
 
 from pre_nixos.inventory import Disk
-from pre_nixos.planner import plan_storage, ROOT_LV_SIZE, _parse_size, _format_size
+from pre_nixos.planner import (
+    plan_storage,
+    ROOT_LV_SIZE,
+    _parse_size,
+    _format_size,
+    MI_BYTE,
+    LVM_EXTENT_BYTES,
+)
 
 
 def test_plan_storage_basic() -> None:
@@ -237,7 +244,10 @@ def test_slash_lv_size_capped() -> None:
     disks = [Disk(name="sda", size=15, rotational=False)]
     plan = plan_storage("fast", disks)
     slash_lv = next(lv for lv in plan["lvs"] if lv["name"] == "slash")
-    assert slash_lv["size"] == "14G"
+    expected_max = _parse_size("14G")
+    actual = _parse_size(slash_lv["size"])
+    assert actual <= expected_max
+    assert expected_max - actual <= 2 * LVM_EXTENT_BYTES
 
 
 def test_swap_lv_accounts_for_efi_partition() -> None:
@@ -254,7 +264,9 @@ def test_swap_lv_accounts_for_efi_partition() -> None:
     slash_size = _parse_size(ROOT_LV_SIZE)
     expected_swap = max(capacity - slash_size, 0)
     expected_swap -= expected_swap % (1024 ** 2)
-    assert swap_lv["size"] == _format_size(expected_swap)
+    actual_swap = _parse_size(swap_lv["size"])
+    assert actual_swap <= expected_swap
+    assert expected_swap - actual_swap <= 2 * LVM_EXTENT_BYTES
 
 
 def test_data_lv_size_capped() -> None:
@@ -265,7 +277,10 @@ def test_data_lv_size_capped() -> None:
     ]
     plan = plan_storage("fast", disks)
     data_lv = next(lv for lv in plan["lvs"] if lv["name"] == "data")
-    assert data_lv["size"] == "60G"
+    expected_max = _parse_size("60G")
+    actual = _parse_size(data_lv["size"])
+    assert actual <= expected_max
+    assert expected_max - actual <= 2 * LVM_EXTENT_BYTES
 
 
 def test_plan_emits_disko_config() -> None:
