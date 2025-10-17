@@ -31,6 +31,11 @@ If you find separate tickets, or other documents, concerning the same topic, lin
 When you have difficulty making progress, consider how many unknowns you are dealing with, and how to reduce the number of unknowns. Use divide-and-conquer to separate the unknowns so that you can solve them individually. You can write a toy project to resolve one particular unknown in isolation from others. When each unknown has been resolved individually, the combination will be more tractable. At least, record a list of the unknowns, and make a plan for resolving each of them.
 
 
+# Newness of Software
+
+When a particular version of some software does not support a desired feature, but a newer one does, prefer adopting the newer version over foregoing the feature.
+
+
 # Time
 
 Don't rush. Take time to understand, and do things the right way. Do it once, do it right!
