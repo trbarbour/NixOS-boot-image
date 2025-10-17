@@ -18,6 +18,9 @@ _Last updated: 2025-10-14T05-00-00Z_
    - 2025-10-15T15-00-00Z - Added a legacy `disko` compatibility shim that strips unsupported filesystem labels before writing `/var/log/pre-nixos/disko-config.nix`; kicked off `nix build .#bootImage` to rebuild the ISO.
    - 2025-10-15T15-25-00Z - `nix build .#bootImage` pulled >400 derivations (~1.8 GiB of binaries) but was interrupted due to session time constraints; rerun the build in a long-lived environment to produce a fresh ISO.
    - 2025-10-16T00-45-00Z - Removed the compatibility shim and overlaid the boot image with the upstream `disko` flake so filesystem labels remain in the generated plan. Rebuild the ISO and rerun the VM regression to confirm the modern CLI succeeds end-to-end.
+   - 2025-10-16T04-49-00Z - `pytest tests/test_boot_image_vm.py -vv` still fails: the bundled `disko` exits with `error: The option 'disko.devices.disk.vda.content.partitions.vda1.content.label' does not exist`, leaving `/run/pre-nixos/storage-status` at `STATE=failed`/`DETAIL=auto-applied` even though networking succeeds. Full artefacts in `docs/work-notes/2025-10-16T04-49-00Z-boot-image-vm-regression/` and test report `docs/test-reports/2025-10-16T04-49-00Z-boot-image-vm-test.md`.
+   - 2025-10-16T05-45-00Z - Attempting to rebuild `.#bootImage` with a freshly generated `PRE_NIXOS_ROOT_KEY` stalled: `nix develop .#bootImageTest` aborted because the ISO derivation `/nix/store/26zylzprcx44248ypkg39yk6hp66qcf5-...iso.drv` exited 1 without logs while `mksquashfs` kept running for >15 minutes. Need to capture the failing build log (e.g. rerun with `--keep-failed`) and determine why the impure build dies during squashfs creation before the VM regression can be retried.
+   - **Next actions**: (a) inspect the generated `disko-config.nix`/overlay to reconcile the missing `label` option with the upstream CLI; (b) reproduce the ISO build under `nix build .#bootImage --impure --keep-failed --print-build-logs` so the squashfs failure can be debugged; (c) once the build stabilises, rerun the VM regression to confirm storage provisioning succeeds end-to-end.
 
 2. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
    - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once networking is configured.
@@ -27,15 +30,18 @@ _Last updated: 2025-10-14T05-00-00Z_
    - 2025-10-13T13-06-59Z - `collect_sshd_pre_nixos_debug.py` confirms `pre-nixos.service` exits cleanly and storage status reports `STATE=applied`/`DETAIL=auto-applied`, but `systemctl list-jobs` still shows the `sshd.service` start job active and `systemctl status sshd` remains in `start-pre` under `sshd-pre-start`. Artefacts in `docs/work-notes/2025-10-13T13-06-59Z-sshd-pre-nixos-debug/`. 【F:docs/work-notes/2025-10-13T13-06-59Z-sshd-pre-nixos-debug/serial.log†L55-L200】
    - 2025-10-14T00-00-00Z - Latest capture confirms `pre-nixos.service` finishes with `/run/pre-nixos/storage-status` reporting `STATE=applied`/`DETAIL=auto-applied`, while `systemctl status sshd` continues in `start-pre` generating host keys. Evidence in `docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/`. 【F:docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/serial.log†L70-L141】
    - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` still documents the pre-change deadlock evidence in `docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`; repeat the capture once the updated ISO is available for comparison.
+   - **Status**: Blocked on Task 1 – need a passing storage regression before re-running the paused-VM inspection with the updated ISO.
 
 3. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
    - Audit any additional units (e.g., console helpers) that expect to pull `sshd.service` in via `WantedBy` and ensure they explicitly order themselves after `secure_ssh` if necessary.
    - During the VM verification run, check `systemctl list-dependencies sshd` to confirm nothing else attempts to start the service before `secure_ssh` finishes provisioning.
+   - **Status**: Pending – revisit once Task 1 produces a passing VM run so dependency checks can be performed on a healthy boot.
 
 4. **If the hang persists, bisect between plan generation and application.**
    - With the updated ISO booted in debug mode, inspect `journalctl -u pre-nixos.service -b` and `/run/pre-nixos/storage-status` to see whether execution stalls before or after `apply.apply_plan`.
    - Capture the storage plan (`pre-nixos --plan-only`), any running `disko` processes, and related logs so we can split the investigation between plan creation and disk application on subsequent runs.
    - Promote any new discoveries into focused follow-up tasks and update this queue accordingly.
+   - **Status**: In progress via Task 1 – current failure occurs during `disko` application (`label` option missing). Continue once the ISO build reliably completes.
 
 ## Backlog (previously active items)
 
