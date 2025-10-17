@@ -123,7 +123,7 @@ def test_apply_plan_preserves_filesystem_labels(tmp_path: Path, fake_disko) -> N
 
     devices = _read_devices(config_path)
     boot_content = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
-    assert boot_content.get("label") == "EFI"
+    assert boot_content.get("extraArgs") == ["-n", "EFI"]
 
 
 def test_apply_plan_handles_swap(tmp_path: Path, fake_disko) -> None:
@@ -271,7 +271,7 @@ def test_apply_plan_prefers_combined_mode_when_supported(tmp_path: Path, fake_di
 
     devices = _read_devices(config_path)
     boot_content = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
-    assert boot_content["label"] == "EFI"
+    assert boot_content.get("extraArgs") == ["-n", "EFI"]
 
 
 def test_select_disko_mode_prefers_legacy_when_combined_missing(fake_disko) -> None:

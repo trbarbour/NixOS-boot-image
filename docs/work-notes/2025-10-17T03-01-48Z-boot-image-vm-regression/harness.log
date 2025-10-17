@@ -1,0 +1,149 @@
+[2025-10-17T02:53:56.476904+00:00] Boot image details: iso=/nix/store/s2p1zy33137izh2ilfx5gx246yvcbrkh-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso store=/nix/store/s2p1zy33137izh2ilfx5gx246yvcbrkh-nixos-24.05.20241230.b134951-x86_64-linux.iso deriver=/nix/store/jjp3bkmi0c0jkbxf5xri1zydkgabk2n1-nixos-24.05.20241230.b134951-x86_64-linux.iso.drv narHash=sha256-+0kX9fw7hZvFysygROwb80F/5qyDzScQCpR3Kz4vuC0=
+[2025-10-17T02:53:56.477890+00:00] Embedded root key fingerprint: 256 SHA256:OqAhKuoKLFamIEh4lHr43Vq+Gt2uyLpWYE80Hb94Hpo boot-image-vm-test (ED25519)
+[2025-10-17T02:53:56.478110+00:00] Starting login sequence
+[2025-10-17T02:53:56.481578+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, # ? (timeout=600s)
+[2025-10-17T02:53:57.383301+00:00] Serial output: ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+[2025-10-17T02:53:57.383624+00:00] Serial output: e%@)0(B
+[2025-10-17T02:53:57.391609+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2025-10-17T02:53:57.392231+00:00] Serial output: x
+[2025-10-17T02:53:57.393242+00:00] Serial output: NixOS
+[2025-10-17T02:53:57.393396+00:00] Serial output: x
+[2025-10-17T02:53:57.395756+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2025-10-17T02:53:57.395846+00:00] Serial output: x
+[2025-10-17T02:53:57.399735+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer
+[2025-10-17T02:53:57.400026+00:00] Serial output: x
+[2025-10-17T02:53:57.400220+00:00] Serial output: x
+[2025-10-17T02:53:57.403472+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (nomodeset)
+[2025-10-17T02:53:57.403810+00:00] Serial output: x
+[2025-10-17T02:53:57.404019+00:00] Serial output: x
+[2025-10-17T02:53:57.407098+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (copytoram)
+[2025-10-17T02:53:57.407525+00:00] Serial output: x
+[2025-10-17T02:53:57.407843+00:00] Serial output: x
+[2025-10-17T02:53:57.410761+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (debug)
+[2025-10-17T02:53:57.411087+00:00] Serial output: x
+[2025-10-17T02:53:57.411354+00:00] Serial output: x
+[2025-10-17T02:53:57.414643+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)
+[2025-10-17T02:53:57.415062+00:00] Serial output: x
+[2025-10-17T02:53:57.415187+00:00] Serial output: x
+[2025-10-17T02:53:57.418325+00:00] Serial output: Memtest86+
+[2025-10-17T02:53:57.418715+00:00] Serial output: x
+[2025-10-17T02:53:57.422899+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2025-10-17T02:53:57.423285+00:00] Serial output: Press [Tab] to edit options
+[2025-10-17T02:53:57.427426+00:00] Serial output: Automatic boot in
+[2025-10-17T02:53:57.427538+00:00] Serial output: 10
+[2025-10-17T02:53:58.458572+00:00] Serial output: seconds...
+[2025-10-17T02:53:58.458966+00:00] Serial output: Automatic boot in
+[2025-10-17T02:53:58.459027+00:00] Serial output: 9
+[2025-10-17T02:53:59.501626+00:00] Serial output: seconds...
+[2025-10-17T02:53:59.502051+00:00] Serial output: Automatic boot in
+[2025-10-17T02:53:59.502130+00:00] Serial output: 8
+[2025-10-17T02:54:00.546689+00:00] Serial output: seconds...
+[2025-10-17T02:54:00.546902+00:00] Serial output: Automatic boot in
+[2025-10-17T02:54:00.546943+00:00] Serial output: 7
+[2025-10-17T02:54:01.588794+00:00] Serial output: seconds...
+[2025-10-17T02:54:01.588973+00:00] Serial output: Automatic boot in
+[2025-10-17T02:54:01.589009+00:00] Serial output: 6
+[2025-10-17T02:54:02.632361+00:00] Serial output: seconds...
+[2025-10-17T02:54:02.632871+00:00] Serial output: Automatic boot in
+[2025-10-17T02:54:02.632955+00:00] Serial output: 5
+[2025-10-17T02:54:03.675943+00:00] Serial output: seconds...
+[2025-10-17T02:54:03.676237+00:00] Serial output: Automatic boot in
+[2025-10-17T02:54:03.676362+00:00] Serial output: 4
+[2025-10-17T02:54:04.720231+00:00] Serial output: seconds...
+[2025-10-17T02:54:04.721040+00:00] Serial output: Automatic boot in
+[2025-10-17T02:54:04.721511+00:00] Serial output: 3
+[2025-10-17T02:54:05.763203+00:00] Serial output: seconds...
+[2025-10-17T02:54:05.763375+00:00] Serial output: Automatic boot in
+[2025-10-17T02:54:05.763792+00:00] Serial output: 2
+[2025-10-17T02:54:06.807959+00:00] Serial output: seconds...
+[2025-10-17T02:54:06.808170+00:00] Serial output: Automatic boot in
+[2025-10-17T02:54:06.808745+00:00] Serial output: 1
+[2025-10-17T02:54:07.854503+00:00] Serial output: second...
+[2025-10-17T02:54:07.858203+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2025-10-17T02:54:07.858329+00:00] Serial output: x
+[2025-10-17T02:54:07.858704+00:00] Serial output: NixOS
+[2025-10-17T02:54:07.859189+00:00] Serial output: x
+[2025-10-17T02:54:07.866000+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2025-10-17T02:54:07.866223+00:00] Serial output: x
+[2025-10-17T02:54:07.873274+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer
+[2025-10-17T02:54:07.873610+00:00] Serial output: x
+[2025-10-17T02:54:07.873670+00:00] Serial output: x
+[2025-10-17T02:54:07.879489+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (nomodeset)
+[2025-10-17T02:54:07.879802+00:00] Serial output: x
+[2025-10-17T02:54:07.879932+00:00] Serial output: x
+[2025-10-17T02:54:07.885279+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (copytoram)
+[2025-10-17T02:54:07.885562+00:00] Serial output: x
+[2025-10-17T02:54:07.885632+00:00] Serial output: x
+[2025-10-17T02:54:07.890488+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (debug)
+[2025-10-17T02:54:07.890666+00:00] Serial output: x
+[2025-10-17T02:54:07.890758+00:00] Serial output: x
+[2025-10-17T02:54:07.896905+00:00] Serial output: NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)
+[2025-10-17T02:54:07.897210+00:00] Serial output: x
+[2025-10-17T02:54:07.897280+00:00] Serial output: x
+[2025-10-17T02:54:07.902598+00:00] Serial output: Memtest86+
+[2025-10-17T02:54:07.902881+00:00] Serial output: x
+[2025-10-17T02:54:07.909935+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2025-10-17T02:54:07.910296+00:00] Serial output: Press [Tab] to edit options
+[2025-10-17T02:54:07.976973+00:00] Serial output: e%@)0(B
+[2025-10-17T02:56:29.666517+00:00] Serial output: Loading /boot/bzImage... ok
+[2025-10-17T02:56:29.667055+00:00] Serial output: Loading /boot/initrd...ok
+[2025-10-17T02:56:29.667605+00:00] Serial output: <<< Welcome to NixOS 24.05.20241230.b134951 (x86_64) - ttyS0 >>>
+[2025-10-17T02:56:29.711759+00:00] Serial output: The "nixos" and "root" accounts have empty passwords.
+[2025-10-17T02:56:29.712011+00:00] Serial output: To log in over ssh you must set a password for either "nixos" or "root"
+[2025-10-17T02:56:29.712053+00:00] Serial output: with `passwd` (prefix with `sudo` for "root"), or add your public key to
+[2025-10-17T02:56:29.712176+00:00] Serial output: /home/nixos/.ssh/authorized_keys or /root/.ssh/authorized_keys.
+[2025-10-17T02:56:29.712197+00:00] Serial output: If you need a wireless connection, type
+[2025-10-17T02:56:29.712216+00:00] Serial output: `sudo systemctl start wpa_supplicant` and configure a
+[2025-10-17T02:56:29.712234+00:00] Serial output: network using `wpa_cli`. See the NixOS manual for details.
+[2025-10-17T02:56:29.712255+00:00] Serial output: Run 'nixos-help' for the NixOS manual.
+[2025-10-17T02:56:29.712282+00:00] Serial output: nixos
+[2025-10-17T02:56:29.712309+00:00] Matched pattern: 'login: '
+[2025-10-17T02:56:29.712589+00:00] Awaiting patterns: \(automatic login\) (timeout=1s)
+[2025-10-17T02:56:29.713370+00:00] Serial output: nixos
+[2025-10-17T02:56:29.713450+00:00] Matched pattern: '\\(automatic login\\)'
+[2025-10-17T02:56:29.713476+00:00] Automatic login banner observed
+[2025-10-17T02:56:29.713564+00:00] Verifying current user ID
+[2025-10-17T02:56:29.768288+00:00] Awaiting patterns: __ROOT__, __USER__ (timeout=60s)
+[2025-10-17T02:56:29.772267+00:00] Serial output: if [ "$(id -u)" -eq 0 ]; then echo
+[2025-10-17T02:56:29.772375+00:00] Matched pattern: '__ROOT__'
+[2025-10-17T02:56:29.776050+00:00] Awaiting patterns: root@.*# ?, # ?, nixos@.*\$ ? (timeout=60s)
+[2025-10-17T02:56:38.493610+00:00] Serial output: ; else echo __USER__; fi
+[2025-10-17T02:56:38.514185+00:00] Serial output: [
+[2025-10-17T02:56:38.514318+00:00] Matched pattern: 'nixos@.*\\$ ?'
+[2025-10-17T02:56:38.514348+00:00] Initial shell already has root privileges
+[2025-10-17T02:56:38.565282+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-10-17T02:56:38.565990+00:00] Serial output: if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi
+[2025-10-17T02:56:38.569414+00:00] Serial output: export PS1='
+[2025-10-17T02:56:38.569485+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-10-17T02:56:38.569506+00:00] Shell prompt configured for interaction
+[2025-10-17T02:56:38.586635+00:00] Running command: :
+[2025-10-17T02:56:38.855285+00:00] Running command: command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[2025-10-17T02:56:40.907767+00:00] Running command: command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[2025-10-17T02:56:42.958665+00:00] Running command: command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[2025-10-17T02:56:43.009566+00:00] Running command: command -v findmnt >/dev/null 2>&1 && echo OK || echo MISSING
+[2025-10-17T02:56:43.060154+00:00] Running command: command -v lsblk >/dev/null 2>&1 && echo OK || echo MISSING
+[2025-10-17T02:56:43.110946+00:00] Running command: command -v wipefs >/dev/null 2>&1 && echo OK || echo MISSING
+[2025-10-17T02:56:43.161577+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:56:48.212833+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:56:53.263692+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:56:58.315208+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:03.367062+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:08.418161+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:13.468834+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:18.519857+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:23.571032+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:28.622237+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:33.673081+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:38.724947+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:43.776095+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:48.827177+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:53.879020+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:57:58.930094+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:58:03.980868+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:58:09.031893+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:58:14.082772+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2025-10-17T02:58:14.134131+00:00] Running command: journalctl --no-pager -u pre-nixos.service -b || true
+[2025-10-17T02:58:14.319768+00:00] Running command: ip -o -4 addr show dev lan 2>/dev/null || true
+[2025-10-17T02:58:19.373312+00:00] Running command: ip -o -4 addr show dev lan 2>/dev/null || true
+[2025-10-17T02:58:24.506388+00:00] Running command: ip -o -4 addr show dev lan 2>/dev/null || true
+[2025-10-17T02:58:24.557565+00:00] Running command: systemctl is-active pre-nixos

@@ -47,6 +47,7 @@ def _format_size(size: int) -> str:
 
 EFI_PARTITION_SIZE = _parse_size("1G")
 MI_BYTE = 1024 ** 2
+LVM_EXTENT_BYTES = 4 * MI_BYTE
 
 
 def _array_capacity(level: str, sizes: List[int]) -> int:
@@ -200,10 +201,32 @@ def plan_storage(
         total = vg_sizes.get(vg, 0)
         used = used_vg_sizes.get(vg, 0)
         free = max(total - used, 0)
-        if free <= 0:
+        if free < LVM_EXTENT_BYTES:
             return
+
+        free_extents = free // LVM_EXTENT_BYTES
+        if free_extents <= 0:
+            return
+
         req = _parse_size(size)
-        alloc = req if req <= free else free
+        if req <= 0:
+            return
+
+        req_extents = max((req + LVM_EXTENT_BYTES - 1) // LVM_EXTENT_BYTES, 1)
+        alloc_extents = min(req_extents, free_extents)
+
+        if alloc_extents == free_extents:
+            if free_extents > 2:
+                # Leave at least two extents so LVM metadata and a follow-up LV can
+                # be created without hitting "insufficient free space" errors.
+                alloc_extents -= 2
+            elif free_extents > 1:
+                alloc_extents -= 1
+
+        if alloc_extents <= 0:
+            return
+
+        alloc = alloc_extents * LVM_EXTENT_BYTES
         used_vg_sizes[vg] = used + alloc
         plan["lvs"].append({"name": name, "vg": vg, "size": _format_size(alloc)})
 
@@ -373,7 +396,7 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
                 content: Dict[str, Any] = {
                     "type": "filesystem",
                     "format": "vfat",
-                    "label": label,
+                    "extraArgs": ["-n", label],
                 }
                 if label == "EFI":
                     content["mountpoint"] = "/boot"
