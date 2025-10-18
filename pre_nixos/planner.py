@@ -58,10 +58,8 @@ def _normalise_volume_label(name: str, max_length: int) -> str:
     ``ext4``/``mkswap`` would reject (anything outside ``[A-Za-z0-9]``) with a
     single underscore—the one punctuation mark both tools explicitly accept via
     ``mke2fs``/``mkswap`` ``-L``.  Leading and trailing underscores are trimmed
-    and the result is truncated to ``max_length`` characters.  Documenting the
-    transformation makes it clear that ``slash`` remains ``slash`` while
-    ``large-1`` becomes ``large_1`` (and may be truncated if necessary).  An
-    empty result falls back to ``vol`` so the caller always gets a usable label.
+    and the result is truncated to ``max_length`` characters.  An empty result
+    falls back to ``vol`` so the caller always gets a usable label.
     """
 
     label = re.sub(r"[^A-Za-z0-9]+", "_", name)
