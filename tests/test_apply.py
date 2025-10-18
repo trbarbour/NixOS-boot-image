@@ -77,7 +77,7 @@ def test_apply_plan_returns_commands(tmp_path: Path, fake_disko) -> None:
     devices = _read_devices(config_path)
     assert "disk" in devices and "mdadm" in devices and "lvm_vg" in devices
     slash_lv = devices["lvm_vg"]["main"]["lvs"]["slash"]
-    assert slash_lv["content"]["label"] == "slash"
+    assert slash_lv["content"]["extraArgs"] == ["-L", "slash"]
 
 
 def test_apply_plan_handles_hdd_only_plan(tmp_path: Path, fake_disko) -> None:
@@ -110,9 +110,9 @@ def test_apply_plan_handles_hdd_only_plan(tmp_path: Path, fake_disko) -> None:
     assert set(devices["lvm_vg"]["main"]["lvs"]) == {"slash", "swap"}
     slash_lv = devices["lvm_vg"]["main"]["lvs"]["slash"]
     assert slash_lv["content"]["mountpoint"] == "/"
-    assert slash_lv["content"]["label"] == "slash"
+    assert slash_lv["content"]["extraArgs"] == ["-L", "slash"]
     swap_lv = devices["lvm_vg"]["main"]["lvs"]["swap"]
-    assert swap_lv["content"]["label"] == "swap"
+    assert swap_lv["content"]["extraArgs"] == ["--label", "swap"]
 
 
 def test_apply_plan_preserves_filesystem_labels(tmp_path: Path, fake_disko) -> None:
