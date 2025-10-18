@@ -48,7 +48,7 @@ def test_multiple_ssd_buckets_named_separately() -> None:
     ]
     plan = plan_storage("fast", disks)
     vg_names = {vg["name"] for vg in plan["vgs"]}
-    assert "main" in vg_names and "main-1" in vg_names
+    assert "main" in vg_names and "main_1" in vg_names
     lv_vgs = {lv["vg"] for lv in plan["lvs"]}
     assert lv_vgs == {"main"}
     # only the disks in the main VG should have an EFI partition
