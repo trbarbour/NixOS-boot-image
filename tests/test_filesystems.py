@@ -32,21 +32,21 @@ def test_filesystem_entries_for_lvs(tmp_path: Path) -> None:
     assert slash["content"]["format"] == "ext4"
     assert slash["content"]["mountpoint"] == "/"
     assert "noatime" in slash["content"]["mountOptions"]
-    assert slash["content"]["label"] == "slash"
+    assert slash["content"]["extraArgs"] == ["-L", "slash"]
 
     data = devices["lvm_vg"]["large"]["lvs"]["data"]
     assert data["content"]["format"] == "ext4"
     assert data["content"]["mountpoint"] == "/data"
     assert "noatime" in data["content"]["mountOptions"]
-    assert data["content"]["label"] == "data"
+    assert data["content"]["extraArgs"] == ["-L", "data"]
 
-    swap_label = None
+    swap_args = None
     for vg in devices["lvm_vg"].values():
         swap_spec = vg.get("lvs", {}).get("swap")
         if swap_spec:
-            swap_label = swap_spec["content"].get("label")
+            swap_args = swap_spec["content"].get("extraArgs")
             break
-    assert swap_label == "swap"
+    assert swap_args == ["--label", "swap"]
 
     efi = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
     assert efi["format"] == "vfat"
@@ -87,5 +87,5 @@ def test_lv_labels_replace_disallowed_characters() -> None:
 
     devices = _plan_to_disko_devices(plan)
 
-    label = devices["lvm_vg"]["main"]["lvs"]["large-1"]["content"]["label"]
-    assert label == "large_1"
+    args = devices["lvm_vg"]["main"]["lvs"]["large-1"]["content"].get("extraArgs")
+    assert args == ["-L", "large_1"]

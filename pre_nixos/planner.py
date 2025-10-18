@@ -477,7 +477,10 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
             continue
         if lv_name == "swap":
             label = _normalise_volume_label(lv_name, 15)
-            content = {"type": "swap", "label": label}
+            content = {
+                "type": "swap",
+                "extraArgs": ["--label", label],
+            }
         else:
             label = _normalise_volume_label(lv_name, 16)
             mountpoint = "/" if lv_name == "slash" else f"/{lv_name}"
@@ -486,7 +489,7 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
                 "format": "ext4",
                 "mountpoint": mountpoint,
                 "mountOptions": ["noatime"],
-                "label": label,
+                "extraArgs": ["-L", label],
             }
         lvs[lv_name] = {"size": size, "content": content}
 
