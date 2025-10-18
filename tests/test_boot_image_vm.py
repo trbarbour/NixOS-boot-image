@@ -250,6 +250,7 @@ class BootImageVM:
     ssh_executable: str
     artifact: BootImageBuild
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
+    _has_root_privileges: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._log_step(
@@ -356,8 +357,9 @@ class BootImageVM:
                 return False
         self._set_shell_prompt()
         uid_output = self._read_uid()
+        self._has_root_privileges = uid_output == "0"
         self._log_step(f"id -u after sudo -i returned: {uid_output!r}")
-        if uid_output == "0":
+        if self._has_root_privileges:
             self._log_step("Successfully escalated privileges with sudo -i")
             return True
         self._log_step("sudo -i completed without root privileges")
@@ -384,8 +386,9 @@ class BootImageVM:
                 return False
         self._set_shell_prompt()
         uid_output = self._read_uid()
+        self._has_root_privileges = uid_output == "0"
         self._log_step(f"id -u after su - returned: {uid_output!r}")
-        if uid_output == "0":
+        if self._has_root_privileges:
             self._log_step("Successfully escalated privileges with su -")
             return True
         self._log_step("su - completed without root privileges")
@@ -436,7 +439,8 @@ class BootImageVM:
         self._set_shell_prompt()
 
         uid_output = self._read_uid()
-        if uid_output == "0":
+        self._has_root_privileges = uid_output == "0"
+        if self._has_root_privileges:
             self._log_step("Initial shell already has root privileges")
             return
 
@@ -488,6 +492,13 @@ class BootImageVM:
         if cleaned and cleaned[0] == command:
             cleaned = cleaned[1:]
         return "\n".join(cleaned).strip()
+
+    def run_as_root(self, command: str, *, timeout: int = 180) -> str:
+        """Execute a command with root privileges when needed."""
+
+        if self._has_root_privileges:
+            return self.run(command, timeout=timeout)
+        return self.run(f"sudo -n {command}", timeout=timeout)
 
     def collect_journal(self, unit: str, *, since_boot: bool = True) -> str:
         """Return the journal for a systemd unit."""
@@ -541,6 +552,8 @@ class BootImageVM:
         while time.time() < deadline:
             status = self.read_storage_status()
             if "STATE" in status and "DETAIL" in status:
+                # Issue a no-op to ensure any buffered command output is flushed
+                self.run(":")
                 return status
             time.sleep(5)
         journal = self.collect_journal("pre-nixos.service")
@@ -562,6 +575,8 @@ class BootImageVM:
             output = self.run(f"ip -o -4 addr show dev {iface} 2>/dev/null || true")
             lines = [line for line in output.splitlines() if line.strip()]
             if any("inet " in line for line in lines):
+                # Run a no-op so any buffered ip output is consumed before returning
+                self.run(":")
                 return lines
             time.sleep(5)
         journal = self.collect_journal("pre-nixos.service")
@@ -755,13 +770,13 @@ def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
             f"journalctl -u pre-nixos.service:\n{journal}"
         )
 
-    vg_output = boot_image_vm.run(
+    vg_output = boot_image_vm.run_as_root(
         "vgs --noheadings --separator '|' -o vg_name", timeout=120
     )
     vg_names = {line.strip() for line in vg_output.splitlines() if line.strip()}
     assert "main" in vg_names
 
-    lv_output = boot_image_vm.run(
+    lv_output = boot_image_vm.run_as_root(
         "lvs --noheadings --separator '|' -o lv_name,vg_name", timeout=120
     )
     lv_pairs = {tuple(part.strip() for part in line.split("|")) for line in lv_output.splitlines() if line.strip()}
