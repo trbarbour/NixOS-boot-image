@@ -493,12 +493,29 @@ class BootImageVM:
             cleaned = cleaned[1:]
         return "\n".join(cleaned).strip()
 
+    def _ensure_root_privileges(self) -> None:
+        """Re-establish a root shell when privileged operations are required."""
+
+        if self._has_root_privileges:
+            return
+
+        self._log_step(
+            "Privileged command requested without active root shell; "
+            "attempting to regain root access"
+        )
+        if self._escalate_with_sudo():
+            return
+        if self._escalate_with_su():
+            return
+        self._raise_with_transcript(
+            "Failed to acquire root shell for privileged command"
+        )
+
     def run_as_root(self, command: str, *, timeout: int = 180) -> str:
         """Execute a command with root privileges when needed."""
 
-        if self._has_root_privileges:
-            return self.run(command, timeout=timeout)
-        return self.run(f"sudo -n {command}", timeout=timeout)
+        self._ensure_root_privileges()
+        return self.run(command, timeout=timeout)
 
     def collect_journal(self, unit: str, *, since_boot: bool = True) -> str:
         """Return the journal for a systemd unit."""
@@ -590,6 +607,37 @@ class BootImageVM:
             f"systemctl status pre-nixos:\n{unit_status}\n"
             f"Harness log: {self.harness_log_path}\n"
             f"Serial log: {self.log_path}"
+        )
+
+    def wait_for_unit_inactive(self, unit: str, *, timeout: int = 240) -> str:
+        """Wait until a systemd unit reports ``inactive`` via ``systemctl``."""
+
+        deadline = time.time() + timeout
+        status_command = f"systemctl is-active {unit} 2>/dev/null || true"
+        while time.time() < deadline:
+            output = self.run(status_command, timeout=60)
+            lines = [line.strip() for line in output.splitlines() if line.strip()]
+            if lines:
+                status = lines[-1]
+                if status == "inactive":
+                    self._log_step(f"{unit} reported inactive state")
+                    self.run(":")
+                    return status
+            time.sleep(5)
+
+        unit_status = self.run(
+            f"systemctl status {unit} --no-pager 2>&1 || true", timeout=240
+        )
+        journal_unit = unit if unit.endswith(".service") else f"{unit}.service"
+        journal = self.collect_journal(journal_unit)
+        self._raise_with_transcript(
+            "\n".join(
+                [
+                    f"Unit {unit} did not reach inactive state within {timeout}s",
+                    f"systemctl status {unit}:\n{unit_status}",
+                    f"journalctl -u {journal_unit} -b:\n{journal}",
+                ]
+            )
         )
 
     def shutdown(self) -> None:
@@ -790,7 +838,7 @@ def test_boot_image_configures_network(
     addr_lines = boot_image_vm.wait_for_ipv4()
     assert any("inet " in line for line in addr_lines)
 
-    status = boot_image_vm.run("systemctl is-active pre-nixos", timeout=60)
+    status = boot_image_vm.wait_for_unit_inactive("pre-nixos", timeout=180)
     assert status == "inactive"
 
     ssh_identity = boot_image_vm.run_ssh(
