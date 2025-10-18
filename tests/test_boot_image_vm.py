@@ -497,7 +497,14 @@ class BootImageVM:
         """Re-establish a root shell when privileged operations are required."""
 
         if self._has_root_privileges:
-            return
+            uid_output = self._read_uid()
+            if uid_output == "0":
+                return
+            self._log_step(
+                "Root shell check reported non-root uid "
+                f"{uid_output!r}; attempting to regain root access"
+            )
+            self._has_root_privileges = False
 
         self._log_step(
             "Privileged command requested without active root shell; "
@@ -612,6 +619,8 @@ class BootImageVM:
     def wait_for_unit_inactive(self, unit: str, *, timeout: int = 240) -> str:
         """Wait until a systemd unit reports ``inactive`` via ``systemctl``."""
 
+        # Flush any buffered output (e.g. from previous ip captures) before polling.
+        self.run(":")
         deadline = time.time() + timeout
         status_command = f"systemctl is-active {unit} 2>/dev/null || true"
         while time.time() < deadline:
