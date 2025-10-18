@@ -7,7 +7,7 @@ IP: 203.0.113.17 (lan)  View: Planned (minimal)  Focus: Disk nvme0n1  Legend: �
 
 ▶ Disk nvme0n1  ⟟  ESP+main (2 parts)   ⇒  md0 ≡ R1 (SSD)   ⇒  VG main (3 LVs)
   Disk nvme1n1  ⟟  member only
-  Disk nvme2n1  ⟟  spare bucket (main-1)
+  Disk nvme2n1  ⟟  spare bucket (main_1)
 
   HDD bucket A (6 disks)   ⇒  md2 ≡ R6   ⇒  VG large (2 LVs)
   HDD bucket B (2 disks)   ⇒  swap mirror waiting (blocked)

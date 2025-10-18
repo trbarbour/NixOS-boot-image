@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from pre_nixos.inventory import Disk
-from pre_nixos.planner import plan_storage
+from pre_nixos.planner import plan_storage, _plan_to_disko_devices
 from pre_nixos.apply import apply_plan
 
 
@@ -32,11 +32,21 @@ def test_filesystem_entries_for_lvs(tmp_path: Path) -> None:
     assert slash["content"]["format"] == "ext4"
     assert slash["content"]["mountpoint"] == "/"
     assert "noatime" in slash["content"]["mountOptions"]
+    assert slash["content"]["label"] == "slash"
 
     data = devices["lvm_vg"]["large"]["lvs"]["data"]
     assert data["content"]["format"] == "ext4"
     assert data["content"]["mountpoint"] == "/data"
     assert "noatime" in data["content"]["mountOptions"]
+    assert data["content"]["label"] == "data"
+
+    swap_label = None
+    for vg in devices["lvm_vg"].values():
+        swap_spec = vg.get("lvs", {}).get("swap")
+        if swap_spec:
+            swap_label = swap_spec["content"].get("label")
+            break
+    assert swap_label == "swap"
 
     efi = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
     assert efi["format"] == "vfat"
@@ -59,3 +69,23 @@ def test_non_root_lvs_have_mountpoints(tmp_path: Path) -> None:
     lvs = devices["lvm_vg"].get("large", {}).get("lvs", {})
     for name, spec in lvs.items():
         assert spec["content"].get("mountpoint") == f"/{name}"
+
+
+def test_lv_labels_replace_disallowed_characters() -> None:
+    plan = {
+        "arrays": [],
+        "vgs": [{"name": "main", "devices": []}],
+        "lvs": [
+            {
+                "name": "large-1",
+                "vg": "main",
+                "size": "10G",
+            }
+        ],
+        "partitions": {},
+    }
+
+    devices = _plan_to_disko_devices(plan)
+
+    label = devices["lvm_vg"]["main"]["lvs"]["large-1"]["content"]["label"]
+    assert label == "large_1"

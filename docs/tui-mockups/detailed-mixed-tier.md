@@ -9,7 +9,7 @@ Disk nvme0n1  ⟟ ─[☐ EFI]─[■ nvme0n1p2]──────────�
                                                 ├── md0 ≡ RAID1 (SSD) ── VG main ── slash 40G (ext4)
 Disk nvme1n1  ⟟ ───────────────[■ nvme1n1p1]───────┘                         └─ nix 120G (ext4, dense)
                                                                              └─ var 30G (ext4)
-Disk nvme2n1  ⟟ ───────────────[■ (unused)]             (spare SSD bucket → VG main-1, unmounted)
+Disk nvme2n1  ⟟ ───────────────[■ (unused)]             (spare SSD bucket → VG main_1, unmounted)
 
 Disk sda      ◎ ─[● sda1 swap-mirror]──────┐
                                           ├── md1 ≡ RAID1 (HDD mirror) ── VG swap ── swap 64G (mkswap)

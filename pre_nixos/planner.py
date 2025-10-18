@@ -1,6 +1,7 @@
 """Storage planning heuristics."""
 from __future__ import annotations
 
+import re
 from typing import List, Dict, Any
 
 from .inventory import Disk
@@ -48,6 +49,28 @@ def _format_size(size: int) -> str:
 EFI_PARTITION_SIZE = _parse_size("1G")
 MI_BYTE = 1024 ** 2
 LVM_EXTENT_BYTES = 4 * MI_BYTE
+
+
+def _normalise_volume_label(name: str, max_length: int) -> str:
+    """Return a filesystem/swap label derived from ``name``.
+
+    Labels preserve their original case while replacing runs of characters that
+    ``ext4``/``mkswap`` would reject (anything outside ``[A-Za-z0-9]``) with a
+    single underscore—the one punctuation mark both tools explicitly accept via
+    ``mke2fs``/``mkswap`` ``-L``.  Leading and trailing underscores are trimmed
+    and the result is truncated to ``max_length`` characters.  Documenting the
+    transformation makes it clear that ``slash`` remains ``slash`` while
+    ``large-1`` becomes ``large_1`` (and may be truncated if necessary).  An
+    empty result falls back to ``vol`` so the caller always gets a usable label.
+    """
+
+    label = re.sub(r"[^A-Za-z0-9]+", "_", name)
+    label = label.strip("_")
+    if not label:
+        label = "vol"
+    if len(label) > max_length:
+        label = label[:max_length]
+    return label
 
 
 def _array_capacity(level: str, sizes: List[int]) -> int:
@@ -260,7 +283,7 @@ def plan_storage(
         return plan
 
     for idx, bucket in enumerate(ssd_buckets):
-        vg_name = "main" if idx == 0 else f"main-{idx}"
+        vg_name = "main" if idx == 0 else f"main_{idx}"
         arr = decide_ssd_array(bucket, mode)
         devices = record_partitions(
             bucket, with_efi=vg_name == "main", raid=arr["level"] != "single"
@@ -328,7 +351,7 @@ def plan_storage(
         elif idx == main_bucket_idx:
             vg_name = "main"
         else:
-            vg_name = "large" if large_idx == 0 else f"large-{large_idx}"
+            vg_name = "large" if large_idx == 0 else f"large_{large_idx}"
             large_idx += 1
         arr = hdd_arrays[idx]
         devices = record_partitions(
@@ -451,17 +474,23 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
         size = lv.get("size")
         if size is None:
             continue
-        if lv.get("name") == "swap":
-            content = {"type": "swap"}
+        lv_name = lv.get("name")
+        if not lv_name:
+            continue
+        if lv_name == "swap":
+            label = _normalise_volume_label(lv_name, 15)
+            content = {"type": "swap", "label": label}
         else:
-            mountpoint = "/" if lv.get("name") == "slash" else f"/{lv.get('name')}"
+            label = _normalise_volume_label(lv_name, 16)
+            mountpoint = "/" if lv_name == "slash" else f"/{lv_name}"
             content = {
                 "type": "filesystem",
                 "format": "ext4",
                 "mountpoint": mountpoint,
                 "mountOptions": ["noatime"],
+                "label": label,
             }
-        lvs[lv["name"]] = {"size": size, "content": content}
+        lvs[lv_name] = {"size": size, "content": content}
 
     for vg, lvs in lvs_by_vg.items():
         devices["lvm_vg"][vg] = {"type": "lvm_vg", "lvs": lvs}
