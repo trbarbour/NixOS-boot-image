@@ -4,7 +4,13 @@ _Last updated: 2025-10-14T05-00-00Z_
 
 ## Active Tasks
 
-1. **Validate the fix end-to-end in the VM regression.**
+1. **Make the boot-image build succeed inside the dev shell.**
+   - Reproduce the failure by running `nix develop .#bootImageTest -c nix build .#bootImage` without overriding `TMPDIR` and confirm the sandboxed builder cannot read `env-vars` from the private temp directory.
+   - Update the development workflow (e.g., shell hook, documentation, or build helper) so ISO builds launched from the dev shell always use a world-readable temp directory such as `/tmp`.
+   - Capture the successful rebuild logs after the fix and attach them to a new report under `docs/work-notes/`.
+   - 2025-10-17T21-30-00Z - Investigation shows the builder runs as `nixbld` and fails with `install: cannot stat '/tmp/nix-shell.*-*/env-vars': Permission denied` when `TMPDIR` points to the shell's private directory. Setting `TMPDIR=/tmp` restores the build.
+
+2. **Validate the fix end-to-end in the VM regression.**
    - Rebuild the ISO with the storage fix applied.
    - Rerun `pytest tests/test_boot_image_vm.py` and confirm storage provisioning, networking, and SSH succeed.
    - 2025-10-14T02-09-43Z - `pytest tests/test_boot_image_vm.py -vv` still fails: `pre-nixos.service` exits with `STATE=failed` after `disko --yes-wipe-all-disks --mode destroy,format,mount` returns usage/exit code 1, leaving `systemctl is-active pre-nixos` buffered behind the IPv4 output. Captured harness and serial logs in `docs/work-notes/2025-10-14T02-09-43Z-boot-image-vm-regression/`.
@@ -24,7 +30,7 @@ _Last updated: 2025-10-14T05-00-00Z_
    - 2025-10-17T18-45-00Z - Fixture start-up now surfaces the ISO store path before launching QEMU, matching the manual rebuild (`Boot image details: iso=/nix/store/n0zbdz75bkc80z8wzn9f1wq5vqr8x91l-nixos-24.05.20241230.b134951-x86_64-linux.iso/...`). Continue instrumenting the harness so the pytest-run `nix build` stderr is captured alongside these details. 【F:docs/work-notes/2025-10-17T03-20-16Z-boot-image-vm-regression/harness.log†L1-L5】
     - **Next actions**: (a) adjust the harness or privilege escalation so the `vgs` probe runs with the required LVM permissions; (b) split the `systemctl is-active pre-nixos` check from the `ip -o -4` capture so the buffered IPv4 output no longer pollutes the assertion payload; (c) once the harness output is stable, rerun the VM regression to confirm the assertions pass end-to-end.
 
-2. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
+3. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
    - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once networking is configured.
    - From the debug shell, capture `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `systemctl status sshd` to confirm the sshd job no longer waits on `pre-nixos.service` now that `secure_ssh` uses `systemctl reload-or-restart --no-block`.
    - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, noting whether `/run/pre-nixos/storage-status` reports `STATE=applied`/`DETAIL=auto-applied`.
@@ -34,12 +40,12 @@ _Last updated: 2025-10-14T05-00-00Z_
    - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` still documents the pre-change deadlock evidence in `docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`; repeat the capture once the updated ISO is available for comparison.
    - **Status**: Waiting on Task 1 harness fixes – the 2025-10-17 run reaches `inactive`, so resume the paused-VM sshd capture once the privilege/output issues above are resolved. 【F:docs/test-reports/2025-10-17T03-10-54Z-boot-image-vm-test.md†L1-L12】【F:docs/work-notes/2025-10-17T03-20-16Z-boot-image-vm-regression/serial.log†L91-L122】
 
-3. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
+4. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
    - Audit any additional units (e.g., console helpers) that expect to pull `sshd.service` in via `WantedBy` and ensure they explicitly order themselves after `secure_ssh` if necessary.
    - During the VM verification run, check `systemctl list-dependencies sshd` to confirm nothing else attempts to start the service before `secure_ssh` finishes provisioning.
    - **Status**: Pending – revisit once Task 1 produces a passing VM run so dependency checks can be performed on a healthy boot.
 
-4. **If the hang persists, bisect between plan generation and application.**
+5. **If the hang persists, bisect between plan generation and application.**
    - With the updated ISO booted in debug mode, inspect `journalctl -u pre-nixos.service -b` and `/run/pre-nixos/storage-status` to see whether execution stalls before or after `apply.apply_plan`.
    - Capture the storage plan (`pre-nixos --plan-only`), any running `disko` processes, and related logs so we can split the investigation between plan creation and disk application on subsequent runs.
    - Promote any new discoveries into focused follow-up tasks and update this queue accordingly.
