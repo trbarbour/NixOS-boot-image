@@ -66,6 +66,6 @@ in {
     systemd.services.sshd.wantedBy = lib.mkForce [ ];
     systemd.services.sshd.after = [ "pre-nixos.service" ];
     systemd.services.sshd.serviceConfig.ExecStart =
-      lib.mkForce "${pkgs.openssh}/sbin/sshd -D -e -f /etc/ssh/sshd_config";
+      lib.mkForce "${pkgs.openssh}/bin/sshd -D -e -f /etc/ssh/sshd_config";
   };
 }

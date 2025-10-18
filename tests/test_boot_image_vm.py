@@ -314,6 +314,83 @@ class BootImageVM:
                 self._log_step(f"Matched pattern: {patterns[idx]!r}")
                 return idx
 
+    def _set_shell_prompt(self) -> None:
+        """Configure the interactive shell prompt."""
+
+        self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
+        self._expect_normalised([SHELL_PROMPT], timeout=60)
+        self._log_step("Shell prompt configured for interaction")
+
+    def _read_uid(self) -> str:
+        """Return the numeric UID reported by ``id -u``."""
+
+        self.child.sendline("id -u")
+        try:
+            self.child.expect(r"(\d+)\r*(?:\n|$)", timeout=60)
+        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+            self._raise_with_transcript(
+                f"Timed out waiting for id -u output: {exc}"
+            )
+        uid = self.child.match.group(1)
+        self._expect_normalised([SHELL_PROMPT], timeout=60)
+        return uid
+
+    def _escalate_with_sudo(self) -> bool:
+        """Attempt to escalate privileges with ``sudo -i``."""
+
+        self._log_step("Attempting to escalate with sudo -i")
+        self.child.sendline("sudo -i")
+        sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ?", r"# ?"]
+        try:
+            idx = self._expect_normalised(sudo_patterns, timeout=120)
+        except pexpect.TIMEOUT:
+            self._log_step("sudo -i did not produce a root prompt")
+            return False
+        if idx == 0:
+            self._log_step("Submitting empty sudo password")
+            self.child.sendline("")
+            try:
+                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=120)
+            except pexpect.TIMEOUT:
+                self._log_step("sudo -i password prompt did not yield a root shell")
+                return False
+        self._set_shell_prompt()
+        uid_output = self._read_uid()
+        self._log_step(f"id -u after sudo -i returned: {uid_output!r}")
+        if uid_output == "0":
+            self._log_step("Successfully escalated privileges with sudo -i")
+            return True
+        self._log_step("sudo -i completed without root privileges")
+        return False
+
+    def _escalate_with_su(self) -> bool:
+        """Attempt to escalate privileges with ``su -``."""
+
+        self._log_step("Attempting to escalate with su -")
+        self.child.sendline("su -")
+        su_patterns = [r"Password:", r"root@.*# ?", r"# ?"]
+        try:
+            idx = self._expect_normalised(su_patterns, timeout=120)
+        except pexpect.TIMEOUT:
+            self._log_step("su - did not produce a root prompt")
+            return False
+        if idx == 0:
+            self._log_step("Submitting empty root password for su -")
+            self.child.sendline("")
+            try:
+                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=120)
+            except pexpect.TIMEOUT:
+                self._log_step("su - password prompt did not yield a root shell")
+                return False
+        self._set_shell_prompt()
+        uid_output = self._read_uid()
+        self._log_step(f"id -u after su - returned: {uid_output!r}")
+        if uid_output == "0":
+            self._log_step("Successfully escalated privileges with su -")
+            return True
+        self._log_step("su - completed without root privileges")
+        return False
+
     def _login(self) -> None:
         self._log_step("Starting login sequence")
         login_patterns = [
@@ -356,54 +433,21 @@ class BootImageVM:
             else:
                 self._log_step("Automatic login banner observed")
 
-        root_check = 'if [ "$(id -u)" -eq 0 ]; then echo __ROOT__; else echo __USER__; fi'
-        self._log_step("Verifying current user ID")
-        self.child.sendline(root_check)
-        try:
-            marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
-            self._expect_normalised([r"root@.*# ?", r"# ?", r"nixos@.*\$ ?"], timeout=60)
-        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
-            self._raise_with_transcript(
-                f"Timed out while confirming initial user privileges: {exc}"
-            )
+        self._set_shell_prompt()
 
-        if marker_idx == 0:
+        uid_output = self._read_uid()
+        if uid_output == "0":
             self._log_step("Initial shell already has root privileges")
+            return
 
-        if marker_idx == 1:
-            self._log_step("Attempting to escalate with sudo -i")
-            self.child.sendline("sudo -i")
-            sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ?", r"# ?"]
-            try:
-                idx = self._expect_normalised(sudo_patterns, timeout=180)
-            except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
-                self._raise_with_transcript(
-                    f"Timed out waiting for sudo escalation to complete: {exc}"
-                )
-            if idx == 0:
-                self._log_step("Submitting empty sudo password")
-                self.child.sendline("")
-                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
-            else:
-                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
-
-            self.child.sendline(root_check)
-            try:
-                marker_idx = self._expect_normalised([r"__ROOT__", r"__USER__"], timeout=60)
-                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=60)
-            except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
-                self._raise_with_transcript(
-                    f"Timed out verifying sudo escalation result: {exc}"
-                )
-            if marker_idx != 0:
-                self._raise_with_transcript(
-                    "Failed to acquire root shell via sudo -i"
-                )
-            self._log_step("Successfully escalated privileges with sudo -i")
-
-        self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
-        self._expect_normalised([SHELL_PROMPT], timeout=60)
-        self._log_step("Shell prompt configured for interaction")
+        self._log_step("Initial shell lacks root privileges")
+        if self._escalate_with_sudo():
+            return
+        if self._escalate_with_su():
+            return
+        self._raise_with_transcript(
+            "Failed to acquire root shell via sudo -i or su -"
+        )
 
     def interact(self) -> None:
         """Drop into an interactive session with the running VM."""
