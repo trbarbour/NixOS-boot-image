@@ -132,6 +132,16 @@
               pkgs.qemu
               pkgs.nix
             ];
+            shellHook = ''
+              shared_tmp=''${PRE_NIXOS_BOOT_IMAGE_TMPDIR:-/tmp/boot-image-shared-tmp}
+              if [ ! -d "$shared_tmp" ]; then
+                install -d -m 1777 "$shared_tmp"
+              else
+                chmod 1777 "$shared_tmp"
+              fi
+              export PRE_NIXOS_BOOT_IMAGE_TMPDIR="$shared_tmp"
+              export TMPDIR="$shared_tmp"
+            '';
           };
         };
       }) // {
