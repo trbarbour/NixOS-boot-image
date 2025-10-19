@@ -1,43 +1,39 @@
 # Task Queue
 
-_Last updated: 2025-10-19T02-45-00Z_
+_Last updated: 2025-10-19T11-59-00Z_
 
 ## Active Tasks
 
-1. **Probe the storage-detection path from inside the debug VM.**
-   - Within the paused VM, run `pre-nixos-detect-storage` and `pre-nixos --plan-only` to ensure the blank disk is detected correctly post-fix.
-   - Inspect `/run/pre-nixos/storage-status`, `/var/log/pre-nixos/disko-config.nix`, and any running `disko`/`wipefs` processes to confirm provisioning success.
-   - Preserve command output in investigation notes for future comparison.
-
-2. **Establish a known-good baseline with an upstream minimal NixOS ISO.**
+1. **Establish a known-good baseline with an upstream minimal NixOS ISO.**
    - Boot `nixpkgs#nixosConfigurations.installerMinimal.x86_64-linux.config.system.build.isoImage` (or similar) with the harness settings.
    - Verify DHCP, storage, and console interaction to validate host assumptions now that our image passes.
 
-3. **Compare harness and service toggles to isolate any remaining regressions.**
+2. **Compare harness and service toggles to isolate any remaining regressions.**
    - Boot the baseline ISO, install the `pre-nixos` package manually, and execute `pre-nixos --plan-only` without the systemd unit.
    - Rebuild our ISO with targeted toggles (e.g., temporarily disabling `pre-nixos.service`) to observe behavioural changes, documenting contrasts.
 
-4. **Expand unit coverage and regression safeguards.**
+3. **Expand unit coverage and regression safeguards.**
    - Add unit tests for LAN identification, SSH key propagation, and storage-plan execution edge cases surfaced during the outage.
    - Ensure structured logs are asserted in the unit suite so regressions surface before integration tests.
 
-5. **Harden BootImageVM diagnostics.**
+4. **Harden BootImageVM diagnostics.**
    - Keep improving the login helper so root escalation transcripts and serial output are captured automatically on failure.
    - Collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever provisioning or DHCP waits time out, and emit ISO metadata (store path, hash, root key fingerprint) in logs.
    - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
 
-6. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
+5. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
    - Use the now-working dev shell workflow to produce new ISOs whenever changes land, then run `pytest tests/test_boot_image_vm.py -vv` without interruption to validate end-to-end behaviour.
    - Promote passing serial/journal logs to `docs/boot-logs/` with updated test reports.
 
-7. **Capture follow-up boot timings after configuration adjustments.**
+6. **Capture follow-up boot timings after configuration adjustments.**
     - With the harness stable, collect new timing data after each substantive change to detect regressions early.
 
-8. **Ensure the full test suite runs without skips.**
+7. **Ensure the full test suite runs without skips.**
     - Audit pytest skips and prerequisites so the VM suite remains active, and maintain CI coverage for the entire suite.
 
 
 ## Recently Completed
+- 2025-10-19T11-58-00Z - Probed the storage-detection path inside the debug VM and captured `pre-nixos-detect-storage`/`pre-nixos --plan-only` output; see `docs/work-notes/2025-10-19T11-49-37Z-storage-detection-probe/`. 【F:docs/work-notes/2025-10-19T11-49-37Z-storage-detection-probe/storage-detection-probe.md†L1-L205】
 
 - 2025-10-19T02-45-00Z - Verified the boot ISO embeds the generated root key; see `docs/work-notes/2025-10-19T02-45-00Z-embedded-key-verification.md`. 【F:docs/work-notes/2025-10-19T02-45-00Z-embedded-key-verification.md†L1-L58】
 - 2025-10-19T01-40-00Z - Audited `systemctl list-dependencies sshd` on the rebuilt ISO: only `sysinit.target` and its mounts remain, `WantedBy=` is empty, and no `secure_ssh` unit exists—evidence captured in `docs/work-notes/2025-10-19T01-11-04Z-sshd-dependency-audit/`. 【F:docs/work-notes/2025-10-19T01-11-04Z-sshd-dependency-audit/sshd-dependency-notes.md†L1-L98】
