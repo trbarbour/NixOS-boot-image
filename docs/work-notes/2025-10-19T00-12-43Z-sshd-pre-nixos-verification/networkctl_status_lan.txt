@@ -1,0 +1,34 @@
+● 2: lan
+Link File: /nix/store/rhq3rwyghbqq4lnkmdf4vsrazr2aa5a7-syste…
+Network File: /etc/systemd/network/20-lan.network
+State: routable (configured)
+Online state: online
+Type: ether
+Path: pci-0000:00:04.0
+Driver: virtio_net
+Vendor: Red Hat, Inc.
+Model: Virtio network device
+Alternative Names: enp0s4
+Hardware Address: 52:54:00:12:34:56
+MTU: 1500 (min: 68, max: 65535)
+QDisc: fq_codel
+IPv6 Address Generation Mode: eui64
+Number of Queues (Tx/Rx): 1/1
+Auto negotiation: no
+Address: 10.0.2.15 (DHCP4 via 10.0.2.2)
+fec0::5054:ff:fe12:3456
+fe80::5054:ff:fe12:3456
+Gateway: 10.0.2.2
+fe80::2
+DNS: 10.0.2.3
+Activation Policy: up
+Required For Online: yes
+DHCP4 Client ID: IAID:0x405663a2/DUID
+DHCP6 Client DUID: DUID-EN/Vendor:0000ab114023bf0d0fb1e025
+Oct 19 00:19:19 nixos systemd-networkd[832]: lan: Link UP
+Oct 19 00:19:19 nixos systemd-networkd[832]: lan: Gained carrier
+Oct 19 00:19:20 nixos systemd-networkd[860]: lan: Link UP
+Oct 19 00:19:20 nixos systemd-networkd[860]: lan: Gained carrier
+Oct 19 00:19:20 nixos systemd-networkd[860]: lan: Configuring with /etc/syst…rk.
+Oct 19 00:19:20 nixos systemd-networkd[860]: lan: DHCPv4 address 10.0.2.15/2…2.2
+Oct 19 00:19:21 nixos systemd-networkd[860]: lan: Gained IPv6LL

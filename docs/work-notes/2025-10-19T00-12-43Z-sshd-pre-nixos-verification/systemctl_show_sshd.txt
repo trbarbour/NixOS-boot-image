@@ -1,0 +1,1 @@
+After=pre-nixos.service systemd-journald.socket system.slice sysinit.target network.target basic.target

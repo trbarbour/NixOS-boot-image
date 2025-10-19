@@ -1,0 +1,5 @@
+JOB UNIT              TYPE  STATE
+275 sshd.service      start waiting
+72  pre-nixos.service start running
+1   multi-user.target start waiting
+3 jobs listed.

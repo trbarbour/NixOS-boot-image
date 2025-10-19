@@ -1,0 +1,7 @@
+{
+  "iso_path": "/nix/store/wbpspycn8jxc2yy9xmz48vh3b5s90ald-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "store_path": "/nix/store/wbpspycn8jxc2yy9xmz48vh3b5s90ald-nixos-24.05.20241230.b134951-x86_64-linux.iso",
+  "deriver": "/nix/store/7bvrzlnlwsl0x5i60hbzkj5xypm07hl4-nixos-24.05.20241230.b134951-x86_64-linux.iso.drv",
+  "nar_hash": "sha256-IQBo+LPoOL/ACJUEUCrxI3lO26IrwOV/c4pl2TED+Dg=",
+  "root_key_fingerprint": "256 SHA256:gK6SqnBOCjqUT0qRFTpf/pKK3dB0oNKzgD0WCZvkOx0 boot-image-debug (ED25519)"
+}
