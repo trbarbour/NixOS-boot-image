@@ -1,0 +1,240 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 24.05.20241230.b134951 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (nomodeset)                                             [0;30;44mx[6;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (copytoram)                                             [0;30;44mx[7;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (debug)                                                 [0;30;44mx[8;1H[0;30;44mx[0;37;44m NixOS 24.05.20241230.b134951 Installer (serial console=ttyS0,115200n8)                         [0;30;44mx[9;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot/bzImage... ok
+Loading /boot/initrd...ok
+
+
+[1;32m<<< Welcome to NixOS 24.05.20241230.b134951 (x86_64) - ttyS0 >>>[0m
+The "nixos" and "root" accounts have empty passwords.
+
+To log in over ssh you must set a password for either "nixos" or "root"
+with `passwd` (prefix with `sudo` for "root"), or add your public key to
+/home/nixos/.ssh/authorized_keys or /root/.ssh/authorized_keys.
+
+If you need a wireless connection, type
+`sudo systemctl start wpa_supplicant` and configure a
+network using `wpa_cli`. See the NixOS manual for details.
+
+
+Run 'nixos-help' for the NixOS manual.
+
+nixos login: nixos (automatic login)
+
+export PS1='PRE-NIXOS> '
+export PS1='PRE-NIXOS> '
+id -u
+id -u
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '
+[?2004l[?2004hPRE-NIXOS> sudo -i
+id -u
+[?2004lsudo -i
+1000
+[?2004hPRE-NIXOS> sudo -i
+[?2004l[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> '
+export PS1='PRE-NIXOS> '
+id -u
+[?2004l[?2004hPRE-NIXOS> id -u
+[?2004l0
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004linactive
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> id -u
+id -u
+[?2004l0
+[?2004hPRE-NIXOS> systemctl list-dependencies sshd --no-pager
+systemctl list-dependencies sshd --no-pager
+[?2004lsshd.service
+[0;1;32m●[0m ├─system.slice
+[0;1;32m●[0m └─sysinit.target
+[0;1;32m●[0m   ├─dev-hugepages.mount
+[0;1;32m●[0m   ├─dev-mqueue.mount
+[0;1;32m●[0m   ├─firewall.service
+[0;1;32m●[0m   ├─kmod-static-nodes.service
+[0m○[0m   ├─suid-sgid-wrappers.service
+[0;1;32m●[0m   ├─sys-fs-fuse-connections.mount
+[0;1;32m●[0m   ├─sys-kernel-config.mount
+[0;1;32m●[0m   ├─sys-kernel-debug.mount
+[0;1;32m●[0m   ├─systemd-ask-password-console.path
+[0m○[0m   ├─systemd-boot-random-seed.service
+[0;1;32m●[0m   ├─systemd-journal-catalog-update.service
+[0;1;32m●[0m   ├─systemd-journal-flush.service
+[0;1;32m●[0m   ├─systemd-journald.service
+[0;1;32m●[0m   ├─systemd-modules-load.service
+[0m○[0m   ├─systemd-pstore.service
+[0;1;32m●[0m   ├─systemd-random-seed.service
+[0;1;32m●[0m   ├─systemd-sysctl.service
+[0;1;32m●[0m   ├─systemd-timesyncd.service
+[0;1;32m●[0m   ├─systemd-tmpfiles-setup-dev-early.service
+[0;1;32m●[0m   ├─systemd-tmpfiles-setup-dev.service
+[0;1;32m●[0m   ├─systemd-tmpfiles-setup.service
+[0;1;32m●[0m   ├─systemd-udev-trigger.service
+[0;1;32m●[0m   ├─systemd-udevd.service
+[0;1;32m●[0m   ├─systemd-update-done.service
+[0;1;32m●[0m   ├─systemd-update-utmp.service
+[0;1;32m●[0m   ├─cryptsetup.target
+[0;1;32m●[0m   ├─local-fs.target
+[0;1;32m●[0m   │ ├─-.mount
+[0;1;32m●[0m   │ ├─iso.mount
+[0;1;32m●[0m   │ ├─nix-.ro\x2dstore.mount
+[0;1;32m●[0m   │ ├─nix-.rw\x2dstore.mount
+[0;1;32m●[0m   │ ├─nix-store.mount
+[0;1;32m●[0m   │ └─systemd-remount-fs.service
+[0;1;32m●[0m   └─swap.target
+[?2004hPRE-NIXOS> id -u
+id -u
+[?2004l0
+[?2004hPRE-NIXOS> systemctl list-dependencies --reverse sshd --no-pager
+systemctl list-dependencies --reverse sshd --no-pager
+[?2004lsshd.service
+[?2004hPRE-NIXOS> id -u
+id -u
+[?2004l0
+[?2004hPRE-NIXOS> systemctl status secure_ssh --no-pager 2>&1 || true
+systemctl status secure_ssh --no-pager 2>&1 || true
+[?2004l[0;1;31mUnit secure_ssh.service could not be found.[0m
+[?2004hPRE-NIXOS> id -u
+id -u
+[?2004l0
+[?2004hPRE-NIXOS> systemctl status sshd --no-pager 2>&1 || true
+systemctl status sshd --no-pager 2>&1 || true
+[?2004l● sshd.service - SSH Daemon
+     Loaded: loaded (]8;;file://nixos/etc/systemd/system/sshd.service/etc/systemd/system/sshd.service]8;;; linked; preset: [0;1;32menabled[0m)
+     Active: activating (start-pre) since Sun 2025-10-19 01:29:04 UTC; 8s ago
+  Cntrl PID: 1393 (sshd-pre-start)
+         IP: 0B in, 0B out
+         IO: 1.2M read, 0B written
+      Tasks: 2 (limit: 2329)
+     Memory: 3.9M (peak: 4.3M)
+        CPU: 8.121s
+     CGroup: /system.slice/sshd.service
+             ├─[0;38;5;245m1393 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin…[0m
+             └─[0;38;5;245m1397 ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N[0m
+
+Oct 19 01:29:04 nixos systemd[1]: Starting SSH Daemon...
+[?2004hPRE-NIXOS> id -u
+id -u
+[?2004l0
+[?2004hPRE-NIXOS> systemctl show -p WantedBy sshd.service
+systemctl show -p WantedBy sshd.service
+[?2004lWantedBy=[m
+[K[?2004hPRE-NIXOS> id -u
+id -u
+[?2004l0
+[?2004hPRE-NIXOS> journalctl --no-pager -u secure_ssh -b 2>&1 || true
+journalctl --no-pager -u secure_ssh -b 2>&1 || true
+[?2004l-- No entries --
+[?2004hPRE-NIXOS> poweroff
+poweroff
+[?2004l
+Broadcast message from root@nixos on pts/0 (Sun 2025-10-19 01:29:16 UTC):
+
+The system will power off now!
+
+[?2004hPRE-NIXOS> [  453.983291] reboot: Power down
