@@ -274,7 +274,7 @@ def plan_storage(
             array_index += 1
             add_array(name, arr["level"], devices, "hdd")
             add_vg("main", [name])
-        swap_size = f"{ram_gb * 2 * 1024}M"
+        swap_size = _format_size(_to_bytes(ram_gb * 2))
         add_lv("slash", "main", ROOT_LV_SIZE)
         add_lv("swap", "main", swap_size)
         plan["disko"] = _plan_to_disko_devices(plan)
@@ -363,7 +363,7 @@ def plan_storage(
             add_array(name, arr["level"], devices, "hdd")
             add_vg(vg_name, [name])
 
-    swap_size = f"{ram_gb * 2 * 1024}M"
+    swap_size = _format_size(_to_bytes(ram_gb * 2))
     swap_vg = next((vg["name"] for vg in plan["vgs"] if vg["name"] == "swap"), None)
     if swap_vg is None:
         swap_vg = next(
