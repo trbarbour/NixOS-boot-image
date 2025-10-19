@@ -1,0 +1,13 @@
+● sshd.service - SSH Daemon
+Loaded: loaded (/etc/systemd/system/sshd.service; linked; preset: enabled)
+Active: activating (start-pre) since Sun 2025-10-19 00:28:58 UTC; 4s ago
+Cntrl PID: 1268 (sshd-pre-start)
+IP: 0B in, 0B out
+IO: 1.2M read, 0B written
+Tasks: 2 (limit: 2329)
+Memory: 3.9M (peak: 4.2M)
+CPU: 4.001s
+CGroup: /system.slice/sshd.service
+├─1268 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin…
+└─1272 ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N
+Oct 19 00:28:58 nixos systemd[1]: Starting SSH Daemon...

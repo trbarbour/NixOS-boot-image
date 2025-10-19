@@ -1,0 +1,26 @@
+● pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: enabled)
+Active: activating (start) since Sun 2025-10-19 00:19:10 UTC; 21s ago
+Main PID: 751 (pre-nixos-start)
+IP: 0B in, 0B out
+IO: 76.1M read, 0B written
+Tasks: 6 (limit: 2329)
+Memory: 144.8M (peak: 144.8M)
+CPU: 13.936s
+CGroup: /system.slice/pre-nixos.service
+├─751 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…
+├─841 /nix/store/s0p1kr5mvs0j42dq5r08kgqbi0k028f2-python3-3.11.10/…
+├─869 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…
+├─871 /nix/store/1jzhbwq5rjjaqa75z88ws2b424vh7m53-bash-5.2p32/bin/…
+└─872 nix-build /nix/store/67n392qxiwrb0bsl32n81jz5f5i6nn34-disko/…
+Oct 19 00:19:20 nixos pre-nixos-start[841]: {"command": ["systemctl", "reloa…0"}
+Oct 19 00:19:20 nixos pre-nixos-start[841]: {"command": ["systemctl", "reloa…0"}
+Oct 19 00:19:20 nixos pre-nixos-start[841]: {"authorized_keys_path": "/root/…0"}
+Oct 19 00:19:20 nixos pre-nixos-start[841]: {"event": "pre_nixos.network.con…0"}
+Oct 19 00:19:21 nixos pre-nixos-start[841]: {"detected": true, "event": "pre…0"}
+Oct 19 00:19:21 nixos pre-nixos-start[841]: {"dry_run": false, "event": "pre…0"}
+Oct 19 00:19:21 nixos pre-nixos-start[841]: {"config_path": "/var/log/pre-ni…0"}
+Oct 19 00:19:21 nixos pre-nixos-start[841]: {"command": "disko --mode destro…0"}
+Oct 19 00:19:21 nixos pre-nixos-start[841]: {"command": "disko --mode destro…0"}
+Oct 19 00:19:21 nixos pre-nixos-start[869]: disko version 1.12.0-dirty
+Hint: Some lines were ellipsized, use -l to show in full.

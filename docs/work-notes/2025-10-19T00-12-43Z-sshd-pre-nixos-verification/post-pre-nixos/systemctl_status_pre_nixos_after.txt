@@ -1,0 +1,18 @@
+○ pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: enabled)
+Active: inactive (dead) since Sun 2025-10-19 00:28:58 UTC; 3s ago
+Process: 692 ExecStart=/nix/store/kwfrw9aikcprccs9chyp80r6mmhfgj7l-unit-script-pre-nixos-start/bin/pre-nixos-start (code=exited, status=0/SUCCESS)
+Main PID: 692 (code=exited, status=0/SUCCESS)
+IP: 188B in, 844B out
+CPU: 52.426s
+Oct 19 00:28:58 nixos pre-nixos-start[820]:             }
+Oct 19 00:28:58 nixos pre-nixos-start[820]:           }
+Oct 19 00:28:58 nixos pre-nixos-start[820]:         }
+Oct 19 00:28:58 nixos pre-nixos-start[820]:       }
+Oct 19 00:28:58 nixos pre-nixos-start[820]:     }
+Oct 19 00:28:58 nixos pre-nixos-start[820]:   }
+Oct 19 00:28:58 nixos pre-nixos-start[820]: }
+Oct 19 00:28:58 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Oct 19 00:28:58 nixos systemd[1]: Finished Pre-NixOS setup.
+Oct 19 00:28:58 nixos systemd[1]: pre-nixos.service: Consumed 52.426s CPU t…fic.
+Hint: Some lines were ellipsized, use -l to show in full.
