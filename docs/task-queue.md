@@ -1,124 +1,61 @@
 # Task Queue
 
-_Last updated: 2025-10-14T05-00-00Z_
+_Last updated: 2025-10-19T01-30-00Z_
 
 ## Active Tasks
 
-1. **Make the boot-image build succeed inside the dev shell.**
-   - Reproduce the failure by running `nix develop .#bootImageTest -c nix build .#bootImage` without overriding `TMPDIR` and confirm the sandboxed builder cannot read `env-vars` from the private temp directory.
-   - Update the development workflow (e.g., shell hook, documentation, or build helper) so ISO builds launched from the dev shell always use a world-readable temp directory such as `/tmp`.
-   - Capture the successful rebuild logs after the fix and attach them to a new report under `docs/work-notes/`.
-   - 2025-10-17T21-30-00Z - Investigation shows the builder runs as `nixbld` and fails with `install: cannot stat '/tmp/nix-shell.*-*/env-vars': Permission denied` when `TMPDIR` points to the shell's private directory. Setting `TMPDIR=/tmp` restores the build.
+1. **Resume sshd/pre-nixos verification with the passing harness.**
+   - Rebuild the ISO if recent SSH changes land, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and pause once networking configures.
+   - From the debug shell, capture `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `systemctl status sshd` to confirm the non-blocking restart keeps sshd independent of `pre-nixos.service`.
+   - Archive the debug transcripts alongside harness/serial logs under a new timestamped directory in `docs/work-notes/`, noting the storage status reported by `/run/pre-nixos/storage-status`.
+   - 2025-10-14T00-00-00Z captures still show sshd stuck in `start-pre` even though `pre-nixos.service` completes; retake the capture now that Task 1 restored end-to-end provisioning. 【F:docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/serial.log†L70-L141】
 
-2. **Validate the fix end-to-end in the VM regression.**
-   - Rebuild the ISO with the storage fix applied.
-   - Rerun `pytest tests/test_boot_image_vm.py` and confirm storage provisioning, networking, and SSH succeed.
-   - 2025-10-14T02-09-43Z - `pytest tests/test_boot_image_vm.py -vv` still fails: `pre-nixos.service` exits with `STATE=failed` after `disko --yes-wipe-all-disks --mode destroy,format,mount` returns usage/exit code 1, leaving `systemctl is-active pre-nixos` buffered behind the IPv4 output. Captured harness and serial logs in `docs/work-notes/2025-10-14T02-09-43Z-boot-image-vm-regression/`.
-   - 2025-10-14T05-30-00Z - `pre_nixos.apply` now invokes `disko --mode disko`; rebuild the ISO and rerun the VM regression to confirm the usage failure no longer occurs.
-   - 2025-10-14T03-15-00Z - Started rebuilding the ISO with `nix build .#bootImage`; fetch phase completed but the `mksquashfs` stage remained busy after ~6 minutes, so the command was interrupted and must be re-run to produce an image. Progress log in `docs/work-notes/2025-10-14T03-15-00Z-boot-image-vm-regression.md`.
-   - 2025-10-14T03-28-00Z - Rebuilt `.#bootImage` to completion; ISO symlink now points to `/nix/store/1y1dzyvl2y7kwyjv4ck4jsaq1s3lx1x7-nixos-24.05.20241230.b134951-x86_64-linux.iso`. Full `pytest` run passes (BootImageVM cases remain skipped pending the new image). Notes in `docs/work-notes/2025-10-14T03-15-00Z-boot-image-vm-regression.md`.
-   - 2025-10-14T04-35-11Z - Executed `pytest tests/test_boot_image_vm.py` inside `nix develop .#bootImageTest` (with `TMPDIR=/tmp` so the disposable SSH key can be embedded). Both VM tests now run end-to-end but fail: storage status stays `STATE=failed`/`DETAIL=auto-applied` and `systemctl is-active pre-nixos` never reaches `inactive`. Logs in `docs/test-reports/2025-10-14T04-33-37Z-boot-image-vm-test/`; run details in `docs/work-notes/2025-10-14T04-35-11Z-boot-image-vm-regression.md`.
-   - 2025-10-14T06-20-00Z - Updated `pre_nixos.apply` to probe `disko --help` and fall back to legacy `--mode disko` when `--yes-wipe-all-disks` is unsupported. Unit tests now cover both legacy and combined-mode invocations; rebuild the ISO and re-run the VM regression to confirm `pre-nixos.service` succeeds with the adjusted command.
-   - 2025-10-15T02-54-23Z - Rebuilt `.#bootImage` and ran `TMPDIR=/tmp nix develop .#bootImageTest -c pytest tests/test_boot_image_vm.py -vv`; both VM tests failed because `disko --mode disko --root-mountpoint /mnt /var/log/pre-nixos/disko-config.nix` exited 1 with `error: file 'nixpkgs' was not found in the Nix search path`, leaving `/run/pre-nixos/storage-status` at `STATE=failed`/`DETAIL=auto-applied` and keeping `systemctl is-active pre-nixos` from reaching `inactive`. Logs in `docs/work-notes/2025-10-15T02-54-23Z-boot-image-vm-regression/` and test report `docs/test-reports/2025-10-15T02-54-23Z-boot-image-vm-test.md`.
-   - 2025-10-15T13-07-50Z - `nix develop .#bootImageTest -c env TMPDIR=/tmp pytest tests/test_boot_image_vm.py -vv` still fails: `disko --mode disko` aborts because `disko.devices.disk.vda.content.partitions.vda1.content.label` is undefined, leaving `/run/pre-nixos/storage-status` at `STATE=failed`/`DETAIL=auto-applied` and keeping `systemctl is-active pre-nixos` from reaching `inactive`. Logs in `docs/work-notes/2025-10-15T13-07-50Z-boot-image-vm-regression/` and test report `docs/test-reports/2025-10-15T13-07-50Z-boot-image-vm-test.md`.
-   - 2025-10-15T15-00-00Z - Added a legacy `disko` compatibility shim that strips unsupported filesystem labels before writing `/var/log/pre-nixos/disko-config.nix`; kicked off `nix build .#bootImage` to rebuild the ISO.
-   - 2025-10-15T15-25-00Z - `nix build .#bootImage` pulled >400 derivations (~1.8 GiB of binaries) but was interrupted due to session time constraints; rerun the build in a long-lived environment to produce a fresh ISO.
-   - 2025-10-16T00-45-00Z - Removed the compatibility shim and overlaid the boot image with the upstream `disko` flake so filesystem labels remain in the generated plan. Rebuild the ISO and rerun the VM regression to confirm the modern CLI succeeds end-to-end.
-   - 2025-10-16T04-49-00Z - `pytest tests/test_boot_image_vm.py -vv` still fails: the bundled `disko` exits with `error: The option 'disko.devices.disk.vda.content.partitions.vda1.content.label' does not exist`, leaving `/run/pre-nixos/storage-status` at `STATE=failed`/`DETAIL=auto-applied` even though networking succeeds. Full artefacts in `docs/work-notes/2025-10-16T04-49-00Z-boot-image-vm-regression/` and test report `docs/test-reports/2025-10-16T04-49-00Z-boot-image-vm-test.md`.
-   - 2025-10-16T05-45-00Z - Attempting to rebuild `.#bootImage` with a freshly generated `PRE_NIXOS_ROOT_KEY` stalled: `nix develop .#bootImageTest` aborted because the ISO derivation `/nix/store/26zylzprcx44248ypkg39yk6hp66qcf5-...iso.drv` exited 1 without logs while `mksquashfs` kept running for >15 minutes. Need to capture the failing build log (e.g. rerun with `--keep-failed`) and determine why the impure build dies during squashfs creation before the VM regression can be retried.
-    - 2025-10-17T03-10-54Z - BootImageVM now reports the ISO store path (`/nix/store/n0zbdz75bkc80z8wzn9f1wq5vqr8x91l-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso`), `/run/pre-nixos/storage-status` reaches `STATE=applied`/`DETAIL=auto-applied`, but assertions still fail because `vgs --noheadings` runs as the unprivileged `nixos` user (LVM lock denied) and the `systemctl is-active pre-nixos` capture includes buffered `ip -o -4` output. 【F:docs/test-reports/2025-10-17T03-10-54Z-boot-image-vm-test.md†L1-L15】【F:docs/work-notes/2025-10-17T03-20-16Z-boot-image-vm-regression/harness.log†L1-L152】【F:docs/work-notes/2025-10-17T03-20-16Z-boot-image-vm-regression/serial.log†L91-L122】
-   - 2025-10-17T18-45-00Z - Fixture start-up now surfaces the ISO store path before launching QEMU, matching the manual rebuild (`Boot image details: iso=/nix/store/n0zbdz75bkc80z8wzn9f1wq5vqr8x91l-nixos-24.05.20241230.b134951-x86_64-linux.iso/...`). Continue instrumenting the harness so the pytest-run `nix build` stderr is captured alongside these details. 【F:docs/work-notes/2025-10-17T03-20-16Z-boot-image-vm-regression/harness.log†L1-L5】
-    - 2025-10-18T17-45-00Z - `bootImageTest` dev shell now forces a shared `/tmp/boot-image-shared-tmp` (mode `1777`) via `shellHook`, so `nix develop .#bootImageTest -c nix build .#bootImage` succeeds without manual `TMPDIR` overrides. ISO build completed at `/nix/store/83vw736vi27nryfaa3i2bawy435xspqm-nixos-24.05.20241230.b134951-x86_64-linux.iso/iso/nixos-24.05.20241230.b134951-x86_64-linux.iso`. 【F:flake.nix†L120-L135】【029fd2†L1-L68】【0054d1†L1-L4】
-    - 2025-10-18T22-57-17Z - Completed the privilege escalation and `systemctl` polling adjustments; `nix develop .#bootImageTest -c pytest tests/test_boot_image_vm.py -vv` now passes both VM cases. Harness and serial logs archived under `docs/work-notes/2025-10-18T22-57-17Z-boot-image-vm-regression/`, summary in `docs/test-reports/2025-10-18T22-57-17Z-boot-image-vm-test.md`. 【F:docs/work-notes/2025-10-18T22-57-17Z-boot-image-vm-regression/harness.log†L1-L185】【F:docs/test-reports/2025-10-18T22-57-17Z-boot-image-vm-test.md†L1-L26】
-    - **Next actions**: Monitor subsequent VM regression runs for regressions and coordinate with Task 2 as new storage or networking issues surface; no additional harness changes are pending under Task 1 after the successful run above.
-    - 2025-10-18T21-40-17Z - `pytest tests/test_boot_image_vm.py::test_boot_image_configures_network -vv` completed successfully after rebuilding the ISO; the VM obtained `10.0.2.15/24`, `pre-nixos.service` settled to `inactive`, and SSH as root succeeded with the generated key. Harness and serial logs archived under `docs/work-notes/2025-10-18T21-40-17Z-boot-image-vm-regression/`, summary in `docs/test-reports/2025-10-18T21-40-17Z-boot-image-vm-test.md`.
-    - 2025-10-19T01-15-00Z - BootImageVM now reacquires a root shell before privileged probes (`run_as_root`) and polls `systemctl is-active pre-nixos` via a dedicated `wait_for_unit_inactive` helper, eliminating the LVM permission failure and separating the IPv4 capture from the status check.
+2. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
+   - During the resumed VM debug session, audit `systemctl list-dependencies sshd` and `systemctl status secure_ssh` to ensure nothing else races sshd online before provisioning finishes.
+   - Cross-reference captures with earlier runs to document behaviour changes after the successful regression fix.
+   - 2025-10-10T04-47-41Z manual debug showed dependent services still assuming sshd starts automatically; re-check with the latest ISO while the VM is paused from Task 1. 【F:docs/work-notes/2025-10-10T04-47-41Z-boot-image-vm-debug-session/serial.log†L40-L137】
 
-3. **Verify the sshd/pre-nixos interaction after the non-blocking restart change.**
-   - Rebuild the ISO if necessary, then execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and keep the VM paused once networking is configured.
-   - From the debug shell, capture `systemctl list-jobs`, `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, and `systemctl status sshd` to confirm the sshd job no longer waits on `pre-nixos.service` now that `secure_ssh` uses `systemctl reload-or-restart --no-block`.
-   - Archive the resulting harness log, serial log, and manual command transcripts under a new timestamped directory in `docs/work-notes/`, noting whether `/run/pre-nixos/storage-status` reports `STATE=applied`/`DETAIL=auto-applied`.
-   - 2025-10-13T00-05-40Z - Pytest run still fails before SSH checks (`termios.error` prevents interactive debug) but automated capture shows `pre-nixos.service` finishing in 5.8s while `systemctl list-jobs` continues to list `sshd.service` in `start running`. See `docs/work-notes/2025-10-13T00-05-40Z-sshd-pre-nixos-debug/` for harness/serial logs and command outputs.
-   - 2025-10-13T13-06-59Z - `collect_sshd_pre_nixos_debug.py` confirms `pre-nixos.service` exits cleanly and storage status reports `STATE=applied`/`DETAIL=auto-applied`, but `systemctl list-jobs` still shows the `sshd.service` start job active and `systemctl status sshd` remains in `start-pre` under `sshd-pre-start`. Artefacts in `docs/work-notes/2025-10-13T13-06-59Z-sshd-pre-nixos-debug/`. 【F:docs/work-notes/2025-10-13T13-06-59Z-sshd-pre-nixos-debug/serial.log†L55-L200】
-   - 2025-10-14T00-00-00Z - Latest capture confirms `pre-nixos.service` finishes with `/run/pre-nixos/storage-status` reporting `STATE=applied`/`DETAIL=auto-applied`, while `systemctl status sshd` continues in `start-pre` generating host keys. Evidence in `docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/`. 【F:docs/work-notes/2025-10-14T00-00-00Z-sshd-pre-nixos-verify/serial.log†L70-L141】
-   - 2025-10-12T17-13-25Z - Automated capture via `scripts/collect_sshd_pre_nixos_debug.py` still documents the pre-change deadlock evidence in `docs/work-notes/2025-10-12T17-13-25Z-sshd-pre-nixos-deadlock/`; repeat the capture once the updated ISO is available for comparison.
-   - **Status**: Waiting on Task 1 harness fixes – the 2025-10-17 run reaches `inactive`, so resume the paused-VM sshd capture once the privilege/output issues above are resolved. 【F:docs/test-reports/2025-10-17T03-10-54Z-boot-image-vm-test.md†L1-L12】【F:docs/work-notes/2025-10-17T03-20-16Z-boot-image-vm-regression/serial.log†L91-L122】
+3. **Verify the embedded SSH public key inside the ISO artefact.**
+   - Use `unsquashfs -ll` (or mount the image) on the freshly built ISO to confirm `pre_nixos/root_key.pub` matches the generated fingerprint.
+   - If the key is missing, audit the `flake.nix` wiring and environment variables that feed `PRE_NIXOS_ROOT_KEY` into the build, and document findings.
 
-4. **Confirm dependent services behave with sshd held back by `wantedBy = []`.**
-   - Audit any additional units (e.g., console helpers) that expect to pull `sshd.service` in via `WantedBy` and ensure they explicitly order themselves after `secure_ssh` if necessary.
-   - During the VM verification run, check `systemctl list-dependencies sshd` to confirm nothing else attempts to start the service before `secure_ssh` finishes provisioning.
-   - **Status**: Pending – revisit once Task 1 produces a passing VM run so dependency checks can be performed on a healthy boot.
+4. **Probe the storage-detection path from inside the debug VM.**
+   - Within the paused VM, run `pre-nixos-detect-storage` and `pre-nixos --plan-only` to ensure the blank disk is detected correctly post-fix.
+   - Inspect `/run/pre-nixos/storage-status`, `/var/log/pre-nixos/disko-config.nix`, and any running `disko`/`wipefs` processes to confirm provisioning success.
+   - Preserve command output in investigation notes for future comparison.
 
-5. **If the hang persists, bisect between plan generation and application.**
-   - With the updated ISO booted in debug mode, inspect `journalctl -u pre-nixos.service -b` and `/run/pre-nixos/storage-status` to see whether execution stalls before or after `apply.apply_plan`.
-   - Capture the storage plan (`pre-nixos --plan-only`), any running `disko` processes, and related logs so we can split the investigation between plan creation and disk application on subsequent runs.
-   - Promote any new discoveries into focused follow-up tasks and update this queue accordingly.
-   - **Status**: In progress via Task 1 – current failure occurs during `disko` application (`label` option missing). Continue once the ISO build reliably completes.
+5. **Establish a known-good baseline with an upstream minimal NixOS ISO.**
+   - Boot `nixpkgs#nixosConfigurations.installerMinimal.x86_64-linux.config.system.build.isoImage` (or similar) with the harness settings.
+   - Verify DHCP, storage, and console interaction to validate host assumptions now that our image passes.
 
-## Backlog (previously active items)
-
-1. **Reproduce the boot-image VM failure with maximum visibility.**
-   - After the ISO build finishes, execute `pytest tests/test_boot_image_vm.py -vv --boot-image-debug` and remain in the interactive session to inspect the guest instead of tearing it down immediately.
-   - Collect `systemctl status pre-nixos`, `journalctl -u pre-nixos.service -b`, `networkctl status lan`, `ip -o link`, and `/run/pre-nixos/storage-status` from the debug shell, then archive the transcripts (`harness.log`, `serial.log`, and shell captures) under `docs/work-notes/`.
-   - 2025-10-12T02-04-19Z - Archived a fresh VM run in `docs/work-notes/2025-10-12T02-04-19Z-boot-image-vm-debug-session/`. `pre-nixos.service` stayed `activating` even though `networkctl status lan` showed `lan` with DHCP `10.0.2.15`; `/run/pre-nixos/storage-status` remained empty. 【F:docs/work-notes/2025-10-12T02-04-19Z-boot-image-vm-debug-session/serial.log†L40-L131】
-   - 2025-10-12T03-06-00Z - Re-ran the suite with `--boot-image-debug`; copied the resulting harness/serial logs to `docs/work-notes/2025-10-12T03-06-00Z-boot-image-vm-debug-session/`. `pre-nixos.service` was still `activating` after ~26 minutes, `systemctl status pre-nixos` showed the service stuck in the start job, and `ip -o -4 addr` confirmed `lan` held `10.0.2.15/24`. Manual `networkctl`/`ip -o link` captures were not possible without a TTY. 【F:docs/work-notes/2025-10-12T03-06-00Z-boot-image-vm-debug-session/systemctl_status_pre_nixos.txt†L1-L11】【F:docs/work-notes/2025-10-12T03-06-00Z-boot-image-vm-debug-session/ip_o_4_lan.txt†L1-L3】【F:docs/work-notes/2025-10-12T03-06-00Z-boot-image-vm-debug-session/README.md†L9-L19】
-   - 2025-10-12T04-00-25Z - Normalized the manual VM debug transcript so the captured command output renders without stray quote markers (`docs/work-notes/2025-10-12T04-00-25Z-boot-image-vm-debug-session/command-captures.md`).
-   - Cross-reference the captured evidence with earlier runs to highlight changes in behaviour as fixes land.
-   - 2025-10-10T04-47-41Z - Manual debug session gathered the requested evidence (`docs/work-notes/2025-10-10T04-47-41Z-boot-image-vm-debug-session/`). `pre-nixos.service` remained `activating` while `pre_nixos.network.wait_for_lan` looped; `networkctl status lan` reported `Interface "lan" not found`, and `ip -o link` listed only `lo` plus a downed `ens4`. BootImageVM also failed to escalate to root; future reproductions must capture the sudo transcript.
-
-2. **Verify the embedded SSH public key inside the ISO artefact.**
-   - Use `unsquashfs -ll` (or mount the image) on the freshly built ISO to confirm `pre_nixos/root_key.pub` is present and matches the generated key fingerprint.
-   - If the key is missing, audit the `flake.nix` wiring and environment variables so `PRE_NIXOS_ROOT_KEY` is propagated during the build. Record findings alongside the reproduction logs.
-
-3. **Probe the storage-detection path from inside the debug VM.**
-   - Within the paused VM, run `pre-nixos-detect-storage` and `pre-nixos --plan-only` to see whether the blank disk is mis-detected as provisioned.
-   - Inspect `/run/pre-nixos/storage-status`, `/var/log/pre-nixos/disko-config.nix`, and any running `disko`/`wipefs` processes to understand where provisioning halts.
-   - Preserve command output in the investigation notes so we can compare against future fixes.
-
-4. **Establish a known-good baseline with an upstream minimal NixOS ISO.**
-   - Build `nixpkgs#nixosConfigurations.installerMinimal.x86_64-linux.config.system.build.isoImage` (or similar) and boot it with the same QEMU parameters used by the harness.
-   - Verify DHCP, storage visibility, and console interaction work under the harness to validate host-side assumptions.
-   - 2025-10-12T00-31-04Z - Documented the overarching half-splitting plan and noted that the first draft of an upstream ISO probe harness still blocks waiting for the VM login prompt (`docs/work-notes/2025-10-12T00-31-04Z-half-splitting-plan.md`).
-
-5. **Compare harness and service toggles to isolate the regression.**
-   - Boot the baseline ISO, install the `pre-nixos` package manually, and execute `pre-nixos --plan-only` to observe behaviour without the systemd unit.
-   - Rebuild our ISO with targeted toggles (e.g., temporarily disabling `pre-nixos.service`) to see which combinations allow networking to succeed, then document the contrasts.
-
-6. **Deep-dive instrumentation around the failure point.**
-   - Use the debug session to capture `journalctl -u pre-nixos.service -b`, `_run` command exit codes, and the generated `disko` configuration to determine whether execution stops before or after plan application.
-   - Extend logging as required and ensure every timeout automatically saves the relevant journal excerpts for offline review.
+6. **Compare harness and service toggles to isolate any remaining regressions.**
+   - Boot the baseline ISO, install the `pre-nixos` package manually, and execute `pre-nixos --plan-only` without the systemd unit.
+   - Rebuild our ISO with targeted toggles (e.g., temporarily disabling `pre-nixos.service`) to observe behavioural changes, documenting contrasts.
 
 7. **Expand unit coverage and regression safeguards.**
-   - Add focused unit tests that exercise LAN identification, SSH key propagation, and storage-plan execution edge cases uncovered during the investigation.
-   - Ensure new structured logs are asserted in the unit suite so regressions surface before integration tests.
+   - Add unit tests for LAN identification, SSH key propagation, and storage-plan execution edge cases surfaced during the outage.
+   - Ensure structured logs are asserted in the unit suite so regressions surface before integration tests.
 
-8. **Harden BootImageVM root escalation and capture richer failure context.**
-   - Extend the login helper with step-by-step logging, fail fast when `sudo -i` does not yield a root shell, and surface the captured transcript in assertion messages so we can observe why escalation stalls.
-   - Automatically collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever storage provisioning or DHCP waits time out, ensuring every failure includes the relevant journal excerpts.
-   - Emit the booted ISO derivation path, hash, and embedded root key fingerprints in the harness logs to rule out stale artefacts or mismatched images during investigations.
-   - 2025-10-09T15-30-00Z - BootImageVM harness now records step-by-step transcripts, journals on storage/network timeouts, and ISO metadata (`tests/test_boot_image_vm.py`). `pytest tests/test_boot_image_vm.py` was interrupted after 4m46s because `nix build .#bootImage` continued compiling dependencies; rerun once the derivation has finished building to validate the changes end-to-end.
-   - 2025-10-09T23-39-12Z - Added serial-output capture to the login transcript and documented the renewed pytest attempt (`docs/work-notes/2025-10-09T23-39-12Z-boot-image-vm-test-attempt.md`). The run was aborted after ~350s while `nix build .#bootImage` continued compiling, so the enhanced logging still needs in-situ validation once the build completes.
-   - 2025-10-10T00-07-04Z - Testing policy updated: `pytest tests/test_boot_image_vm.py -vv` must be allowed to run without interruption for at least 30 minutes to capture the full provisioning behaviour before declaring failure.
-   - 2025-10-10T00-17-07Z - Latest pytest run completed fixture setup after 9m38s and failed with `KeyError: 0` because `nix path-info --json` returned a mapping; documented results in `docs/work-notes/2025-10-10T00-17-07Z-boot-image-vm-test-attempt.md`.
-   - 2025-10-10T00-47-08Z - Pytest ran for 22m51s without interruption; both VM tests failed waiting for storage status and IPv4 despite new logging. Full notes in `docs/work-notes/2025-10-10T00-47-08Z-boot-image-vm-test-attempt.md`.
+8. **Harden BootImageVM diagnostics.**
+   - Keep improving the login helper so root escalation transcripts and serial output are captured automatically on failure.
+   - Collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever provisioning or DHCP waits time out, and emit ISO metadata (store path, hash, root key fingerprint) in logs.
+   - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
 
-9. **Rebuild the boot image with the network fixes and rerun the VM regression.**
-    - 2025-10-08T13-51-16Z run (`pytest tests/test_boot_image_vm.py`) still fails: `test_boot_image_provisions_clean_disk` flagged `disko`, `lsblk`, and `wipefs` as missing and `test_boot_image_configures_network` timed out without an IPv4 lease. The captured journal shows `pre_nixos.network.identify_lan` raising `OSError: [Errno 22] Invalid argument` when reading the NIC carrier file (see `docs/test-reports/2025-10-08T13-51-16Z-boot-image-vm-test.md`).
-    - Prior run (2025-10-08T07-36-29Z) exhibited the same symptoms on the earlier ISO build; see `docs/test-reports/2025-10-08T07-36-29Z-boot-image-vm-test.md` for historical context.
-    - Implement a fix for the carrier read failure (e.g. guard `identify_lan` against `OSError` and confirm the interface detection logic tolerates virtio NICs without link state).
-    - Stabilise the command-availability probe so the first `command -v` execution does not race the prompt update.
-    - Rebuild the ISO, rerun the VM regression, and confirm provisioning, DHCP, and SSH succeed. Promote fresh serial/journal logs to `docs/boot-logs/` together with an updated test report when the run passes.
-    - 2025-10-09T01-32-01Z run exercised the updated carrier handling and command probe (`pytest tests/test_boot_image_vm.py`). Command checks now report `OK`, and `identify_lan` no longer crashes, but provisioning still timed out waiting for `pre-nixos` to populate `/run/pre-nixos/storage-status` and no IPv4 lease appeared on `lan`. See `docs/test-reports/2025-10-09T01-32-01Z-boot-image-vm-test.md` and the new serial log at `docs/boot-logs/2025-10-09T01-32-01Z-serial.log`.
+9. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
+   - Use the now-working dev shell workflow to produce new ISOs whenever changes land, then run `pytest tests/test_boot_image_vm.py -vv` without interruption to validate end-to-end behaviour.
+   - Promote passing serial/journal logs to `docs/boot-logs/` with updated test reports.
 
 10. **Capture follow-up boot timings after configuration adjustments.**
-    - The latest run (2025-10-08T00-41-32Z) still failed after 1000.26s because provisioning aborted; rerun once the networking fix is validated to measure meaningful timings.
+    - With the harness stable, collect new timing data after each substantive change to detect regressions early.
 
-11. **Ensure the full test suite runs without skips (especially `test_boot_image_vm`).**
-    - Audit pytest skips and environment prerequisites; install or document missing dependencies so the VM test executes rather than skipping.
-    - Maintain scripts or nix expressions that exercise the entire suite as part of CI/regression testing.
+11. **Ensure the full test suite runs without skips.**
+    - Audit pytest skips and prerequisites so the VM suite remains active, and maintain CI coverage for the entire suite.
 
 ## Recently Completed
 
+- 2025-10-19T01-15-00Z - BootImageVM harness now regains a root shell for privileged probes and waits for `pre-nixos` to become inactive, removing the LVM permission failure and IPv4 buffering. 【F:docs/work-notes/2025-10-18T22-57-17Z-boot-image-vm-regression/harness.log†L120-L185】
+- 2025-10-18T22-57-17Z - `nix develop .#bootImageTest -c pytest tests/test_boot_image_vm.py -vv` passes both VM cases end-to-end using the shared `/tmp/boot-image-shared-tmp`; logs archived under `docs/work-notes/2025-10-18T22-57-17Z-boot-image-vm-regression/` with summary in `docs/test-reports/2025-10-18T22-57-17Z-boot-image-vm-test.md`. 【F:docs/work-notes/2025-10-18T22-57-17Z-boot-image-vm-regression/harness.log†L1-L185】【F:docs/test-reports/2025-10-18T22-57-17Z-boot-image-vm-test.md†L1-L26】
+- 2025-10-18T17-45-00Z - The `bootImageTest` dev shell enforces a shared `/tmp/boot-image-shared-tmp`, letting `nix build .#bootImage` succeed without manual overrides; the ISO completed at `/nix/store/83vw736vi27nryfaa3i2bawy435xspqm-…-x86_64-linux.iso`. 【F:flake.nix†L120-L135】【029fd2†L1-L68】【0054d1†L1-L4】
 - 2025-10-17T03-10-54Z - Disko label regression is resolved and the impure ISO build now completes: `/run/pre-nixos/storage-status` reaches `STATE=applied`/`DETAIL=auto-applied`, and the harness records the rebuilt store path before launching the VM. 【F:docs/test-reports/2025-10-17T03-10-54Z-boot-image-vm-test.md†L1-L12】【F:docs/work-notes/2025-10-17T03-20-16Z-boot-image-vm-regression/harness.log†L1-L5】
 - 2025-10-14T05-00-00Z - Added HDD-only regression coverage in `tests/test_apply.py` that asserts the generated disko configuration provisions both disks, keeps `md0` bound to the `main` volume group, and retains the slash LV mount at root.
 - 2025-10-14T01-01-49Z - HDD-only plans now populate `plan["disko"]` and the single-disk regression test asserts the emitted disk/LVM layout (`pre_nixos/planner.py`, `tests/test_plan_storage.py`).
