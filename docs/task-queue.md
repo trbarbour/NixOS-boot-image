@@ -5,8 +5,12 @@ _Last updated: 2025-10-19T11-59-00Z_
 ## Active Tasks
 
 1. **Establish a known-good baseline with an upstream minimal NixOS ISO.**
-   - Boot `nixpkgs#nixosConfigurations.installerMinimal.x86_64-linux.config.system.build.isoImage` (or similar) with the harness settings.
-   - Verify DHCP, storage, and console interaction to validate host assumptions now that our image passes.
+   - Build the upstream ISO (e.g., `nix build nixpkgs#nixosConfigurations.installerMinimal.x86_64-linux.config.system.build.isoImage --no-link --print-out-paths`) and point the existing `BootImageVM` harness at the resulting store path—no ISO customization required.
+   - Let `BootImageVM` drive the console login and `sudo -i` escalation; reaching the custom root prompt without intervention demonstrates the harness and upstream ISO cooperate.
+   - Call `wait_for_ipv4()` (already exposed on the fixture) so the transcript records a successful DHCP lease under the same user-network stack used by our image.
+   - Use `run_as_root()` to issue storage probes such as `lsblk`/`sgdisk -p /dev/vda`; writable visibility of the virtio disk confirms host storage assumptions.
+   - (Optional) Drop the harness-provided public key into `/home/nixos/.ssh/authorized_keys` and reuse `run_ssh()` to confirm outbound SSH connectivity mirrors the checks performed on our ISO.
+   - Preserve the serial and harness logs emitted by `BootImageVM`; a run that satisfies the console, DHCP, and storage bullets above constitutes the “known-good” baseline.
 
 2. **Compare harness and service toggles to isolate any remaining regressions.**
    - Boot the baseline ISO, install the `pre-nixos` package manually, and execute `pre-nixos --plan-only` without the systemd unit.
