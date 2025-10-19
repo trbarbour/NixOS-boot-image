@@ -50,6 +50,14 @@ running slower integration scenarios.
 The boot image tests build the ISO with Nix, boot it inside QEMU, and validate
 end-to-end storage provisioning and DHCP configuration.
 
+The first `nix build .#bootImage --impure --no-link` run can take several
+minutes while the derivations are realised, so run it ahead of `pytest
+tests/test_boot_image_vm.py` when possible. Subsequent invocations reuse the
+cached derivations and complete much faster as long as the inputs remain
+unchanged. When the build appears quiet, pass `--print-build-logs` to stream
+its progress or inspect `/nix/var/log/nix/drvs/` with `tail -f` so you can tell
+the job is still healthy.
+
 ```bash
 pytest tests/test_boot_image_vm.py
 ```
