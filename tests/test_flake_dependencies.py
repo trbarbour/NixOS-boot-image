@@ -8,6 +8,15 @@ from pathlib import Path
 
 def _extract_propagated_inputs() -> set[str]:
     flake_text = Path("flake.nix").read_text(encoding="utf-8")
+    required_names_block = re.search(
+        r"requiredToolNames\s*=\s*\[(?P<body>[^\]]+)\];",
+        flake_text,
+        re.DOTALL,
+    )
+    if required_names_block is not None:
+        body = required_names_block.group("body")
+        return set(re.findall(r'"([^\"]+)"', body))
+
     with_block = re.search(
         r"propagatedBuildInputs\s*=\s*with pkgs;\s*\[(?P<body>[^\]]+)\];",
         flake_text,
@@ -51,4 +60,15 @@ def test_pre_nixos_runtime_dependencies_include_required_tools() -> None:
     assert not missing, (
         "pre-nixos must propagate the expected tool packages for the boot "
         f"environment (missing: {sorted(missing)})"
+    )
+
+
+def test_pre_nixos_scripts_wrap_required_tool_path() -> None:
+    flake_text = Path("flake.nix").read_text(encoding="utf-8")
+    loop_pattern = r"for prog in pre-nixos pre-nixos-detect-storage pre-nixos-tui; do"
+    assert re.search(loop_pattern, flake_text), (
+        "pre-nixos flake must wrap all CLI entry points in postFixup"
+    )
+    assert "wrapProgram \"$out/bin/$prog\" --prefix PATH :" in flake_text, (
+        "pre-nixos flake must extend PATH for wrapped CLI entry points"
     )

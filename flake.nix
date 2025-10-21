@@ -48,23 +48,28 @@
         };
 
       preNixosModule = import ./modules/pre-nixos.nix;
+      requiredToolNames = [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" "kmod" ];
 
       makePreNixosPackage = system:
         let
           pkgs = pkgsFor system;
+          requiredToolPackages = pkgs.lib.attrVals requiredToolNames pkgs;
+          requiredToolBinPath = pkgs.lib.makeBinPath requiredToolPackages;
         in
         pkgs.python3Packages.buildPythonApplication {
           pname = "pre-nixos";
           version = "0.1.0";
           src = ./.;
           pyproject = true;
-          nativeBuildInputs = with pkgs.python3Packages; [ setuptools wheel ];
-          propagatedBuildInputs =
-            pkgs.lib.attrVals
-              [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" "kmod" ]
-              pkgs;
+          nativeBuildInputs = with pkgs; [ makeWrapper python3Packages.setuptools python3Packages.wheel ];
+          propagatedBuildInputs = requiredToolPackages;
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
             cp ${rootPub} pre_nixos/root_key.pub
+          '';
+          postFixup = ''
+            for prog in pre-nixos pre-nixos-detect-storage pre-nixos-tui; do
+              wrapProgram "$out/bin/$prog" --prefix PATH : ${requiredToolBinPath}
+            done
           '';
         };
 
@@ -103,14 +108,13 @@
         checks = {
           pre-nixos-propagates-required-tools =
             let
-              requiredTools = [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" "kmod" ];
               propagatedNames =
                 builtins.map
                   (drv:
                     if drv ? pname then drv.pname else (builtins.parseDrvName drv.name).name)
                   preNixosPackage.propagatedBuildInputs;
               missingTools =
-                pkgs.lib.filter (tool: !(pkgs.lib.elem tool propagatedNames)) requiredTools;
+                pkgs.lib.filter (tool: !(pkgs.lib.elem tool propagatedNames)) requiredToolNames;
               _ =
                 pkgs.lib.assertMsg
                   (missingTools == [])
