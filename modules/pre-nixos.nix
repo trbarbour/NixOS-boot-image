@@ -7,9 +7,11 @@ let
   # ``nixpkgs`` being available on ``$NIX_PATH`` when executing the generated
   # configuration, so expose the evaluated nixpkgs path alongside the execution
   # flag.
+  preNixosVersion = pkgs.pre-nixos.version;
   preNixosExecEnv = {
     PRE_NIXOS_EXEC = "1";
     PRE_NIXOS_NIXPKGS = "${pkgs.path}";
+    PRE_NIXOS_VERSION = preNixosVersion;
   };
   preNixosServiceEnv = preNixosExecEnv // {
     NIX_PATH = "nixpkgs=${pkgs.path}";

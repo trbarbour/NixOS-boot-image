@@ -1,4 +1,7 @@
 # shellcheck shell=sh
+if [ -n "${PRE_NIXOS_VERSION-}" ]; then
+  printf '%s\n' "pre-nixos boot image version ${PRE_NIXOS_VERSION}"
+fi
 status_file=/run/pre-nixos/storage-status
 if [ -r "$status_file" ]; then
   state=""
