@@ -9,7 +9,7 @@ in ''
   status_file=$status_dir/storage-status
   mkdir -p "$status_dir"
 
-  version_msg="pre-nixos boot image version ${PRE_NIXOS_VERSION:-unknown}"
+  version_msg="pre-nixos boot image version ''${PRE_NIXOS_VERSION:-unknown}"
   printf '%s\n' "$version_msg"
   if [ -w /dev/console ]; then
     printf '%s\r\n' "$version_msg" > /dev/console
