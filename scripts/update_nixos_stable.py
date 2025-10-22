@@ -86,7 +86,10 @@ def newest_stable_channel(branches: Iterable[str]) -> str:
 
 def update_flake_nix(path: Path, channel: str) -> None:
     original = path.read_text(encoding="utf-8")
-    updated, replacements = RE_FLAKE_INPUT.subn(r"\\1" + channel + r"\\3", original, count=1)
+    def replacement(match: re.Match[str]) -> str:
+        return f"{match.group(1)}{channel}{match.group(3)}"
+
+    updated, replacements = RE_FLAKE_INPUT.subn(replacement, original, count=1)
     if replacements == 0:
         raise SystemExit(
             "Did not find an existing nixpkgs.url entry in flake.nix to update."
