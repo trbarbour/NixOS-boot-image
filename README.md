@@ -113,6 +113,11 @@ to apply it:
 nix build
 ```
 
+> **Tip:** To ensure the boot image targets the newest stable NixOS release,
+> run `scripts/update_nixos_stable.py` before building. The helper retargets
+> `flake.nix` and refreshes the `nixpkgs` lock entry to the latest
+> `nixos-YY.MM` channel available on GitHub.
+
 ### Running flake checks locally
 
 The flake defines a regression check that ensures `pre-nixos` continues to
