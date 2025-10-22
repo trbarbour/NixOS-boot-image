@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env nix-shell
+#!nix-shell -i python3 -p python3
 """Update the repository to the latest stable NixOS channel.
 
 The script performs three steps:
@@ -26,7 +27,7 @@ from typing import Iterable
 
 RE_CHANNEL = re.compile(r"^nixos-(\d{2})\.(\d{2})$")
 RE_FLAKE_INPUT = re.compile(
-    r"(nixpkgs\\.url\s*=\s*\"github:NixOS/nixpkgs/)(nixos-\d{2}\.\d{2})(\";)"
+    r'(nixpkgs\.url\s*=\s*"github:NixOS/nixpkgs/)(nixos-\d{2}\.\d{2})(";)'
 )
 GITHUB_BRANCHES_URL = "https://api.github.com/repos/NixOS/nixpkgs/branches"
 USER_AGENT = "nixos-boot-image-update-script"
