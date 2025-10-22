@@ -116,7 +116,7 @@ def main() -> None:
     update_flake_nix(flake_path, channel)
 
     print("Updating flake.lock…", file=sys.stderr)
-    run("nix", "flake", "lock", "--update-input", "nixpkgs", cwd=repo_root)
+    run("nix", "flake", "update", "--update-input", "nixpkgs", cwd=repo_root)
     print("Update complete.", file=sys.stderr)
 
 
