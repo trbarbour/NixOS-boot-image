@@ -25,6 +25,25 @@ except ImportError:  # pragma: no cover - handled by pytest skip
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SHELL_PROMPT = "PRE-NIXOS> "
 
+
+def _read_timeout_env(name: str, default: int) -> int:
+    """Return a positive integer timeout configured via environment variable."""
+
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    try:
+        parsed = int(value)
+    except ValueError as exc:  # pragma: no cover - defensive configuration guard
+        raise ValueError(f"{name} must be an integer value") from exc
+    if parsed <= 0:  # pragma: no cover - defensive configuration guard
+        raise ValueError(f"{name} must be greater than zero")
+    return parsed
+
+
+VM_SPAWN_TIMEOUT = _read_timeout_env("BOOT_IMAGE_VM_SPAWN_TIMEOUT", 600)
+VM_LOGIN_TIMEOUT = _read_timeout_env("BOOT_IMAGE_VM_LOGIN_TIMEOUT", 600)
+
 ANSI_ESCAPE_PATTERN = re.compile(
     r"""
     \x1B(
@@ -403,7 +422,7 @@ class BootImageVM:
             r"# ?",
         ]
         try:
-            idx = self._expect_normalised(login_patterns, timeout=600)
+            idx = self._expect_normalised(login_patterns, timeout=VM_LOGIN_TIMEOUT)
         except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
             self._raise_with_transcript(
                 f"Timed out waiting for initial login prompt: {exc}"
@@ -759,7 +778,7 @@ def boot_image_vm(
         cmd[1:],
         encoding="utf-8",
         codec_errors="ignore",
-        timeout=600,
+        timeout=VM_SPAWN_TIMEOUT,
     )
     child.logfile = log_handle
     debug_enabled = bool(request.config.getoption("boot_image_debug"))
