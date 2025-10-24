@@ -1,26 +1,22 @@
 # Task Queue
 
-_Last updated: 2025-10-23T15-10-00Z_
+_Last updated: 2025-10-24T01-39-58Z_
 
 ## Active Tasks
 
-1. **Expand unit coverage and regression safeguards.**
-   - Add unit tests for LAN identification, SSH key propagation, and storage-plan execution edge cases surfaced during the outage.
-   - Ensure structured logs are asserted in the unit suite so regressions surface before integration tests.
-
-2. **Harden BootImageVM diagnostics.**
+1. **Harden BootImageVM diagnostics.**
    - Keep improving the login helper so root escalation transcripts and serial output are captured automatically on failure.
    - Collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever provisioning or DHCP waits time out, and emit ISO metadata (store path, hash, root key fingerprint) in logs.
    - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
 
-3. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
+2. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
    - Use the now-working dev shell workflow to produce new ISOs whenever changes land, then run `pytest tests/test_boot_image_vm.py -vv` without interruption to validate end-to-end behaviour.
    - Promote passing serial/journal logs to `docs/boot-logs/` with updated test reports.
 
-4. **Capture follow-up boot timings after configuration adjustments.**
+3. **Capture follow-up boot timings after configuration adjustments.**
     - With the harness stable, collect new timing data after each substantive change to detect regressions early.
 
-5. **Ensure the full test suite runs without skips.**
+4. **Ensure the full test suite runs without skips.**
     - Audit pytest skips and prerequisites so the VM suite remains active, and maintain CI coverage for the entire suite.
 
 
@@ -46,3 +42,4 @@ _Last updated: 2025-10-23T15-10-00Z_
 - 2025-10-07T02-11-38Z - Audited boot-image VM prerequisites; see `docs/test-reports/2025-10-07T02-11-38Z-boot-image-prereq-audit.md` for detailed pass/fail outcomes and recommended follow-ups.
 - 2025-10-07T01-11-00Z - Identified root cause of boot-image VM login failure: colourised Bash prompt emits ANSI escapes that our regex does not match, preventing `_login` from issuing `sudo -i`. See `docs/work-notes/2025-10-07T01-11-00Z-boot-image-vm-root-prompt-analysis.md`.
 - 2025-10-06T15-54-30Z - Captured baseline boot-image VM test output, timings, and serial log for reference.
+- 2025-10-24T01-39-58Z - Expanded unit coverage for LAN detection, SSH key propagation, and storage plan execution, asserting structured logs for regressions in `tests/test_network.py` and `tests/test_apply.py`. 【F:tests/test_network.py†L1-L210】【F:tests/test_apply.py†L1-L260】
