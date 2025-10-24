@@ -1,38 +1,26 @@
 # Task Queue
 
-_Last updated: 2025-10-19T11-59-00Z_
+_Last updated: 2025-10-23T15-10-00Z_
 
 ## Active Tasks
 
-1. **Establish a known-good baseline with an upstream minimal NixOS ISO.**
-   - Build the upstream ISO (e.g., `nix build nixpkgs#nixosConfigurations.installerMinimal.x86_64-linux.config.system.build.isoImage --no-link --print-out-paths`) and point the existing `BootImageVM` harness at the resulting store path—no ISO customization required.
-   - Let `BootImageVM` drive the console login and `sudo -i` escalation; reaching the custom root prompt without intervention demonstrates the harness and upstream ISO cooperate.
-   - Call `wait_for_ipv4()` (already exposed on the fixture) so the transcript records a successful DHCP lease under the same user-network stack used by our image.
-   - Use `run_as_root()` to issue storage probes such as `lsblk`/`sgdisk -p /dev/vda`; writable visibility of the virtio disk confirms host storage assumptions.
-   - (Optional) Drop the harness-provided public key into `/home/nixos/.ssh/authorized_keys` and reuse `run_ssh()` to confirm outbound SSH connectivity mirrors the checks performed on our ISO.
-   - Preserve the serial and harness logs emitted by `BootImageVM`; a run that satisfies the console, DHCP, and storage bullets above constitutes the “known-good” baseline.
-
-2. **Compare harness and service toggles to isolate any remaining regressions.**
-   - Boot the baseline ISO, install the `pre-nixos` package manually, and execute `pre-nixos --plan-only` without the systemd unit.
-   - Rebuild our ISO with targeted toggles (e.g., temporarily disabling `pre-nixos.service`) to observe behavioural changes, documenting contrasts.
-
-3. **Expand unit coverage and regression safeguards.**
+1. **Expand unit coverage and regression safeguards.**
    - Add unit tests for LAN identification, SSH key propagation, and storage-plan execution edge cases surfaced during the outage.
    - Ensure structured logs are asserted in the unit suite so regressions surface before integration tests.
 
-4. **Harden BootImageVM diagnostics.**
+2. **Harden BootImageVM diagnostics.**
    - Keep improving the login helper so root escalation transcripts and serial output are captured automatically on failure.
    - Collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever provisioning or DHCP waits time out, and emit ISO metadata (store path, hash, root key fingerprint) in logs.
    - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
 
-5. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
+3. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
    - Use the now-working dev shell workflow to produce new ISOs whenever changes land, then run `pytest tests/test_boot_image_vm.py -vv` without interruption to validate end-to-end behaviour.
    - Promote passing serial/journal logs to `docs/boot-logs/` with updated test reports.
 
-6. **Capture follow-up boot timings after configuration adjustments.**
+4. **Capture follow-up boot timings after configuration adjustments.**
     - With the harness stable, collect new timing data after each substantive change to detect regressions early.
 
-7. **Ensure the full test suite runs without skips.**
+5. **Ensure the full test suite runs without skips.**
     - Audit pytest skips and prerequisites so the VM suite remains active, and maintain CI coverage for the entire suite.
 
 
