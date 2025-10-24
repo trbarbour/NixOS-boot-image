@@ -283,12 +283,19 @@ class BootImageVM:
         )
         self._login()
 
-    def _log_step(self, message: str) -> None:
+    def _log_step(self, message: str, body: Optional[str] = None) -> None:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         entry = f"[{timestamp}] {message}"
         self._transcript.append(entry)
         with self.harness_log_path.open("a", encoding="utf-8") as handle:
             handle.write(entry + "\n")
+            if body is not None:
+                lines = body.splitlines()
+                if not lines:
+                    handle.write(f"[{timestamp}]   <no output>\n")
+                else:
+                    for line in lines:
+                        handle.write(f"[{timestamp}]   {line}\n")
 
     def _record_child_output(self) -> None:
         buffer = self.child.before.replace("\r", "") if self.child.before else ""
@@ -302,12 +309,29 @@ class BootImageVM:
                 continue
             self._log_step(f"Serial output: {line}")
 
+    def _read_serial_tail(self, lines: int = 50) -> List[str]:
+        if not self.log_path.exists():
+            return []
+        with self.log_path.open("r", encoding="utf-8", errors="ignore") as handle:
+            tail = handle.readlines()[-lines:]
+        return [line.rstrip("\n") for line in tail]
+
     def _raise_with_transcript(self, message: str) -> None:
+        self._record_child_output()
+        serial_tail = self._read_serial_tail()
+        if serial_tail:
+            self._log_step(
+                f"Serial log tail (last {len(serial_tail)} lines)",
+                body="\n".join(serial_tail),
+            )
         transcript = "\n".join(self._transcript)
         details = [message]
         if transcript:
             details.append("Login transcript:")
             details.append(transcript)
+        if serial_tail:
+            details.append(f"Serial log tail (last {len(serial_tail)} lines):")
+            details.append("\n".join(serial_tail))
         details.append(f"Harness log: {self.harness_log_path}")
         details.append(f"Serial log: {self.log_path}")
         raise AssertionError("\n".join(details))
@@ -599,17 +623,23 @@ class BootImageVM:
                 self.run(":")
                 return status
             time.sleep(5)
+        self._log_step("Timed out waiting for pre-nixos storage status")
         journal = self.collect_journal("pre-nixos.service")
+        self._log_step(
+            "Captured journalctl -u pre-nixos.service -b after storage status timeout",
+            body=journal,
+        )
         unit_status = self.run(
             "systemctl status pre-nixos --no-pager 2>&1 || true", timeout=240
         )
-        self._log_step("Timed out waiting for pre-nixos storage status")
-        raise AssertionError(
+        self._log_step(
+            "Captured systemctl status pre-nixos after storage status timeout",
+            body=unit_status,
+        )
+        self._raise_with_transcript(
             "timed out waiting for pre-nixos storage status\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
-            f"systemctl status pre-nixos:\n{unit_status}\n"
-            f"Harness log: {self.harness_log_path}\n"
-            f"Serial log: {self.log_path}"
+            f"systemctl status pre-nixos:\n{unit_status}"
         )
 
     def wait_for_ipv4(self, iface: str = "lan", *, timeout: int = 240) -> List[str]:
@@ -622,17 +652,23 @@ class BootImageVM:
                 self.run(":")
                 return lines
             time.sleep(5)
+        self._log_step(f"Timed out waiting for IPv4 on interface {iface}")
         journal = self.collect_journal("pre-nixos.service")
+        self._log_step(
+            "Captured journalctl -u pre-nixos.service -b after IPv4 timeout",
+            body=journal,
+        )
         unit_status = self.run(
             "systemctl status pre-nixos --no-pager 2>&1 || true", timeout=240
         )
-        self._log_step(f"Timed out waiting for IPv4 on interface {iface}")
-        raise AssertionError(
+        self._log_step(
+            "Captured systemctl status pre-nixos after IPv4 timeout",
+            body=unit_status,
+        )
+        self._raise_with_transcript(
             f"timed out waiting for IPv4 address on {iface}\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
-            f"systemctl status pre-nixos:\n{unit_status}\n"
-            f"Harness log: {self.harness_log_path}\n"
-            f"Serial log: {self.log_path}"
+            f"systemctl status pre-nixos:\n{unit_status}"
         )
 
     def wait_for_unit_inactive(self, unit: str, *, timeout: int = 240) -> str:
