@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pexpect
 
@@ -26,6 +26,7 @@ from tests.test_boot_image_vm import (  # type: ignore  # noqa: E402
     BootImageVM,
     SHELL_PROMPT,
     _resolve_iso_path,
+    write_boot_image_metadata,
 )
 
 
@@ -188,6 +189,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
         harness_log = log_dir / "harness.log"
         harness_log.write_text("", encoding="utf-8")
         serial_log = log_dir / "serial.log"
+        metadata_path = log_dir / "metadata.json"
 
         ssh_port = reserve_ssh_port()
         cmd = [
@@ -223,6 +225,17 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
 
         try:
             log_handle = serial_log.open("w", encoding="utf-8")
+            write_boot_image_metadata(
+                metadata_path,
+                artifact=build,
+                harness_log=harness_log,
+                serial_log=serial_log,
+                qemu_command=cmd,
+                disk_image=disk,
+                ssh_host="127.0.0.1",
+                ssh_port=ssh_port,
+                ssh_executable="ssh",
+            )
             child = pexpect.spawn(
                 cmd[0],
                 cmd[1:],
@@ -236,6 +249,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
                 child=child,
                 log_path=serial_log,
                 harness_log_path=harness_log,
+                metadata_path=metadata_path,
                 ssh_port=ssh_port,
                 ssh_host="127.0.0.1",
                 ssh_executable="ssh",
@@ -268,7 +282,13 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
                 shutil.copy2(harness_log, output_dir / "harness.log")
             if serial_log.exists():
                 shutil.copy2(serial_log, output_dir / "serial.log")
+            if metadata_path.exists():
+                shutil.copy2(metadata_path, output_dir / "metadata.json")
+            harness_metadata: Dict[str, Any] = {}
+            if metadata_path.exists():
+                harness_metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
             metadata = {
+                "boot_image_vm": harness_metadata,
                 "iso_path": str(build.iso_path),
                 "store_path": str(build.store_path),
                 "deriver": build.deriver,

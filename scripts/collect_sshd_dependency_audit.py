@@ -20,6 +20,7 @@ from tests.test_boot_image_vm import (  # type: ignore  # noqa: E402
     BootImageBuild,
     BootImageVM as BaseBootImageVM,
     SHELL_PROMPT,
+    write_boot_image_metadata,
 )
 
 DEFAULT_PREFIX = REPO_ROOT / "docs" / "work-notes"
@@ -67,6 +68,7 @@ def launch_vm(
     ssh_port: int,
     harness_log: Path,
     serial_log: Path,
+    metadata_path: Path,
 ) -> Tuple[PatchedBootImageVM, pexpect.spawn, object]:
     ssh = manual.require_executable("ssh")
     qemu = manual.require_executable("qemu-system-x86_64")
@@ -99,6 +101,18 @@ def launch_vm(
         "virtio-net-pci,netdev=net0",
     ]
 
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=cmd,
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=ssh_port,
+        ssh_executable=ssh,
+    )
+
     child = pexpect.spawn(
         cmd[0],
         cmd[1:],
@@ -112,6 +126,7 @@ def launch_vm(
         child=child,
         log_path=serial_log,
         harness_log_path=harness_log,
+        metadata_path=metadata_path,
         ssh_port=ssh_port,
         ssh_host="127.0.0.1",
         ssh_executable=ssh,
@@ -182,6 +197,7 @@ def main(argv: Iterable[str]) -> int:
 
     harness_log = output_dir / "harness.log"
     serial_log = output_dir / "serial.log"
+    metadata_path = output_dir / "metadata.json"
     note_path = output_dir / "sshd-dependency-notes.md"
 
     manual.write_header(note_path, artifact, ssh_port, disk_image)
@@ -196,6 +212,7 @@ def main(argv: Iterable[str]) -> int:
             ssh_port=ssh_port,
             harness_log=harness_log,
             serial_log=serial_log,
+            metadata_path=metadata_path,
         )
         vm.wait_for_unit_inactive("pre-nixos", timeout=420)
         collect_evidence(vm, note_path)

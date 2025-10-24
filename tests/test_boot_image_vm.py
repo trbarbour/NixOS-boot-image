@@ -246,6 +246,49 @@ class SSHKeyPair:
     public_key: Path
 
 
+def write_boot_image_metadata(
+    metadata_path: Path,
+    *,
+    artifact: "BootImageBuild",
+    harness_log: Path,
+    serial_log: Path,
+    qemu_command: List[str],
+    disk_image: Path,
+    ssh_host: str,
+    ssh_port: int,
+    ssh_executable: str,
+) -> None:
+    """Persist structured metadata describing the active BootImageVM session."""
+
+    metadata = {
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "artifact": {
+            "iso_path": str(artifact.iso_path),
+            "store_path": str(artifact.store_path),
+            "deriver": artifact.deriver,
+            "nar_hash": artifact.nar_hash,
+            "root_key_fingerprint": artifact.root_key_fingerprint,
+        },
+        "logs": {
+            "harness": str(harness_log),
+            "serial": str(serial_log),
+        },
+        "qemu": {
+            "command": qemu_command,
+            "disk_image": str(disk_image),
+        },
+        "ssh": {
+            "host": ssh_host,
+            "port": ssh_port,
+            "executable": ssh_executable,
+        },
+    }
+    metadata_path.write_text(
+        json.dumps(metadata, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 @dataclass(frozen=True)
 class BootImageBuild:
     """Metadata describing the built boot image artifact."""
@@ -264,6 +307,7 @@ class BootImageVM:
     child: "pexpect.spawn"
     log_path: Path
     harness_log_path: Path
+    metadata_path: Path
     ssh_port: int
     ssh_host: str
     ssh_executable: str
@@ -276,6 +320,7 @@ class BootImageVM:
             "Boot image artifact metadata",
             body="\n".join(self._format_artifact_metadata()),
         )
+        self._log_step(f"Harness metadata written to {self.metadata_path}")
         self._login()
 
     def _format_artifact_metadata(self) -> List[str]:
@@ -346,6 +391,7 @@ class BootImageVM:
             details.append("\n".join(serial_tail))
         details.append(f"Harness log: {self.harness_log_path}")
         details.append(f"Serial log: {self.log_path}")
+        details.append(f"Metadata: {self.metadata_path}")
         raise AssertionError("\n".join(details))
 
     def _expect_normalised(self, patterns: List[str], *, timeout: int) -> int:
@@ -795,6 +841,7 @@ def boot_image_vm(
     log_dir = tmp_path_factory.mktemp("boot-image-logs")
     log_path = log_dir / "serial.log"
     harness_log_path = log_dir / "harness.log"
+    metadata_path = log_dir / "metadata.json"
     harness_log_path.write_text("", encoding="utf-8")
     log_handle = log_path.open("w", encoding="utf-8")
     cmd = [
@@ -821,6 +868,18 @@ def boot_image_vm(
         "-device",
         "virtio-net-pci,netdev=net0",
     ]
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=boot_image_build,
+        harness_log=harness_log_path,
+        serial_log=log_path,
+        qemu_command=cmd,
+        disk_image=vm_disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=ssh_forward_port,
+        ssh_executable=ssh_executable,
+    )
+
     child = _pexpect.spawn(
         cmd[0],
         cmd[1:],
@@ -844,6 +903,7 @@ def boot_image_vm(
             child=child,
             log_path=log_path,
             harness_log_path=harness_log_path,
+            metadata_path=metadata_path,
             ssh_port=ssh_forward_port,
             ssh_host="127.0.0.1",
             ssh_executable=ssh_executable,
