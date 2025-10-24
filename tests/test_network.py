@@ -5,6 +5,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from pre_nixos.network import (
     configure_lan,
     identify_lan,
@@ -22,6 +24,39 @@ def test_identify_lan(tmp_path):
         (iface / "device").mkdir()
         (iface / "carrier").write_text(carrier)
     assert identify_lan(tmp_path) == "eth1"
+
+
+def test_identify_lan_logs_carrier_detection(tmp_path, monkeypatch):
+    netdir = tmp_path / "net"
+    netdir.mkdir()
+
+    primary = netdir / "eth0"
+    primary.mkdir()
+    (primary / "device").mkdir()
+    (primary / "carrier").write_text("0")
+
+    detected = netdir / "eth1"
+    detected.mkdir()
+    (detected / "device").mkdir()
+    (detected / "carrier").write_text("1")
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.network.log_event", record_event)
+
+    assert identify_lan(netdir) == "eth1"
+
+    carrier_events = [
+        fields
+        for event, fields in events
+        if event == "pre_nixos.network.identify_lan.detected"
+    ]
+    assert carrier_events, "expected structured carrier detection log"
+    assert carrier_events[0]["interface"] == "eth1"
+    assert carrier_events[0]["signal"] == "carrier"
 
 
 def test_identify_lan_uses_operstate_on_transient_carrier_error(tmp_path, monkeypatch):
@@ -277,6 +312,32 @@ def test_secure_ssh_logs_key_propagation(tmp_path, monkeypatch):
     expected_auth_path = tmp_path / "root" / ".ssh" / "authorized_keys"
     assert finished_fields["authorized_keys_path"] == expected_auth_path
     assert conf_path == ssh_dir / "sshd_config"
+
+
+def test_secure_ssh_logs_error_when_key_missing(tmp_path, monkeypatch):
+    ssh_dir = tmp_path / "etc/ssh"
+    ssh_dir.mkdir(parents=True)
+
+    missing_key = tmp_path / "missing.pub"
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.network.log_event", record_event)
+
+    with pytest.raises(FileNotFoundError):
+        secure_ssh(ssh_dir, authorized_key=missing_key, root_home=tmp_path / "root")
+
+    event_fields = [
+        fields
+        for event, fields in events
+        if event == "pre_nixos.network.secure_ssh.error"
+    ]
+    assert event_fields, "expected error log when authorized key is missing"
+    assert event_fields[0]["reason"] == "missing authorized key"
+    assert event_fields[0]["authorized_key"] == missing_key
 
 
 def test_get_ip_address_parses_output(monkeypatch):

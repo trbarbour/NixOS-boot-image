@@ -333,3 +333,70 @@ def test_apply_plan_logs_missing_disko(monkeypatch: pytest.MonkeyPatch, tmp_path
     assert any(fields.get("reason") == "executable not found" for fields in skip_events)
     assert any(event == "pre_nixos.apply.apply_plan.finished" for event, _ in events)
 
+
+def test_apply_plan_logs_execution_disabled(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    plan = {"disko": {"disk": {}}, "disko_config_path": str(tmp_path / "disabled-disko.nix")}
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.apply.log_event", record_event)
+    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+
+    def fail_run(*_args, **_kwargs):
+        raise AssertionError("execution should be disabled")
+
+    monkeypatch.setattr("pre_nixos.apply.subprocess.run", fail_run)
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "0")
+
+    apply_plan(plan, dry_run=False)
+
+    skip_events = [
+        fields
+        for event, fields in events
+        if event == "pre_nixos.apply.command.skip"
+    ]
+    assert any(fields.get("reason") == "execution disabled" for fields in skip_events)
+    assert any(event == "pre_nixos.apply.apply_plan.finished" for event, _ in events)
+
+
+def test_prepare_command_environment_logs_nix_path_injection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.apply.log_event", record_event)
+    monkeypatch.delenv("NIX_PATH", raising=False)
+    monkeypatch.setenv("PRE_NIXOS_NIXPKGS", "/nix/store/test-nixpkgs")
+
+    env = apply_module._prepare_command_environment()
+
+    assert env["NIX_PATH"] == "nixpkgs=/nix/store/test-nixpkgs"
+    assert events and events[-1][0] == "pre_nixos.apply.command.nix_path_injected"
+
+
+def test_prepare_command_environment_logs_missing_nix_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.apply.log_event", record_event)
+    monkeypatch.delenv("NIX_PATH", raising=False)
+    monkeypatch.delenv("PRE_NIXOS_NIXPKGS", raising=False)
+
+    env = apply_module._prepare_command_environment()
+
+    assert "NIX_PATH" not in env or not env["NIX_PATH"].strip()
+    assert events and events[-1][0] == "pre_nixos.apply.command.nix_path_missing"
+
