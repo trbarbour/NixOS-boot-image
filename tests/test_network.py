@@ -50,6 +50,48 @@ def test_identify_lan_uses_operstate_on_transient_carrier_error(tmp_path, monkey
     assert identify_lan(netdir) == "eth0"
 
 
+def test_identify_lan_logs_operstate_detection(tmp_path, monkeypatch):
+    netdir = tmp_path / "net"
+    netdir.mkdir()
+
+    iface = netdir / "eth0"
+    iface.mkdir()
+    (iface / "device").mkdir()
+    (iface / "operstate").write_text("up")
+
+    other = netdir / "eth1"
+    other.mkdir()
+    (other / "device").mkdir()
+    (other / "carrier").write_text("0")
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.network.log_event", record_event)
+
+    original_read_text = Path.read_text
+
+    def fake_read_text(self, *args, **kwargs):
+        if self == iface / "carrier":
+            error = OSError("transient carrier failure")
+            error.errno = 0
+            raise error
+        return original_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fake_read_text)
+
+    assert identify_lan(netdir) == "eth0"
+
+    detection_events = [
+        fields for event, fields in events if event == "pre_nixos.network.identify_lan.detected"
+    ]
+    assert detection_events, "expected structured detection log event"
+    assert detection_events[0]["interface"] == "eth0"
+    assert detection_events[0]["signal"] == "operstate"
+
+
 def test_write_lan_rename_rule(tmp_path):
     for name, carrier in ("eth0", "0"), ("eth1", "1"):
         iface = tmp_path / name
@@ -206,6 +248,35 @@ def test_secure_ssh_queues_non_blocking_restart(tmp_path, monkeypatch):
     secure_ssh(ssh_dir, authorized_key=key, root_home=tmp_path / "root")
 
     assert calls == [(["reload-or-restart", "--no-block", "sshd"], False)]
+
+
+def test_secure_ssh_logs_key_propagation(tmp_path, monkeypatch):
+    ssh_dir = tmp_path / "etc/ssh"
+    ssh_dir.mkdir(parents=True)
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.network.log_event", record_event)
+    monkeypatch.setattr("pre_nixos.network._systemctl", lambda *a, **k: None)
+
+    conf_path = secure_ssh(ssh_dir, authorized_key=key, root_home=tmp_path / "root")
+
+    event_names = [event for event, _ in events]
+    assert "pre_nixos.network.secure_ssh.authorized_key_written" in event_names
+    assert event_names[-1] == "pre_nixos.network.secure_ssh.finished"
+
+    finished_fields = next(
+        fields for event, fields in events if event == "pre_nixos.network.secure_ssh.finished"
+    )
+    expected_auth_path = tmp_path / "root" / ".ssh" / "authorized_keys"
+    assert finished_fields["authorized_keys_path"] == expected_auth_path
+    assert conf_path == ssh_dir / "sshd_config"
 
 
 def test_get_ip_address_parses_output(monkeypatch):

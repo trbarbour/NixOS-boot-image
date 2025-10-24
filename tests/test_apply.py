@@ -296,3 +296,40 @@ def test_select_disko_mode_detects_combined_support(fake_disko) -> None:
     assert mode == "destroy,format,mount"
     assert supports_yes
 
+
+def test_apply_plan_logs_no_devices(monkeypatch: pytest.MonkeyPatch) -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.apply.log_event", record_event)
+    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+
+    commands = apply_plan({}, dry_run=True)
+
+    assert commands == []
+    event_names = [event for event, _ in events]
+    assert event_names[0] == "pre_nixos.apply.apply_plan.start"
+    assert "pre_nixos.apply.apply_plan.no_devices" in event_names
+
+
+def test_apply_plan_logs_missing_disko(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    plan = {"disko": {"disk": {}}, "disko_config_path": str(tmp_path / "missing-disko.nix")}
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.apply.log_event", record_event)
+    monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
+    monkeypatch.setattr("pre_nixos.apply.shutil.which", lambda exe: None)
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+    apply_plan(plan, dry_run=False)
+
+    skip_events = [fields for event, fields in events if event == "pre_nixos.apply.command.skip"]
+    assert any(fields.get("reason") == "executable not found" for fields in skip_events)
+    assert any(event == "pre_nixos.apply.apply_plan.finished" for event, _ in events)
+
