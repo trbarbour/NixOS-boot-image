@@ -273,15 +273,25 @@ class BootImageVM:
 
     def __post_init__(self) -> None:
         self._log_step(
-            "Boot image details: "
-            f"iso={self.artifact.iso_path} store={self.artifact.store_path} "
-            f"deriver={self.artifact.deriver} narHash={self.artifact.nar_hash}"
+            "Boot image artifact metadata",
+            body="\n".join(self._format_artifact_metadata()),
         )
-        self._log_step(
+        self._login()
+
+    def _format_artifact_metadata(self) -> List[str]:
+        metadata = [
+            f"ISO: {self.artifact.iso_path}",
+            f"Store path: {self.artifact.store_path}",
+        ]
+        if self.artifact.deriver:
+            metadata.append(f"Deriver: {self.artifact.deriver}")
+        if self.artifact.nar_hash:
+            metadata.append(f"NAR hash: {self.artifact.nar_hash}")
+        metadata.append(
             "Embedded root key fingerprint: "
             f"{self.artifact.root_key_fingerprint}"
         )
-        self._login()
+        return metadata
 
     def _log_step(self, message: str, body: Optional[str] = None) -> None:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -326,6 +336,8 @@ class BootImageVM:
             )
         transcript = "\n".join(self._transcript)
         details = [message]
+        details.append("Boot image artifact metadata:")
+        details.extend(self._format_artifact_metadata())
         if transcript:
             details.append("Login transcript:")
             details.append(transcript)
