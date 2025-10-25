@@ -12,7 +12,7 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pytest
 
@@ -260,6 +260,9 @@ def write_boot_image_metadata(
 ) -> None:
     """Persist structured metadata describing the active BootImageVM session."""
 
+    log_dir = metadata_path.parent
+    diagnostics_dir = log_dir / "diagnostics"
+    diagnostics_dir.mkdir(parents=True, exist_ok=True)
     metadata = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "artifact": {
@@ -281,6 +284,9 @@ def write_boot_image_metadata(
             "host": ssh_host,
             "port": ssh_port,
             "executable": ssh_executable,
+        },
+        "diagnostics": {
+            "directory": str(diagnostics_dir),
         },
     }
     metadata_path.write_text(
@@ -314,8 +320,14 @@ class BootImageVM:
     artifact: BootImageBuild
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
+    _log_dir: Path = field(init=False, repr=False)
+    _diagnostic_dir: Path = field(init=False, repr=False)
+    _diagnostic_counter: int = field(default=0, init=False, repr=False)
 
     def __post_init__(self) -> None:
+        self._log_dir = self.harness_log_path.parent
+        self._diagnostic_dir = self._log_dir / "diagnostics"
+        self._diagnostic_dir.mkdir(exist_ok=True)
         self._log_step(
             "Boot image artifact metadata",
             body="\n".join(self._format_artifact_metadata()),
@@ -352,6 +364,25 @@ class BootImageVM:
                     for line in lines:
                         handle.write(f"[{timestamp}]   {line}\n")
 
+    def _write_diagnostic_artifact(
+        self, slug: str, content: str, *, extension: str = ".log"
+    ) -> Path:
+        safe_slug = re.sub(r"[^A-Za-z0-9_-]", "-", slug).strip("-")
+        if not safe_slug:
+            safe_slug = "diagnostic"
+        if not extension.startswith("."):
+            extension = "." + extension
+        self._diagnostic_counter += 1
+        filename = f"{safe_slug}-{self._diagnostic_counter:02d}{extension}"
+        path = self._diagnostic_dir / filename
+        if content and not content.endswith("\n"):
+            to_write = content + "\n"
+        else:
+            to_write = content
+        path.write_text(to_write, encoding="utf-8")
+        self._log_step(f"Diagnostic artifact written to {path}")
+        return path
+
     def _record_child_output(self) -> None:
         buffer = self.child.before.replace("\r", "") if self.child.before else ""
         if not buffer:
@@ -371,7 +402,12 @@ class BootImageVM:
             tail = handle.readlines()[-lines:]
         return [line.rstrip("\n") for line in tail]
 
-    def _raise_with_transcript(self, message: str) -> None:
+    def _raise_with_transcript(
+        self,
+        message: str,
+        *,
+        diagnostics: Optional[List[Tuple[str, Path]]] = None,
+    ) -> None:
         self._record_child_output()
         serial_tail = self._read_serial_tail()
         if serial_tail:
@@ -392,6 +428,10 @@ class BootImageVM:
         details.append(f"Harness log: {self.harness_log_path}")
         details.append(f"Serial log: {self.log_path}")
         details.append(f"Metadata: {self.metadata_path}")
+        if diagnostics:
+            details.append("Diagnostic artifacts:")
+            for label, path in diagnostics:
+                details.append(f"- {label}: {path}")
         raise AssertionError("\n".join(details))
 
     def _expect_normalised(self, patterns: List[str], *, timeout: int) -> int:
@@ -694,10 +734,20 @@ class BootImageVM:
             "Captured systemctl status pre-nixos after storage status timeout",
             body=unit_status,
         )
+        diagnostics: List[Tuple[str, Path]] = []
+        journal_path = self._write_diagnostic_artifact(
+            "pre-nixos-journal-storage-timeout", journal
+        )
+        diagnostics.append(("journalctl -u pre-nixos.service -b", journal_path))
+        status_path = self._write_diagnostic_artifact(
+            "pre-nixos-status-storage-timeout", unit_status
+        )
+        diagnostics.append(("systemctl status pre-nixos", status_path))
         self._raise_with_transcript(
             "timed out waiting for pre-nixos storage status\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
-            f"systemctl status pre-nixos:\n{unit_status}"
+            f"systemctl status pre-nixos:\n{unit_status}",
+            diagnostics=diagnostics,
         )
 
     def wait_for_ipv4(self, iface: str = "lan", *, timeout: int = 240) -> List[str]:
@@ -723,10 +773,20 @@ class BootImageVM:
             "Captured systemctl status pre-nixos after IPv4 timeout",
             body=unit_status,
         )
+        diagnostics: List[Tuple[str, Path]] = []
+        journal_path = self._write_diagnostic_artifact(
+            f"pre-nixos-journal-ipv4-timeout-{iface}", journal
+        )
+        diagnostics.append(("journalctl -u pre-nixos.service -b", journal_path))
+        status_path = self._write_diagnostic_artifact(
+            f"pre-nixos-status-ipv4-timeout-{iface}", unit_status
+        )
+        diagnostics.append(("systemctl status pre-nixos", status_path))
         self._raise_with_transcript(
             f"timed out waiting for IPv4 address on {iface}\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
-            f"systemctl status pre-nixos:\n{unit_status}"
+            f"systemctl status pre-nixos:\n{unit_status}",
+            diagnostics=diagnostics,
         )
 
     def wait_for_unit_inactive(self, unit: str, *, timeout: int = 240) -> str:
@@ -752,6 +812,15 @@ class BootImageVM:
         )
         journal_unit = unit if unit.endswith(".service") else f"{unit}.service"
         journal = self.collect_journal(journal_unit)
+        diagnostics: List[Tuple[str, Path]] = []
+        status_path = self._write_diagnostic_artifact(
+            f"{journal_unit}-status-timeout", unit_status
+        )
+        diagnostics.append((f"systemctl status {unit}", status_path))
+        journal_path = self._write_diagnostic_artifact(
+            f"{journal_unit}-journal-timeout", journal
+        )
+        diagnostics.append((f"journalctl -u {journal_unit} -b", journal_path))
         self._raise_with_transcript(
             "\n".join(
                 [
@@ -759,7 +828,8 @@ class BootImageVM:
                     f"systemctl status {unit}:\n{unit_status}",
                     f"journalctl -u {journal_unit} -b:\n{journal}",
                 ]
-            )
+            ),
+            diagnostics=diagnostics,
         )
 
     def shutdown(self) -> None:
