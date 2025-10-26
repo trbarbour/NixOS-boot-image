@@ -1081,6 +1081,20 @@ class BootImageVM:
         deadline = time.monotonic() + timeout
         last_stdout = ""
         last_stderr = ""
+        last_returncode: Optional[int] = None
+        attempts = 0
+
+        self._log_step(
+            "Executing SSH command",
+            body="\n".join(
+                [
+                    f"User: {user}",
+                    f"Host: {self.ssh_host}",
+                    f"Port: {target_port}",
+                    f"Command: {command}",
+                ]
+            ),
+        )
 
         ssh_cmd = [
             self.ssh_executable,
@@ -1101,6 +1115,7 @@ class BootImageVM:
         ]
 
         while time.monotonic() < deadline:
+            attempts += 1
             result = subprocess.run(
                 ssh_cmd,
                 check=False,
@@ -1108,15 +1123,88 @@ class BootImageVM:
                 text=True,
             )
             if result.returncode == 0:
-                return result.stdout.strip()
+                output = result.stdout.strip()
+                self._log_step(
+                    f"SSH command succeeded on attempt {attempts}",
+                    body=output or None,
+                )
+                return output
             last_stdout = result.stdout
             last_stderr = result.stderr
+            last_returncode = result.returncode
+            self._log_step(
+                f"SSH command attempt {attempts} failed with return code {result.returncode}",
+                body="\n".join(
+                    [
+                        "--- stdout ---",
+                        last_stdout.strip() or "<no stdout>",
+                        "--- stderr ---",
+                        last_stderr.strip() or "<no stderr>",
+                    ]
+                ),
+            )
             time.sleep(interval)
 
-        raise AssertionError(
-            "SSH command failed after retries: "
-            f"stdout={last_stdout!r} stderr={last_stderr!r}"
+        diagnostics: List[Tuple[str, Path]] = []
+        command_summary = " ".join(ssh_cmd)
+        stdout_content = "\n".join(
+            [
+                f"SSH command: {command_summary}",
+                f"User: {user}",
+                f"Host: {self.ssh_host}",
+                f"Port: {target_port}",
+                f"Attempts: {attempts}",
+                f"Last return code: {last_returncode if last_returncode is not None else 'N/A'}",
+                "",
+                last_stdout.rstrip("\n") or "<no stdout captured>",
+            ]
         )
+        stdout_path = self._write_diagnostic_artifact(
+            "ssh-command-stdout",
+            stdout_content,
+            metadata_label="SSH command stdout",
+        )
+        diagnostics.append(("SSH command stdout", stdout_path))
+
+        stderr_content = "\n".join(
+            [
+                f"SSH command: {command_summary}",
+                f"User: {user}",
+                f"Host: {self.ssh_host}",
+                f"Port: {target_port}",
+                f"Attempts: {attempts}",
+                f"Last return code: {last_returncode if last_returncode is not None else 'N/A'}",
+                "",
+                last_stderr.rstrip("\n") or "<no stderr captured>",
+            ]
+        )
+        stderr_path = self._write_diagnostic_artifact(
+            "ssh-command-stderr",
+            stderr_content,
+            metadata_label="SSH command stderr",
+        )
+        diagnostics.append(("SSH command stderr", stderr_path))
+
+        failure_lines = [
+            (
+                "SSH command '{cmd}' failed after {attempts} attempts for {user}@{host}:{port}".format(
+                    cmd=command,
+                    attempts=attempts,
+                    user=user,
+                    host=self.ssh_host,
+                    port=target_port,
+                )
+            )
+        ]
+        if last_returncode is not None:
+            failure_lines.append(f"Last return code: {last_returncode}")
+        failure_lines.append(
+            "Last stdout:\n" + (last_stdout.strip() or "<no stdout>")
+        )
+        failure_lines.append(
+            "Last stderr:\n" + (last_stderr.strip() or "<no stderr>")
+        )
+        self._raise_with_transcript("\n".join(failure_lines), diagnostics=diagnostics)
 
 
 def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
@@ -1203,6 +1291,125 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
     assert "sudo -i escalation transcript" in message
     assert str(path) in message
 
+
+def test_run_ssh_failure_records_diagnostics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SSH failures should leave behind diagnostic artifacts and surface them."""
+
+    iso_path = tmp_path / "sample.iso"
+    store_path = tmp_path / "store"
+    disk_image = tmp_path / "disk.img"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    metadata_path = tmp_path / "metadata.json"
+
+    iso_path.write_text("", encoding="utf-8")
+    store_path.mkdir()
+    disk_image.write_text("", encoding="utf-8")
+    harness_log.write_text("", encoding="utf-8")
+    serial_log.write_text("", encoding="utf-8")
+
+    artifact = BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver="sample.drv",
+        nar_hash="sha256-sample",
+        root_key_fingerprint="SHA256:sample",
+    )
+
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    class DummyChild:
+        def __init__(self) -> None:
+            self.before = ""
+
+    vm = object.__new__(BootImageVM)
+    vm.child = DummyChild()
+    vm.log_path = serial_log
+    vm.harness_log_path = harness_log
+    vm.metadata_path = metadata_path
+    vm.ssh_port = 2222
+    vm.ssh_host = "127.0.0.1"
+    vm.ssh_executable = "/usr/bin/ssh"
+    vm.artifact = artifact
+    vm._transcript = []
+    vm._has_root_privileges = False
+    vm._log_dir = metadata_path.parent
+    vm._diagnostic_dir = metadata_path.parent / "diagnostics"
+    vm._diagnostic_dir.mkdir(exist_ok=True)
+    vm._diagnostic_counter = 0
+    vm._escalation_diagnostics = []
+
+    attempts: List[int] = []
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        result = subprocess.CompletedProcess(
+            args=args,
+            returncode=255,
+            stdout="simulated stdout\n",
+            stderr="simulated stderr\n",
+        )
+        attempts.append(1)
+        return result
+
+    monotonic_values = iter([0.0, 0.1, 1.5])
+
+    def fake_monotonic() -> float:
+        try:
+            return next(monotonic_values)
+        except StopIteration:
+            return 2.0
+
+    monkeypatch.setattr(
+        "tests.test_boot_image_vm.subprocess.run",
+        fake_run,
+    )
+    monkeypatch.setattr("tests.test_boot_image_vm.time.monotonic", fake_monotonic)
+    monkeypatch.setattr("tests.test_boot_image_vm.time.sleep", lambda _: None)
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm.run_ssh(
+            private_key=tmp_path / "id_ed25519",
+            command="id -un",
+            timeout=1,
+            interval=0,
+        )
+
+    assert attempts, "expected SSH command to be invoked"
+    message = str(excinfo.value)
+    assert "SSH command stdout" in message
+    assert "SSH command stderr" in message
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    artifacts = metadata["diagnostics"]["artifacts"]
+    stdout_entries = [
+        entry for entry in artifacts if entry["label"] == "SSH command stdout"
+    ]
+    stderr_entries = [
+        entry for entry in artifacts if entry["label"] == "SSH command stderr"
+    ]
+    assert stdout_entries, "expected SSH stdout diagnostic to be recorded"
+    assert stderr_entries, "expected SSH stderr diagnostic to be recorded"
+
+    stdout_path = Path(stdout_entries[-1]["path"])
+    stderr_path = Path(stderr_entries[-1]["path"])
+    assert stdout_path.exists()
+    assert stderr_path.exists()
+    stdout_content = stdout_path.read_text(encoding="utf-8")
+    stderr_content = stderr_path.read_text(encoding="utf-8")
+    assert "simulated stdout" in stdout_content
+    assert "simulated stderr" in stderr_content
 
 @pytest.fixture(scope="session")
 def boot_image_vm(
