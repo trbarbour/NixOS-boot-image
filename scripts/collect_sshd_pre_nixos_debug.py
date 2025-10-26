@@ -282,6 +282,13 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
                 shutil.copy2(harness_log, output_dir / "harness.log")
             if serial_log.exists():
                 shutil.copy2(serial_log, output_dir / "serial.log")
+            diagnostics_dir = log_dir / "diagnostics"
+            if diagnostics_dir.exists():
+                shutil.copytree(
+                    diagnostics_dir,
+                    output_dir / "diagnostics",
+                    dirs_exist_ok=True,
+                )
             if metadata_path.exists():
                 shutil.copy2(metadata_path, output_dir / "metadata.json")
             harness_metadata: Dict[str, Any] = {}
