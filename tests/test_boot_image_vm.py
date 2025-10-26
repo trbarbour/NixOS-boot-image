@@ -410,12 +410,29 @@ class BootImageVM:
     ) -> None:
         self._record_child_output()
         serial_tail = self._read_serial_tail()
+        transcript = "\n".join(self._transcript)
+
+        collected_diagnostics: List[Tuple[str, Path]] = []
+        if diagnostics:
+            collected_diagnostics.extend(diagnostics)
+
         if serial_tail:
+            serial_body = "\n".join(serial_tail)
             self._log_step(
                 f"Serial log tail (last {len(serial_tail)} lines)",
-                body="\n".join(serial_tail),
+                body=serial_body,
             )
-        transcript = "\n".join(self._transcript)
+            serial_path = self._write_diagnostic_artifact(
+                "serial-log-tail", serial_body
+            )
+            collected_diagnostics.append(("serial log tail", serial_path))
+
+        if transcript:
+            transcript_path = self._write_diagnostic_artifact(
+                "login-transcript", transcript, extension=".txt"
+            )
+            collected_diagnostics.append(("login transcript", transcript_path))
+
         details = [message]
         details.append("Boot image artifact metadata:")
         details.extend(self._format_artifact_metadata())
@@ -428,9 +445,9 @@ class BootImageVM:
         details.append(f"Harness log: {self.harness_log_path}")
         details.append(f"Serial log: {self.log_path}")
         details.append(f"Metadata: {self.metadata_path}")
-        if diagnostics:
+        if collected_diagnostics:
             details.append("Diagnostic artifacts:")
-            for label, path in diagnostics:
+            for label, path in collected_diagnostics:
                 details.append(f"- {label}: {path}")
         raise AssertionError("\n".join(details))
 
