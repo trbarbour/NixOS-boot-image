@@ -575,6 +575,25 @@ class BootImageVM:
                 self._record_child_output()
                 self._log_step("pexpect reported TIMEOUT while awaiting patterns")
                 raise
+            except pexpect.EOF as exc:
+                self._record_child_output()
+                self._log_step("pexpect reported EOF while awaiting patterns")
+                self._raise_with_transcript(
+                    "Unexpected EOF while awaiting patterns "
+                    + ", ".join(patterns)
+                    + f": {exc}"
+                )
+            except pexpect.ExceptionPexpect as exc:
+                self._record_child_output()
+                self._log_step(
+                    "pexpect raised unexpected error while awaiting patterns",
+                    body=repr(exc),
+                )
+                self._raise_with_transcript(
+                    "pexpect error while awaiting patterns "
+                    + ", ".join(patterns)
+                    + f": {exc}"
+                )
             self._record_child_output()
             if idx < len(patterns):
                 self._log_step(f"Matched pattern: {patterns[idx]!r}")
@@ -596,6 +615,19 @@ class BootImageVM:
         except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
             self._raise_with_transcript(
                 f"Timed out waiting for id -u output: {exc}"
+            )
+        except pexpect.EOF as exc:  # pragma: no cover - integration timing
+            self._log_step("pexpect reported EOF while waiting for id -u output")
+            self._raise_with_transcript(
+                f"Unexpected EOF while waiting for id -u output: {exc}"
+            )
+        except pexpect.ExceptionPexpect as exc:  # pragma: no cover - defensive
+            self._log_step(
+                "pexpect raised unexpected error while waiting for id -u output",
+                body=repr(exc),
+            )
+            self._raise_with_transcript(
+                f"pexpect error while waiting for id -u output: {exc}"
             )
         uid = self.child.match.group(1)
         self._expect_normalised([SHELL_PROMPT], timeout=60)
@@ -787,6 +819,19 @@ class BootImageVM:
         except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
             self._raise_with_transcript(
                 f"Timed out while running command '{command}': {exc}"
+            )
+        except pexpect.EOF as exc:  # pragma: no cover - integration timing
+            self._log_step("pexpect reported EOF while waiting for command output")
+            self._raise_with_transcript(
+                f"Unexpected EOF while running command '{command}': {exc}"
+            )
+        except pexpect.ExceptionPexpect as exc:  # pragma: no cover - defensive
+            self._log_step(
+                "pexpect raised unexpected error while running command",
+                body=repr(exc),
+            )
+            self._raise_with_transcript(
+                f"pexpect error while running command '{command}': {exc}"
             )
         output = self.child.before.replace("\r", "")
         lines = output.splitlines()
@@ -1323,6 +1368,110 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
     message = str(excinfo.value)
     assert "sudo -i escalation transcript" in message
     assert str(path) in message
+
+
+def test_run_command_eof_records_diagnostics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Unexpected EOF errors should surface diagnostics via _raise_with_transcript."""
+
+    stub_pexpect = pexpect
+    if pexpect is None:
+        class DummyTimeout(Exception):
+            pass
+
+        class DummyEOF(Exception):
+            pass
+
+        class DummyException(Exception):
+            pass
+
+        class StubPexpect:
+            TIMEOUT = DummyTimeout
+            EOF = DummyEOF
+            ExceptionPexpect = DummyException
+
+        monkeypatch.setitem(globals(), "pexpect", StubPexpect)
+        stub_pexpect = StubPexpect
+
+    iso_path = tmp_path / "sample.iso"
+    store_path = tmp_path / "store"
+    disk_image = tmp_path / "disk.img"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    metadata_path = tmp_path / "metadata.json"
+
+    iso_path.write_text("", encoding="utf-8")
+    store_path.mkdir()
+    disk_image.write_text("", encoding="utf-8")
+    harness_log.write_text("", encoding="utf-8")
+
+    artifact = BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver="sample.drv",
+        nar_hash="sha256-sample",
+        root_key_fingerprint="SHA256:sample",
+    )
+
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    class EOFChild:
+        def __init__(self) -> None:
+            self.before = ""
+
+        def sendline(self, command: str) -> None:
+            self.before = f"{command}\r\npartial output"
+
+        def expect(self, pattern: object, timeout: int) -> None:
+            self.before += "\r\nunexpected termination"
+            raise stub_pexpect.EOF("command stream closed")
+
+    vm = object.__new__(BootImageVM)
+    vm.child = EOFChild()
+    vm.log_path = serial_log
+    vm.harness_log_path = harness_log
+    vm.metadata_path = metadata_path
+    vm.ssh_port = 2222
+    vm.ssh_host = "127.0.0.1"
+    vm.ssh_executable = "/usr/bin/ssh"
+    vm.artifact = artifact
+    vm._transcript = []
+    vm._has_root_privileges = False
+    vm._log_dir = metadata_path.parent
+    vm._diagnostic_dir = metadata_path.parent / "diagnostics"
+    vm._diagnostic_dir.mkdir(exist_ok=True)
+    vm._diagnostic_counter = 0
+    vm._escalation_diagnostics = []
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm.run("echo hello")
+
+    message = str(excinfo.value)
+    assert "Unexpected EOF while running command 'echo hello'" in message
+    assert "Diagnostic artifacts:" in message
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    diagnostics = metadata["diagnostics"]["artifacts"]
+    login_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "Login transcript"
+    ]
+    assert login_entries, "expected login transcript diagnostic to be recorded"
+    for entry in login_entries:
+        path = Path(entry["path"])
+        assert path.exists(), "diagnostic artifact path should exist"
 
 
 def test_run_ssh_failure_records_diagnostics(
