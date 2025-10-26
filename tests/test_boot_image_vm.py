@@ -12,7 +12,7 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import pytest
 
@@ -1185,6 +1185,39 @@ class BootImageVM:
         )
         diagnostics.append(("SSH command stderr", stderr_path))
 
+        def _capture_vm_output(
+            *,
+            label: str,
+            slug: str,
+            collector: Callable[[], str],
+        ) -> None:
+            try:
+                output = collector()
+            except AssertionError as exc:
+                output = f"Failed to capture {label}: {exc}"
+            log_body = output or "<no output captured>"
+            self._log_step(f"Captured {label} after SSH failure", body=log_body)
+            path = self._write_diagnostic_artifact(
+                slug,
+                output,
+                metadata_label=label,
+            )
+            diagnostics.append((label, path))
+
+        _capture_vm_output(
+            label="systemctl status sshd",
+            slug="systemctl-status-sshd",
+            collector=lambda: self.run(
+                "systemctl status sshd --no-pager 2>&1 || true", timeout=240
+            ),
+        )
+
+        _capture_vm_output(
+            label="journalctl -u sshd.service -b",
+            slug="journalctl-sshd-service",
+            collector=lambda: self.collect_journal("sshd.service"),
+        )
+
         failure_lines = [
             (
                 "SSH command '{cmd}' failed after {attempts} attempts for {user}@{host}:{port}".format(
@@ -1352,6 +1385,8 @@ def test_run_ssh_failure_records_diagnostics(
     vm._escalation_diagnostics = []
 
     attempts: List[int] = []
+    commands: List[str] = []
+    journal_calls: List[Tuple[str, bool]] = []
 
     def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
         result = subprocess.CompletedProcess(
@@ -1378,6 +1413,19 @@ def test_run_ssh_failure_records_diagnostics(
     monkeypatch.setattr("tests.test_boot_image_vm.time.monotonic", fake_monotonic)
     monkeypatch.setattr("tests.test_boot_image_vm.time.sleep", lambda _: None)
 
+    def fake_vm_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+        commands.append(command)
+        return f"output for {command}"
+
+    def fake_collect_journal(
+        unit: str, *, since_boot: bool = True
+    ) -> str:  # type: ignore[override]
+        journal_calls.append((unit, since_boot))
+        return f"journal for {unit}"
+
+    vm.run = fake_vm_run  # type: ignore[assignment]
+    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
+
     with pytest.raises(AssertionError) as excinfo:
         vm.run_ssh(
             private_key=tmp_path / "id_ed25519",
@@ -1390,6 +1438,8 @@ def test_run_ssh_failure_records_diagnostics(
     message = str(excinfo.value)
     assert "SSH command stdout" in message
     assert "SSH command stderr" in message
+    assert "systemctl status sshd" in message
+    assert "journalctl -u sshd.service -b" in message
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     artifacts = metadata["diagnostics"]["artifacts"]
@@ -1402,6 +1452,17 @@ def test_run_ssh_failure_records_diagnostics(
     assert stdout_entries, "expected SSH stdout diagnostic to be recorded"
     assert stderr_entries, "expected SSH stderr diagnostic to be recorded"
 
+    sshd_status_entries = [
+        entry for entry in artifacts if entry["label"] == "systemctl status sshd"
+    ]
+    sshd_journal_entries = [
+        entry
+        for entry in artifacts
+        if entry["label"] == "journalctl -u sshd.service -b"
+    ]
+    assert sshd_status_entries, "expected sshd status diagnostic to be recorded"
+    assert sshd_journal_entries, "expected sshd journal diagnostic to be recorded"
+
     stdout_path = Path(stdout_entries[-1]["path"])
     stderr_path = Path(stderr_entries[-1]["path"])
     assert stdout_path.exists()
@@ -1410,6 +1471,20 @@ def test_run_ssh_failure_records_diagnostics(
     stderr_content = stderr_path.read_text(encoding="utf-8")
     assert "simulated stdout" in stdout_content
     assert "simulated stderr" in stderr_content
+
+    status_path = Path(sshd_status_entries[-1]["path"])
+    journal_path = Path(sshd_journal_entries[-1]["path"])
+    assert status_path.exists()
+    assert journal_path.exists()
+    status_content = status_path.read_text(encoding="utf-8")
+    journal_content = journal_path.read_text(encoding="utf-8")
+    assert "output for systemctl status sshd --no-pager 2>&1 || true" in status_content
+    assert "journal for sshd.service" in journal_content
+
+    assert any(
+        command == "systemctl status sshd --no-pager 2>&1 || true" for command in commands
+    ), "expected systemctl status sshd to be collected"
+    assert journal_calls == [("sshd.service", True)]
 
 @pytest.fixture(scope="session")
 def boot_image_vm(
