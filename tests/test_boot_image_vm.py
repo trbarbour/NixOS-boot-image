@@ -358,6 +358,9 @@ class BootImageVM:
     _log_dir: Path = field(init=False, repr=False)
     _diagnostic_dir: Path = field(init=False, repr=False)
     _diagnostic_counter: int = field(default=0, init=False, repr=False)
+    _escalation_diagnostics: List[Tuple[str, Path]] = field(
+        default_factory=list, init=False, repr=False
+    )
 
     def __post_init__(self) -> None:
         self._log_dir = self.harness_log_path.parent
@@ -433,6 +436,50 @@ class BootImageVM:
                 )
         return path
 
+    def _snapshot_transcript(self) -> int:
+        """Return the index of the next transcript entry for later slicing."""
+
+        return len(self._transcript)
+
+    def _clear_escalation_diagnostics(self) -> None:
+        """Remove any recorded escalation diagnostics after a successful login."""
+
+        if self._escalation_diagnostics:
+            self._escalation_diagnostics.clear()
+
+    def _capture_escalation_failure(
+        self,
+        *,
+        slug: str,
+        description: str,
+        reason: str,
+        transcript_start: int,
+    ) -> None:
+        """Persist a diagnostic transcript for a failed privilege escalation."""
+
+        self._record_child_output()
+        captured_entries = self._transcript[transcript_start:]
+        transcript_body = "\n".join(captured_entries).strip()
+        if not transcript_body:
+            transcript_body = "<no transcript entries recorded>"
+        content_lines = [
+            f"Escalation method: {description}",
+            f"Failure reason: {reason}",
+            f"Captured at: {datetime.datetime.now(datetime.timezone.utc).isoformat()}",
+            "",
+            transcript_body,
+        ]
+        content = "\n".join(content_lines)
+        path = self._write_diagnostic_artifact(
+            f"{slug}-escalation-failure",
+            content,
+            extension=".txt",
+            metadata_label=f"{description} escalation transcript",
+        )
+        label = f"{description} escalation transcript"
+        if not any(existing_path == path for _, existing_path in self._escalation_diagnostics):
+            self._escalation_diagnostics.append((label, path))
+
     def _record_child_output(self) -> None:
         buffer = self.child.before.replace("\r", "") if self.child.before else ""
         if not buffer:
@@ -465,6 +512,11 @@ class BootImageVM:
         collected_diagnostics: List[Tuple[str, Path]] = []
         if diagnostics:
             collected_diagnostics.extend(diagnostics)
+
+        if self._escalation_diagnostics:
+            for label, path in self._escalation_diagnostics:
+                if not any(existing_path == path for _, existing_path in collected_diagnostics):
+                    collected_diagnostics.append((label, path))
 
         if serial_tail:
             serial_body = "\n".join(serial_tail)
@@ -552,13 +604,21 @@ class BootImageVM:
     def _escalate_with_sudo(self) -> bool:
         """Attempt to escalate privileges with ``sudo -i``."""
 
+        transcript_start = self._snapshot_transcript()
         self._log_step("Attempting to escalate with sudo -i")
         self.child.sendline("sudo -i")
         sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ?", r"# ?"]
         try:
             idx = self._expect_normalised(sudo_patterns, timeout=120)
         except pexpect.TIMEOUT:
-            self._log_step("sudo -i did not produce a root prompt")
+            reason = "sudo -i did not produce a root prompt"
+            self._log_step(reason)
+            self._capture_escalation_failure(
+                slug="sudo",
+                description="sudo -i",
+                reason=reason,
+                transcript_start=transcript_start,
+            )
             return False
         if idx == 0:
             self._log_step("Submitting empty sudo password")
@@ -566,7 +626,14 @@ class BootImageVM:
             try:
                 self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=120)
             except pexpect.TIMEOUT:
-                self._log_step("sudo -i password prompt did not yield a root shell")
+                reason = "sudo -i password prompt did not yield a root shell"
+                self._log_step(reason)
+                self._capture_escalation_failure(
+                    slug="sudo",
+                    description="sudo -i",
+                    reason=reason,
+                    transcript_start=transcript_start,
+                )
                 return False
         self._set_shell_prompt()
         uid_output = self._read_uid()
@@ -574,20 +641,35 @@ class BootImageVM:
         self._log_step(f"id -u after sudo -i returned: {uid_output!r}")
         if self._has_root_privileges:
             self._log_step("Successfully escalated privileges with sudo -i")
+            self._clear_escalation_diagnostics()
             return True
         self._log_step("sudo -i completed without root privileges")
+        self._capture_escalation_failure(
+            slug="sudo",
+            description="sudo -i",
+            reason="sudo -i completed without root privileges",
+            transcript_start=transcript_start,
+        )
         return False
 
     def _escalate_with_su(self) -> bool:
         """Attempt to escalate privileges with ``su -``."""
 
+        transcript_start = self._snapshot_transcript()
         self._log_step("Attempting to escalate with su -")
         self.child.sendline("su -")
         su_patterns = [r"Password:", r"root@.*# ?", r"# ?"]
         try:
             idx = self._expect_normalised(su_patterns, timeout=120)
         except pexpect.TIMEOUT:
-            self._log_step("su - did not produce a root prompt")
+            reason = "su - did not produce a root prompt"
+            self._log_step(reason)
+            self._capture_escalation_failure(
+                slug="su",
+                description="su -",
+                reason=reason,
+                transcript_start=transcript_start,
+            )
             return False
         if idx == 0:
             self._log_step("Submitting empty root password for su -")
@@ -595,7 +677,14 @@ class BootImageVM:
             try:
                 self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=120)
             except pexpect.TIMEOUT:
-                self._log_step("su - password prompt did not yield a root shell")
+                reason = "su - password prompt did not yield a root shell"
+                self._log_step(reason)
+                self._capture_escalation_failure(
+                    slug="su",
+                    description="su -",
+                    reason=reason,
+                    transcript_start=transcript_start,
+                )
                 return False
         self._set_shell_prompt()
         uid_output = self._read_uid()
@@ -603,8 +692,15 @@ class BootImageVM:
         self._log_step(f"id -u after su - returned: {uid_output!r}")
         if self._has_root_privileges:
             self._log_step("Successfully escalated privileges with su -")
+            self._clear_escalation_diagnostics()
             return True
         self._log_step("su - completed without root privileges")
+        self._capture_escalation_failure(
+            slug="su",
+            description="su -",
+            reason="su - completed without root privileges",
+            transcript_start=transcript_start,
+        )
         return False
 
     def _login(self) -> None:
@@ -655,6 +751,7 @@ class BootImageVM:
         self._has_root_privileges = uid_output == "0"
         if self._has_root_privileges:
             self._log_step("Initial shell already has root privileges")
+            self._clear_escalation_diagnostics()
             return
 
         self._log_step("Initial shell lacks root privileges")
@@ -712,6 +809,7 @@ class BootImageVM:
         if self._has_root_privileges:
             uid_output = self._read_uid()
             if uid_output == "0":
+                self._clear_escalation_diagnostics()
                 return
             self._log_step(
                 "Root shell check reported non-root uid "
@@ -1019,6 +1117,91 @@ class BootImageVM:
             "SSH command failed after retries: "
             f"stdout={last_stdout!r} stderr={last_stderr!r}"
         )
+
+
+def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
+    """Root escalation failures should create diagnostic transcripts automatically."""
+
+    iso_path = tmp_path / "sample.iso"
+    store_path = tmp_path / "store"
+    disk_image = tmp_path / "disk.img"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    metadata_path = tmp_path / "metadata.json"
+    iso_path.write_text("", encoding="utf-8")
+    store_path.mkdir()
+    disk_image.write_text("", encoding="utf-8")
+    harness_log.write_text("", encoding="utf-8")
+    serial_log.write_text("", encoding="utf-8")
+
+    artifact = BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver="sample.drv",
+        nar_hash="sha256-sample",
+        root_key_fingerprint="SHA256:sample",
+    )
+
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    class DummyChild:
+        def __init__(self) -> None:
+            self.before = ""
+
+    vm = object.__new__(BootImageVM)
+    vm.child = DummyChild()
+    vm.log_path = serial_log
+    vm.harness_log_path = harness_log
+    vm.metadata_path = metadata_path
+    vm.ssh_port = 2222
+    vm.ssh_host = "127.0.0.1"
+    vm.ssh_executable = "/usr/bin/ssh"
+    vm.artifact = artifact
+    vm._transcript = []
+    vm._has_root_privileges = False
+    vm._log_dir = metadata_path.parent
+    vm._diagnostic_dir = metadata_path.parent / "diagnostics"
+    vm._diagnostic_dir.mkdir(exist_ok=True)
+    vm._diagnostic_counter = 0
+    vm._escalation_diagnostics = []
+
+    transcript_start = vm._snapshot_transcript()
+    vm._log_step("Attempting to escalate with sudo -i")
+    vm.child.before = "sudo -i\r\nPassword:\r\n"
+    vm._capture_escalation_failure(
+        slug="sudo",
+        description="sudo -i",
+        reason="sudo -i did not produce a root prompt",
+        transcript_start=transcript_start,
+    )
+
+    assert vm._escalation_diagnostics, "expected escalation diagnostics to be recorded"
+    label, path = vm._escalation_diagnostics[-1]
+    assert label == "sudo -i escalation transcript"
+    assert path.exists()
+    content = path.read_text(encoding="utf-8")
+    assert "Escalation method: sudo -i" in content
+    assert "Failure reason: sudo -i did not produce a root prompt" in content
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    diagnostics = metadata["diagnostics"]["artifacts"]
+    assert any(entry["path"] == str(path) for entry in diagnostics)
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm._raise_with_transcript("escalation failed")
+    message = str(excinfo.value)
+    assert "sudo -i escalation transcript" in message
+    assert str(path) in message
 
 
 @pytest.fixture(scope="session")
