@@ -287,8 +287,43 @@ def write_boot_image_metadata(
         },
         "diagnostics": {
             "directory": str(diagnostics_dir),
+            "artifacts": [],
         },
     }
+    metadata_path.write_text(
+        json.dumps(metadata, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def record_boot_image_diagnostic(
+    metadata_path: Path,
+    *,
+    label: str,
+    path: Path,
+) -> None:
+    """Append a diagnostic artifact entry to ``metadata.json`` when available."""
+
+    try:
+        raw_metadata = metadata_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return
+
+    if not raw_metadata.strip():
+        return
+
+    try:
+        metadata = json.loads(raw_metadata)
+    except json.JSONDecodeError:
+        return
+
+    diagnostics = metadata.setdefault("diagnostics", {})
+    artifacts = diagnostics.setdefault("artifacts", [])
+    entry = {"label": label, "path": str(path)}
+    if any(existing.get("path") == entry["path"] for existing in artifacts):
+        return
+
+    artifacts.append(entry)
     metadata_path.write_text(
         json.dumps(metadata, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -365,7 +400,12 @@ class BootImageVM:
                         handle.write(f"[{timestamp}]   {line}\n")
 
     def _write_diagnostic_artifact(
-        self, slug: str, content: str, *, extension: str = ".log"
+        self,
+        slug: str,
+        content: str,
+        *,
+        extension: str = ".log",
+        metadata_label: Optional[str] = None,
     ) -> Path:
         safe_slug = re.sub(r"[^A-Za-z0-9_-]", "-", slug).strip("-")
         if not safe_slug:
@@ -381,6 +421,16 @@ class BootImageVM:
             to_write = content
         path.write_text(to_write, encoding="utf-8")
         self._log_step(f"Diagnostic artifact written to {path}")
+        if metadata_label:
+            try:
+                record_boot_image_diagnostic(
+                    self.metadata_path, label=metadata_label, path=path
+                )
+            except Exception as exc:  # pragma: no cover - defensive logging
+                self._log_step(
+                    "Failed to record diagnostic artifact in metadata",
+                    body=repr(exc),
+                )
         return path
 
     def _record_child_output(self) -> None:
@@ -423,13 +473,18 @@ class BootImageVM:
                 body=serial_body,
             )
             serial_path = self._write_diagnostic_artifact(
-                "serial-log-tail", serial_body
+                "serial-log-tail",
+                serial_body,
+                metadata_label="Serial log tail",
             )
             collected_diagnostics.append(("serial log tail", serial_path))
 
         if transcript:
             transcript_path = self._write_diagnostic_artifact(
-                "login-transcript", transcript, extension=".txt"
+                "login-transcript",
+                transcript,
+                extension=".txt",
+                metadata_label="Login transcript",
             )
             collected_diagnostics.append(("login transcript", transcript_path))
 
@@ -753,13 +808,28 @@ class BootImageVM:
         )
         diagnostics: List[Tuple[str, Path]] = []
         journal_path = self._write_diagnostic_artifact(
-            "pre-nixos-journal-storage-timeout", journal
+            "pre-nixos-journal-storage-timeout",
+            journal,
+            metadata_label="journalctl -u pre-nixos.service -b (storage timeout)",
         )
         diagnostics.append(("journalctl -u pre-nixos.service -b", journal_path))
         status_path = self._write_diagnostic_artifact(
-            "pre-nixos-status-storage-timeout", unit_status
+            "pre-nixos-status-storage-timeout",
+            unit_status,
+            metadata_label="systemctl status pre-nixos (storage timeout)",
         )
         diagnostics.append(("systemctl status pre-nixos", status_path))
+        lsblk_output = self.run("lsblk -f 2>&1 || true", timeout=240)
+        self._log_step(
+            "Captured lsblk -f after storage status timeout",
+            body=lsblk_output,
+        )
+        lsblk_path = self._write_diagnostic_artifact(
+            "lsblk-storage-timeout",
+            lsblk_output,
+            metadata_label="lsblk -f (storage timeout)",
+        )
+        diagnostics.append(("lsblk -f", lsblk_path))
         self._raise_with_transcript(
             "timed out waiting for pre-nixos storage status\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -792,13 +862,33 @@ class BootImageVM:
         )
         diagnostics: List[Tuple[str, Path]] = []
         journal_path = self._write_diagnostic_artifact(
-            f"pre-nixos-journal-ipv4-timeout-{iface}", journal
+            f"pre-nixos-journal-ipv4-timeout-{iface}",
+            journal,
+            metadata_label=(
+                "journalctl -u pre-nixos.service -b "
+                f"(IPv4 timeout on {iface})"
+            ),
         )
         diagnostics.append(("journalctl -u pre-nixos.service -b", journal_path))
         status_path = self._write_diagnostic_artifact(
-            f"pre-nixos-status-ipv4-timeout-{iface}", unit_status
+            f"pre-nixos-status-ipv4-timeout-{iface}",
+            unit_status,
+            metadata_label="systemctl status pre-nixos (IPv4 timeout)",
         )
         diagnostics.append(("systemctl status pre-nixos", status_path))
+        network_status = self.run(
+            f"networkctl status {iface} 2>&1 || true", timeout=240
+        )
+        self._log_step(
+            f"Captured networkctl status {iface} after IPv4 timeout",
+            body=network_status,
+        )
+        network_path = self._write_diagnostic_artifact(
+            f"networkctl-status-ipv4-timeout-{iface}",
+            network_status,
+            metadata_label=f"networkctl status {iface} (IPv4 timeout)",
+        )
+        diagnostics.append((f"networkctl status {iface}", network_path))
         self._raise_with_transcript(
             f"timed out waiting for IPv4 address on {iface}\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -831,13 +921,30 @@ class BootImageVM:
         journal = self.collect_journal(journal_unit)
         diagnostics: List[Tuple[str, Path]] = []
         status_path = self._write_diagnostic_artifact(
-            f"{journal_unit}-status-timeout", unit_status
+            f"{journal_unit}-status-timeout",
+            unit_status,
+            metadata_label=f"systemctl status {unit} (inactive timeout)",
         )
         diagnostics.append((f"systemctl status {unit}", status_path))
         journal_path = self._write_diagnostic_artifact(
-            f"{journal_unit}-journal-timeout", journal
+            f"{journal_unit}-journal-timeout",
+            journal,
+            metadata_label=f"journalctl -u {journal_unit} -b (inactive timeout)",
         )
         diagnostics.append((f"journalctl -u {journal_unit} -b", journal_path))
+        job_list = self.run(
+            "systemctl list-jobs --no-legend 2>&1 || true", timeout=240
+        )
+        self._log_step(
+            "Captured systemctl list-jobs after unit inactivity timeout",
+            body=job_list,
+        )
+        jobs_path = self._write_diagnostic_artifact(
+            f"{journal_unit}-jobs-timeout",
+            job_list,
+            metadata_label="systemctl list-jobs (inactive timeout)",
+        )
+        diagnostics.append(("systemctl list-jobs", jobs_path))
         self._raise_with_transcript(
             "\n".join(
                 [
