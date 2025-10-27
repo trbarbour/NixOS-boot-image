@@ -501,10 +501,11 @@ class BootImageVM:
         transcript_body = "\n".join(captured_entries).strip()
         if not transcript_body:
             transcript_body = "<no transcript entries recorded>"
+        captured_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
         content_lines = [
             f"Escalation method: {description}",
             f"Failure reason: {reason}",
-            f"Captured at: {datetime.datetime.now(datetime.timezone.utc).isoformat()}",
+            f"Captured at: {captured_at}",
             "",
             transcript_body,
         ]
@@ -518,6 +519,29 @@ class BootImageVM:
         label = f"{description} escalation transcript"
         if not any(existing_path == path for _, existing_path in self._escalation_diagnostics):
             self._escalation_diagnostics.append((label, path))
+
+        serial_tail = self._read_serial_tail()
+        if serial_tail:
+            serial_body = "\n".join(serial_tail)
+        else:
+            serial_body = "<no serial log entries recorded>"
+        serial_lines = [
+            f"Escalation method: {description}",
+            f"Failure reason: {reason}",
+            f"Captured at: {captured_at}",
+            "",
+            serial_body,
+        ]
+        serial_content = "\n".join(serial_lines)
+        serial_path = self._write_diagnostic_artifact(
+            f"{slug}-serial-log-tail",
+            serial_content,
+            extension=".txt",
+            metadata_label=f"{description} serial log tail",
+        )
+        serial_label = f"{description} serial log tail"
+        if not any(existing_path == serial_path for _, existing_path in self._escalation_diagnostics):
+            self._escalation_diagnostics.append((serial_label, serial_path))
 
     def _record_child_output(self) -> None:
         buffer = self.child.before.replace("\r", "") if self.child.before else ""
@@ -1386,7 +1410,10 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
     store_path.mkdir()
     disk_image.write_text("", encoding="utf-8")
     harness_log.write_text("", encoding="utf-8")
-    serial_log.write_text("", encoding="utf-8")
+    serial_log.write_text(
+        "serial boot line 1\nserial boot line 2\n",
+        encoding="utf-8",
+    )
 
     artifact = BootImageBuild(
         iso_path=iso_path,
@@ -1442,22 +1469,39 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
     )
 
     assert vm._escalation_diagnostics, "expected escalation diagnostics to be recorded"
-    label, path = vm._escalation_diagnostics[-1]
-    assert label == "sudo -i escalation transcript"
-    assert path.exists()
-    content = path.read_text(encoding="utf-8")
+    diagnostics_map = {label: path for label, path in vm._escalation_diagnostics}
+
+    transcript_path = diagnostics_map.get("sudo -i escalation transcript")
+    assert transcript_path is not None, "expected escalation transcript artifact"
+    assert transcript_path.exists()
+    content = transcript_path.read_text(encoding="utf-8")
     assert "Escalation method: sudo -i" in content
     assert "Failure reason: sudo -i did not produce a root prompt" in content
 
+    serial_path = diagnostics_map.get("sudo -i serial log tail")
+    assert serial_path is not None, "expected serial log artifact"
+    assert serial_path.exists()
+    serial_content = serial_path.read_text(encoding="utf-8")
+    assert "Escalation method: sudo -i" in serial_content
+    assert "serial boot line 2" in serial_content
+
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     diagnostics = metadata["diagnostics"]["artifacts"]
-    assert any(entry["path"] == str(path) for entry in diagnostics)
+    labels_in_metadata = {entry["label"] for entry in diagnostics}
+    assert "sudo -i escalation transcript" in labels_in_metadata
+    assert "sudo -i serial log tail" in labels_in_metadata
+
+    paths_in_metadata = {entry["path"] for entry in diagnostics}
+    assert str(transcript_path) in paths_in_metadata
+    assert str(serial_path) in paths_in_metadata
 
     with pytest.raises(AssertionError) as excinfo:
         vm._raise_with_transcript("escalation failed")
     message = str(excinfo.value)
     assert "sudo -i escalation transcript" in message
-    assert str(path) in message
+    assert "sudo -i serial log tail" in message
+    assert str(transcript_path) in message
+    assert str(serial_path) in message
 
 
 def test_raise_with_transcript_includes_qemu_version(tmp_path: Path) -> None:
