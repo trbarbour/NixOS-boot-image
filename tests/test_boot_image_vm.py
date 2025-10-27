@@ -1158,6 +1158,33 @@ class BootImageVM:
             metadata_label=f"networkctl status {iface} (IPv4 timeout)",
         )
         diagnostics.append((f"networkctl status {iface}", network_path))
+        networkd_status = self.run(
+            "systemctl status systemd-networkd --no-pager 2>&1 || true",
+            timeout=240,
+        )
+        self._log_step(
+            "Captured systemctl status systemd-networkd after IPv4 timeout",
+            body=networkd_status,
+        )
+        networkd_status_path = self._write_diagnostic_artifact(
+            f"systemd-networkd-status-ipv4-timeout-{iface}",
+            networkd_status,
+            metadata_label="systemctl status systemd-networkd (IPv4 timeout)",
+        )
+        diagnostics.append(("systemctl status systemd-networkd", networkd_status_path))
+        networkd_journal = self.collect_journal("systemd-networkd.service")
+        self._log_step(
+            "Captured journalctl -u systemd-networkd.service -b after IPv4 timeout",
+            body=networkd_journal,
+        )
+        networkd_journal_path = self._write_diagnostic_artifact(
+            f"systemd-networkd-journal-ipv4-timeout-{iface}",
+            networkd_journal,
+            metadata_label="journalctl -u systemd-networkd.service -b (IPv4 timeout)",
+        )
+        diagnostics.append(
+            ("journalctl -u systemd-networkd.service -b", networkd_journal_path)
+        )
         jobs_output = self.run(
             "systemctl list-jobs --no-legend 2>&1 || true",
             timeout=240,
@@ -2071,6 +2098,7 @@ def test_ipv4_timeout_records_systemd_jobs(
     vm._escalation_diagnostics = []
 
     commands: List[str] = []
+    journal_calls: List[Tuple[str, bool]] = []
 
     def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
         commands.append(command)
@@ -2080,11 +2108,18 @@ def test_ipv4_timeout_records_systemd_jobs(
             return "pre-nixos status"
         if "networkctl status" in command:
             return "networkctl output"
+        if "systemctl status systemd-networkd" in command:
+            return "networkd status"
         if "systemctl list-jobs" in command:
             return "job output"
         return ""
 
-    def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:  # type: ignore[override]
+    def fake_collect_journal(
+        unit: str, *, since_boot: bool = True
+    ) -> str:  # type: ignore[override]
+        journal_calls.append((unit, since_boot))
+        if unit == "systemd-networkd.service":
+            return "networkd journal"
         return "journal output"
 
     vm.run = fake_run  # type: ignore[assignment]
@@ -2107,11 +2142,19 @@ def test_ipv4_timeout_records_systemd_jobs(
     message = str(excinfo.value)
     assert "systemctl list-jobs" in message
     assert any("systemctl list-jobs" in cmd for cmd in commands)
+    assert "systemctl status systemd-networkd" in message
+    assert any(
+        "systemctl status systemd-networkd" in cmd for cmd in commands
+    )
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     diagnostics = metadata["diagnostics"]["artifacts"]
     labels = {entry["label"] for entry in diagnostics}
     assert "systemctl list-jobs (IPv4 timeout on lan)" in labels
+    assert "systemctl status systemd-networkd (IPv4 timeout)" in labels
+    assert (
+        "journalctl -u systemd-networkd.service -b (IPv4 timeout)" in labels
+    )
     job_entries = [
         entry
         for entry in diagnostics
@@ -2120,6 +2163,34 @@ def test_ipv4_timeout_records_systemd_jobs(
     assert job_entries, "expected systemctl list-jobs artifact to be catalogued"
     for entry in job_entries:
         assert Path(entry["path"]).exists()
+
+    networkd_status_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "systemctl status systemd-networkd (IPv4 timeout)"
+    ]
+    assert (
+        networkd_status_entries
+    ), "expected systemctl status systemd-networkd artifact to be catalogued"
+    for entry in networkd_status_entries:
+        assert Path(entry["path"]).exists()
+
+    networkd_journal_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"]
+        == "journalctl -u systemd-networkd.service -b (IPv4 timeout)"
+    ]
+    assert (
+        networkd_journal_entries
+    ), "expected systemd-networkd journal artifact to be catalogued"
+    for entry in networkd_journal_entries:
+        assert Path(entry["path"]).exists()
+
+    assert journal_calls == [
+        ("pre-nixos.service", True),
+        ("systemd-networkd.service", True),
+    ]
 
 
 @pytest.fixture(scope="session")
