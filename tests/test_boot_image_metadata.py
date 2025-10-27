@@ -37,6 +37,7 @@ def test_metadata_includes_diagnostics_directory(tmp_path: Path, sample_boot_ima
         harness_log=harness_log,
         serial_log=serial_log,
         qemu_command=["qemu", "--version"],
+        qemu_version="QEMU emulator version 8.0.0",
         disk_image=disk_image,
         ssh_host="127.0.0.1",
         ssh_port=2222,
@@ -47,6 +48,33 @@ def test_metadata_includes_diagnostics_directory(tmp_path: Path, sample_boot_ima
     diagnostics = metadata["diagnostics"]
     assert diagnostics["directory"] == str(tmp_path / "diagnostics")
     assert diagnostics["artifacts"] == []
+    assert metadata["qemu"]["version"] == "QEMU emulator version 8.0.0"
+
+
+def test_metadata_records_qemu_version_when_available(
+    tmp_path: Path, sample_boot_image_build: BootImageBuild
+) -> None:
+    metadata_path = tmp_path / "metadata.json"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    disk_image = tmp_path / "disk.img"
+
+    qemu_version = "QEMU emulator version 9.0.1"
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=sample_boot_image_build,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        qemu_version=qemu_version,
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata["qemu"]["version"] == qemu_version
 
 
 def test_record_boot_image_diagnostic_appends_entries(

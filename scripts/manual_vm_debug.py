@@ -20,6 +20,7 @@ from tests.test_boot_image_vm import (
     BootImageBuild,
     BootImageVM,
     _resolve_iso_path,
+    probe_qemu_version,
     write_boot_image_metadata,
 )
 
@@ -185,12 +186,15 @@ def launch_vm(
         "virtio-net-pci,netdev=net0",
     ]
 
+    qemu_version = probe_qemu_version(qemu)
+
     write_boot_image_metadata(
         metadata_path,
         artifact=artifact,
         harness_log=harness_log,
         serial_log=serial_log,
         qemu_command=cmd,
+        qemu_version=qemu_version,
         disk_image=disk_image,
         ssh_host="127.0.0.1",
         ssh_port=ssh_port,
@@ -215,6 +219,7 @@ def launch_vm(
         ssh_host="127.0.0.1",
         ssh_executable=ssh,
         artifact=artifact,
+        qemu_version=qemu_version,
     )
     return vm, child, serial_handle
 
