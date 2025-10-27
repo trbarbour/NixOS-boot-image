@@ -6,6 +6,7 @@ import datetime
 import json
 import os
 import re
+import shlex
 import shutil
 import socket
 import subprocess
@@ -377,6 +378,8 @@ class BootImageVM:
     ssh_executable: str
     artifact: BootImageBuild
     qemu_version: Optional[str] = None
+    qemu_command: Optional[Tuple[str, ...]] = None
+    disk_image: Optional[Path] = None
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
     _log_dir: Path = field(init=False, repr=False)
@@ -390,6 +393,8 @@ class BootImageVM:
         self._log_dir = self.harness_log_path.parent
         self._diagnostic_dir = self._log_dir / "diagnostics"
         self._diagnostic_dir.mkdir(exist_ok=True)
+        if self.qemu_command is not None and not isinstance(self.qemu_command, tuple):
+            self.qemu_command = tuple(self.qemu_command)
         self._log_step(
             "Boot image artifact metadata",
             body="\n".join(self._format_artifact_metadata()),
@@ -412,6 +417,14 @@ class BootImageVM:
         )
         if self.qemu_version:
             metadata.append(f"QEMU version: {self.qemu_version}")
+        if self.disk_image is not None:
+            metadata.append(f"Disk image: {self.disk_image}")
+        if self.qemu_command:
+            try:
+                command_repr = shlex.join(self.qemu_command)
+            except AttributeError:
+                command_repr = " ".join(self.qemu_command)
+            metadata.append(f"QEMU command: {command_repr}")
         return metadata
 
     def _log_step(self, message: str, body: Optional[str] = None) -> None:
@@ -1408,6 +1421,8 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
     vm.ssh_host = "127.0.0.1"
     vm.ssh_executable = "/usr/bin/ssh"
     vm.artifact = artifact
+    vm.qemu_command = ("qemu", "--version")
+    vm.disk_image = disk_image
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -1504,6 +1519,8 @@ def test_raise_with_transcript_includes_qemu_version(tmp_path: Path) -> None:
     vm.ssh_executable = "/usr/bin/ssh"
     vm.artifact = artifact
     vm.qemu_version = qemu_version
+    vm.qemu_command = ("qemu", "--version")
+    vm.disk_image = disk_image
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -1517,6 +1534,8 @@ def test_raise_with_transcript_includes_qemu_version(tmp_path: Path) -> None:
 
     message = str(excinfo.value)
     assert f"QEMU version: {qemu_version}" in message
+    assert f"Disk image: {disk_image}" in message
+    assert "QEMU command: qemu --version" in message
 
 
 def test_run_command_eof_records_diagnostics(
@@ -1604,6 +1623,8 @@ def test_run_command_eof_records_diagnostics(
     vm.ssh_host = "127.0.0.1"
     vm.ssh_executable = "/usr/bin/ssh"
     vm.artifact = artifact
+    vm.qemu_command = ("qemu", "--version")
+    vm.disk_image = disk_image
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -1692,6 +1713,8 @@ def test_run_ssh_failure_records_diagnostics(
     vm.ssh_host = "127.0.0.1"
     vm.ssh_executable = "/usr/bin/ssh"
     vm.artifact = artifact
+    vm.qemu_command = ("qemu", "--version")
+    vm.disk_image = disk_image
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -1886,6 +1909,8 @@ def boot_image_vm(
             ssh_executable=ssh_executable,
             artifact=boot_image_build,
             qemu_version=qemu_version,
+            qemu_command=tuple(cmd),
+            disk_image=vm_disk_image,
         )
         try:
             yield vm
