@@ -26,6 +26,7 @@ from tests.test_boot_image_vm import (  # type: ignore  # noqa: E402
     BootImageVM,
     SHELL_PROMPT,
     _resolve_iso_path,
+    probe_qemu_version,
     write_boot_image_metadata,
 )
 
@@ -217,6 +218,8 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
             "virtio-net-pci,netdev=net0",
         ]
 
+        qemu_version = probe_qemu_version(qemu)
+
         outputs: Dict[str, str] = {}
         failure: Optional[Dict[str, str]] = None
         child: Optional[pexpect.spawn] = None
@@ -231,6 +234,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
                 harness_log=harness_log,
                 serial_log=serial_log,
                 qemu_command=cmd,
+                qemu_version=qemu_version,
                 disk_image=disk,
                 ssh_host="127.0.0.1",
                 ssh_port=ssh_port,
@@ -254,6 +258,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
                 ssh_host="127.0.0.1",
                 ssh_executable="ssh",
                 artifact=build,
+                qemu_version=qemu_version,
             )
 
             ensure_prompt(vm)

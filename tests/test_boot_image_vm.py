@@ -66,6 +66,26 @@ def _require_executable(executable: str) -> str:
     return path
 
 
+def probe_qemu_version(executable: str) -> Optional[str]:
+    """Return the first line of ``qemu --version`` output when available."""
+
+    try:
+        result = subprocess.run(
+            [executable, "--version"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    output = (result.stdout or "").strip()
+    if not output:
+        output = (result.stderr or "").strip()
+    if not output:
+        return None
+    return output.splitlines()[0]
+
+
 @pytest.fixture(scope="session")
 def _pexpect() -> "pexpect":
     if pexpect is None:  # pragma: no cover - environment specific
@@ -253,6 +273,7 @@ def write_boot_image_metadata(
     harness_log: Path,
     serial_log: Path,
     qemu_command: List[str],
+    qemu_version: Optional[str] = None,
     disk_image: Path,
     ssh_host: str,
     ssh_port: int,
@@ -290,6 +311,8 @@ def write_boot_image_metadata(
             "artifacts": [],
         },
     }
+    if qemu_version:
+        metadata["qemu"]["version"] = qemu_version
     metadata_path.write_text(
         json.dumps(metadata, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -353,6 +376,7 @@ class BootImageVM:
     ssh_host: str
     ssh_executable: str
     artifact: BootImageBuild
+    qemu_version: Optional[str] = None
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
     _log_dir: Path = field(init=False, repr=False)
@@ -386,6 +410,8 @@ class BootImageVM:
             "Embedded root key fingerprint: "
             f"{self.artifact.root_key_fingerprint}"
         )
+        if self.qemu_version:
+            metadata.append(f"QEMU version: {self.qemu_version}")
         return metadata
 
     def _log_step(self, message: str, body: Optional[str] = None) -> None:
@@ -1419,6 +1445,80 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
     assert str(path) in message
 
 
+def test_raise_with_transcript_includes_qemu_version(tmp_path: Path) -> None:
+    """Failures should surface the QEMU version in harness assertions."""
+
+    iso_path = tmp_path / "sample.iso"
+    store_path = tmp_path / "store"
+    disk_image = tmp_path / "disk.img"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    metadata_path = tmp_path / "metadata.json"
+
+    iso_path.write_text("", encoding="utf-8")
+    store_path.mkdir()
+    disk_image.write_text("", encoding="utf-8")
+    harness_log.write_text("", encoding="utf-8")
+    serial_log.write_text("", encoding="utf-8")
+
+    artifact = BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver="sample.drv",
+        nar_hash="sha256-sample",
+        root_key_fingerprint="SHA256:sample",
+    )
+
+    qemu_version = "QEMU emulator version 8.0.0"
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        qemu_version=qemu_version,
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    class DummyChild:
+        def __init__(self) -> None:
+            self.before = ""
+            self.exitstatus = 0
+            self.signalstatus = None
+            self.pid = 1234
+            self.closed = False
+
+        def isalive(self) -> bool:
+            return False
+
+    vm = object.__new__(BootImageVM)
+    vm.child = DummyChild()
+    vm.log_path = serial_log
+    vm.harness_log_path = harness_log
+    vm.metadata_path = metadata_path
+    vm.ssh_port = 2222
+    vm.ssh_host = "127.0.0.1"
+    vm.ssh_executable = "/usr/bin/ssh"
+    vm.artifact = artifact
+    vm.qemu_version = qemu_version
+    vm._transcript = []
+    vm._has_root_privileges = False
+    vm._log_dir = metadata_path.parent
+    vm._diagnostic_dir = metadata_path.parent / "diagnostics"
+    vm._diagnostic_dir.mkdir(exist_ok=True)
+    vm._diagnostic_counter = 0
+    vm._escalation_diagnostics = []
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm._raise_with_transcript("example failure")
+
+    message = str(excinfo.value)
+    assert f"QEMU version: {qemu_version}" in message
+
+
 def test_run_command_eof_records_diagnostics(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1743,12 +1843,14 @@ def boot_image_vm(
         "-device",
         "virtio-net-pci,netdev=net0",
     ]
+    qemu_version = probe_qemu_version(qemu_executable)
     write_boot_image_metadata(
         metadata_path,
         artifact=boot_image_build,
         harness_log=harness_log_path,
         serial_log=log_path,
         qemu_command=cmd,
+        qemu_version=qemu_version,
         disk_image=vm_disk_image,
         ssh_host="127.0.0.1",
         ssh_port=ssh_forward_port,
@@ -1783,6 +1885,7 @@ def boot_image_vm(
             ssh_host="127.0.0.1",
             ssh_executable=ssh_executable,
             artifact=boot_image_build,
+            qemu_version=qemu_version,
         )
         try:
             yield vm
