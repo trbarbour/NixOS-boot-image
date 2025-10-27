@@ -499,6 +499,46 @@ class BootImageVM:
             tail = handle.readlines()[-lines:]
         return [line.rstrip("\n") for line in tail]
 
+    def _record_vm_exit_status(self) -> Optional[Tuple[str, Path, List[str]]]:
+        """Record diagnostic information about the QEMU process when it exits."""
+
+        isalive = getattr(self.child, "isalive", None)
+        if not callable(isalive):
+            return None
+        try:
+            alive = bool(isalive())
+        except Exception as exc:  # pragma: no cover - defensive logging
+            self._log_step(
+                "Failed to determine QEMU process status",
+                body=repr(exc),
+            )
+            return None
+        if alive:
+            return None
+
+        exitstatus = getattr(self.child, "exitstatus", None)
+        signalstatus = getattr(self.child, "signalstatus", None)
+        pid = getattr(self.child, "pid", None)
+        closed = getattr(self.child, "closed", None)
+
+        status_lines = [
+            "QEMU process is no longer running.",
+            f"PID: {pid if pid is not None else 'unknown'}",
+            f"Exit status: {exitstatus if exitstatus is not None else 'unknown'}",
+            f"Signal status: {signalstatus if signalstatus is not None else 'unknown'}",
+        ]
+        if closed is not None:
+            status_lines.append(f"pexpect closed flag: {closed!r}")
+
+        status_body = "\n".join(status_lines)
+        self._log_step("Captured QEMU exit status after failure", body=status_body)
+        path = self._write_diagnostic_artifact(
+            "qemu-exit-status",
+            status_body,
+            metadata_label="QEMU exit status",
+        )
+        return ("QEMU exit status", path, status_lines)
+
     def _raise_with_transcript(
         self,
         message: str,
@@ -517,6 +557,11 @@ class BootImageVM:
             for label, path in self._escalation_diagnostics:
                 if not any(existing_path == path for _, existing_path in collected_diagnostics):
                     collected_diagnostics.append((label, path))
+
+        exit_status = self._record_vm_exit_status()
+        if exit_status is not None:
+            label, path, status_lines = exit_status
+            collected_diagnostics.append((label, path))
 
         if serial_tail:
             serial_body = "\n".join(serial_tail)
@@ -549,6 +594,10 @@ class BootImageVM:
         if serial_tail:
             details.append(f"Serial log tail (last {len(serial_tail)} lines):")
             details.append("\n".join(serial_tail))
+        if exit_status is not None:
+            _, _, status_lines = exit_status
+            details.append("QEMU exit status:")
+            details.extend(status_lines)
         details.append(f"Harness log: {self.harness_log_path}")
         details.append(f"Serial log: {self.log_path}")
         details.append(f"Metadata: {self.metadata_path}")
@@ -1429,13 +1478,22 @@ def test_run_command_eof_records_diagnostics(
     class EOFChild:
         def __init__(self) -> None:
             self.before = ""
+            self.exitstatus = 1
+            self.signalstatus = None
+            self.pid = 1234
+            self.closed = True
+            self._alive = True
 
         def sendline(self, command: str) -> None:
             self.before = f"{command}\r\npartial output"
 
         def expect(self, pattern: object, timeout: int) -> None:
             self.before += "\r\nunexpected termination"
+            self._alive = False
             raise stub_pexpect.EOF("command stream closed")
+
+        def isalive(self) -> bool:
+            return self._alive
 
     vm = object.__new__(BootImageVM)
     vm.child = EOFChild()
@@ -1472,6 +1530,15 @@ def test_run_command_eof_records_diagnostics(
     for entry in login_entries:
         path = Path(entry["path"])
         assert path.exists(), "diagnostic artifact path should exist"
+
+    qemu_entries = [
+        entry for entry in diagnostics if entry["label"] == "QEMU exit status"
+    ]
+    assert qemu_entries, "expected QEMU exit status diagnostic to be recorded"
+    qemu_path = Path(qemu_entries[-1]["path"])
+    assert qemu_path.exists(), "QEMU exit status artifact should exist"
+    qemu_content = qemu_path.read_text(encoding="utf-8")
+    assert "Exit status: 1" in qemu_content
 
 
 def test_run_ssh_failure_records_diagnostics(
