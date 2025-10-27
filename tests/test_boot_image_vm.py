@@ -1085,6 +1085,20 @@ class BootImageVM:
             metadata_label="lsblk -f (storage timeout)",
         )
         diagnostics.append(("lsblk -f", lsblk_path))
+        jobs_output = self.run(
+            "systemctl list-jobs --no-legend 2>&1 || true",
+            timeout=240,
+        )
+        self._log_step(
+            "Captured systemctl list-jobs after storage status timeout",
+            body=jobs_output,
+        )
+        jobs_path = self._write_diagnostic_artifact(
+            "systemctl-list-jobs-storage-timeout",
+            jobs_output,
+            metadata_label="systemctl list-jobs (storage timeout)",
+        )
+        diagnostics.append(("systemctl list-jobs", jobs_path))
         self._raise_with_transcript(
             "timed out waiting for pre-nixos storage status\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -1144,6 +1158,20 @@ class BootImageVM:
             metadata_label=f"networkctl status {iface} (IPv4 timeout)",
         )
         diagnostics.append((f"networkctl status {iface}", network_path))
+        jobs_output = self.run(
+            "systemctl list-jobs --no-legend 2>&1 || true",
+            timeout=240,
+        )
+        self._log_step(
+            f"Captured systemctl list-jobs after IPv4 timeout on {iface}",
+            body=jobs_output,
+        )
+        jobs_path = self._write_diagnostic_artifact(
+            f"systemctl-list-jobs-ipv4-timeout-{iface}",
+            jobs_output,
+            metadata_label=f"systemctl list-jobs (IPv4 timeout on {iface})",
+        )
+        diagnostics.append(("systemctl list-jobs", jobs_path))
         self._raise_with_transcript(
             f"timed out waiting for IPv4 address on {iface}\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -1868,6 +1896,231 @@ def test_run_ssh_failure_records_diagnostics(
         command == "systemctl status sshd --no-pager 2>&1 || true" for command in commands
     ), "expected systemctl status sshd to be collected"
     assert journal_calls == [("sshd.service", True)]
+
+def test_storage_timeout_records_systemd_jobs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Storage status timeouts should capture systemctl list-jobs diagnostics."""
+
+    iso_path = tmp_path / "sample.iso"
+    store_path = tmp_path / "store"
+    disk_image = tmp_path / "disk.img"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    metadata_path = tmp_path / "metadata.json"
+
+    iso_path.write_text("", encoding="utf-8")
+    store_path.mkdir()
+    disk_image.write_text("", encoding="utf-8")
+    harness_log.write_text("", encoding="utf-8")
+    serial_log.write_text("serial line\n", encoding="utf-8")
+
+    artifact = BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver="sample.drv",
+        nar_hash="sha256-sample",
+        root_key_fingerprint="SHA256:sample",
+    )
+
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    class DummyChild:
+        def __init__(self) -> None:
+            self.before = ""
+
+    vm = object.__new__(BootImageVM)
+    vm.child = DummyChild()
+    vm.log_path = serial_log
+    vm.harness_log_path = harness_log
+    vm.metadata_path = metadata_path
+    vm.ssh_port = 2222
+    vm.ssh_host = "127.0.0.1"
+    vm.ssh_executable = "/usr/bin/ssh"
+    vm.artifact = artifact
+    vm.qemu_command = ("qemu", "--version")
+    vm.disk_image = disk_image
+    vm._transcript = []
+    vm._has_root_privileges = False
+    vm._log_dir = metadata_path.parent
+    vm._diagnostic_dir = metadata_path.parent / "diagnostics"
+    vm._diagnostic_dir.mkdir(exist_ok=True)
+    vm._diagnostic_counter = 0
+    vm._escalation_diagnostics = []
+
+    commands: List[str] = []
+
+    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+        commands.append(command)
+        if "systemctl status pre-nixos" in command:
+            return "pre-nixos status"
+        if "lsblk" in command:
+            return "lsblk output"
+        if "systemctl list-jobs" in command:
+            return "job output"
+        return ""
+
+    def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:  # type: ignore[override]
+        return "journal output"
+
+    vm.run = fake_run  # type: ignore[assignment]
+    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
+    vm.read_storage_status = lambda: {}
+
+    time_values = iter([0.0, 0.0, 1000.0])
+
+    def fake_time() -> float:
+        try:
+            return next(time_values)
+        except StopIteration:
+            return 1000.0
+
+    monkeypatch.setattr("tests.test_boot_image_vm.time.time", fake_time)
+    monkeypatch.setattr("tests.test_boot_image_vm.time.sleep", lambda _: None)
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm.wait_for_storage_status(timeout=1)
+
+    message = str(excinfo.value)
+    assert "systemctl list-jobs" in message
+    assert any("systemctl list-jobs" in cmd for cmd in commands)
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    diagnostics = metadata["diagnostics"]["artifacts"]
+    labels = {entry["label"] for entry in diagnostics}
+    assert "systemctl list-jobs (storage timeout)" in labels
+    job_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "systemctl list-jobs (storage timeout)"
+    ]
+    assert job_entries, "expected systemctl list-jobs artifact to be catalogued"
+    for entry in job_entries:
+        assert Path(entry["path"]).exists()
+
+
+def test_ipv4_timeout_records_systemd_jobs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """IPv4 timeouts should capture systemctl list-jobs diagnostics."""
+
+    iso_path = tmp_path / "sample.iso"
+    store_path = tmp_path / "store"
+    disk_image = tmp_path / "disk.img"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    metadata_path = tmp_path / "metadata.json"
+
+    iso_path.write_text("", encoding="utf-8")
+    store_path.mkdir()
+    disk_image.write_text("", encoding="utf-8")
+    harness_log.write_text("", encoding="utf-8")
+    serial_log.write_text("serial line\n", encoding="utf-8")
+
+    artifact = BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver="sample.drv",
+        nar_hash="sha256-sample",
+        root_key_fingerprint="SHA256:sample",
+    )
+
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    class DummyChild:
+        def __init__(self) -> None:
+            self.before = ""
+
+    vm = object.__new__(BootImageVM)
+    vm.child = DummyChild()
+    vm.log_path = serial_log
+    vm.harness_log_path = harness_log
+    vm.metadata_path = metadata_path
+    vm.ssh_port = 2222
+    vm.ssh_host = "127.0.0.1"
+    vm.ssh_executable = "/usr/bin/ssh"
+    vm.artifact = artifact
+    vm.qemu_command = ("qemu", "--version")
+    vm.disk_image = disk_image
+    vm._transcript = []
+    vm._has_root_privileges = False
+    vm._log_dir = metadata_path.parent
+    vm._diagnostic_dir = metadata_path.parent / "diagnostics"
+    vm._diagnostic_dir.mkdir(exist_ok=True)
+    vm._diagnostic_counter = 0
+    vm._escalation_diagnostics = []
+
+    commands: List[str] = []
+
+    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+        commands.append(command)
+        if command.startswith("ip -o -4 addr"):
+            return ""
+        if "systemctl status pre-nixos" in command:
+            return "pre-nixos status"
+        if "networkctl status" in command:
+            return "networkctl output"
+        if "systemctl list-jobs" in command:
+            return "job output"
+        return ""
+
+    def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:  # type: ignore[override]
+        return "journal output"
+
+    vm.run = fake_run  # type: ignore[assignment]
+    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
+
+    time_values = iter([0.0, 0.0, 1000.0])
+
+    def fake_time() -> float:
+        try:
+            return next(time_values)
+        except StopIteration:
+            return 1000.0
+
+    monkeypatch.setattr("tests.test_boot_image_vm.time.time", fake_time)
+    monkeypatch.setattr("tests.test_boot_image_vm.time.sleep", lambda _: None)
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm.wait_for_ipv4(timeout=1)
+
+    message = str(excinfo.value)
+    assert "systemctl list-jobs" in message
+    assert any("systemctl list-jobs" in cmd for cmd in commands)
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    diagnostics = metadata["diagnostics"]["artifacts"]
+    labels = {entry["label"] for entry in diagnostics}
+    assert "systemctl list-jobs (IPv4 timeout on lan)" in labels
+    job_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "systemctl list-jobs (IPv4 timeout on lan)"
+    ]
+    assert job_entries, "expected systemctl list-jobs artifact to be catalogued"
+    for entry in job_entries:
+        assert Path(entry["path"]).exists()
+
 
 @pytest.fixture(scope="session")
 def boot_image_vm(
