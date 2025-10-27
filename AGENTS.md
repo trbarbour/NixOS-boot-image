@@ -42,6 +42,8 @@ Don't rush. Take time to understand, and do things the right way. Do it once, do
 
 If something is expensive to compute, and you need it as input into code you are experimenting with, don't recompute it for each experiment, save a copy and use it for several experiments.
 
+When documenting time-sensitive findings, always record actual UTC timestamps retrieved from a real command (for example, date -u +"%Y-%m-%d %H:%M:%SZ") instead of inventing values.
+
 
 # Task tracking
 
