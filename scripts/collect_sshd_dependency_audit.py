@@ -135,6 +135,8 @@ def launch_vm(
         ssh_executable=ssh,
         artifact=artifact,
         qemu_version=qemu_version,
+        qemu_command=tuple(cmd),
+        disk_image=disk_image,
     )
     return vm, child, serial_handle
 

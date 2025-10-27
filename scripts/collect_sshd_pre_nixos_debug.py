@@ -259,6 +259,8 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
                 ssh_executable="ssh",
                 artifact=build,
                 qemu_version=qemu_version,
+                qemu_command=tuple(cmd),
+                disk_image=disk,
             )
 
             ensure_prompt(vm)
