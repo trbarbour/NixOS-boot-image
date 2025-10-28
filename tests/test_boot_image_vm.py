@@ -1158,6 +1158,32 @@ class BootImageVM:
             metadata_label=f"networkctl status {iface} (IPv4 timeout)",
         )
         diagnostics.append((f"networkctl status {iface}", network_path))
+        ip_addr_output = self.run(
+            f"ip addr show dev {iface} 2>&1 || true", timeout=240
+        )
+        self._log_step(
+            f"Captured ip addr show dev {iface} after IPv4 timeout",
+            body=ip_addr_output,
+        )
+        ip_addr_path = self._write_diagnostic_artifact(
+            f"ip-addr-ipv4-timeout-{iface}",
+            ip_addr_output,
+            metadata_label=f"ip addr show dev {iface} (IPv4 timeout)",
+        )
+        diagnostics.append((f"ip addr show dev {iface}", ip_addr_path))
+        ip_route_output = self.run(
+            f"ip route show dev {iface} 2>&1 || true", timeout=240
+        )
+        self._log_step(
+            f"Captured ip route show dev {iface} after IPv4 timeout",
+            body=ip_route_output,
+        )
+        ip_route_path = self._write_diagnostic_artifact(
+            f"ip-route-ipv4-timeout-{iface}",
+            ip_route_output,
+            metadata_label=f"ip route show dev {iface} (IPv4 timeout)",
+        )
+        diagnostics.append((f"ip route show dev {iface}", ip_route_path))
         networkd_status = self.run(
             "systemctl status systemd-networkd --no-pager 2>&1 || true",
             timeout=240,
@@ -2104,6 +2130,10 @@ def test_ipv4_timeout_records_systemd_jobs(
         commands.append(command)
         if command.startswith("ip -o -4 addr"):
             return ""
+        if command.startswith("ip addr show dev"):
+            return "ip addr output"
+        if command.startswith("ip route show dev"):
+            return "ip route output"
         if "systemctl status pre-nixos" in command:
             return "pre-nixos status"
         if "networkctl status" in command:
@@ -2146,6 +2176,10 @@ def test_ipv4_timeout_records_systemd_jobs(
     assert any(
         "systemctl status systemd-networkd" in cmd for cmd in commands
     )
+    assert "ip addr show dev lan" in message
+    assert any("ip addr show dev lan" in cmd for cmd in commands)
+    assert "ip route show dev lan" in message
+    assert any("ip route show dev lan" in cmd for cmd in commands)
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     diagnostics = metadata["diagnostics"]["artifacts"]
@@ -2155,6 +2189,8 @@ def test_ipv4_timeout_records_systemd_jobs(
     assert (
         "journalctl -u systemd-networkd.service -b (IPv4 timeout)" in labels
     )
+    assert "ip addr show dev lan (IPv4 timeout)" in labels
+    assert "ip route show dev lan (IPv4 timeout)" in labels
     job_entries = [
         entry
         for entry in diagnostics
@@ -2185,6 +2221,24 @@ def test_ipv4_timeout_records_systemd_jobs(
         networkd_journal_entries
     ), "expected systemd-networkd journal artifact to be catalogued"
     for entry in networkd_journal_entries:
+        assert Path(entry["path"]).exists()
+
+    ip_addr_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "ip addr show dev lan (IPv4 timeout)"
+    ]
+    assert ip_addr_entries, "expected ip addr artifact to be catalogued"
+    for entry in ip_addr_entries:
+        assert Path(entry["path"]).exists()
+
+    ip_route_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "ip route show dev lan (IPv4 timeout)"
+    ]
+    assert ip_route_entries, "expected ip route artifact to be catalogued"
+    for entry in ip_route_entries:
         assert Path(entry["path"]).exists()
 
     assert journal_calls == [

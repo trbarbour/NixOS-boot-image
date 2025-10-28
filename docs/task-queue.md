@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2025-10-27T13-39-46Z_
+_Last updated: 2025-10-27T23-08-26Z_
 
 ## Active Tasks
 
@@ -17,6 +17,7 @@ _Last updated: 2025-10-27T13-39-46Z_
    - 2025-10-27T04-00-00Z abrupt QEMU exits now capture exit status diagnostics that are logged, catalogued in `metadata.json`, and asserted by the EOF regression test.【F:docs/work-notes/2025-10-27T04-00-00Z-boot-image-qemu-exit-diagnostics.md†L1-L14】【F:tests/test_boot_image_vm.py†L417-L470】【F:tests/test_boot_image_vm.py†L1373-L1439】
    - 2025-10-27T13-04-29Z storage and IPv4 timeouts now record `systemctl list-jobs` outputs alongside existing diagnostics so metadata and failure messages surface the active job queue.【F:docs/work-notes/2025-10-27T13-04-29Z-boot-image-systemd-jobs-diagnostics.md†L1-L14】【F:tests/test_boot_image_vm.py†L1051-L1183】
    - 2025-10-27T13-39-46Z IPv4 timeouts additionally capture `systemctl status systemd-networkd` and its journal so diagnostics catalogue the service state when DHCP waits fail.【F:docs/work-notes/2025-10-27T13-39-46Z-boot-image-networkd-diagnostics.md†L1-L13】【F:tests/test_boot_image_vm.py†L1148-L1187】【F:tests/test_boot_image_vm.py†L2044-L2193】
+   - 2025-10-27T23-08-26Z IPv4 timeouts now snapshot `ip addr show dev <iface>` and `ip route show dev <iface>` outputs so diagnostics catalogue link configuration alongside systemd state.【F:docs/work-notes/2025-10-27T23-08-26Z-boot-image-ip-diagnostics.md†L1-L18】【F:tests/test_boot_image_vm.py†L1136-L1188】【F:tests/test_boot_image_vm.py†L2044-L2209】
    - 2025-10-28T01-15-00Z metadata capture now records the QEMU version and `_raise_with_transcript` includes it in failure messages, ensuring provenance for host-specific regressions.【F:docs/work-notes/2025-10-28T01-15-00Z-boot-image-qemu-version-diagnostics.md†L1-L17】【F:tests/test_boot_image_vm.py†L240-L305】【F:tests/test_boot_image_vm.py†L1405-L1459】【F:tests/test_boot_image_metadata.py†L24-L56】
   - 2025-10-27T04-21-49Z BootImageVM failure metadata now lists the disk image and shell-quoted QEMU command so provenance survives outside `metadata.json`, with regression coverage guarding the new lines.【F:docs/work-notes/2025-10-27T04-21-49Z-boot-image-qemu-command-diagnostics.md†L1-L18】【F:tests/test_boot_image_vm.py†L368-L428】【F:tests/test_boot_image_vm.py†L1870-L1914】【F:tests/test_boot_image_vm.py†L1512-L1538】
    - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
