@@ -60,6 +60,9 @@ ANSI_ESCAPE_PATTERN = re.compile(
 )
 
 
+DMESG_CAPTURE_COMMAND = "dmesg --color=never 2>&1 || dmesg 2>&1 || true"
+
+
 def _require_executable(executable: str) -> str:
     path = shutil.which(executable)
     if path is None:
@@ -474,6 +477,24 @@ class BootImageVM:
                     body=repr(exc),
                 )
         return path
+
+    def _capture_dmesg(self, context: str) -> Tuple[str, Path]:
+        """Capture the kernel ring buffer for diagnostic purposes."""
+
+        output = self.run(DMESG_CAPTURE_COMMAND, timeout=240)
+        self._log_step(f"Captured dmesg after {context}", body=output)
+        slug_context = re.sub(r"[^A-Za-z0-9_-]+", "-", context.lower()).strip("-")
+        if slug_context:
+            slug = f"dmesg-{slug_context}"
+        else:
+            slug = "dmesg"
+        label = f"dmesg ({context})"
+        path = self._write_diagnostic_artifact(
+            slug,
+            output,
+            metadata_label=label,
+        )
+        return (label, path)
 
     def _snapshot_transcript(self) -> int:
         """Return the index of the next transcript entry for later slicing."""
@@ -1113,6 +1134,7 @@ class BootImageVM:
             metadata_label="systemctl list-units --failed (storage timeout)",
         )
         diagnostics.append(("systemctl list-units --failed", failed_units_path))
+        diagnostics.append(self._capture_dmesg("storage timeout"))
         self._raise_with_transcript(
             "timed out waiting for pre-nixos storage status\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -1268,6 +1290,7 @@ class BootImageVM:
             ),
         )
         diagnostics.append(("systemctl list-units --failed", failed_units_path))
+        diagnostics.append(self._capture_dmesg(f"IPv4 timeout on {iface}"))
         self._raise_with_transcript(
             f"timed out waiting for IPv4 address on {iface}\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -1338,6 +1361,9 @@ class BootImageVM:
             metadata_label="systemctl list-units --failed (inactive timeout)",
         )
         diagnostics.append(("systemctl list-units --failed", failed_units_path))
+        diagnostics.append(
+            self._capture_dmesg(f"inactive timeout for {unit}")
+        )
         self._raise_with_transcript(
             "\n".join(
                 [
@@ -2080,6 +2106,8 @@ def test_storage_timeout_records_systemd_jobs(
             return "job output"
         if "systemctl list-units --failed" in command:
             return "failed units output"
+        if command.startswith("dmesg"):
+            return "dmesg output"
         return ""
 
     def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:  # type: ignore[override]
@@ -2108,12 +2136,15 @@ def test_storage_timeout_records_systemd_jobs(
     assert any("systemctl list-jobs" in cmd for cmd in commands)
     assert "systemctl list-units --failed" in message
     assert any("systemctl list-units --failed" in cmd for cmd in commands)
+    assert "dmesg (storage timeout)" in message
+    assert any(cmd.startswith("dmesg") for cmd in commands)
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     diagnostics = metadata["diagnostics"]["artifacts"]
     labels = {entry["label"] for entry in diagnostics}
     assert "systemctl list-jobs (storage timeout)" in labels
     assert "systemctl list-units --failed (storage timeout)" in labels
+    assert "dmesg (storage timeout)" in labels
     job_entries = [
         entry
         for entry in diagnostics
@@ -2132,6 +2163,15 @@ def test_storage_timeout_records_systemd_jobs(
         failed_units_entries
     ), "expected systemctl list-units --failed artifact to be catalogued"
     for entry in failed_units_entries:
+        assert Path(entry["path"]).exists()
+
+    dmesg_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "dmesg (storage timeout)"
+    ]
+    assert dmesg_entries, "expected dmesg artifact to be catalogued"
+    for entry in dmesg_entries:
         assert Path(entry["path"]).exists()
 
 
@@ -2219,6 +2259,8 @@ def test_ipv4_timeout_records_systemd_jobs(
             return "job output"
         if "systemctl list-units --failed" in command:
             return "failed units output"
+        if command.startswith("dmesg"):
+            return "dmesg output"
         return ""
 
     def fake_collect_journal(
@@ -2261,6 +2303,8 @@ def test_ipv4_timeout_records_systemd_jobs(
     assert any("ip route show dev lan" in cmd for cmd in commands)
     assert "ip -s link show dev lan" in message
     assert any("ip -s link show dev lan" in cmd for cmd in commands)
+    assert "dmesg (IPv4 timeout on lan)" in message
+    assert any(cmd.startswith("dmesg") for cmd in commands)
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     diagnostics = metadata["diagnostics"]["artifacts"]
@@ -2274,6 +2318,7 @@ def test_ipv4_timeout_records_systemd_jobs(
     assert "ip addr show dev lan (IPv4 timeout)" in labels
     assert "ip route show dev lan (IPv4 timeout)" in labels
     assert "ip -s link show dev lan (IPv4 timeout)" in labels
+    assert "dmesg (IPv4 timeout on lan)" in labels
     job_entries = [
         entry
         for entry in diagnostics
@@ -2343,6 +2388,15 @@ def test_ipv4_timeout_records_systemd_jobs(
     ]
     assert ip_route_entries, "expected ip route artifact to be catalogued"
     for entry in ip_route_entries:
+        assert Path(entry["path"]).exists()
+
+    dmesg_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "dmesg (IPv4 timeout on lan)"
+    ]
+    assert dmesg_entries, "expected dmesg artifact to be catalogued"
+    for entry in dmesg_entries:
         assert Path(entry["path"]).exists()
 
     assert journal_calls == [
@@ -2427,6 +2481,8 @@ def test_unit_inactive_timeout_records_failed_units(
             return "job output"
         if command.startswith("systemctl list-units --failed"):
             return "failed units output"
+        if command.startswith("dmesg"):
+            return "dmesg output"
         return ""
 
     def fake_collect_journal(
@@ -2459,6 +2515,8 @@ def test_unit_inactive_timeout_records_failed_units(
     assert any("systemctl list-units --failed" in cmd for cmd in commands)
     assert "systemctl status pre-nixos" in message
     assert any("systemctl status pre-nixos" in cmd for cmd in commands)
+    assert "dmesg (inactive timeout for pre-nixos)" in message
+    assert any(cmd.startswith("dmesg") for cmd in commands)
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     diagnostics = metadata["diagnostics"]["artifacts"]
@@ -2467,6 +2525,7 @@ def test_unit_inactive_timeout_records_failed_units(
     assert "journalctl -u pre-nixos.service -b (inactive timeout)" in labels
     assert "systemctl list-jobs (inactive timeout)" in labels
     assert "systemctl list-units --failed (inactive timeout)" in labels
+    assert "dmesg (inactive timeout for pre-nixos)" in labels
 
     failed_units_entries = [
         entry
@@ -2498,6 +2557,15 @@ def test_unit_inactive_timeout_records_failed_units(
         assert Path(entry["path"]).exists()
 
     assert journal_calls == [("pre-nixos.service", True)]
+
+    dmesg_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "dmesg (inactive timeout for pre-nixos)"
+    ]
+    assert dmesg_entries, "expected dmesg artifact to be catalogued"
+    for entry in dmesg_entries:
+        assert Path(entry["path"]).exists()
 
 
 @pytest.fixture(scope="session")
