@@ -1324,6 +1324,20 @@ class BootImageVM:
             metadata_label="systemctl list-jobs (inactive timeout)",
         )
         diagnostics.append(("systemctl list-jobs", jobs_path))
+        failed_units_output = self.run(
+            "systemctl list-units --failed --no-legend 2>&1 || true",
+            timeout=240,
+        )
+        self._log_step(
+            "Captured systemctl list-units --failed after unit inactivity timeout",
+            body=failed_units_output,
+        )
+        failed_units_path = self._write_diagnostic_artifact(
+            f"{journal_unit}-failed-units-timeout",
+            failed_units_output,
+            metadata_label="systemctl list-units --failed (inactive timeout)",
+        )
+        diagnostics.append(("systemctl list-units --failed", failed_units_path))
         self._raise_with_transcript(
             "\n".join(
                 [
@@ -2335,6 +2349,155 @@ def test_ipv4_timeout_records_systemd_jobs(
         ("pre-nixos.service", True),
         ("systemd-networkd.service", True),
     ]
+
+
+def test_unit_inactive_timeout_records_failed_units(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Unit inactivity timeouts should snapshot failed units alongside jobs."""
+
+    iso_path = tmp_path / "sample.iso"
+    store_path = tmp_path / "store"
+    disk_image = tmp_path / "disk.img"
+    harness_log = tmp_path / "harness.log"
+    serial_log = tmp_path / "serial.log"
+    metadata_path = tmp_path / "metadata.json"
+
+    iso_path.write_text("", encoding="utf-8")
+    store_path.mkdir()
+    disk_image.write_text("", encoding="utf-8")
+    harness_log.write_text("", encoding="utf-8")
+    serial_log.write_text("serial line\n", encoding="utf-8")
+
+    artifact = BootImageBuild(
+        iso_path=iso_path,
+        store_path=store_path,
+        deriver="sample.drv",
+        nar_hash="sha256-sample",
+        root_key_fingerprint="SHA256:sample",
+    )
+
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=artifact,
+        harness_log=harness_log,
+        serial_log=serial_log,
+        qemu_command=["qemu", "--version"],
+        disk_image=disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=2222,
+        ssh_executable="/usr/bin/ssh",
+    )
+
+    class DummyChild:
+        def __init__(self) -> None:
+            self.before = ""
+
+    vm = object.__new__(BootImageVM)
+    vm.child = DummyChild()
+    vm.log_path = serial_log
+    vm.harness_log_path = harness_log
+    vm.metadata_path = metadata_path
+    vm.ssh_port = 2222
+    vm.ssh_host = "127.0.0.1"
+    vm.ssh_executable = "/usr/bin/ssh"
+    vm.artifact = artifact
+    vm.qemu_command = ("qemu", "--version")
+    vm.disk_image = disk_image
+    vm._transcript = []
+    vm._has_root_privileges = False
+    vm._log_dir = metadata_path.parent
+    vm._diagnostic_dir = metadata_path.parent / "diagnostics"
+    vm._diagnostic_dir.mkdir(exist_ok=True)
+    vm._diagnostic_counter = 0
+    vm._escalation_diagnostics = []
+
+    commands: List[str] = []
+    journal_calls: List[Tuple[str, bool]] = []
+
+    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+        commands.append(command)
+        if command == ":":
+            return ""
+        if command.startswith("systemctl is-active"):
+            return "activating\n"
+        if command.startswith("systemctl status pre-nixos"):
+            return "pre-nixos status"
+        if command.startswith("systemctl list-jobs"):
+            return "job output"
+        if command.startswith("systemctl list-units --failed"):
+            return "failed units output"
+        return ""
+
+    def fake_collect_journal(
+        unit: str, *, since_boot: bool = True
+    ) -> str:  # type: ignore[override]
+        journal_calls.append((unit, since_boot))
+        return "journal output"
+
+    vm.run = fake_run  # type: ignore[assignment]
+    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
+
+    time_values = iter([0.0, 0.0, 1000.0])
+
+    def fake_time() -> float:
+        try:
+            return next(time_values)
+        except StopIteration:
+            return 1000.0
+
+    monkeypatch.setattr("tests.test_boot_image_vm.time.time", fake_time)
+    monkeypatch.setattr("tests.test_boot_image_vm.time.sleep", lambda _: None)
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm.wait_for_unit_inactive("pre-nixos", timeout=1)
+
+    message = str(excinfo.value)
+    assert "systemctl list-jobs" in message
+    assert any("systemctl list-jobs" in cmd for cmd in commands)
+    assert "systemctl list-units --failed" in message
+    assert any("systemctl list-units --failed" in cmd for cmd in commands)
+    assert "systemctl status pre-nixos" in message
+    assert any("systemctl status pre-nixos" in cmd for cmd in commands)
+
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    diagnostics = metadata["diagnostics"]["artifacts"]
+    labels = {entry["label"] for entry in diagnostics}
+    assert "systemctl status pre-nixos (inactive timeout)" in labels
+    assert "journalctl -u pre-nixos.service -b (inactive timeout)" in labels
+    assert "systemctl list-jobs (inactive timeout)" in labels
+    assert "systemctl list-units --failed (inactive timeout)" in labels
+
+    failed_units_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "systemctl list-units --failed (inactive timeout)"
+    ]
+    assert (
+        failed_units_entries
+    ), "expected systemctl list-units --failed artifact to be catalogued"
+    for entry in failed_units_entries:
+        assert Path(entry["path"]).exists()
+
+    journal_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "journalctl -u pre-nixos.service -b (inactive timeout)"
+    ]
+    assert journal_entries, "expected pre-nixos journal artifact to be catalogued"
+    for entry in journal_entries:
+        assert Path(entry["path"]).exists()
+
+    job_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "systemctl list-jobs (inactive timeout)"
+    ]
+    assert job_entries, "expected systemctl list-jobs artifact to be catalogued"
+    for entry in job_entries:
+        assert Path(entry["path"]).exists()
+
+    assert journal_calls == [("pre-nixos.service", True)]
 
 
 @pytest.fixture(scope="session")
