@@ -5,6 +5,9 @@ SCRIPT_NAME="$(basename "$0")"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_PREFIX="[${SCRIPT_NAME}]"
 
+# shellcheck source=./lib/nix_environment.sh
+source "${REPO_ROOT}/scripts/lib/nix_environment.sh"
+
 usage() {
   cat <<USAGE
 Usage: ${SCRIPT_NAME} [--skip-nix]
@@ -176,6 +179,7 @@ main() {
   SKIP_NIX="${SKIP_NIX}" install_nix
   create_python_venv
   configure_nix_features
+  ensure_nix_command_in_path
 
   log "Setup completed successfully."
 }
