@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2025-10-29T19-55-52Z_
+_Last updated: 2025-10-29T20-25-29Z_
 
 ## Active Tasks
 
@@ -22,6 +22,7 @@ _Last updated: 2025-10-29T19-55-52Z_
    - 2025-10-28T12-44-37Z IPv4 timeouts now capture `ip -s link show dev <iface>` output so link statistics accompany address and routing diagnostics in both metadata and assertion messages.【F:docs/work-notes/2025-10-28T12-44-37Z-boot-image-ip-link-diagnostics.md†L1-L15】【F:tests/test_boot_image_vm.py†L1161-L1199】【F:tests/test_boot_image_vm.py†L2184-L2251】
    - 2025-10-29T19-20-22Z storage and IPv4 timeouts now snapshot `systemctl list-units --failed --no-legend` alongside job queues so metadata and failure messages surface failed services during triage.【F:docs/work-notes/2025-10-29T19-20-22Z-boot-image-failed-units-diagnostics.md†L1-L18】【F:tests/test_boot_image_vm.py†L1096-L1249】【F:tests/test_boot_image_vm.py†L1969-L2251】
    - 2025-10-29T19-55-52Z unit inactivity timeouts now snapshot `systemctl list-units --failed --no-legend` alongside job queues so metadata and failure messages surface failed services when waiting for units to stop.【F:docs/work-notes/2025-10-29T19-55-52Z-boot-image-unit-inactive-diagnostics.md†L1-L15】【F:tests/test_boot_image_vm.py†L1278-L1389】【F:tests/test_boot_image_vm.py†L2252-L2359】
+   - 2025-10-29T20-25-29Z storage, IPv4, and unit inactivity timeouts now capture the kernel ring buffer via `dmesg`, logging and cataloguing the artifacts alongside existing diagnostics.【F:docs/work-notes/2025-10-29T20-25-29Z-boot-image-dmesg-diagnostics.md†L1-L9】【F:tests/test_boot_image_vm.py†L1137-L1389】【F:tests/test_boot_image_vm.py†L2102-L2567】
   - 2025-10-27T04-21-49Z BootImageVM failure metadata now lists the disk image and shell-quoted QEMU command so provenance survives outside `metadata.json`, with regression coverage guarding the new lines.【F:docs/work-notes/2025-10-27T04-21-49Z-boot-image-qemu-command-diagnostics.md†L1-L18】【F:tests/test_boot_image_vm.py†L368-L428】【F:tests/test_boot_image_vm.py†L1870-L1914】【F:tests/test_boot_image_vm.py†L1512-L1538】
    - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
    - 2025-10-24T03-00-00Z updates capture serial tails and systemd diagnostics in the harness log when timeouts occur. 【F:docs/work-notes/2025-10-24T03-00-00Z-boot-image-vm-diagnostics.md†L1-L17】【F:tests/test_boot_image_vm.py†L286-L341】【F:tests/test_boot_image_vm.py†L599-L675】
