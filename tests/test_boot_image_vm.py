@@ -1134,11 +1134,28 @@ class BootImageVM:
             metadata_label="systemctl list-units --failed (storage timeout)",
         )
         diagnostics.append(("systemctl list-units --failed", failed_units_path))
+        storage_status_raw = self.run(
+            "cat /run/pre-nixos/storage-status 2>/dev/null || true", timeout=240
+        )
+        self._log_step(
+            "Captured /run/pre-nixos/storage-status after storage status timeout",
+            body=storage_status_raw,
+        )
+        storage_status_path = self._write_diagnostic_artifact(
+            "storage-status-storage-timeout",
+            storage_status_raw,
+            metadata_label="/run/pre-nixos/storage-status (storage timeout)",
+        )
+        diagnostics.append(("/run/pre-nixos/storage-status", storage_status_path))
         diagnostics.append(self._capture_dmesg("storage timeout"))
+        storage_status_display = (
+            storage_status_raw.strip() or "<no storage status captured>"
+        )
         self._raise_with_transcript(
             "timed out waiting for pre-nixos storage status\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
-            f"systemctl status pre-nixos:\n{unit_status}",
+            f"systemctl status pre-nixos:\n{unit_status}\n"
+            f"/run/pre-nixos/storage-status contents:\n{storage_status_display}",
             diagnostics=diagnostics,
         )
 
@@ -2108,6 +2125,8 @@ def test_storage_timeout_records_systemd_jobs(
             return "failed units output"
         if command.startswith("dmesg"):
             return "dmesg output"
+        if "/run/pre-nixos/storage-status" in command:
+            return "STATE=pending\nDETAIL=waiting"
         return ""
 
     def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:  # type: ignore[override]
@@ -2136,6 +2155,8 @@ def test_storage_timeout_records_systemd_jobs(
     assert any("systemctl list-jobs" in cmd for cmd in commands)
     assert "systemctl list-units --failed" in message
     assert any("systemctl list-units --failed" in cmd for cmd in commands)
+    assert "/run/pre-nixos/storage-status contents" in message
+    assert any("/run/pre-nixos/storage-status" in cmd for cmd in commands)
     assert "dmesg (storage timeout)" in message
     assert any(cmd.startswith("dmesg") for cmd in commands)
 
@@ -2144,6 +2165,7 @@ def test_storage_timeout_records_systemd_jobs(
     labels = {entry["label"] for entry in diagnostics}
     assert "systemctl list-jobs (storage timeout)" in labels
     assert "systemctl list-units --failed (storage timeout)" in labels
+    assert "/run/pre-nixos/storage-status (storage timeout)" in labels
     assert "dmesg (storage timeout)" in labels
     job_entries = [
         entry
@@ -2172,6 +2194,15 @@ def test_storage_timeout_records_systemd_jobs(
     ]
     assert dmesg_entries, "expected dmesg artifact to be catalogued"
     for entry in dmesg_entries:
+        assert Path(entry["path"]).exists()
+
+    storage_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "/run/pre-nixos/storage-status (storage timeout)"
+    ]
+    assert storage_entries, "expected storage-status artifact to be catalogued"
+    for entry in storage_entries:
         assert Path(entry["path"]).exists()
 
 
