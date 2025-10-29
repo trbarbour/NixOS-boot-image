@@ -31,6 +31,7 @@ _Last updated: 2025-10-29T20-45-20Z_
 2. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
    - Use the now-working dev shell workflow to produce new ISOs whenever changes land, then run `pytest tests/test_boot_image_vm.py -vv` without interruption to validate end-to-end behaviour.
    - Promote passing serial/journal logs to `docs/boot-logs/` with updated test reports.
+   - 2025-10-29T21-32-03Z - Rebuilt the ISO and reran the full regression suite; see `docs/work-notes/2025-10-29T21-32-03Z-boot-image-vm-regression.md` and `docs/test-reports/2025-10-29T21-32-03Z-boot-image-vm-test.md` for command output and results.【F:docs/work-notes/2025-10-29T21-32-03Z-boot-image-vm-regression.md†L1-L7】【F:docs/test-reports/2025-10-29T21-32-03Z-boot-image-vm-test.md†L1-L15】
 
 3. **Capture follow-up boot timings after configuration adjustments.**
     - With the harness stable, collect new timing data after each substantive change to detect regressions early.
