@@ -1099,6 +1099,20 @@ class BootImageVM:
             metadata_label="systemctl list-jobs (storage timeout)",
         )
         diagnostics.append(("systemctl list-jobs", jobs_path))
+        failed_units_output = self.run(
+            "systemctl list-units --failed --no-legend 2>&1 || true",
+            timeout=240,
+        )
+        self._log_step(
+            "Captured systemctl list-units --failed after storage status timeout",
+            body=failed_units_output,
+        )
+        failed_units_path = self._write_diagnostic_artifact(
+            "systemctl-list-units-failed-storage-timeout",
+            failed_units_output,
+            metadata_label="systemctl list-units --failed (storage timeout)",
+        )
+        diagnostics.append(("systemctl list-units --failed", failed_units_path))
         self._raise_with_transcript(
             "timed out waiting for pre-nixos storage status\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -1238,6 +1252,22 @@ class BootImageVM:
             metadata_label=f"systemctl list-jobs (IPv4 timeout on {iface})",
         )
         diagnostics.append(("systemctl list-jobs", jobs_path))
+        failed_units_output = self.run(
+            "systemctl list-units --failed --no-legend 2>&1 || true",
+            timeout=240,
+        )
+        self._log_step(
+            f"Captured systemctl list-units --failed after IPv4 timeout on {iface}",
+            body=failed_units_output,
+        )
+        failed_units_path = self._write_diagnostic_artifact(
+            f"systemctl-list-units-failed-ipv4-timeout-{iface}",
+            failed_units_output,
+            metadata_label=(
+                f"systemctl list-units --failed (IPv4 timeout on {iface})"
+            ),
+        )
+        diagnostics.append(("systemctl list-units --failed", failed_units_path))
         self._raise_with_transcript(
             f"timed out waiting for IPv4 address on {iface}\n"
             f"journalctl -u pre-nixos.service -b:\n{journal}\n"
@@ -2034,6 +2064,8 @@ def test_storage_timeout_records_systemd_jobs(
             return "lsblk output"
         if "systemctl list-jobs" in command:
             return "job output"
+        if "systemctl list-units --failed" in command:
+            return "failed units output"
         return ""
 
     def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:  # type: ignore[override]
@@ -2060,11 +2092,14 @@ def test_storage_timeout_records_systemd_jobs(
     message = str(excinfo.value)
     assert "systemctl list-jobs" in message
     assert any("systemctl list-jobs" in cmd for cmd in commands)
+    assert "systemctl list-units --failed" in message
+    assert any("systemctl list-units --failed" in cmd for cmd in commands)
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     diagnostics = metadata["diagnostics"]["artifacts"]
     labels = {entry["label"] for entry in diagnostics}
     assert "systemctl list-jobs (storage timeout)" in labels
+    assert "systemctl list-units --failed (storage timeout)" in labels
     job_entries = [
         entry
         for entry in diagnostics
@@ -2072,6 +2107,17 @@ def test_storage_timeout_records_systemd_jobs(
     ]
     assert job_entries, "expected systemctl list-jobs artifact to be catalogued"
     for entry in job_entries:
+        assert Path(entry["path"]).exists()
+
+    failed_units_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"] == "systemctl list-units --failed (storage timeout)"
+    ]
+    assert (
+        failed_units_entries
+    ), "expected systemctl list-units --failed artifact to be catalogued"
+    for entry in failed_units_entries:
         assert Path(entry["path"]).exists()
 
 
@@ -2157,6 +2203,8 @@ def test_ipv4_timeout_records_systemd_jobs(
             return "networkd status"
         if "systemctl list-jobs" in command:
             return "job output"
+        if "systemctl list-units --failed" in command:
+            return "failed units output"
         return ""
 
     def fake_collect_journal(
@@ -2187,6 +2235,8 @@ def test_ipv4_timeout_records_systemd_jobs(
     message = str(excinfo.value)
     assert "systemctl list-jobs" in message
     assert any("systemctl list-jobs" in cmd for cmd in commands)
+    assert "systemctl list-units --failed" in message
+    assert any("systemctl list-units --failed" in cmd for cmd in commands)
     assert "systemctl status systemd-networkd" in message
     assert any(
         "systemctl status systemd-networkd" in cmd for cmd in commands
@@ -2202,6 +2252,7 @@ def test_ipv4_timeout_records_systemd_jobs(
     diagnostics = metadata["diagnostics"]["artifacts"]
     labels = {entry["label"] for entry in diagnostics}
     assert "systemctl list-jobs (IPv4 timeout on lan)" in labels
+    assert "systemctl list-units --failed (IPv4 timeout on lan)" in labels
     assert "systemctl status systemd-networkd (IPv4 timeout)" in labels
     assert (
         "journalctl -u systemd-networkd.service -b (IPv4 timeout)" in labels
@@ -2216,6 +2267,18 @@ def test_ipv4_timeout_records_systemd_jobs(
     ]
     assert job_entries, "expected systemctl list-jobs artifact to be catalogued"
     for entry in job_entries:
+        assert Path(entry["path"]).exists()
+
+    failed_units_entries = [
+        entry
+        for entry in diagnostics
+        if entry["label"]
+        == "systemctl list-units --failed (IPv4 timeout on lan)"
+    ]
+    assert (
+        failed_units_entries
+    ), "expected systemctl list-units --failed artifact to be catalogued"
+    for entry in failed_units_entries:
         assert Path(entry["path"]).exists()
 
     networkd_status_entries = [
