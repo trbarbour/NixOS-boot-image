@@ -50,9 +50,12 @@ ensure_nix_command_in_path() {
 
     if [[ -L "${link_path}" ]]; then
       local current_target
-      current_target="$(readlink -f "${link_path}")"
-      if [[ "${current_target}" == "${source_path}" ]]; then
-        continue
+      if current_target="$(readlink "${link_path}" 2>/dev/null)"; then
+        if [[ "${current_target}" == "${source_path}" ]]; then
+          continue
+        fi
+      else
+        _nix_env_log "Replacing unreadable symlink ${link_path}."
       fi
     elif [[ -e "${link_path}" ]]; then
       _nix_env_log "Skipping ${link_path}; non-symlink file already exists."
