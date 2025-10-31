@@ -66,6 +66,9 @@
           postPatch = pkgs.lib.optionalString (rootPub != null) ''
             cp ${rootPub} pre_nixos/root_key.pub
           '';
+          postInstall = pkgs.lib.optionalString (rootPub != null) ''
+            install -Dm0644 ${rootPub} "$out/${pkgs.python3.sitePackages}/pre_nixos/root_key.pub"
+          '';
           postFixup = ''
             for prog in pre-nixos pre-nixos-detect-storage pre-nixos-tui; do
               wrapProgram "$out/bin/$prog" --prefix PATH : ${requiredToolBinPath}
