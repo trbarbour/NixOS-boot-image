@@ -72,3 +72,16 @@ def test_pre_nixos_scripts_wrap_required_tool_path() -> None:
     assert "wrapProgram \"$out/bin/$prog\" --prefix PATH :" in flake_text, (
         "pre-nixos flake must extend PATH for wrapped CLI entry points"
     )
+
+
+def test_pre_nixos_installs_root_key_during_post_install() -> None:
+    flake_text = Path("flake.nix").read_text(encoding="utf-8")
+    assert "postInstall = pkgs.lib.optionalString (rootPub != null)" in flake_text, (
+        "pre-nixos flake must guard postInstall with the embedded key condition"
+    )
+    install_snippet = (
+        "install -Dm0644 ${rootPub} \"$out/${pkgs.python3.sitePackages}/pre_nixos/root_key.pub\""
+    )
+    assert install_snippet in flake_text, (
+        "pre-nixos flake must install the embedded root key into site-packages"
+    )
