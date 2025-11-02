@@ -455,9 +455,6 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
             "type": "mdadm",
             "level": level_map.get(arr.get("level", ""), arr.get("level")),
         }
-        devices_list = [dev for dev in arr.get("devices", []) if isinstance(dev, str)]
-        if devices_list:
-            entry["devices"] = devices_list
         target_vg = array_to_vg.get(name)
         if target_vg:
             entry["content"] = {"type": "lvm_pv", "vg": target_vg}

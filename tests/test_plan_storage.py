@@ -295,7 +295,9 @@ def test_plan_emits_disko_config() -> None:
     md0 = devices["mdadm"]["md0"]
     assert md0["level"] == 1
     assert md0["content"]["vg"] == "swap"
-    assert set(md0["devices"]) == {"sdb1", "sdc1"}
+    assert "devices" not in md0
+    arrays = {arr["name"]: arr for arr in plan["arrays"]}
+    assert set(arrays["md0"]["devices"]) == {"sdb1", "sdc1"}
     slash = devices["lvm_vg"]["main"]["lvs"]["slash"]
     assert slash["content"]["mountpoint"] == "/"
     swap = devices["lvm_vg"]["swap"]["lvs"]["swap"]

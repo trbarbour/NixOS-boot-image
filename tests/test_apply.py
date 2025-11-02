@@ -106,7 +106,9 @@ def test_apply_plan_handles_hdd_only_plan(tmp_path: Path, fake_disko) -> None:
     assert "md0" in devices["mdadm"], "root RAID array missing from HDD-only plan"
     md0 = devices["mdadm"]["md0"]
     assert md0["content"] == {"type": "lvm_pv", "vg": "main"}
-    assert md0["devices"] == ["sda2", "sdb2"]
+    assert "devices" not in md0
+    arrays = {arr["name"]: arr for arr in plan["arrays"]}
+    assert arrays["md0"]["devices"] == ["sda2", "sdb2"]
     assert set(devices["lvm_vg"]["main"]["lvs"]) == {"slash", "swap"}
     slash_lv = devices["lvm_vg"]["main"]["lvs"]["slash"]
     assert slash_lv["content"]["mountpoint"] == "/"
