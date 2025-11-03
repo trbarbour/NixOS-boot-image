@@ -7,8 +7,10 @@ from typing import Callable, Dict, Sequence, Tuple
 from pre_nixos.storage_detection import (
     CommandOutput,
     DetectionEnvironment,
+    ExistingStorageDevice,
     has_existing_storage,
     resolve_boot_disk,
+    scan_existing_storage,
 )
 
 
@@ -47,6 +49,8 @@ def test_detects_partitions_as_existing() -> None:
         ("wipefs", "-n", "/dev/sdb"): CommandOutput(stdout="", returncode=0),
     }
     env = make_env(commands)
+    devices = scan_existing_storage(env, boot_disk=None)
+    assert devices == [ExistingStorageDevice(device="/dev/sdb", reasons=("partitions",))]
     assert has_existing_storage(env, boot_disk=None)
 
 
@@ -63,6 +67,8 @@ def test_detects_wipefs_signature_without_partitions() -> None:
         ): CommandOutput(stdout="0x1234\tfilesystem", returncode=0),
     }
     env = make_env(commands)
+    devices = scan_existing_storage(env, boot_disk=None)
+    assert devices == [ExistingStorageDevice(device="/dev/sdc", reasons=("signatures",))]
     assert has_existing_storage(env, boot_disk=None)
 
 
@@ -94,6 +100,7 @@ def test_only_boot_disk_is_ignored() -> None:
     )
     boot_disk = resolve_boot_disk(env)
     assert boot_disk == "/dev/sda"
+    assert scan_existing_storage(env, boot_disk=boot_disk) == []
     assert not has_existing_storage(env, boot_disk=boot_disk)
 
 
@@ -106,6 +113,7 @@ def test_missing_device_during_inspection_is_ignored() -> None:
         ("wipefs", "-n", "/dev/sdd"): CommandOutput(stdout="", returncode=32),
     }
     env = make_env(commands)
+    assert scan_existing_storage(env, boot_disk=None) == []
     assert not has_existing_storage(env, boot_disk=None)
 
 
@@ -119,4 +127,26 @@ def test_floppy_device_is_ignored_during_detection() -> None:
     }
 
     env = make_env(commands, path_exists=lambda _path: True, realpath=lambda path: path)
+    assert scan_existing_storage(env, boot_disk=None) == []
     assert not has_existing_storage(env, boot_disk=None)
+
+
+def test_detects_multiple_reasons_for_device() -> None:
+    commands = {
+        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
+            stdout="/dev/sde disk\n", returncode=0
+        ),
+        ("lsblk", "-rno", "TYPE", "/dev/sde"): CommandOutput(
+            stdout="disk\npart\n", returncode=0
+        ),
+        (
+            "wipefs",
+            "-n",
+            "/dev/sde",
+        ): CommandOutput(stdout="0x2345\tlvm", returncode=0),
+    }
+    env = make_env(commands)
+    devices = scan_existing_storage(env, boot_disk=None)
+    assert devices == [
+        ExistingStorageDevice(device="/dev/sde", reasons=("partitions", "signatures"))
+    ]

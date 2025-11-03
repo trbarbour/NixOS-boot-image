@@ -11,7 +11,9 @@ from typing import Callable, Iterable, Optional, Sequence
 __all__ = [
     "CommandOutput",
     "DetectionEnvironment",
+    "ExistingStorageDevice",
     "resolve_boot_disk",
+    "scan_existing_storage",
     "has_existing_storage",
     "main",
 ]
@@ -85,6 +87,14 @@ _IGNORED_DEVICE_PREFIXES = (
 _DISAPPEARED_DEVICE_RETURN_CODES = {32}
 
 
+@dataclass(frozen=True)
+class ExistingStorageDevice:
+    """Describe a device that already contains storage metadata."""
+
+    device: str
+    reasons: tuple[str, ...]
+
+
 def _run_command(
     env: DetectionEnvironment, cmd: Sequence[str], *, ignore_errors: bool = False
 ) -> str:
@@ -142,15 +152,16 @@ def _iter_lsblk_rows(output: str) -> Iterable[tuple[str, str]]:
         yield parts[0], parts[1]
 
 
-def has_existing_storage(
+def scan_existing_storage(
     env: DetectionEnvironment | None = None,
     *,
     boot_disk: Optional[str] = None,
-) -> bool:
-    """Return True when non-boot disks contain partitions or signatures."""
+) -> list[ExistingStorageDevice]:
+    """Return a list of non-boot disks that contain storage metadata."""
 
     env = env or DetectionEnvironment()
     listing = _run_command(env, ["lsblk", "-dnpo", "NAME,TYPE"])
+    detected: list[ExistingStorageDevice] = []
     for device, dev_type in _iter_lsblk_rows(listing):
         if dev_type != "disk":
             continue
@@ -174,8 +185,9 @@ def has_existing_storage(
             )
         type_listing = type_result.stdout
         type_lines = [line for line in type_listing.splitlines() if line.strip()]
+        reasons: list[str] = []
         if len(type_lines) > 1:
-            return True
+            reasons.append("partitions")
         wipefs_result = env.run(["wipefs", "-n", device])
         if wipefs_result.returncode in _DISAPPEARED_DEVICE_RETURN_CODES:
             if env.path_exists(device):
@@ -190,8 +202,22 @@ def has_existing_storage(
                 f"{wipefs_result.returncode}"
             )
         if wipefs_result.stdout.strip():
-            return True
-    return False
+            reasons.append("signatures")
+        if reasons:
+            detected.append(
+                ExistingStorageDevice(device=resolved, reasons=tuple(reasons))
+            )
+    return detected
+
+
+def has_existing_storage(
+    env: DetectionEnvironment | None = None,
+    *,
+    boot_disk: Optional[str] = None,
+) -> bool:
+    """Return True when non-boot disks contain partitions or signatures."""
+
+    return bool(scan_existing_storage(env, boot_disk=boot_disk))
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:  # pragma: no cover - thin wrapper
