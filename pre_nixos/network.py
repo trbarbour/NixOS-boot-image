@@ -298,6 +298,63 @@ def get_lan_status(authorized_key: Optional[Path] = None, iface: str = "lan") ->
     return ip
 
 
+def wait_for_ipv4(
+    iface: str = "lan",
+    *,
+    attempts: int = 60,
+    delay: float = 1.0,
+) -> Optional[str]:
+    """Poll ``iface`` for an IPv4 address and return it when detected."""
+
+    exec_enabled = os.environ.get("PRE_NIXOS_EXEC") == "1"
+    log_event(
+        "pre_nixos.network.wait_for_ipv4.start",
+        interface=iface,
+        attempts=attempts,
+        delay_seconds=delay,
+        exec_enabled=exec_enabled,
+    )
+    if not exec_enabled:
+        log_event(
+            "pre_nixos.network.wait_for_ipv4.skipped",
+            interface=iface,
+            reason="execution disabled",
+        )
+        return None
+
+    for attempt in range(1, attempts + 1):
+        ip_address = get_ip_address(iface)
+        if ip_address:
+            log_event(
+                "pre_nixos.network.wait_for_ipv4.detected",
+                interface=iface,
+                attempt=attempt,
+                ip_address=ip_address,
+            )
+            return ip_address
+        time.sleep(delay)
+
+    log_event(
+        "pre_nixos.network.wait_for_ipv4.timeout",
+        interface=iface,
+        attempts=attempts,
+        delay_seconds=delay,
+    )
+    return None
+
+
+def _write_console_line(message: str, console_path: Path) -> bool:
+    """Write ``message`` to ``console_path`` using CRLF line endings."""
+
+    try:
+        with console_path.open("w", buffering=1, encoding="utf-8") as console:
+            console.write(message + "\r\n")
+            console.flush()
+        return True
+    except OSError:
+        return False
+
+
 def secure_ssh(
     ssh_dir: Path,
     ssh_service: str = "sshd",
@@ -386,6 +443,7 @@ def configure_lan(
     ssh_service: str = "sshd",
     authorized_key: Optional[Path] = None,
     root_home: Path = Path("/root"),
+    console_path: Path = Path("/dev/console"),
 ) -> Optional[Path]:
     """Configure the active NIC for DHCP and optionally enable secure SSH.
 
@@ -458,4 +516,25 @@ def configure_lan(
         interface=iface,
         network_file=net_path_conf,
     )
+
+    ip_address = wait_for_ipv4("lan")
+    if ip_address is None:
+        log_event(
+            "pre_nixos.network.configure_lan.ip_unavailable",
+            interface="lan",
+        )
+    else:
+        announcement = f"LAN IPv4 address: {ip_address}"
+        print(announcement)
+        console_written = False
+        if os.environ.get("PRE_NIXOS_EXEC") == "1" and console_path is not None:
+            console_written = _write_console_line(announcement, console_path)
+        log_event(
+            "pre_nixos.network.configure_lan.ip_announced",
+            interface="lan",
+            ip_address=ip_address,
+            console_path=console_path,
+            console_written=console_written,
+        )
+
     return net_path_conf

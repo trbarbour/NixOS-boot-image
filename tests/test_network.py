@@ -13,6 +13,7 @@ from pre_nixos.network import (
     get_ip_address,
     get_lan_status,
     secure_ssh,
+    wait_for_ipv4,
     write_lan_rename_rule,
 )
 
@@ -240,6 +241,53 @@ def test_configure_lan_emits_structured_logs(tmp_path, monkeypatch, capsys):
     assert "pre_nixos.network.command.skip" in events
 
 
+def test_configure_lan_announces_ip_to_console(tmp_path, monkeypatch):
+    netdir = tmp_path / "sys/class/net"
+    netdir.mkdir(parents=True)
+    iface = netdir / "eth0"
+    iface.mkdir()
+    (iface / "device").mkdir()
+    (iface / "carrier").write_text("1")
+
+    network_dir = tmp_path / "etc/systemd/network"
+    ssh_dir = tmp_path / "etc/ssh"
+    root_home = tmp_path / "root"
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr("pre_nixos.network._run", lambda *a, **k: None)
+    monkeypatch.setattr("pre_nixos.network._systemctl", lambda *a, **k: None)
+    monkeypatch.setattr("pre_nixos.network.wait_for_ipv4", lambda *a, **k: "198.51.100.7")
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.network.log_event", record_event)
+
+    console_path = tmp_path / "console"
+
+    configure_lan(
+        netdir,
+        network_dir,
+        ssh_dir,
+        authorized_key=key,
+        root_home=root_home,
+        console_path=console_path,
+    )
+
+    assert "LAN IPv4 address: 198.51.100.7" in console_path.read_text()
+    announcement_events = [
+        fields for name, fields in events if name == "pre_nixos.network.configure_lan.ip_announced"
+    ]
+    assert announcement_events, "expected IP announcement log entry"
+    assert announcement_events[0]["ip_address"] == "198.51.100.7"
+    assert announcement_events[0]["console_written"] is True
+
+
 def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     ssh_dir = tmp_path / "etc/ssh"
     ssh_dir.mkdir(parents=True)
@@ -404,3 +452,43 @@ def test_get_lan_status_returns_ip(tmp_path, monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", lambda *a, **k: DummyResult())
     assert get_lan_status(authorized_key=key) == "203.0.113.9"
+
+
+def test_wait_for_ipv4_detects_address(monkeypatch):
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    results = [None, None, "198.51.100.42"]
+
+    def fake_get_ip(iface: str = "lan"):
+        return results.pop(0)
+
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.network.get_ip_address", fake_get_ip)
+    monkeypatch.setattr("pre_nixos.network.log_event", record_event)
+    monkeypatch.setattr("pre_nixos.network.time.sleep", lambda *_: None)
+
+    ip_address = wait_for_ipv4(attempts=3, delay=0)
+    assert ip_address == "198.51.100.42"
+    detected_events = [
+        fields for name, fields in events if name == "pre_nixos.network.wait_for_ipv4.detected"
+    ]
+    assert detected_events and detected_events[0]["attempt"] == 3
+
+
+def test_wait_for_ipv4_times_out(monkeypatch):
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+    monkeypatch.setattr("pre_nixos.network.get_ip_address", lambda *_, **__: None)
+    events: list[str] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append(event)
+
+    monkeypatch.setattr("pre_nixos.network.log_event", record_event)
+    monkeypatch.setattr("pre_nixos.network.time.sleep", lambda *_: None)
+
+    assert wait_for_ipv4(attempts=2, delay=0) is None
+    assert "pre_nixos.network.wait_for_ipv4.timeout" in events
