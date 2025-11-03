@@ -5,9 +5,10 @@ This project contains tools to prepare bare-metal machines for a NixOS installat
 Storage execution is delegated to [disko](https://github.com/nix-community/disko). The planner emits a `disko.devices` description alongside the traditional RAID/VG/LV view, and the applier writes `/var/log/pre-nixos/disko-config.nix` before inspecting `disko --help`. Newer disko releases expect the combined `--mode destroy,format,mount` entry point (and support `--yes-wipe-all-disks`), while older packages only recognise `--mode disko`. Detecting the available mode at runtime keeps the same boot image compatible with both generations and still leaves an auditable config behind for reuse.
 
 > **Note:** To enable SSH access on the boot image, supply a public key via the
-> `PRE_NIXOS_ROOT_KEY` environment variable before building. If no key is
-> provided—or the supplied path cannot be read—the image falls back to the
-> NixOS default of console-only access so automated builds still succeed.
+> `PRE_NIXOS_ROOT_KEY` environment variable before building **and** pass
+> `--impure` to `nix build`. Without `--impure` the environment variable is
+> ignored and the build prints a warning before falling back to the NixOS
+> default of console-only access so automated builds still succeed.
 
 ## Usage
 
@@ -45,7 +46,10 @@ nix build --impure
 
 After generating the key pair, keep `PRE_NIXOS_ROOT_KEY` set (or provide an
 absolute path directly in the environment) before running `nix build --impure`
-so that the key is embedded in the image.
+so that the key is embedded in the image. If `--impure` is omitted, Nix
+evaluates the flake in a pure environment and silently drops
+`PRE_NIXOS_ROOT_KEY`, resulting in a build that now emits a warning and ships
+without the SSH key.
 
 During the first boot the `pre-nixos` service copies the embedded public key to
 `/root/.ssh/authorized_keys` and rewrites `/etc/ssh/sshd_config` to disable
