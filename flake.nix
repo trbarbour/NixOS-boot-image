@@ -14,6 +14,9 @@
 
       rootPubEnv = builtins.getEnv "PRE_NIXOS_ROOT_KEY";
       rootPubPath = "${builtins.toString ./.}/pre_nixos/root_key.pub";
+      warnNoKey = message: builtins.trace message null;
+      missingKeyWarning =
+        "PRE_NIXOS_ROOT_KEY was not provided or visible during evaluation; continuing without embedding a root SSH key. Pass --impure to `nix build` if you expect environment variables to be available.";
       rootPub =
         let
           resolvedPath =
@@ -25,12 +28,12 @@
                 builtins.toPath candidate
               else
                 builtins.trace
-                  "PRE_NIXOS_ROOT_KEY did not resolve to a readable file; continuing without embedding a root key"
+                  "PRE_NIXOS_ROOT_KEY did not resolve to a readable file; continuing without embedding a root SSH key"
                   null
             else if builtins.pathExists rootPubPath then
               builtins.toPath rootPubPath
             else
-              null;
+              warnNoKey missingKeyWarning;
         in
         if resolvedPath != null then
           builtins.path { path = resolvedPath; }
