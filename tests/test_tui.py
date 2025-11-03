@@ -96,6 +96,48 @@ def test_plan_renderer_prefers_detailed_profile(renderer):
     assert render.lines[0].startswith("Disk nvme0n1")
 
 
+def test_plan_renderer_deduplicates_array_vgs():
+    plan = {
+        "partitions": {
+            "nvme0n1": [
+                {"name": "nvme0n1p1", "type": "efi"},
+                {"name": "nvme0n1p2", "type": "lvm"},
+            ],
+            "nvme1n1": [
+                {"name": "nvme1n1p1", "type": "efi"},
+                {"name": "nvme1n1p2", "type": "lvm"},
+            ],
+        },
+        "arrays": [
+            {
+                "name": "md0",
+                "level": "raid0",
+                "devices": ["nvme0n1p2", "nvme1n1p2"],
+                "type": "ssd",
+            }
+        ],
+        "vgs": [
+            {"name": "main", "devices": ["md0"]},
+        ],
+        "lvs": [
+            {"name": "slash", "vg": "main", "size": "50G"},
+        ],
+    }
+    disks = [
+        inventory.Disk(name="nvme0n1", rotational=False, nvme=True),
+        inventory.Disk(name="nvme1n1", rotational=False, nvme=True),
+    ]
+    render = tui.PlanRenderer(plan, disks).render(120, 40, None, "detailed", ())
+
+    vg_lines = [line for line in render.lines if "VG main" in line]
+    lv_lines = [line for line in render.lines if "slash 50G" in line]
+
+    assert len(vg_lines) == 1
+    assert len(lv_lines) == 1
+    assert not any("Disk nvme1n1" in line and "VG main" in line for line in render.lines)
+    assert any("Disk nvme1n1" in line and "md0" in line for line in render.lines)
+
+
 def test_plan_renderer_falls_back_to_minimal(renderer):
     render = renderer.render(40, 10, None, "auto", expanded=())
     assert render.profile == "minimal"

@@ -262,6 +262,7 @@ class PlanRenderer:
 
     def _generate_rows(self, profile: str) -> list[RowData]:
         rows: list[RowData] = []
+        seen_array_vgs: set[tuple[str, str]] = set()
         for disk_name in self.disk_order:
             partitions = self.partitions.get(disk_name, [])
             disk_label = self._format_disk_label(profile, disk_name, partitions)
@@ -293,6 +294,26 @@ class PlanRenderer:
 
                 source_first = True
                 for vg_name in vgs:
+                    if source_name:
+                        key = (source_name, vg_name)
+                        if key in seen_array_vgs:
+                            columns = [
+                                disk_label if not disk_row_started else "",
+                                source_label if source_first else connector,
+                                "",
+                                "",
+                            ]
+                            focus: FocusKey | None
+                            if source_name:
+                                focus = ("array", source_name, None)
+                            else:
+                                focus = ("disk", disk_name, None)
+                            rows.append(RowData(columns, focus, disk_name))
+                            disk_row_started = True
+                            source_first = False
+                            continue
+                        seen_array_vgs.add(key)
+
                     vg_label = self._format_vg_label(profile, vg_name)
                     lvs = self.vg_to_lvs.get(vg_name, [])
                     vg_connector = connector
