@@ -5,8 +5,17 @@ import io
 import json
 import os
 import sys
+from typing import Sequence
 
-from . import inventory, planner, apply, partition, network
+from . import (
+    apply,
+    inventory,
+    network,
+    partition,
+    planner,
+    storage_cleanup,
+    storage_detection,
+)
 
 
 def _maybe_open_console() -> io.TextIOWrapper | None:
@@ -27,11 +36,9 @@ def _is_interactive() -> bool:
 
 
 def _confirm_storage_reset() -> bool:
-    """Request confirmation before destroying existing storage."""
+    """Request confirmation before applying the storage plan."""
 
-    prompt = (
-        "This will erase and reinitialize all detected storage. Continue? [y/N]: "
-    )
+    prompt = "Apply the proposed storage plan now? This may erase data. [y/N]: "
     while True:
         try:
             response = input(prompt)
@@ -43,6 +50,55 @@ def _confirm_storage_reset() -> bool:
         if choice in {"", "n", "no"}:
             return False
         print("Please respond with 'yes' or 'no'.")
+
+
+def _prompt_storage_cleanup(
+    devices: Sequence[storage_detection.ExistingStorageDevice],
+) -> str | None:
+    print("Existing storage detected on the following devices:")
+    for entry in devices:
+        reasons = storage_detection.format_existing_storage_reasons(entry.reasons)
+        print(f"  - {entry.device} ({reasons})")
+    print("Choose how to erase the existing data before applying the plan:")
+    for option in storage_cleanup.CLEANUP_OPTIONS:
+        print(f"  [{option.key}] {option.description}")
+    while True:
+        try:
+            response = input("Selection [q]: ")
+        except EOFError:
+            return None
+        choice = response.strip().lower() or "q"
+        for option in storage_cleanup.CLEANUP_OPTIONS:
+            if choice == option.key:
+                return option.action
+        print("Please choose one of the listed options.")
+
+
+def _handle_existing_storage(execute: bool) -> bool:
+    try:
+        devices = storage_detection.detect_existing_storage()
+    except Exception as exc:
+        print(f"Failed to inspect existing storage: {exc}")
+        return False
+    if not devices:
+        return True
+    if not _is_interactive():
+        print(
+            "Existing storage was detected but no interactive terminal is "
+            "available to choose a wipe method. Aborting."
+        )
+        return False
+    action = _prompt_storage_cleanup(devices)
+    if action is None:
+        print("Aborting without modifying storage.")
+        return False
+    if action != storage_cleanup.SKIP_CLEANUP:
+        storage_cleanup.perform_storage_cleanup(
+            action,
+            [entry.device for entry in devices],
+            execute=execute,
+        )
+    return True
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -112,8 +168,10 @@ def main(argv: list[str] | None = None) -> None:
             and not args.dry_run
             and os.environ.get("PRE_NIXOS_EXEC") == "1"
         )
-        if will_modify_storage and _is_interactive():
-            if not _confirm_storage_reset():
+        if will_modify_storage:
+            if not _handle_existing_storage(execute=will_modify_storage):
+                return
+            if _is_interactive() and not _confirm_storage_reset():
                 print("Aborting without modifying storage.")
                 return
 
