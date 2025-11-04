@@ -1,8 +1,10 @@
 # shellcheck shell=sh
+state_dir=${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}
+
 if [ -n "${PRE_NIXOS_VERSION-}" ]; then
   printf '%s\n' "pre-nixos boot image version ${PRE_NIXOS_VERSION}"
 fi
-status_file=/run/pre-nixos/storage-status
+status_file=$state_dir/storage-status
 if [ -r "$status_file" ]; then
   state=""
   detail=""
@@ -49,4 +51,17 @@ if [ -r "$status_file" ]; then
       printf '%s\n' "pre-nixos: Provisioning status is '$state' ($detail)."
       ;;
   esac
+fi
+
+network_status_file=$state_dir/network-status
+if [ -r "$network_status_file" ]; then
+  ipv4=""
+  while IFS='=' read -r key value; do
+    case "$key" in
+      LAN_IPV4) ipv4=$value ;;
+    esac
+  done < "$network_status_file"
+  if [ -n "$ipv4" ]; then
+    printf '%s\n' "LAN IPv4 address: $ipv4"
+  fi
 fi

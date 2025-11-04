@@ -436,6 +436,18 @@ def secure_ssh(
     return conf_path
 
 
+def _write_network_status(
+    ip_address: str,
+    status_dir: Path = Path("/run/pre-nixos"),
+) -> Path:
+    """Persist the detected ``ip_address`` for login notices."""
+
+    status_dir.mkdir(parents=True, exist_ok=True)
+    status_path = status_dir / "network-status"
+    status_path.write_text(f"LAN_IPV4={ip_address}\n", encoding="utf-8")
+    return status_path
+
+
 def configure_lan(
     net_path: Path = Path("/sys/class/net"),
     network_dir: Path = Path("/etc/systemd/network"),
@@ -444,6 +456,7 @@ def configure_lan(
     authorized_key: Optional[Path] = None,
     root_home: Path = Path("/root"),
     console_path: Path = Path("/dev/console"),
+    status_dir: Path = Path("/run/pre-nixos"),
 ) -> Optional[Path]:
     """Configure the active NIC for DHCP and optionally enable secure SSH.
 
@@ -529,6 +542,21 @@ def configure_lan(
         console_written = False
         if os.environ.get("PRE_NIXOS_EXEC") == "1" and console_path is not None:
             console_written = _write_console_line(announcement, console_path)
+        try:
+            status_path = _write_network_status(ip_address, status_dir)
+        except OSError as error:
+            log_event(
+                "pre_nixos.network.configure_lan.status_write_failed",
+                interface="lan",
+                error=str(error),
+                status_dir=status_dir,
+            )
+        else:
+            log_event(
+                "pre_nixos.network.configure_lan.status_written",
+                interface="lan",
+                status_path=status_path,
+            )
         log_event(
             "pre_nixos.network.configure_lan.ip_announced",
             interface="lan",

@@ -10,6 +10,7 @@ let
   preNixosExecEnv = {
     PRE_NIXOS_EXEC = "1";
     PRE_NIXOS_NIXPKGS = "${pkgs.path}";
+    PRE_NIXOS_STATE_DIR = "/run/pre-nixos";
   } // lib.optionalAttrs cfg.enable {
     PRE_NIXOS_VERSION = pkgs.pre-nixos.version;
   };

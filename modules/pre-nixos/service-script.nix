@@ -5,7 +5,7 @@ let
 in ''
   set -euo pipefail
 
-  status_dir=/run/pre-nixos
+  status_dir="''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
   status_file=$status_dir/storage-status
   mkdir -p "$status_dir"
 
