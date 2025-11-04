@@ -162,8 +162,15 @@ def test_configure_lan_writes_network_file(tmp_path):
     key = tmp_path / "id_ed25519.pub"
     key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
 
+    status_dir = tmp_path / "run/pre-nixos"
+
     network_file = configure_lan(
-        netdir, network_dir, ssh_dir, authorized_key=key, root_home=root_home
+        netdir,
+        network_dir,
+        ssh_dir,
+        authorized_key=key,
+        root_home=root_home,
+        status_dir=status_dir,
     )
     assert network_file == network_dir / "20-lan.network"
     assert "DHCP=yes" in network_file.read_text()
@@ -185,7 +192,15 @@ def test_configure_lan_skips_without_key(tmp_path):
     ssh_dir = tmp_path / "etc/ssh"
     root_home = tmp_path / "root"
 
-    result = configure_lan(netdir, network_dir, ssh_dir, root_home=root_home)
+    status_dir = tmp_path / "run/pre-nixos"
+
+    result = configure_lan(
+        netdir,
+        network_dir,
+        ssh_dir,
+        root_home=root_home,
+        status_dir=status_dir,
+    )
     assert result is None
     assert not (network_dir / "20-lan.network").exists()
     assert not (root_home / ".ssh/authorized_keys").exists()
@@ -202,8 +217,15 @@ def test_configure_lan_secures_ssh_without_detected_iface(tmp_path):
     key = tmp_path / "id_ed25519.pub"
     key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
 
+    status_dir = tmp_path / "run/pre-nixos"
+
     result = configure_lan(
-        netdir, network_dir, ssh_dir, authorized_key=key, root_home=root_home
+        netdir,
+        network_dir,
+        ssh_dir,
+        authorized_key=key,
+        root_home=root_home,
+        status_dir=status_dir,
     )
     assert result is None
     auth_keys = root_home / ".ssh/authorized_keys"
@@ -229,8 +251,15 @@ def test_configure_lan_emits_structured_logs(tmp_path, monkeypatch, capsys):
 
     monkeypatch.setenv("PRE_NIXOS_EXEC", "0")
 
+    status_dir = tmp_path / "run/pre-nixos"
+
     configure_lan(
-        netdir, network_dir, ssh_dir, authorized_key=key, root_home=root_home
+        netdir,
+        network_dir,
+        ssh_dir,
+        authorized_key=key,
+        root_home=root_home,
+        status_dir=status_dir,
     )
 
     captured = capsys.readouterr()
@@ -270,6 +299,8 @@ def test_configure_lan_announces_ip_to_console(tmp_path, monkeypatch):
 
     console_path = tmp_path / "console"
 
+    status_dir = tmp_path / "run/pre-nixos"
+
     configure_lan(
         netdir,
         network_dir,
@@ -277,6 +308,7 @@ def test_configure_lan_announces_ip_to_console(tmp_path, monkeypatch):
         authorized_key=key,
         root_home=root_home,
         console_path=console_path,
+        status_dir=status_dir,
     )
 
     assert "LAN IPv4 address: 198.51.100.7" in console_path.read_text()
@@ -286,6 +318,9 @@ def test_configure_lan_announces_ip_to_console(tmp_path, monkeypatch):
     assert announcement_events, "expected IP announcement log entry"
     assert announcement_events[0]["ip_address"] == "198.51.100.7"
     assert announcement_events[0]["console_written"] is True
+    status_path = status_dir / "network-status"
+    assert status_path.is_file()
+    assert status_path.read_text() == "LAN_IPV4=198.51.100.7\n"
 
 
 def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
