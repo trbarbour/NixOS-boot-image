@@ -9,9 +9,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import curses
 import json
+import os
 from typing import Any, Iterable, Optional, Sequence, Tuple
 
-from . import inventory, planner, apply, network
+from . import (
+    apply,
+    inventory,
+    network,
+    planner,
+    storage_cleanup,
+    storage_detection,
+)
 
 
 FocusKey = Tuple[str, str, Optional[str]]
@@ -759,6 +767,151 @@ def _load_plan(stdscr: curses.window, plan: dict[str, Any]) -> dict[str, Any]:
     return plan
 
 
+def _show_modal(stdscr: curses.window, lines: Sequence[str]) -> None:
+    """Display *lines* and wait for a key press."""
+
+    stdscr.clear()
+    height, width = stdscr.getmaxyx()
+    for idx, line in enumerate(lines):
+        stdscr.addstr(idx, 0, _trim(line, width - 1))
+    prompt_row = len(lines)
+    stdscr.addstr(prompt_row, 0, _trim("Press any key to continue.", width - 1))
+    stdscr.refresh()
+    while True:
+        try:
+            stdscr.getkey()
+            break
+        except curses.error:
+            continue
+
+
+def _prompt_storage_cleanup(
+    stdscr: curses.window,
+    devices: Sequence[storage_detection.ExistingStorageDevice],
+) -> str:
+    """Prompt the operator for a storage cleanup action."""
+
+    options = [
+        (
+            "1",
+            storage_cleanup.WIPE_SIGNATURES,
+            "Wipe partition tables and filesystem signatures (fast)",
+        ),
+        (
+            "2",
+            storage_cleanup.DISCARD_BLOCKS,
+            "Discard all blocks (SSD/NVMe only)",
+        ),
+        (
+            "3",
+            storage_cleanup.OVERWRITE_RANDOM,
+            "Overwrite the entire device with random data (slow)",
+        ),
+        ("s", storage_cleanup.SKIP_CLEANUP, "Skip wiping and continue"),
+        ("q", "abort", "Abort without making changes"),
+    ]
+    message = ""
+
+    while True:
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+        row = 0
+        stdscr.addstr(
+            row,
+            0,
+            _trim("Existing storage detected on the following devices:", width - 1),
+        )
+        row += 2
+        for entry in devices:
+            reasons = storage_detection.format_existing_storage_reasons(entry.reasons)
+            stdscr.addstr(row, 0, _trim(f"- {entry.device} ({reasons})", width - 1))
+            row += 1
+        row += 1
+        stdscr.addstr(
+            row,
+            0,
+            _trim(
+                "Choose how to erase the existing data before applying the plan:",
+                width - 1,
+            ),
+        )
+        row += 2
+        for key, _action, description in options:
+            stdscr.addstr(row, 0, _trim(f"[{key}] {description}", width - 1))
+            row += 1
+        stdscr.addstr(row, 0, _trim("Selection [q]: ", width - 1))
+        if message:
+            stdscr.addstr(row + 1, 0, _trim(message, width - 1))
+        stdscr.refresh()
+
+        try:
+            key = stdscr.getkey()
+        except curses.error:
+            continue
+
+        normalized = key.lower()
+        if normalized in {"\n", "\r"}:
+            normalized = "q"
+        elif normalized == "key_enter":
+            normalized = "q"
+        elif len(key) == 1:
+            normalized = key.strip().lower()
+            if not normalized:
+                normalized = "q"
+
+        for option_key, action, _desc in options:
+            if normalized == option_key:
+                return action
+        message = "Please choose one of the listed options."
+
+
+def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
+    """Handle the apply-plan workflow. Returns ``True`` when exiting."""
+
+    execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
+    try:
+        devices = storage_detection.detect_existing_storage()
+    except Exception as exc:  # pragma: no cover - rare detection errors
+        _show_modal(stdscr, [f"Failed to inspect existing storage: {exc}"])
+        return False
+
+    if devices:
+        action = _prompt_storage_cleanup(stdscr, devices)
+        if action == "abort":
+            _show_modal(stdscr, ["Aborting without modifying storage."])
+            return False
+        if action != storage_cleanup.SKIP_CLEANUP:
+            targets = [entry.device for entry in devices]
+            try:
+                storage_cleanup.perform_storage_cleanup(
+                    action,
+                    targets,
+                    execute=execute,
+                )
+            except Exception as exc:  # pragma: no cover - subprocess failure is rare
+                _show_modal(stdscr, [f"Failed to wipe storage: {exc}"])
+                return False
+
+    stdscr.clear()
+    stdscr.addstr(0, 0, "Applying plan...\n")
+    stdscr.refresh()
+    try:
+        apply.apply_plan(state.plan)
+    except Exception as exc:  # pragma: no cover - subprocess failure is rare
+        _show_modal(stdscr, [f"Failed to apply plan: {exc}"])
+        return False
+
+    stdscr.addstr(1, 0, "Done. Press any key to exit.")
+    stdscr.refresh()
+    while True:
+        try:
+            stdscr.getkey()
+            break
+        except curses.error:
+            continue
+    return True
+
+
 def run() -> None:
     """Launch the interactive provisioning TUI."""
 
@@ -808,13 +961,10 @@ def run() -> None:
                 refresh_renderer()
                 continue
             if key_lower == "a":
-                stdscr.clear()
-                stdscr.addstr(0, 0, "Applying plan...\n")
-                stdscr.refresh()
-                apply.apply_plan(state.plan)
-                stdscr.addstr(1, 0, "Done. Press any key to exit.")
-                stdscr.getkey()
-                break
+                if _handle_apply_plan(stdscr, state):
+                    break
+                refresh_renderer()
+                continue
             if key_lower in {"KEY_UP", "k"}:
                 _move_focus(state, render, -1)
                 continue

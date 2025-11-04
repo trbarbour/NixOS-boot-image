@@ -52,18 +52,13 @@ def _confirm_storage_reset() -> bool:
         print("Please respond with 'yes' or 'no'.")
 
 
-def _format_reasons(reasons: Sequence[str]) -> str:
-    if not reasons:
-        return "unknown"
-    return ", ".join(reasons)
-
-
 def _prompt_storage_cleanup(
     devices: Sequence[storage_detection.ExistingStorageDevice],
 ) -> str:
     print("Existing storage detected on the following devices:")
     for entry in devices:
-        print(f"  - {entry.device} ({_format_reasons(entry.reasons)})")
+        reasons = storage_detection.format_existing_storage_reasons(entry.reasons)
+        print(f"  - {entry.device} ({reasons})")
     print("Choose how to erase the existing data before applying the plan:")
     options = [
         (
@@ -100,9 +95,7 @@ def _prompt_storage_cleanup(
 
 def _handle_existing_storage(execute: bool) -> bool:
     try:
-        env = storage_detection.DetectionEnvironment()
-        boot_disk = storage_detection.resolve_boot_disk(env)
-        devices = storage_detection.scan_existing_storage(env, boot_disk=boot_disk)
+        devices = storage_detection.detect_existing_storage()
     except Exception as exc:
         print(f"Failed to inspect existing storage: {exc}")
         return False

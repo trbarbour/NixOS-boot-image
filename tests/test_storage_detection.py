@@ -8,6 +8,8 @@ from pre_nixos.storage_detection import (
     CommandOutput,
     DetectionEnvironment,
     ExistingStorageDevice,
+    detect_existing_storage,
+    format_existing_storage_reasons,
     has_existing_storage,
     resolve_boot_disk,
     scan_existing_storage,
@@ -150,3 +152,51 @@ def test_detects_multiple_reasons_for_device() -> None:
     assert devices == [
         ExistingStorageDevice(device="/dev/sde", reasons=("partitions", "signatures"))
     ]
+
+
+def test_detect_existing_storage_excludes_boot_disk() -> None:
+    commands = {
+        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
+            stdout="/dev/sda disk\n/dev/sdb disk\n", returncode=0
+        ),
+        ("lsblk", "-npo", "PKNAME", "/dev/sda1"): CommandOutput(
+            stdout="sda\n", returncode=0
+        ),
+        ("lsblk", "-rno", "TYPE", "/dev/sdb"): CommandOutput(
+            stdout="disk\npart\n", returncode=0
+        ),
+        ("wipefs", "-n", "/dev/sdb"): CommandOutput(
+            stdout="0x2345\tlvm", returncode=0
+        ),
+        ("findmnt", "-n", "-o", "SOURCE", "/iso"): CommandOutput(stdout="", returncode=1),
+    }
+
+    known_paths = {"/dev/disk/by-label/BOOT", "/dev/sda1", "/dev/sda", "/dev/sdb"}
+
+    def path_exists(path: str) -> bool:
+        return path in known_paths
+
+    def realpath(path: str) -> str:
+        if path == "/dev/disk/by-label/BOOT":
+            return "/dev/sda1"
+        return path
+
+    env = make_env(
+        commands,
+        path_exists=path_exists,
+        realpath=realpath,
+        read_cmdline=lambda: ["boot=LABEL=BOOT"],
+    )
+
+    devices = detect_existing_storage(env)
+    assert devices == [
+        ExistingStorageDevice(device="/dev/sdb", reasons=("partitions", "signatures"))
+    ]
+
+
+def test_format_existing_storage_reasons() -> None:
+    assert format_existing_storage_reasons(()) == "unknown"
+    assert (
+        format_existing_storage_reasons(("partitions", "signatures"))
+        == "partitions, signatures"
+    )

@@ -12,6 +12,8 @@ __all__ = [
     "CommandOutput",
     "DetectionEnvironment",
     "ExistingStorageDevice",
+    "detect_existing_storage",
+    "format_existing_storage_reasons",
     "resolve_boot_disk",
     "scan_existing_storage",
     "has_existing_storage",
@@ -208,6 +210,24 @@ def scan_existing_storage(
                 ExistingStorageDevice(device=resolved, reasons=tuple(reasons))
             )
     return detected
+
+
+def detect_existing_storage(
+    env: DetectionEnvironment | None = None,
+) -> list[ExistingStorageDevice]:
+    """Inspect the system and return devices that contain existing storage."""
+
+    env = env or DetectionEnvironment()
+    boot_disk = resolve_boot_disk(env)
+    return scan_existing_storage(env, boot_disk=boot_disk)
+
+
+def format_existing_storage_reasons(reasons: Sequence[str]) -> str:
+    """Return a human-readable summary of detection reasons."""
+
+    if not reasons:
+        return "unknown"
+    return ", ".join(reasons)
 
 
 def has_existing_storage(
