@@ -61,7 +61,7 @@
         in
         pkgs.python3Packages.buildPythonApplication {
           pname = "pre-nixos";
-          version = "0.1.0";
+          version = "0.2.0";
           src = ./.;
           pyproject = true;
           nativeBuildInputs = with pkgs; [ makeWrapper python3Packages.setuptools python3Packages.wheel ];

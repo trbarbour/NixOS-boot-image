@@ -1,6 +1,6 @@
 [project]
 name = "pre-nixos"
-version = "0.1.0"
+version = "0.2.0"
 description = "Pre-NixOS setup tool"
 authors = [{name = "Unknown"}]
 readme = "README.md"
