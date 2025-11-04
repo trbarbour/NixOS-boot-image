@@ -788,28 +788,9 @@ def _show_modal(stdscr: curses.window, lines: Sequence[str]) -> None:
 def _prompt_storage_cleanup(
     stdscr: curses.window,
     devices: Sequence[storage_detection.ExistingStorageDevice],
-) -> str:
+) -> str | None:
     """Prompt the operator for a storage cleanup action."""
 
-    options = [
-        (
-            "1",
-            storage_cleanup.WIPE_SIGNATURES,
-            "Wipe partition tables and filesystem signatures (fast)",
-        ),
-        (
-            "2",
-            storage_cleanup.DISCARD_BLOCKS,
-            "Discard all blocks (SSD/NVMe only)",
-        ),
-        (
-            "3",
-            storage_cleanup.OVERWRITE_RANDOM,
-            "Overwrite the entire device with random data (slow)",
-        ),
-        ("s", storage_cleanup.SKIP_CLEANUP, "Skip wiping and continue"),
-        ("q", "abort", "Abort without making changes"),
-    ]
     message = ""
 
     while True:
@@ -836,8 +817,12 @@ def _prompt_storage_cleanup(
             ),
         )
         row += 2
-        for key, _action, description in options:
-            stdscr.addstr(row, 0, _trim(f"[{key}] {description}", width - 1))
+        for option in storage_cleanup.CLEANUP_OPTIONS:
+            stdscr.addstr(
+                row,
+                0,
+                _trim(f"[{option.key}] {option.description}", width - 1),
+            )
             row += 1
         stdscr.addstr(row, 0, _trim("Selection [q]: ", width - 1))
         if message:
@@ -859,9 +844,9 @@ def _prompt_storage_cleanup(
             if not normalized:
                 normalized = "q"
 
-        for option_key, action, _desc in options:
-            if normalized == option_key:
-                return action
+        for option in storage_cleanup.CLEANUP_OPTIONS:
+            if normalized == option.key:
+                return option.action
         message = "Please choose one of the listed options."
 
 
@@ -877,7 +862,7 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
 
     if devices:
         action = _prompt_storage_cleanup(stdscr, devices)
-        if action == "abort":
+        if action is None:
             _show_modal(stdscr, ["Aborting without modifying storage."])
             return False
         if action != storage_cleanup.SKIP_CLEANUP:

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import shlex
 import subprocess
-from typing import Callable, Iterable, List, Sequence
+from typing import Callable, Iterable, List, Sequence, Tuple
 
 from .logging_utils import log_event
 
@@ -13,6 +14,8 @@ __all__ = [
     "DISCARD_BLOCKS",
     "OVERWRITE_RANDOM",
     "SKIP_CLEANUP",
+    "CleanupOption",
+    "CLEANUP_OPTIONS",
     "perform_storage_cleanup",
 ]
 
@@ -23,6 +26,36 @@ WIPE_SIGNATURES = "wipe-signatures"
 DISCARD_BLOCKS = "discard"
 OVERWRITE_RANDOM = "overwrite-random"
 SKIP_CLEANUP = "skip"
+
+
+@dataclass(frozen=True)
+class CleanupOption:
+    """Choice presented to operators when wiping existing storage."""
+
+    key: str
+    action: str | None
+    description: str
+
+
+CLEANUP_OPTIONS: Tuple[CleanupOption, ...] = (
+    CleanupOption(
+        "1",
+        WIPE_SIGNATURES,
+        "Wipe partition tables and filesystem signatures (fast)",
+    ),
+    CleanupOption(
+        "2",
+        DISCARD_BLOCKS,
+        "Discard all blocks (SSD/NVMe only)",
+    ),
+    CleanupOption(
+        "3",
+        OVERWRITE_RANDOM,
+        "Overwrite the entire device with random data (slow)",
+    ),
+    CleanupOption("s", SKIP_CLEANUP, "Skip wiping and continue"),
+    CleanupOption("q", None, "Abort without making changes"),
+)
 
 
 def _default_runner(cmd: Sequence[str]) -> subprocess.CompletedProcess:

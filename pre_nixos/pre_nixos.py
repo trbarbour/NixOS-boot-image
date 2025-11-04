@@ -54,42 +54,23 @@ def _confirm_storage_reset() -> bool:
 
 def _prompt_storage_cleanup(
     devices: Sequence[storage_detection.ExistingStorageDevice],
-) -> str:
+) -> str | None:
     print("Existing storage detected on the following devices:")
     for entry in devices:
         reasons = storage_detection.format_existing_storage_reasons(entry.reasons)
         print(f"  - {entry.device} ({reasons})")
     print("Choose how to erase the existing data before applying the plan:")
-    options = [
-        (
-            "1",
-            storage_cleanup.WIPE_SIGNATURES,
-            "Wipe partition tables and filesystem signatures (fast)",
-        ),
-        (
-            "2",
-            storage_cleanup.DISCARD_BLOCKS,
-            "Discard all blocks (SSD/NVMe only)",
-        ),
-        (
-            "3",
-            storage_cleanup.OVERWRITE_RANDOM,
-            "Overwrite the entire device with random data (slow)",
-        ),
-        ("s", storage_cleanup.SKIP_CLEANUP, "Skip wiping and continue"),
-        ("q", "abort", "Abort without making changes"),
-    ]
-    for key, _action, description in options:
-        print(f"  [{key}] {description}")
+    for option in storage_cleanup.CLEANUP_OPTIONS:
+        print(f"  [{option.key}] {option.description}")
     while True:
         try:
             response = input("Selection [q]: ")
         except EOFError:
-            return "abort"
+            return None
         choice = response.strip().lower() or "q"
-        for key, action, _description in options:
-            if choice == key:
-                return action
+        for option in storage_cleanup.CLEANUP_OPTIONS:
+            if choice == option.key:
+                return option.action
         print("Please choose one of the listed options.")
 
 
@@ -108,7 +89,7 @@ def _handle_existing_storage(execute: bool) -> bool:
         )
         return False
     action = _prompt_storage_cleanup(devices)
-    if action == "abort":
+    if action is None:
         print("Aborting without modifying storage.")
         return False
     if action != storage_cleanup.SKIP_CLEANUP:
