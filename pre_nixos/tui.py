@@ -579,12 +579,65 @@ class TUIState:
     focus: FocusKey | None = None
     profile_override: str = "auto"
     expanded: set[FocusKey] = field(default_factory=set)
+    cleanup_notice: list[str] = field(default_factory=list)
 
 
 def _initial_state(plan: dict[str, Any], disks: list[inventory.Disk]) -> TUIState:
     """Create a :class:`TUIState` from the current plan and inventory."""
 
-    return TUIState(plan=plan, disks=disks, renderer=PlanRenderer(plan, disks))
+    state = TUIState(plan=plan, disks=disks, renderer=PlanRenderer(plan, disks))
+    state.cleanup_notice = _initial_cleanup_notice()
+    return state
+
+
+def _short_cleanup_description(text: str) -> str:
+    """Return a concise label for a cleanup option description."""
+
+    if " (" in text:
+        return text.split(" (", 1)[0]
+    return text
+
+
+def _format_cleanup_notice(
+    devices: Sequence[storage_detection.ExistingStorageDevice],
+) -> list[str]:
+    """Return header notice lines describing existing storage cleanup choices."""
+
+    if not devices:
+        return []
+
+    count = len(devices)
+    sample = [entry.device for entry in devices[:3]]
+    device_list = ", ".join(sample)
+    if count > 3:
+        device_list += ", …"
+
+    summary_line = f"Existing storage on {count} device(s): {device_list}".strip()
+
+    option_parts = [
+        f"{option.key}={_short_cleanup_description(option.description)}"
+        for option in storage_cleanup.CLEANUP_OPTIONS
+    ]
+    options_line = (
+        "Press [A]pply to choose a wipe method before applying the plan. Options: "
+        + ", ".join(option_parts)
+    )
+
+    return [summary_line, options_line]
+
+
+def _initial_cleanup_notice() -> list[str]:
+    """Inspect the system to pre-compute cleanup guidance for the header."""
+
+    try:
+        devices = storage_detection.detect_existing_storage()
+    except Exception as exc:  # pragma: no cover - rare command failures
+        message = str(exc).splitlines()[0]
+        return [
+            "Existing storage scan failed; wipe options will appear when applying.",
+            f"Error: {message}",
+        ]
+    return _format_cleanup_notice(devices)
 
 
 def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
@@ -593,7 +646,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
     stdscr.clear()
     status = network.get_lan_status()
     height, width = stdscr.getmaxyx()
-    header_rows = 2
+    header_rows = 2 + len(state.cleanup_notice)
     footer_rows = 1
     canvas_height = max(height - header_rows - footer_rows, 0)
     canvas_width = max(width - 2, 10)
@@ -612,6 +665,8 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
     header = f"IP: {status}  View: Planned  Focus: {focus_label}  Profile: {render.profile}"
     stdscr.addstr(0, 0, _trim(header, width - 1))
     stdscr.addstr(1, 0, _trim(PlanRenderer.LEGEND, width - 1))
+    for idx, line in enumerate(state.cleanup_notice):
+        stdscr.addstr(2 + idx, 0, _trim(line, width - 1))
 
     start_y = header_rows
     max_lines = min(canvas_height, len(render.lines))
