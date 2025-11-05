@@ -29,6 +29,18 @@ in {
       { NIX_PATH = lib.mkForce "nixpkgs=${pkgs.path}"; }
     ];
     environment.interactiveShellInit = preNixosLoginNotice;
+    environment.etc."issue".text = lib.mkForce ''
+      <<< Welcome to NixOS ${config.system.nixos.label} (\m) - \l >>>
+      The "nixos" and "root" accounts have empty passwords for console logins.
+
+      SSH access:
+        - If this image was built with PRE_NIXOS_ROOT_KEY, use the matching private key to log in as root.
+        - Otherwise, add your public key to /root/.ssh/authorized_keys or set a password with passwd.
+
+      Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+      Run "nixos-help" for the NixOS manual.
+    '';
     systemd.network.enable = true;
     networking.useNetworkd = lib.mkForce true;
     networking.useDHCP = lib.mkForce false;
