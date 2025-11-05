@@ -4,7 +4,9 @@ from pathlib import Path
 from pre_nixos.logging_utils import log_event
 
 
-def test_log_event_emits_json_to_stderr(capsys) -> None:
+def test_log_event_emits_json_to_stderr(capsys, monkeypatch) -> None:
+    monkeypatch.setenv("PRE_NIXOS_LOG_EVENTS", "1")
+
     log_event("pre_nixos.test", path=Path("/tmp/demo"), value=5)
 
     captured = capsys.readouterr()

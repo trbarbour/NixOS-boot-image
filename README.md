@@ -22,6 +22,10 @@ The tool executes system commands only when `PRE_NIXOS_EXEC=1` is set. The
 bootable image sets this variable automatically; set it manually if you want to
 apply changes on a running system.
 
+Structured JSON debug logs are now opt-in. Set
+`PRE_NIXOS_LOG_EVENTS=1` in the environment before running the CLI to emit the
+previous diagnostic stream to `stderr` during troubleshooting or test runs.
+
 For an interactive review and to apply the plan manually, use the TUI helper,
 which displays the current IP address or a diagnostic message when the
 embedded SSH key is missing or no address was assigned:
