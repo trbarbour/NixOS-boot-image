@@ -4,6 +4,8 @@ Break large source files into smaller modules.
 
 Manage dependencies carefully: don't introduce them unnecessarily; make sure the right versions exist and can be found.
 
+Increment the minor version number for each new feature, and increment the patch-level for each bug fix or trivial modification.
+
 Do not make assumptions about technical matters (e.g. language properties).
 When in doubt, verify, by an experiment if necessary. An experiment should test the particular matter in isolation, so far as possible.
 
