@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.17
+**Doc status:** Draft v0.18
 **Date:** 2025-09-11 (America/New_York)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -92,25 +92,24 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - **Fallbacks:** If insufficient HDDs for a swap mirror, create VG `large` from available HDDs and put the swap LV there. With no rotating tier available, place the swap LV on `main` provided it can accommodate the configured size; otherwise skip swap.
 
 ### 7.3 Partitioning scheme (GPT)
-- **SSD boot device(s):**
-  1. ESP FAT32 1 GiB, label `ESP`.
-  2. Remainder → PV_main → VG `main`.
-- **HDDs:**
-  - `HDD-SWAP`: small partitions on two disks → md RAID1 → PV → VG `swap`.
-  - `HDD-DATA`: remainders → md RAID (RAID1/5/6) → PV → VG `large`.
-  - Fallbacks: if no swap mirror, omit `HDD-SWAP` and use all for `large`; swap LV goes on `large`. If no rotating tier exists, create the fallback swap LV on `main` when capacity allows.
+- **Per-disk layout:** every participating disk receives a GPT with a single data partition sized to the available capacity. When the disk underpins VG `main`, an additional 1 GiB EFI System Partition (label `ESP`, FAT32) is created before the data slice.
+- **Partition types:** data partitions destined for md arrays are flagged `linux-raid`; others are marked `lvm`. The final partition on each disk feeds either a RAID array or an LVM PV directly.
+- **Fallbacks:** if no rotating mirror exists for swap, the HDD capacity is assigned to VG `large` and swap falls back to that VG; with no rotating tier, swap may be placed on `main` when free space permits.
 
 ### 7.4 LVM layout
 - **VGs:** `main`, `swap` (if present), `large` (if present). Additional SSD/HDD buckets are created as `main_1`, `large_1`, etc., and left without logical volumes.
 - **LVs:**
-  - `main/slash` 20 GiB (ext4).
-  - `main/nix` 100–200 GiB.
-  - `main/var` 20–50 GiB.
+  - `main/slash` sized at a fixed 50 GiB for the root filesystem.
+  - `main/home`, created when `main` has free space, mounted on `/home` and sized to **16 GiB or one quarter of the remaining space**, whichever is smaller and extent-aligned.
   - Swap: `swap/swap` on VG `swap`; fallback hierarchy: `large/swap` on VG `large`, else `main/swap` on VG `main` when capacity permits.
-  - Bulk: `large/data`.
+  - When the dedicated `swap` VG still has extents free after provisioning swap, it also hosts:
+    - `swap/var_tmp`, default size equal to the swap LV.
+    - `swap/var_log`, default size 4 GiB or the swap LV size, whichever is smaller.
+  - Bulk: `large/data` receives 100 GiB by default when a `large` VG exists.
+- **Extent safety margin:** allocations avoid consuming the final one or two extents of a VG so follow-up provisioning remains possible.
 
 ### 7.5 Filesystems (ext4)
-- Mount options: `noatime`. For SSDs, optional `discard=async`.
+- Mount options: `relatime`. For SSDs, optional `discard=async`. `/var/tmp` inherits the default ext4 mount and is fixed to mode `1777` via a post-apply command.
 
 ### 7.6 UEFI bootloader
 - Install **systemd-boot** into ESP by default. Fallback to GRUB-UEFI if firmware quirks detected.
@@ -134,11 +133,13 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - `hardware‑disk.nix` (by‑label mounts, mdadm arrays, LVM VGs/LVs).
   - `network‑lan.nix` (udev rename → `lan`, DHCP on `lan`).
   - `bootloader.nix` (systemd‑boot config).
+- Optional `post_apply_commands` list to capture follow-up shell commands (e.g., `chmod 1777 /mnt/var/tmp`) executed immediately after Disko completes.
 
 ### 7.10 Disko orchestration
 - The planner promotes its internal partition/array/VG/LV graph into a `disko.devices` attrset. Physical disks become `disk.<name>` entries with GPT partitions; EFI partitions gain FAT32 filesystems and only the primary ESP is mounted at `/boot`.
 - RAID sets map to `mdadm.<name>` with integer `level` values and `content = { type = "lvm_pv"; vg = "…"; }` so Disko turns arrays directly into PVs. Single devices stay as `lvm_pv` content on their partitions.
-- LVM volume groups surface as `lvm_vg.<name>.lvs`. Logical volumes render as either `filesystem` (ext4, `noatime`, mountpoints such as `/` and `/data`) or `swap` content. This mirrors today's manual mkfs/mkswap labelling policy.
+- LVM volume groups surface as `lvm_vg.<name>.lvs`. Logical volumes render as either `filesystem` (ext4, `relatime`, mountpoints such as `/`, `/home`, `/var/tmp`, `/var/log`, and `/data`) or `swap` content. This mirrors today's manual mkfs/mkswap labelling policy.
+- After Disko runs, the applier iterates over any `post_apply_commands` and executes them in order, logging each invocation.
 - The applier serialises the structure via `builtins.fromJSON` to keep the config legible, then shells out to Disko to execute the destroy/format/mount pipeline in one idempotent step.
 
 ---
@@ -267,9 +268,12 @@ function apply_plan(plan):
 ```nix
 { ... }:
 {
-  fileSystems."/" = { device = "LABEL=ROOT"; fsType = "ext4"; options = [ "noatime" ]; };
-  fileSystems."/nix" = { device = "LABEL=NIX"; fsType = "ext4"; options = [ "noatime" ]; };
-  swapDevices = [ { device = "/dev/disk/by-label/SWAP"; } ];
+  fileSystems."/" = { device = "LABEL=slash"; fsType = "ext4"; options = [ "relatime" ]; };
+  fileSystems."/home" = { device = "LABEL=home"; fsType = "ext4"; options = [ "relatime" ]; };
+  fileSystems."/var/log" = { device = "LABEL=var_log"; fsType = "ext4"; options = [ "relatime" ]; };
+  fileSystems."/var/tmp" = { device = "LABEL=var_tmp"; fsType = "ext4"; options = [ "relatime" ]; };
+  fileSystems."/data" = { device = "LABEL=data"; fsType = "ext4"; options = [ "relatime" ]; };
+  swapDevices = [ { device = "/dev/disk/by-label/swap"; } ];
   boot.loader.systemd-boot.enable = true;
   boot.supportedFilesystems = [ "ext4" ];
 }

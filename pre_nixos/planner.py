@@ -218,20 +218,34 @@ def plan_storage(
         plan["arrays"].append({"name": name, "level": level, "devices": devices, "type": typ})
         device_sizes[name] = _array_capacity(level, [device_sizes[d] for d in devices])
 
-    def add_lv(name: str, vg: str, size: str) -> None:
+    def vg_total(name: str) -> int:
+        return vg_sizes.get(name, 0)
+
+    def vg_used(name: str) -> int:
+        return used_vg_sizes.get(name, 0)
+
+    def vg_free(name: str) -> int:
+        total = vg_total(name)
+        used = vg_used(name)
+        free = max(total - used, 0)
+        if free > 0:
+            free -= free % LVM_EXTENT_BYTES
+        return free
+
+    def add_lv(name: str, vg: str, size: str) -> int:
         total = vg_sizes.get(vg, 0)
         used = used_vg_sizes.get(vg, 0)
         free = max(total - used, 0)
         if free < LVM_EXTENT_BYTES:
-            return
+            return 0
 
         free_extents = free // LVM_EXTENT_BYTES
         if free_extents <= 0:
-            return
+            return 0
 
         req = _parse_size(size)
         if req <= 0:
-            return
+            return 0
 
         req_extents = max((req + LVM_EXTENT_BYTES - 1) // LVM_EXTENT_BYTES, 1)
         alloc_extents = min(req_extents, free_extents)
@@ -245,11 +259,47 @@ def plan_storage(
                 alloc_extents -= 1
 
         if alloc_extents <= 0:
-            return
+            return 0
 
         alloc = alloc_extents * LVM_EXTENT_BYTES
         used_vg_sizes[vg] = used + alloc
         plan["lvs"].append({"name": name, "vg": vg, "size": _format_size(alloc)})
+        return alloc
+
+    def add_lv_bytes(name: str, vg: str, size: int) -> int:
+        if size <= 0:
+            return 0
+        size -= size % LVM_EXTENT_BYTES
+        if size < LVM_EXTENT_BYTES:
+            return 0
+        return add_lv(name, vg, _format_size(size))
+
+    def ensure_home_lv() -> None:
+        if not any(vg["name"] == "main" for vg in plan["vgs"]):
+            return
+        if any(lv.get("name") == "home" and lv.get("vg") == "main" for lv in plan["lvs"]):
+            return
+        total_main = vg_total("main")
+        if total_main <= 0:
+            return
+        used_main = sum(
+            _parse_size(lv.get("size", "0")) for lv in plan["lvs"] if lv.get("vg") == "main"
+        )
+        free_main = max(total_main - used_main, 0)
+        if free_main <= 0:
+            return
+        free_main -= free_main % LVM_EXTENT_BYTES
+        if free_main <= 0:
+            return
+        quarter = free_main // 4
+        if quarter <= 0:
+            return
+        preferred = _parse_size("16G")
+        desired = min(preferred, quarter)
+        desired -= desired % LVM_EXTENT_BYTES
+        if desired < LVM_EXTENT_BYTES:
+            return
+        add_lv_bytes("home", "main", desired)
 
     ssd_buckets = sorted(
         groups["ssd"],
@@ -275,7 +325,16 @@ def plan_storage(
             add_array(name, arr["level"], devices, "hdd")
             add_vg("main", [name])
         swap_size = _format_size(_to_bytes(ram_gb * 2))
-        add_lv("slash", "main", ROOT_LV_SIZE)
+        slash_alloc = add_lv("slash", "main", ROOT_LV_SIZE)
+        if slash_alloc > 0:
+            free_main = vg_free("main")
+            if free_main > 0:
+                quarter = free_main // 4
+                if quarter > 0:
+                    desired = min(_parse_size("16G"), quarter)
+                    desired -= desired % LVM_EXTENT_BYTES
+                    if desired >= LVM_EXTENT_BYTES:
+                        add_lv_bytes("home", "main", desired)
         add_lv("swap", "main", swap_size)
         plan["disko"] = _plan_to_disko_devices(plan)
         return plan
@@ -363,6 +422,8 @@ def plan_storage(
             add_array(name, arr["level"], devices, "hdd")
             add_vg(vg_name, [name])
 
+    post_commands: List[str] = []
+
     swap_size = _format_size(_to_bytes(ram_gb * 2))
     swap_vg = next((vg["name"] for vg in plan["vgs"] if vg["name"] == "swap"), None)
     if swap_vg is None:
@@ -376,13 +437,36 @@ def plan_storage(
             None,
         )
     if any(vg["name"] == "main" for vg in plan["vgs"]):
-        add_lv("slash", "main", ROOT_LV_SIZE)
+        slash_alloc = add_lv("slash", "main", ROOT_LV_SIZE)
+        if slash_alloc > 0:
+            ensure_home_lv()
     if swap_vg is not None:
-        add_lv("swap", swap_vg, swap_size)
+        swap_alloc = add_lv("swap", swap_vg, swap_size)
+    else:
+        swap_alloc = 0
+    if swap_vg == "swap" and swap_alloc > 0:
+        def enough_space(desired: int) -> bool:
+            desired -= desired % LVM_EXTENT_BYTES
+            if desired < LVM_EXTENT_BYTES:
+                return False
+            free_bytes = vg_free("swap")
+            return free_bytes > desired
+
+        desired_tmp = swap_alloc
+        if enough_space(desired_tmp):
+            tmp_alloc = add_lv_bytes("var_tmp", "swap", desired_tmp)
+            if tmp_alloc > 0:
+                post_commands.append("chmod 1777 /mnt/var/tmp")
+        desired_log = min(swap_alloc, _parse_size("4G"))
+        if enough_space(desired_log):
+            add_lv_bytes("var_log", "swap", desired_log)
+    ensure_home_lv()
     if any(vg["name"].startswith("large") for vg in plan["vgs"]):
         add_lv("data", "large", DATA_LV_SIZE)
 
     plan["disko"] = _plan_to_disko_devices(plan)
+    if post_commands:
+        plan["post_apply_commands"] = post_commands
     return plan
 
 
@@ -461,6 +545,17 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
         devices["mdadm"][name] = entry
 
     lvs_by_vg: Dict[str, Dict[str, Any]] = {}
+    def lv_mountpoint(name: str) -> str | None:
+        if name == "slash":
+            return "/"
+        if name == "home":
+            return "/home"
+        if name == "var_tmp":
+            return "/var/tmp"
+        if name == "var_log":
+            return "/var/log"
+        return f"/{name}"
+
     for lv in plan.get("lvs", []):
         vg = lv.get("vg")
         if not vg:
@@ -480,12 +575,12 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
             }
         else:
             label = _normalise_volume_label(lv_name, 16)
-            mountpoint = "/" if lv_name == "slash" else f"/{lv_name}"
+            mountpoint = lv_mountpoint(lv_name)
             content = {
                 "type": "filesystem",
                 "format": "ext4",
                 "mountpoint": mountpoint,
-                "mountOptions": ["noatime"],
+                "mountOptions": ["relatime"],
                 "extraArgs": ["-L", label],
             }
         lvs[lv_name] = {"size": size, "content": content}
