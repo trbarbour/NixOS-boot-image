@@ -21,7 +21,26 @@ def test_cli_plan_only(monkeypatch, capsys):
     pre_nixos.main(["--plan-only"])
     out = capsys.readouterr().out
     assert "main" in out
+    assert '"disko"' not in out
     assert called == []
+    assert net_called == [True]
+
+
+def test_cli_plan_only_disko_output(monkeypatch, capsys):
+    monkeypatch.setattr(
+        pre_nixos.inventory,
+        "enumerate_disks",
+        lambda: [Disk(name="sda", size=1000, rotational=False)],
+    )
+    net_called = []
+
+    monkeypatch.setattr(pre_nixos.apply, "apply_plan", lambda *_: None)
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: net_called.append(True))
+
+    pre_nixos.main(["--plan-only", "--output", "disko"])
+
+    out = capsys.readouterr().out
+    assert "disko.devices" in out
     assert net_called == [True]
 
 
@@ -133,3 +152,4 @@ def test_cli_writes_console(monkeypatch, tmp_path, capsys):
     # correctly on terminals that require carriage returns.
     assert "\n" not in console_output.replace("\r\n", "")
     assert "main" in console_output
+    assert '"disko"' not in console_output
