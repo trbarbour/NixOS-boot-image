@@ -36,7 +36,7 @@ def test_plan_storage_basic() -> None:
     assert all(p["type"] == "linux-raid" for p in plan["partitions"]["sdc"])
 
 
-def test_home_lv_uses_quarter_of_remaining_space() -> None:
+def test_home_lv_uses_quarter_or_less_of_remaining_space() -> None:
     disks = [Disk(name="sda", size=60, rotational=False)]
     plan = plan_storage("fast", disks, ram_gb=4)
 
