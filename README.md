@@ -18,6 +18,13 @@ Generate a storage plan without applying it:
 python -m pre_nixos.pre_nixos --plan-only
 ```
 
+The default output shows the summarized arrays/VGs/LVs view. Request the rendered
+`disko` configuration explicitly when you need to inspect the Nix expression:
+
+```bash
+python -m pre_nixos.pre_nixos --plan-only --output disko
+```
+
 The tool executes system commands only when `PRE_NIXOS_EXEC=1` is set. The
 bootable image sets this variable automatically; set it manually if you want to
 apply changes on a running system.

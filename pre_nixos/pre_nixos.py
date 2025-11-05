@@ -109,6 +109,12 @@ def main(argv: list[str] | None = None) -> None:
         "--plan-only", action="store_true", help="Only print the plan and exit"
     )
     parser.add_argument(
+        "--output",
+        choices=["plan", "disko"],
+        default="plan",
+        help="Choose between the summarized plan or rendered disko config",
+    )
+    parser.add_argument(
         "--partition-boot",
         metavar="DISK",
         help="Partition boot disk with EFI and LVM",
@@ -152,13 +158,18 @@ def main(argv: list[str] | None = None) -> None:
             prefer_raid6_on_four=args.prefer_raid6_on_four,
             ram_gb=ram_gb,
         )
-        output = json.dumps(plan, indent=2)
+        if args.output == "plan":
+            plan_output = {key: value for key, value in plan.items() if key != "disko"}
+            output = json.dumps(plan_output, indent=2)
+        else:
+            devices = plan.get("disko") or {}
+            output = apply._render_disko_config(devices)
         print(output)
         if console is not None:
             # ``/dev/console`` expects carriage return + line feed for proper
-            # rendering on some terminals. Ensure each newline in the JSON
-            # output resets the cursor to the start of the line before
-            # returning control to the caller.
+            # rendering on some terminals. Ensure each newline in the rendered
+            # output resets the cursor to the start of the line before returning
+            # control to the caller.
             console_output = output.replace("\n", "\r\n") + "\r\n"
             console.write(console_output)
             console.flush()
