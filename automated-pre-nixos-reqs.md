@@ -52,6 +52,13 @@ The system must automate the hardware setup process on new servers prior to NixO
   - `swap` for swap (on rotating RAID-1), if present. Otherwise put the swap LV in `large` VG if present, or in `main` (SSD/NVMe) when no rotating tier exists and capacity allows. If there is insufficient capacity anywhere, swap may be omitted.
   - `large` for bulk storage (on RAID-5/6).
 - LVM volumes should be used instead of bare partitions wherever possible and reasonable.
+- The logical volume layout must include:
+  - `main/slash` as the root filesystem.
+  - `main/home` mounted on `/home`, sized by default to **16 GiB or one quarter of the remaining free space** on `main` (after allocating `slash`), whichever is smaller.
+  - `swap/swap` (or the fallback `large/swap` or `main/swap`) sized per the existing swap policy.
+  - When a dedicated `swap` VG exists **and still has capacity after provisioning swap**, provision:
+    - `swap/var_tmp` mounted on `/var/tmp`, default size equal to the allocated swap space, permissions `1777`.
+    - `swap/var_log` mounted on `/var/log`, default size **4 GiB or the allocated swap size**, whichever is smaller.
 
 ### 2.5 Filesystems
 

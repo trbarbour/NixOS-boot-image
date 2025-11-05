@@ -117,6 +117,14 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     )
     _run(cmd, execute)
 
+    for follow_up in plan.get("post_apply_commands", []):
+        commands.append(follow_up)
+        log_event(
+            "pre_nixos.apply.apply_plan.command_scheduled",
+            command=follow_up,
+        )
+        _run(follow_up, execute)
+
     log_event(
         "pre_nixos.apply.apply_plan.finished",
         commands=commands,

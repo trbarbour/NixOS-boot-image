@@ -31,14 +31,22 @@ def test_filesystem_entries_for_lvs(tmp_path: Path) -> None:
     slash = devices["lvm_vg"]["main"]["lvs"]["slash"]
     assert slash["content"]["format"] == "ext4"
     assert slash["content"]["mountpoint"] == "/"
-    assert "noatime" in slash["content"]["mountOptions"]
+    assert "relatime" in slash["content"]["mountOptions"]
     assert slash["content"]["extraArgs"] == ["-L", "slash"]
 
     data = devices["lvm_vg"]["large"]["lvs"]["data"]
     assert data["content"]["format"] == "ext4"
     assert data["content"]["mountpoint"] == "/data"
-    assert "noatime" in data["content"]["mountOptions"]
+    assert "relatime" in data["content"]["mountOptions"]
     assert data["content"]["extraArgs"] == ["-L", "data"]
+
+    var_tmp = devices["lvm_vg"]["swap"]["lvs"]["var_tmp"]
+    assert var_tmp["content"]["mountpoint"] == "/var/tmp"
+    assert "relatime" in var_tmp["content"]["mountOptions"]
+
+    var_log = devices["lvm_vg"]["swap"]["lvs"]["var_log"]
+    assert var_log["content"]["mountpoint"] == "/var/log"
+    assert "relatime" in var_log["content"]["mountOptions"]
 
     swap_args = None
     for vg in devices["lvm_vg"].values():
