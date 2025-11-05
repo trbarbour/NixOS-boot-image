@@ -192,6 +192,7 @@ def test_apply_plan_logs_command_execution(
     plan["disko_config_path"] = str(config_path)
 
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setenv("PRE_NIXOS_LOG_EVENTS", "1")
 
     calls: list[str] = []
 

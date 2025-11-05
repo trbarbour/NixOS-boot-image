@@ -250,6 +250,7 @@ def test_configure_lan_emits_structured_logs(tmp_path, monkeypatch, capsys):
     key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
 
     monkeypatch.setenv("PRE_NIXOS_EXEC", "0")
+    monkeypatch.setenv("PRE_NIXOS_LOG_EVENTS", "1")
 
     status_dir = tmp_path / "run/pre-nixos"
 
