@@ -10,25 +10,66 @@ in ''
   mkdir -p "$status_dir"
 
   announce_network() {
-    local network_status lan_ipv4 key value message
+    local network_status lan_ipv4 recorded_ipv4 key value message attempt max_attempts ip_output ip_line ip_field
     network_status="$status_dir/network-status"
-    if [ ! -r "$network_status" ]; then
-      return
-    fi
     lan_ipv4=""
-    while IFS='=' read -r key value; do
-      if [ "$key" = "LAN_IPV4" ] && [ -n "$value" ]; then
-        lan_ipv4=$value
+    recorded_ipv4=""
+    max_attempts=120
+    attempt=0
+
+    while [ "$attempt" -lt "$max_attempts" ]; do
+      attempt=$((attempt + 1))
+      recorded_ipv4=""
+      if [ -r "$network_status" ]; then
+        while IFS='=' read -r key value; do
+          if [ "$key" = "LAN_IPV4" ] && [ -n "$value" ]; then
+            recorded_ipv4=$(printf %s "$value" | tr -d "\r")
+            break
+          fi
+        done < "$network_status"
+      fi
+
+      lan_ipv4="$recorded_ipv4"
+
+      if [ -z "$lan_ipv4" ]; then
+        if ip_output=$(ip -4 -o addr show dev lan 2>/dev/null); then
+          ip_line=$(printf %s "$ip_output" | head -n1)
+          ip_field=''${ip_line#* inet }
+          if [ "$ip_field" != "$ip_line" ]; then
+            ip_field=''${ip_field%% *}
+            lan_ipv4=''${ip_field%%/*}
+          else
+            lan_ipv4=""
+          fi
+        else
+          lan_ipv4=""
+        fi
+      fi
+
+      if [ -n "$lan_ipv4" ]; then
+        lan_ipv4=$(printf %s "$lan_ipv4" | tr -d "\r\n")
+      fi
+
+      if [ -n "$lan_ipv4" ]; then
         break
       fi
-    done < "$network_status"
+
+      sleep 1
+    done
+
     if [ -z "$lan_ipv4" ]; then
       return
     fi
+
     message="LAN IPv4 address: $lan_ipv4"
     printf '%s\n' "$message"
     if [ -w /dev/console ]; then
       printf '%s\r\n' "$message" > /dev/console
+    fi
+
+    if [ "$recorded_ipv4" != "$lan_ipv4" ] || [ ! -r "$network_status" ]; then
+      mkdir -p "$status_dir"
+      printf 'LAN_IPV4=%s\n' "$lan_ipv4" > "$network_status"
     fi
   }
 
