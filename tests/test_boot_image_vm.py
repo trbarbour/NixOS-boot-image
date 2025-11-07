@@ -2759,3 +2759,15 @@ def test_boot_image_configures_network(
         command="id -un",
     )
     assert ssh_identity == "root"
+
+
+def test_boot_image_announces_lan_ipv4_on_serial_console(
+    boot_image_vm: BootImageVM,
+) -> None:
+    boot_image_vm.wait_for_ipv4()
+    serial_content = boot_image_vm.log_path.read_text(
+        encoding="utf-8", errors="ignore"
+    ).replace("\r", "")
+    assert re.search(
+        r"LAN IPv4 address: \d+\.\d+\.\d+\.\d+", serial_content
+    ), "expected LAN IPv4 announcement in serial console log"
