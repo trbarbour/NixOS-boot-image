@@ -9,6 +9,29 @@ in ''
   status_file=$status_dir/storage-status
   mkdir -p "$status_dir"
 
+  announce_network() {
+    local network_status lan_ipv4 key value message
+    network_status="$status_dir/network-status"
+    if [ ! -r "$network_status" ]; then
+      return
+    fi
+    lan_ipv4=""
+    while IFS='=' read -r key value; do
+      if [ "$key" = "LAN_IPV4" ] && [ -n "$value" ]; then
+        lan_ipv4=$value
+        break
+      fi
+    done < "$network_status"
+    if [ -z "$lan_ipv4" ]; then
+      return
+    fi
+    message="LAN IPv4 address: $lan_ipv4"
+    printf '%s\n' "$message"
+    if [ -w /dev/console ]; then
+      printf '%s\r\n' "$message" > /dev/console
+    fi
+  }
+
   version_msg="pre-nixos boot image version ''${PRE_NIXOS_VERSION:-unknown}"
   printf '%s\n' "$version_msg"
   if [ -w /dev/console ]; then
@@ -38,11 +61,13 @@ in ''
 STATE=$status_state
 DETAIL=$status_detail
 EOF_STATUS
+    announce_network
   else
     cat > "$status_file" <<EOF_STATUS
 STATE=failed
 DETAIL=$status_detail
 EOF_STATUS
+    announce_network
     exit 1
   fi
 ''

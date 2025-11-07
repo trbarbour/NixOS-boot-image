@@ -2,6 +2,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from pre_nixos import __version__ as PRE_NIXOS_VERSION
+
 
 def test_login_notice_prints_lan_ipv4(tmp_path):
     state_dir = tmp_path / "run/pre-nixos"
@@ -14,7 +16,7 @@ def test_login_notice_prints_lan_ipv4(tmp_path):
     env = os.environ.copy()
     env.update(
         {
-            "PRE_NIXOS_VERSION": "0.2.1",
+            "PRE_NIXOS_VERSION": PRE_NIXOS_VERSION,
             "PRE_NIXOS_STATE_DIR": str(state_dir),
         }
     )
