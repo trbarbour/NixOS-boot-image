@@ -1,6 +1,6 @@
 [project]
 name = "pre-nixos"
-version = "0.3.1"
+dynamic = ["version"]
 description = "Pre-NixOS setup tool"
 authors = [{name = "Unknown"}]
 readme = "README.md"
@@ -10,8 +10,11 @@ requires-python = ">=3.10"
 packages = ["pre_nixos"]
 include-package-data = true
 
+[tool.setuptools.dynamic]
+version = {file = "pre_nixos/VERSION"}
+
 [tool.setuptools.package-data]
-pre_nixos = ["root_key.pub"]
+pre_nixos = ["root_key.pub", "VERSION"]
 
 [project.scripts]
 pre-nixos = "pre_nixos.pre_nixos:main"

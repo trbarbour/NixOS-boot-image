@@ -11,6 +11,8 @@
   outputs = { self, nixpkgs, flake-utils, disko, ... }:
     let
       inherit (flake-utils.lib) eachDefaultSystem;
+      lib = nixpkgs.lib;
+      preNixosVersion = lib.strings.removeSuffix "\n" (builtins.readFile ./pre_nixos/VERSION);
 
       rootPubEnv = builtins.getEnv "PRE_NIXOS_ROOT_KEY";
       rootPubPath = "${builtins.toString ./.}/pre_nixos/root_key.pub";
@@ -61,7 +63,7 @@
         in
         pkgs.python3Packages.buildPythonApplication {
           pname = "pre-nixos";
-          version = "0.2.0";
+          version = preNixosVersion;
           src = ./.;
           pyproject = true;
           nativeBuildInputs = with pkgs; [ makeWrapper python3Packages.setuptools python3Packages.wheel ];
