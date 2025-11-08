@@ -42,8 +42,8 @@ def make_env(
 
 def test_detects_partitions_as_existing() -> None:
     commands = {
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
-            stdout="/dev/sdb disk\n", returncode=0
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sdb disk 0\n", returncode=0
         ),
         ("lsblk", "-rno", "TYPE", "/dev/sdb"): CommandOutput(
             stdout="disk\npart\n", returncode=0
@@ -58,8 +58,8 @@ def test_detects_partitions_as_existing() -> None:
 
 def test_detects_wipefs_signature_without_partitions() -> None:
     commands = {
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
-            stdout="/dev/sdc disk\n", returncode=0
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sdc disk 0\n", returncode=0
         ),
         ("lsblk", "-rno", "TYPE", "/dev/sdc"): CommandOutput(stdout="disk\n", returncode=0),
         (
@@ -80,8 +80,8 @@ def test_only_boot_disk_is_ignored() -> None:
             stdout="sda\n", returncode=0
         ),
         ("findmnt", "-n", "-o", "SOURCE", "/iso"): CommandOutput(stdout="", returncode=1),
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
-            stdout="/dev/sda disk\n", returncode=0
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sda disk 0\n", returncode=0
         ),
     }
     known_paths = {"/dev/disk/by-label/BOOT", "/dev/sda1", "/dev/sda"}
@@ -108,8 +108,8 @@ def test_only_boot_disk_is_ignored() -> None:
 
 def test_missing_device_during_inspection_is_ignored() -> None:
     commands = {
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
-            stdout="/dev/sdd disk\n", returncode=0
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sdd disk 0\n", returncode=0
         ),
         ("lsblk", "-rno", "TYPE", "/dev/sdd"): CommandOutput(stdout="", returncode=32),
         ("wipefs", "-n", "/dev/sdd"): CommandOutput(stdout="", returncode=32),
@@ -123,7 +123,9 @@ def test_floppy_device_is_ignored_during_detection() -> None:
     """Legacy floppy controllers should not trigger detection errors."""
 
     commands = {
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(stdout="/dev/fd0 disk\n/dev/vda disk\n"),
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/fd0 disk 1\n/dev/vda disk 0\n"
+        ),
         ("lsblk", "-rno", "TYPE", "/dev/vda"): CommandOutput(stdout="disk\n"),
         ("wipefs", "-n", "/dev/vda"): CommandOutput(stdout=""),
     }
@@ -135,8 +137,8 @@ def test_floppy_device_is_ignored_during_detection() -> None:
 
 def test_detects_multiple_reasons_for_device() -> None:
     commands = {
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
-            stdout="/dev/sde disk\n", returncode=0
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sde disk 0\n", returncode=0
         ),
         ("lsblk", "-rno", "TYPE", "/dev/sde"): CommandOutput(
             stdout="disk\npart\n", returncode=0
@@ -156,8 +158,8 @@ def test_detects_multiple_reasons_for_device() -> None:
 
 def test_detect_existing_storage_excludes_boot_disk() -> None:
     commands = {
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
-            stdout="/dev/sda disk\n/dev/sdb disk\n", returncode=0
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sda disk 0\n/dev/sdb disk 0\n", returncode=0
         ),
         ("lsblk", "-npo", "PKNAME", "/dev/sda1"): CommandOutput(
             stdout="sda\n", returncode=0
@@ -200,8 +202,8 @@ def test_detect_existing_storage_ignores_iso_label_source() -> None:
             stdout="LABEL=NIXOS\\040MINIMAL\n", returncode=0
         ),
         ("lsblk", "-npo", "PKNAME", "/dev/sdc"): CommandOutput(stdout="\n", returncode=0),
-        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
-            stdout="/dev/sdc disk\n/dev/nvme0n1 disk\n", returncode=0
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sdc disk 1\n/dev/nvme0n1 disk 0\n", returncode=0
         ),
         ("lsblk", "-rno", "TYPE", "/dev/nvme0n1"): CommandOutput(
             stdout="disk\npart\n", returncode=0
@@ -233,6 +235,25 @@ def test_detect_existing_storage_ignores_iso_label_source() -> None:
     assert boot_disk == "/dev/sdc"
 
     devices = detect_existing_storage(env)
+    assert devices == [
+        ExistingStorageDevice(device="/dev/nvme0n1", reasons=("partitions", "signatures"))
+    ]
+
+
+def test_scan_existing_storage_skips_removable_when_boot_unknown() -> None:
+    commands = {
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sdb disk 1\n/dev/nvme0n1 disk 0\n", returncode=0
+        ),
+        ("lsblk", "-rno", "TYPE", "/dev/nvme0n1"): CommandOutput(
+            stdout="disk\npart\n", returncode=0
+        ),
+        ("wipefs", "-n", "/dev/nvme0n1"): CommandOutput(
+            stdout="0x2345\tlvm", returncode=0
+        ),
+    }
+    env = make_env(commands)
+    devices = scan_existing_storage(env, boot_disk=None)
     assert devices == [
         ExistingStorageDevice(device="/dev/nvme0n1", reasons=("partitions", "signatures"))
     ]
