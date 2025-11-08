@@ -2,6 +2,7 @@
 let
   detectStorageCmd = "${pkgs.pre-nixos}/bin/pre-nixos-detect-storage";
   preNixosCmd = "${pkgs.pre-nixos}/bin/pre-nixos";
+  broadcastConsoleCmd = "${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast";
 in ''
   set -euo pipefail
 
@@ -63,8 +64,10 @@ in ''
 
     message="LAN IPv4 address: $lan_ipv4"
     printf '%s\n' "$message"
-    if [ -w /dev/console ]; then
-      printf '%s\r\n' "$message" > /dev/console
+    if ! ${broadcastConsoleCmd} "$message"; then
+      if [ -w /dev/console ]; then
+        printf '%s\r\n' "$message" > /dev/console
+      fi
     fi
 
     if [ "$recorded_ipv4" != "$lan_ipv4" ] || [ ! -r "$network_status" ]; then
@@ -75,8 +78,10 @@ in ''
 
   version_msg="pre-nixos boot image version ''${PRE_NIXOS_VERSION:-unknown}"
   printf '%s\n' "$version_msg"
-  if [ -w /dev/console ]; then
-    printf '%s\r\n' "$version_msg" > /dev/console
+  if ! ${broadcastConsoleCmd} "$version_msg"; then
+    if [ -w /dev/console ]; then
+      printf '%s\r\n' "$version_msg" > /dev/console
+    fi
   fi
 
   plan_flag=""

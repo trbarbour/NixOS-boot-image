@@ -8,8 +8,9 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
+from .console import broadcast_line, get_console_paths
 from .logging_utils import log_event
 
 
@@ -343,18 +344,6 @@ def wait_for_ipv4(
     return None
 
 
-def _write_console_line(message: str, console_path: Path) -> bool:
-    """Write ``message`` to ``console_path`` using CRLF line endings."""
-
-    try:
-        with console_path.open("w", buffering=1, encoding="utf-8") as console:
-            console.write(message + "\r\n")
-            console.flush()
-        return True
-    except OSError:
-        return False
-
-
 def secure_ssh(
     ssh_dir: Path,
     ssh_service: str = "sshd",
@@ -455,7 +444,7 @@ def configure_lan(
     ssh_service: str = "sshd",
     authorized_key: Optional[Path] = None,
     root_home: Path = Path("/root"),
-    console_path: Path = Path("/dev/console"),
+    console_paths: Sequence[Path] | None = None,
     status_dir: Path = Path("/run/pre-nixos"),
 ) -> Optional[Path]:
     """Configure the active NIC for DHCP and optionally enable secure SSH.
@@ -539,9 +528,17 @@ def configure_lan(
     else:
         announcement = f"LAN IPv4 address: {ip_address}"
         print(announcement)
+        console_targets: Sequence[Path] = ()
+        console_results: dict[str, bool] = {}
         console_written = False
-        if os.environ.get("PRE_NIXOS_EXEC") == "1" and console_path is not None:
-            console_written = _write_console_line(announcement, console_path)
+        if os.environ.get("PRE_NIXOS_EXEC") == "1":
+            if console_paths is None:
+                console_targets = get_console_paths()
+            else:
+                console_targets = console_paths
+            results = broadcast_line(announcement, console_paths=console_targets)
+            console_written = any(results.values())
+            console_results = {str(path): success for path, success in results.items()}
         try:
             status_path = _write_network_status(ip_address, status_dir)
         except OSError as error:
@@ -561,7 +558,8 @@ def configure_lan(
             "pre_nixos.network.configure_lan.ip_announced",
             interface="lan",
             ip_address=ip_address,
-            console_path=console_path,
+            console_paths=[str(path) for path in console_targets] if console_targets else [],
+            console_results=console_results,
             console_written=console_written,
         )
 

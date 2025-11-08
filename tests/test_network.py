@@ -299,6 +299,7 @@ def test_configure_lan_announces_ip_to_console(tmp_path, monkeypatch):
     monkeypatch.setattr("pre_nixos.network.log_event", record_event)
 
     console_path = tmp_path / "console"
+    second_console = tmp_path / "console2"
 
     status_dir = tmp_path / "run/pre-nixos"
 
@@ -308,17 +309,24 @@ def test_configure_lan_announces_ip_to_console(tmp_path, monkeypatch):
         ssh_dir,
         authorized_key=key,
         root_home=root_home,
-        console_path=console_path,
+        console_paths=[console_path, second_console],
         status_dir=status_dir,
     )
 
-    assert "LAN IPv4 address: 198.51.100.7" in console_path.read_text()
+    expected_line = b"LAN IPv4 address: 198.51.100.7\r\n"
+    assert console_path.read_bytes() == expected_line
+    assert second_console.read_bytes() == expected_line
     announcement_events = [
         fields for name, fields in events if name == "pre_nixos.network.configure_lan.ip_announced"
     ]
     assert announcement_events, "expected IP announcement log entry"
     assert announcement_events[0]["ip_address"] == "198.51.100.7"
     assert announcement_events[0]["console_written"] is True
+    assert announcement_events[0]["console_paths"] == [str(console_path), str(second_console)]
+    assert announcement_events[0]["console_results"] == {
+        str(console_path): True,
+        str(second_console): True,
+    }
     status_path = status_dir / "network-status"
     assert status_path.is_file()
     assert status_path.read_text() == "LAN_IPV4=198.51.100.7\n"
