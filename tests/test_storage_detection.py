@@ -194,6 +194,50 @@ def test_detect_existing_storage_excludes_boot_disk() -> None:
     ]
 
 
+def test_detect_existing_storage_ignores_iso_label_source() -> None:
+    commands = {
+        ("findmnt", "-n", "-o", "SOURCE", "/iso"): CommandOutput(
+            stdout="LABEL=NIXOS\\040MINIMAL\n", returncode=0
+        ),
+        ("lsblk", "-npo", "PKNAME", "/dev/sdc"): CommandOutput(stdout="\n", returncode=0),
+        ("lsblk", "-dnpo", "NAME,TYPE"): CommandOutput(
+            stdout="/dev/sdc disk\n/dev/nvme0n1 disk\n", returncode=0
+        ),
+        ("lsblk", "-rno", "TYPE", "/dev/nvme0n1"): CommandOutput(
+            stdout="disk\npart\n", returncode=0
+        ),
+        ("wipefs", "-n", "/dev/nvme0n1"): CommandOutput(
+            stdout="0x2345\tlvm", returncode=0
+        ),
+    }
+
+    known_paths = {
+        "/dev/sdc",
+        "/dev/disk/by-label/NIXOS MINIMAL",
+        "/dev/disk/by-label/NIXOS\\x20MINIMAL",
+    }
+
+    def path_exists(path: str) -> bool:
+        return path in known_paths
+
+    def realpath(path: str) -> str:
+        if path in {
+            "/dev/disk/by-label/NIXOS MINIMAL",
+            "/dev/disk/by-label/NIXOS\\x20MINIMAL",
+        }:
+            return "/dev/sdc"
+        return path
+
+    env = make_env(commands, path_exists=path_exists, realpath=realpath)
+    boot_disk = resolve_boot_disk(env)
+    assert boot_disk == "/dev/sdc"
+
+    devices = detect_existing_storage(env)
+    assert devices == [
+        ExistingStorageDevice(device="/dev/nvme0n1", reasons=("partitions", "signatures"))
+    ]
+
+
 def test_format_existing_storage_reasons() -> None:
     assert format_existing_storage_reasons(()) == "unknown"
     assert (

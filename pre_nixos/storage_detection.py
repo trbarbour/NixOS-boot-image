@@ -71,6 +71,14 @@ _BOOT_ARG_PREFIXES = {
 }
 
 
+_MOUNT_SOURCE_PREFIXES = {
+    "LABEL=": "/dev/disk/by-label/",
+    "UUID=": "/dev/disk/by-uuid/",
+    "PARTUUID=": "/dev/disk/by-partuuid/",
+    "PARTLABEL=": "/dev/disk/by-partlabel/",
+}
+
+
 _IGNORED_DEVICE_PREFIXES = (
     "/dev/loop",
     "/dev/zram",
@@ -110,6 +118,42 @@ def _run_command(
     return result.stdout
 
 
+def _candidate_paths_from_source(source: str) -> list[str]:
+    """Return potential device paths for a mount *source* string."""
+
+    raw = source.strip()
+    if not raw:
+        return []
+
+    variations = {
+        raw,
+        raw.replace("\\040", " "),
+        raw.replace("\\040", "\\x20"),
+    }
+    candidates: list[str] = []
+    seen: set[str] = set()
+    for variant in variations:
+        if not variant:
+            continue
+        handled_prefix = False
+        for prefix, base in _MOUNT_SOURCE_PREFIXES.items():
+            if not variant.startswith(prefix):
+                continue
+            value = variant[len(prefix) :]
+            candidate = base + value
+            if candidate not in seen:
+                candidates.append(candidate)
+                seen.add(candidate)
+            handled_prefix = True
+        if handled_prefix:
+            continue
+        candidate = variant if variant.startswith("/") else f"/dev/{variant}"
+        if candidate not in seen:
+            candidates.append(candidate)
+            seen.add(candidate)
+    return candidates
+
+
 def resolve_boot_disk(env: DetectionEnvironment | None = None) -> Optional[str]:
     """Determine the disk that hosts the boot media, if possible."""
 
@@ -133,13 +177,16 @@ def resolve_boot_disk(env: DetectionEnvironment | None = None) -> Optional[str]:
     boot_source = _run_command(
         env, ["findmnt", "-n", "-o", "SOURCE", "/iso"], ignore_errors=True
     ).strip()
-    if boot_source and env.path_exists(boot_source):
+    for candidate in _candidate_paths_from_source(boot_source):
+        if not env.path_exists(candidate):
+            continue
+        boot_device = env.realpath(candidate)
         parent = _run_command(
-            env, ["lsblk", "-npo", "PKNAME", boot_source], ignore_errors=True
+            env, ["lsblk", "-npo", "PKNAME", boot_device], ignore_errors=True
         ).strip()
         if parent:
             return env.realpath(f"/dev/{parent}")
-        return env.realpath(boot_source)
+        return boot_device
 
     return None
 
