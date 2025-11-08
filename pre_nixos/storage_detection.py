@@ -191,14 +191,15 @@ def resolve_boot_disk(env: DetectionEnvironment | None = None) -> Optional[str]:
     return None
 
 
-def _iter_lsblk_rows(output: str) -> Iterable[tuple[str, str]]:
+def _iter_lsblk_rows(output: str) -> Iterable[tuple[str, str, str | None]]:
     for line in output.splitlines():
         if not line.strip():
             continue
         parts = line.split()
-        if len(parts) != 2:
+        if len(parts) < 2:
             continue
-        yield parts[0], parts[1]
+        removable = parts[2] if len(parts) >= 3 else None
+        yield parts[0], parts[1], removable
 
 
 def scan_existing_storage(
@@ -209,14 +210,19 @@ def scan_existing_storage(
     """Return a list of non-boot disks that contain storage metadata."""
 
     env = env or DetectionEnvironment()
-    listing = _run_command(env, ["lsblk", "-dnpo", "NAME,TYPE"])
+    listing = _run_command(env, ["lsblk", "-dnpo", "NAME,TYPE,RM"])
     detected: list[ExistingStorageDevice] = []
-    for device, dev_type in _iter_lsblk_rows(listing):
+    for device, dev_type, removable in _iter_lsblk_rows(listing):
         if dev_type != "disk":
             continue
         if device.startswith(_IGNORED_DEVICE_PREFIXES):
             continue
         resolved = env.realpath(device)
+        if removable == "1":
+            # ``lsblk`` reports removable disks for typical USB boot media.
+            # Avoid scheduling destructive operations on such devices because
+            # they frequently host the running pre-nixos environment.
+            continue
         if boot_disk and resolved == boot_disk:
             continue
         type_result = env.run(["lsblk", "-rno", "TYPE", device])
