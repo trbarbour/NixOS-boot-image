@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from typing import List, Sequence
 
 import pytest
@@ -13,6 +14,17 @@ class RecordingRunner:
 
     def __call__(self, cmd: Sequence[str]) -> None:
         self.commands.append(tuple(cmd))
+
+
+class SequenceRunner:
+    def __init__(self, returncodes: Sequence[int]) -> None:
+        self.returncodes = list(returncodes)
+        self.commands: List[Sequence[str]] = []
+
+    def __call__(self, cmd: Sequence[str]) -> subprocess.CompletedProcess:
+        self.commands.append(tuple(cmd))
+        index = len(self.commands) - 1
+        return subprocess.CompletedProcess(cmd, self.returncodes[index])
 
 
 @pytest.mark.parametrize(
@@ -89,4 +101,33 @@ def test_unknown_action_raises_value_error() -> None:
     with pytest.raises(ValueError):
         storage_cleanup.perform_storage_cleanup(
             "unsupported", ["/dev/sda"], execute=True, runner=runner
+        )
+
+
+def test_sgdisk_exit_code_two_is_allowed() -> None:
+    runner = SequenceRunner([2, 0])
+    scheduled = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=True,
+        runner=runner,
+    )
+    assert runner.commands == [
+        ("sgdisk", "--zap-all", "/dev/sda"),
+        ("wipefs", "-a", "/dev/sda"),
+    ]
+    assert scheduled == [
+        "sgdisk --zap-all /dev/sda",
+        "wipefs -a /dev/sda",
+    ]
+
+
+def test_nonzero_exit_code_for_other_commands_fails() -> None:
+    runner = SequenceRunner([0, 1])
+    with pytest.raises(subprocess.CalledProcessError):
+        storage_cleanup.perform_storage_cleanup(
+            storage_cleanup.WIPE_SIGNATURES,
+            ["/dev/sda"],
+            execute=True,
+            runner=runner,
         )

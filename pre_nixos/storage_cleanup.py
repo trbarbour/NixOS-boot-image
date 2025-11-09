@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import shlex
 import subprocess
-from typing import Callable, Iterable, List, Sequence, Tuple
+from typing import Callable, Iterable, List, Mapping, Sequence, Set, Tuple
 
 from .logging_utils import log_event
 
@@ -64,6 +64,21 @@ def _default_runner(cmd: Sequence[str]) -> subprocess.CompletedProcess:
 
 def _command_to_str(cmd: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in cmd)
+
+
+_ALLOWED_NONZERO_EXIT_CODES: Mapping[Tuple[str, ...], Set[int]] = {
+    ("sgdisk", "--zap-all"): {2},
+}
+
+
+def _is_allowed_returncode(cmd: Sequence[str], returncode: int) -> bool:
+    """Return ``True`` when *returncode* is acceptable for *cmd*."""
+
+    if returncode == 0:
+        return True
+    key = tuple(cmd[:2])
+    allowed = _ALLOWED_NONZERO_EXIT_CODES.get(key)
+    return bool(allowed and returncode in allowed)
 
 
 def _commands_for_device(action: str, device: str) -> Iterable[Sequence[str]]:
@@ -125,8 +140,16 @@ def perform_storage_cleanup(
                 continue
             result = runner(cmd)
             if isinstance(result, subprocess.CompletedProcess):
-                if result.returncode != 0:
+                if not _is_allowed_returncode(cmd, result.returncode):
                     raise subprocess.CalledProcessError(result.returncode, cmd_str)
+                if result.returncode != 0:
+                    log_event(
+                        "pre_nixos.cleanup.command_nonzero",
+                        action=action,
+                        device=device,
+                        command=cmd_str,
+                        returncode=result.returncode,
+                    )
             elif result is not None:
                 raise TypeError("Command runner must return CompletedProcess or None")
     log_event(
