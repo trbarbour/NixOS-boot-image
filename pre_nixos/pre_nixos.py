@@ -9,6 +9,7 @@ from typing import Sequence
 
 from . import (
     apply,
+    install,
     inventory,
     network,
     partition,
@@ -127,7 +128,7 @@ def main(argv: list[str] | None = None) -> None:
         help="Partition disk with a single LVM partition (can be repeated)",
     )
     parser.add_argument(
-       "--prefer-raid6-on-four",
+        "--prefer-raid6-on-four",
         action="store_true",
         help="Use RAID6 instead of RAID5 for four-disk HDD groups",
     )
@@ -136,14 +137,29 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Only print commands without executing them",
     )
+    parser.add_argument(
+        "--auto-install",
+        dest="auto_install",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Automatically run nixos-install after applying the storage plan when "
+            "a root SSH key is available (defaults to enabled)."
+        ),
+    )
     args = parser.parse_args(argv)
 
     console = _maybe_open_console()
 
+    lan_config: network.LanConfiguration | None = None
+
     try:
         # Configure networking before performing storage operations so the machine
         # becomes remotely reachable as early as possible.
-        network.configure_lan()
+        lan_config = network.configure_lan()
+        auto_install_enabled = args.auto_install
+        if auto_install_enabled is None:
+            auto_install_enabled = lan_config is not None
 
         if args.partition_boot:
             partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
@@ -188,6 +204,19 @@ def main(argv: list[str] | None = None) -> None:
 
         if not args.plan_only:
             apply.apply_plan(plan, dry_run=args.dry_run)
+            result = install.auto_install(
+                lan_config,
+                enabled=auto_install_enabled,
+                dry_run=args.dry_run,
+            )
+            if result.status == "failed":
+                reason = result.reason or "unknown error"
+                print(f"Auto-install failed: {reason}", file=sys.stderr)
+                sys.exit(1)
+            if result.status == "success":
+                print("Auto-install completed successfully.")
+            elif auto_install_enabled and result.reason:
+                print(f"Auto-install skipped: {result.reason}.")
     finally:
         if console is not None:
             console.close()

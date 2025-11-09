@@ -8,7 +8,26 @@ in ''
 
   status_dir="''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
   status_file=$status_dir/storage-status
+  auto_status_file=$status_dir/auto-install-status
   mkdir -p "$status_dir"
+
+  read_auto_status() {
+    auto_install_state="skipped"
+    auto_install_reason=""
+    if [ ! -r "$auto_status_file" ]; then
+      return
+    fi
+    while IFS='=' read -r key value; do
+      case "$key" in
+        STATE)
+          auto_install_state=$(printf %s "$value" | tr -d "\r")
+          ;;
+        REASON)
+          auto_install_reason=$(printf %s "$value" | tr -d "\r")
+          ;;
+      esac
+    done < "$auto_status_file"
+  }
 
   announce_network() {
     local network_status lan_ipv4 recorded_ipv4 key value message attempt max_attempts ip_output ip_line ip_field
@@ -102,17 +121,34 @@ in ''
     fi
   fi
 
-  if ${preNixosCmd} $plan_flag; then
-    cat > "$status_file" <<EOF_STATUS
-STATE=$status_state
-DETAIL=$status_detail
-EOF_STATUS
+  set +e
+  ${preNixosCmd} $plan_flag
+  pre_status=$?
+  set -e
+  read_auto_status
+
+  if [ "$pre_status" -eq 0 ]; then
+    {
+      printf 'STATE=%s\n' "$status_state"
+      printf 'DETAIL=%s\n' "$status_detail"
+      printf 'AUTO_INSTALL=%s\n' "${auto_install_state:-skipped}"
+      if [ -n "$auto_install_reason" ]; then
+        printf 'AUTO_INSTALL_REASON=%s\n' "$auto_install_reason"
+      fi
+    } > "$status_file"
     announce_network
   else
-    cat > "$status_file" <<EOF_STATUS
-STATE=failed
-DETAIL=$status_detail
-EOF_STATUS
+    {
+      printf 'STATE=failed\n'
+      printf 'DETAIL=%s\n' "$status_detail"
+      printf 'AUTO_INSTALL=%s\n' "${auto_install_state:-failed}"
+      if [ -n "$auto_install_reason" ]; then
+        printf 'AUTO_INSTALL_REASON=%s\n' "$auto_install_reason"
+      fi
+    } > "$status_file"
+    if [ "${auto_install_state}" = "failed" ] && [ -n "$auto_install_reason" ]; then
+      echo "pre-nixos: auto-install failed: $auto_install_reason" >&2
+    fi
     announce_network
     exit 1
   fi
