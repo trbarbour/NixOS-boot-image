@@ -23,30 +23,39 @@ def test_filesystem_entries_for_lvs(tmp_path: Path) -> None:
         Disk(name="sdd", size=1000, rotational=True),
     ]
     plan = plan_storage("fast", disks)
+    plan_devices = plan["disko"]
     config_path = tmp_path / "fs.nix"
     plan["disko_config_path"] = str(config_path)
     apply_plan(plan, dry_run=True)
 
     devices = _read_devices(config_path)
+    slash_plan = plan_devices["lvm_vg"]["main"]["lvs"]["slash"]
     slash = devices["lvm_vg"]["main"]["lvs"]["slash"]
     assert slash["content"]["format"] == "ext4"
     assert slash["content"]["mountpoint"] == "/"
     assert "relatime" in slash["content"]["mountOptions"]
     assert slash["content"]["extraArgs"] == ["-L", "slash"]
+    assert slash_plan["content"]["mountpointPermissions"] == 0
 
+    data_plan = plan_devices["lvm_vg"]["large"]["lvs"]["data"]
     data = devices["lvm_vg"]["large"]["lvs"]["data"]
     assert data["content"]["format"] == "ext4"
     assert data["content"]["mountpoint"] == "/data"
     assert "relatime" in data["content"]["mountOptions"]
     assert data["content"]["extraArgs"] == ["-L", "data"]
+    assert data_plan["content"]["mountpointPermissions"] == 0
 
+    var_tmp_plan = plan_devices["lvm_vg"]["swap"]["lvs"]["var_tmp"]
     var_tmp = devices["lvm_vg"]["swap"]["lvs"]["var_tmp"]
     assert var_tmp["content"]["mountpoint"] == "/var/tmp"
     assert "relatime" in var_tmp["content"]["mountOptions"]
+    assert var_tmp_plan["content"]["mountpointPermissions"] == 0
 
+    var_log_plan = plan_devices["lvm_vg"]["swap"]["lvs"]["var_log"]
     var_log = devices["lvm_vg"]["swap"]["lvs"]["var_log"]
     assert var_log["content"]["mountpoint"] == "/var/log"
     assert "relatime" in var_log["content"]["mountOptions"]
+    assert var_log_plan["content"]["mountpointPermissions"] == 0
 
     swap_args = None
     for vg in devices["lvm_vg"].values():
@@ -56,9 +65,11 @@ def test_filesystem_entries_for_lvs(tmp_path: Path) -> None:
             break
     assert swap_args == ["--label", "swap"]
 
+    efi_plan = plan_devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
     efi = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
     assert efi["format"] == "vfat"
     assert efi["mountpoint"] == "/boot"
+    assert efi_plan["mountpointPermissions"] == 0
 
 
 def test_non_root_lvs_have_mountpoints(tmp_path: Path) -> None:
@@ -69,14 +80,19 @@ def test_non_root_lvs_have_mountpoints(tmp_path: Path) -> None:
         Disk(name="sdd", size=1000, rotational=True),
     ]
     plan = plan_storage("fast", disks)
+    plan_devices = plan["disko"]
     config_path = tmp_path / "mounts.nix"
     plan["disko_config_path"] = str(config_path)
     apply_plan(plan, dry_run=True)
 
     devices = _read_devices(config_path)
+    lvs_plan = plan_devices.get("lvm_vg", {}).get("large", {}).get("lvs", {})
     lvs = devices["lvm_vg"].get("large", {}).get("lvs", {})
     for name, spec in lvs.items():
         assert spec["content"].get("mountpoint") == f"/{name}"
+        plan_spec = lvs_plan.get(name)
+        assert plan_spec is not None
+        assert plan_spec["content"].get("mountpointPermissions") == 0
 
 
 def test_lv_labels_replace_disallowed_characters() -> None:
