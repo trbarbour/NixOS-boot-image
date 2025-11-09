@@ -144,12 +144,14 @@ def test_hdd_only_plan_populates_disko_devices() -> None:
     efi = partitions["sda1"]
     assert efi["type"] == "EF00"
     assert efi["content"]["mountpoint"] == "/boot"
+    assert efi["content"]["mountpointPermissions"] == 0
     data = partitions["sda2"]
     assert data["content"] == {"type": "lvm_pv", "vg": "main"}
     vg_cfg = disko["lvm_vg"]["main"]
     lvs = vg_cfg["lvs"]
     assert {"slash", "swap", "home"} <= set(lvs)
     assert lvs["slash"]["content"]["mountpoint"] == "/"
+    assert lvs["slash"]["content"]["mountpointPermissions"] == 0
     assert lvs["swap"]["content"]["type"] == "swap"
 
 
@@ -338,7 +340,9 @@ def test_plan_emits_disko_config() -> None:
     ]
     plan = plan_storage("fast", disks)
     devices = plan["disko"]
-    assert devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]["mountpoint"] == "/boot"
+    boot_content = devices["disk"]["sda"]["content"]["partitions"]["sda1"]["content"]
+    assert boot_content["mountpoint"] == "/boot"
+    assert boot_content["mountpointPermissions"] == 0
     md0 = devices["mdadm"]["md0"]
     assert md0["level"] == 1
     assert md0["content"]["vg"] == "swap"
@@ -347,14 +351,18 @@ def test_plan_emits_disko_config() -> None:
     assert set(arrays["md0"]["devices"]) == {"sdb1", "sdc1"}
     slash = devices["lvm_vg"]["main"]["lvs"]["slash"]
     assert slash["content"]["mountpoint"] == "/"
+    assert slash["content"]["mountpointPermissions"] == 0
     home = devices["lvm_vg"]["main"]["lvs"]["home"]
     assert home["content"]["mountpoint"] == "/home"
+    assert home["content"]["mountpointPermissions"] == 0
     swap = devices["lvm_vg"]["swap"]["lvs"]["swap"]
     assert swap["content"]["type"] == "swap"
     var_tmp = devices["lvm_vg"]["swap"]["lvs"]["var_tmp"]
     assert var_tmp["content"]["mountpoint"] == "/var/tmp"
+    assert var_tmp["content"]["mountpointPermissions"] == 0
     var_log = devices["lvm_vg"]["swap"]["lvs"]["var_log"]
     assert var_log["content"]["mountpoint"] == "/var/log"
+    assert var_log["content"]["mountpointPermissions"] == 0
 
 
 def test_secondary_efi_partition_not_mounted() -> None:

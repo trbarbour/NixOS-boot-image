@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import shlex
@@ -132,10 +133,29 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     return commands
 
 
+def _sanitise_devices_for_disko(devices: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a copy of ``devices`` without planner-only metadata."""
+
+    cleaned = copy.deepcopy(devices)
+
+    def _strip(value: Any) -> None:
+        if isinstance(value, dict):
+            value.pop("mountpointPermissions", None)
+            for item in value.values():
+                _strip(item)
+        elif isinstance(value, list):
+            for item in value:
+                _strip(item)
+
+    _strip(cleaned)
+    return cleaned
+
+
 def _render_disko_config(devices: Dict[str, Any]) -> str:
     """Return a Nix expression for ``disko.devices``."""
 
-    json_blob = json.dumps(devices, indent=2, sort_keys=True)
+    sanitised = _sanitise_devices_for_disko(devices)
+    json_blob = json.dumps(sanitised, indent=2, sort_keys=True)
     body = textwrap.indent(json_blob, "    ")
     return "{\n  disko.devices = builtins.fromJSON ''\n" + body + "\n  '';\n}\n"
 def _select_disko_mode() -> Tuple[str, bool]:

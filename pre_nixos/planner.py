@@ -12,6 +12,7 @@ from .inventory import Disk
 # cumbersome, especially once filesystems are in place.
 ROOT_LV_SIZE = "50G"
 DATA_LV_SIZE = "100G"
+DEFAULT_MOUNTPOINT_PERMISSIONS = 0
 
 
 def _to_bytes(size: int) -> int:
@@ -505,6 +506,7 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
                 }
                 if label == "EFI":
                     content["mountpoint"] = "/boot"
+                    content["mountpointPermissions"] = DEFAULT_MOUNTPOINT_PERMISSIONS
                     content["mountOptions"] = ["umask=0077"]
                 partitions[name] = {
                     "size": "1G",
@@ -580,6 +582,7 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
                 "type": "filesystem",
                 "format": "ext4",
                 "mountpoint": mountpoint,
+                "mountpointPermissions": DEFAULT_MOUNTPOINT_PERMISSIONS,
                 "mountOptions": ["relatime"],
                 "extraArgs": ["-L", label],
             }
