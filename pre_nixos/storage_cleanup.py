@@ -85,17 +85,20 @@ def _commands_for_device(action: str, device: str) -> Iterable[Sequence[str]]:
     if action == WIPE_SIGNATURES:
         return (
             ("sgdisk", "--zap-all", device),
+            ("partprobe", device),
             ("wipefs", "-a", device),
         )
     if action == DISCARD_BLOCKS:
         return (
             ("sgdisk", "--zap-all", device),
+            ("partprobe", device),
             ("blkdiscard", "--force", device),
             ("wipefs", "-a", device),
         )
     if action == OVERWRITE_RANDOM:
         return (
             ("sgdisk", "--zap-all", device),
+            ("partprobe", device),
             ("shred", "-n", "1", "-vz", device),
             ("wipefs", "-a", device),
         )

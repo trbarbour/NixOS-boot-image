@@ -34,6 +34,7 @@ class SequenceRunner:
             storage_cleanup.WIPE_SIGNATURES,
             [
                 ("sgdisk", "--zap-all", "/dev/sda"),
+                ("partprobe", "/dev/sda"),
                 ("wipefs", "-a", "/dev/sda"),
             ],
         ),
@@ -41,6 +42,7 @@ class SequenceRunner:
             storage_cleanup.DISCARD_BLOCKS,
             [
                 ("sgdisk", "--zap-all", "/dev/sda"),
+                ("partprobe", "/dev/sda"),
                 ("blkdiscard", "--force", "/dev/sda"),
                 ("wipefs", "-a", "/dev/sda"),
             ],
@@ -49,6 +51,7 @@ class SequenceRunner:
             storage_cleanup.OVERWRITE_RANDOM,
             [
                 ("sgdisk", "--zap-all", "/dev/sda"),
+                ("partprobe", "/dev/sda"),
                 ("shred", "-n", "1", "-vz", "/dev/sda"),
                 ("wipefs", "-a", "/dev/sda"),
             ],
@@ -92,6 +95,7 @@ def test_cleanup_does_not_execute_when_disabled() -> None:
     assert runner.commands == []
     assert scheduled == [
         "sgdisk --zap-all /dev/sda",
+        "partprobe /dev/sda",
         "wipefs -a /dev/sda",
     ]
 
@@ -105,7 +109,7 @@ def test_unknown_action_raises_value_error() -> None:
 
 
 def test_sgdisk_exit_code_two_is_allowed() -> None:
-    runner = SequenceRunner([2, 0])
+    runner = SequenceRunner([2, 0, 0])
     scheduled = storage_cleanup.perform_storage_cleanup(
         storage_cleanup.WIPE_SIGNATURES,
         ["/dev/sda"],
@@ -114,10 +118,12 @@ def test_sgdisk_exit_code_two_is_allowed() -> None:
     )
     assert runner.commands == [
         ("sgdisk", "--zap-all", "/dev/sda"),
+        ("partprobe", "/dev/sda"),
         ("wipefs", "-a", "/dev/sda"),
     ]
     assert scheduled == [
         "sgdisk --zap-all /dev/sda",
+        "partprobe /dev/sda",
         "wipefs -a /dev/sda",
     ]
 
