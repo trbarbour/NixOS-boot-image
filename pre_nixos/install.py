@@ -7,9 +7,11 @@ import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
+from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
 
@@ -246,6 +248,98 @@ def _copy_unit(source: Optional[Path], target_dir: Path) -> Optional[Path]:
     return destination
 
 
+def _format_timestamp(moment: datetime) -> str:
+    """Return ``moment`` formatted as an ISO-like UTC string."""
+
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
+
+
+def _broadcast_install_message(message: str) -> Tuple[bool, Dict[str, bool]] | None:
+    """Send ``message`` to all consoles and report success."""
+
+    try:
+        success, targets, results = broadcast_to_consoles(message)
+    except Exception as error:  # pragma: no cover - unexpected device error
+        log_event(
+            "pre_nixos.install.console_broadcast_failed",
+            message=message,
+            error=str(error),
+        )
+        return None
+
+    if not targets and not results:
+        return None
+
+    payload = {str(path): value for path, value in results.items()}
+    log_event(
+        "pre_nixos.install.console_broadcast",
+        message=message,
+        console_paths=[str(path) for path in targets],
+        console_results=payload,
+        console_written=success,
+    )
+    return success, payload
+
+
+def _write_installation_issue(root_path: Path, completed_at: datetime) -> Optional[Path]:
+    """Update ``/etc/issue`` with the automated installation timestamp."""
+
+    issue_path = root_path / "etc/issue"
+    timestamp = _format_timestamp(completed_at)
+    header = (
+        "Automatic NixOS installation completed by pre-nixos.\n"
+        f"Installation timestamp (UTC): {timestamp}\n\n"
+    )
+
+    try:
+        try:
+            existing = issue_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            existing = ""
+        if existing and not existing.endswith("\n"):
+            existing += "\n"
+        issue_path.parent.mkdir(parents=True, exist_ok=True)
+        issue_path.write_text(header + existing, encoding="utf-8")
+    except OSError as error:
+        log_event(
+            "pre_nixos.install.issue_write_failed",
+            issue_path=issue_path,
+            error=str(error),
+        )
+        return None
+
+    log_event(
+        "pre_nixos.install.issue_written",
+        issue_path=issue_path,
+        completed_at=timestamp,
+    )
+    return issue_path
+
+
+def _request_reboot() -> bool:
+    """Attempt to reboot the system using ``systemctl``."""
+
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        log_event(
+            "pre_nixos.install.reboot_skipped",
+            reason="pytest",
+        )
+        return False
+
+    result = subprocess.run(["systemctl", "reboot"], check=False)
+    if result.returncode == 0:
+        log_event("pre_nixos.install.reboot_requested", returncode=result.returncode)
+        return True
+
+    log_event(
+        "pre_nixos.install.reboot_failed",
+        returncode=result.returncode,
+    )
+    return False
+
+
 def auto_install(
     lan: Optional[LanConfiguration],
     *,
@@ -307,6 +401,14 @@ def auto_install(
             status_dir=status_dir,
             reason="mount-unavailable",
         )
+
+    start_time = datetime.now(timezone.utc)
+    start_message = (
+        "Starting automatic NixOS installation at "
+        f"{_format_timestamp(start_time)} UTC."
+    )
+    print(start_message)
+    _broadcast_install_message(start_message)
 
     log_event("pre_nixos.install.generate_config.start", root_path=root_path)
     result = subprocess.run(
@@ -384,8 +486,31 @@ def auto_install(
         "pre_nixos.install.nixos_install.finished",
         returncode=result.returncode,
     )
+
+    completed_at = datetime.now(timezone.utc)
+    completion_message = (
+        "Automatic NixOS installation completed at "
+        f"{_format_timestamp(completed_at)} UTC."
+    )
+    print(completion_message)
+    completion_broadcast = _broadcast_install_message(completion_message)
+
+    issue_path = _write_installation_issue(root_path, completed_at)
+    reboot_requested = _request_reboot()
+
+    details: Dict[str, str] = {
+        "root_path": str(root_path),
+        "completed_at": _format_timestamp(completed_at),
+        "reboot": "requested" if reboot_requested else "skipped",
+    }
+    if issue_path is not None:
+        details["issue_path"] = str(issue_path)
+    if completion_broadcast is not None:
+        console_written, _ = completion_broadcast
+        details["console_written"] = "true" if console_written else "false"
+
     return _record_result(
         "success",
         status_dir=status_dir,
-        details={"root_path": str(root_path)},
+        details=details,
     )
