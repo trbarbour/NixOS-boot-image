@@ -7,11 +7,22 @@ import json
 import os
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
 
 from .console import broadcast_line, get_console_paths
 from .logging_utils import log_event
+
+
+@dataclass(frozen=True)
+class LanConfiguration:
+    """Description of the live LAN setup that can be replicated on ``/mnt``."""
+
+    authorized_key: Path
+    interface: Optional[str] = None
+    rename_rule: Optional[Path] = None
+    network_unit: Optional[Path] = None
 
 
 _TRANSIENT_SYSFS_ERRNOS = {
@@ -446,7 +457,7 @@ def configure_lan(
     root_home: Path = Path("/root"),
     console_paths: Sequence[Path] | None = None,
     status_dir: Path = Path("/run/pre-nixos"),
-) -> Optional[Path]:
+) -> Optional[LanConfiguration]:
     """Configure the active NIC for DHCP and optionally enable secure SSH.
 
     When a root public key is present, the interface with an active carrier is
@@ -455,8 +466,9 @@ def configure_lan(
     DHCP and SSH access is secured with the provided key.  If no key is
     available, networking and SSH are left in their NixOS boot image defaults.
 
-    Returns the path to the created network file or ``None`` when no LAN
-    interface is detected or no key is provided.
+    Returns a :class:`LanConfiguration` describing the persisted network
+    artifacts when a root key is available. When no key is provided,
+    ``None`` is returned and networking remains unchanged.
     """
 
     log_event(
@@ -486,13 +498,19 @@ def configure_lan(
             message="no interface with carrier detected",
         )
         secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
-        return None
+        lan_configuration = LanConfiguration(
+            authorized_key=authorized_key,
+            interface=None,
+            rename_rule=None,
+            network_unit=None,
+        )
+        return lan_configuration
 
     log_event(
         "pre_nixos.network.configure_lan.detected_interface",
         interface=iface,
     )
-    write_lan_rename_rule(net_path, network_dir)
+    rename_rule = write_lan_rename_rule(net_path, network_dir)
 
     network_dir.mkdir(parents=True, exist_ok=True)
     net_path_conf = network_dir / "20-lan.network"
@@ -517,6 +535,7 @@ def configure_lan(
         "pre_nixos.network.configure_lan.finished",
         interface=iface,
         network_file=net_path_conf,
+        rename_rule=rename_rule,
     )
 
     ip_address = wait_for_ipv4("lan")
@@ -563,4 +582,10 @@ def configure_lan(
             console_written=console_written,
         )
 
-    return net_path_conf
+    lan_configuration = LanConfiguration(
+        authorized_key=authorized_key,
+        interface="lan",
+        rename_rule=rename_rule,
+        network_unit=net_path_conf,
+    )
+    return lan_configuration

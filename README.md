@@ -33,6 +33,13 @@ Structured JSON debug logs are now opt-in. Set
 `PRE_NIXOS_LOG_EVENTS=1` in the environment before running the CLI to emit the
 previous diagnostic stream to `stderr` during troubleshooting or test runs.
 
+When a root SSH key is embedded via `PRE_NIXOS_ROOT_KEY`, the CLI automatically
+generates a minimal NixOS configuration (firewall enabled with SSH + ping, root
+key authorised, flakes enabled, and the `lan` interface managed by
+systemd-networkd) and runs `nixos-install --no-root-passwd` after the storage
+plan completes. Disable this behaviour with `--no-auto-install` when you prefer
+to inspect the generated configuration manually.
+
 For an interactive review and to apply the plan manually, use the TUI helper,
 which displays the current IP address or a diagnostic message when the
 embedded SSH key is missing or no address was assigned:
@@ -41,7 +48,10 @@ embedded SSH key is missing or no address was assigned:
 pre-nixos-tui
 ```
 Within the interface press `S` to save the current plan to a JSON file or `L`
-to load an existing plan.
+to load an existing plan. The footer now shows an `I` toggle that controls
+whether the TUI should launch the same minimal `nixos-install` workflow after
+applying the storage plan; the header reflects the most recent auto-install
+outcome.
 
 ## SSH access
 
@@ -67,6 +77,12 @@ During the first boot the `pre-nixos` service copies the embedded public key to
 password authentication. This hardening happens even if no network interface is
 connected yet, so you can plug in the LAN cable afterwards and connect with the
 prepared private key.
+
+If the key is present, the new auto-install step drops a configuration that
+keeps the firewall locked down to SSH and ICMP and ensures the root account is
+reachable only via the authorised key. The generated `configuration.nix` also
+enables flakes so remote tooling such as deploy-rs or NixOps can immediately
+rebuild the machine.
 
 Keep `pre_nixos/root_key` secure and uncommitted; `.gitignore` prevents
 accidental check-in of both halves. Use the generated

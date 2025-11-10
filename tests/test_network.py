@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from pre_nixos.network import (
+    LanConfiguration,
     configure_lan,
     identify_lan,
     get_ip_address,
@@ -164,7 +165,7 @@ def test_configure_lan_writes_network_file(tmp_path):
 
     status_dir = tmp_path / "run/pre-nixos"
 
-    network_file = configure_lan(
+    lan_config = configure_lan(
         netdir,
         network_dir,
         ssh_dir,
@@ -172,8 +173,12 @@ def test_configure_lan_writes_network_file(tmp_path):
         root_home=root_home,
         status_dir=status_dir,
     )
-    assert network_file == network_dir / "20-lan.network"
-    assert "DHCP=yes" in network_file.read_text()
+    assert isinstance(lan_config, LanConfiguration)
+    assert lan_config.network_unit == network_dir / "20-lan.network"
+    assert lan_config.rename_rule == network_dir / "10-lan.link"
+    assert lan_config.interface == "lan"
+    assert lan_config.authorized_key == key
+    assert "DHCP=yes" in lan_config.network_unit.read_text()
     auth_keys = root_home / ".ssh/authorized_keys"
     assert auth_keys.read_text() == key.read_text()
     ssh_conf = ssh_dir / "sshd_config"
@@ -219,7 +224,7 @@ def test_configure_lan_secures_ssh_without_detected_iface(tmp_path):
 
     status_dir = tmp_path / "run/pre-nixos"
 
-    result = configure_lan(
+    lan_config = configure_lan(
         netdir,
         network_dir,
         ssh_dir,
@@ -227,7 +232,11 @@ def test_configure_lan_secures_ssh_without_detected_iface(tmp_path):
         root_home=root_home,
         status_dir=status_dir,
     )
-    assert result is None
+    assert isinstance(lan_config, LanConfiguration)
+    assert lan_config.interface is None
+    assert lan_config.network_unit is None
+    assert lan_config.rename_rule is None
+    assert lan_config.authorized_key == key
     auth_keys = root_home / ".ssh/authorized_keys"
     assert auth_keys.read_text() == key.read_text()
     ssh_conf = ssh_dir / "sshd_config"

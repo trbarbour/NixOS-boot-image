@@ -35,7 +35,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ---
 
 ## 3) Non-Goals
-- Full OS provisioning beyond the pre-install baseline (the final `nixos-install` run may optionally be triggered, but is out of scope for *design guarantees*).
+- Full OS provisioning beyond the pre-install baseline (the final `nixos-install` run may optionally be triggered—and now defaults to running a minimal install when a root key is embedded—but it remains out of scope for *design guarantees*).
 - Advanced crypto (e.g., LUKS), ZFS/btrfs, or multi-boot support.
 - NIC bonding/VLANs or complex network topologies.
 

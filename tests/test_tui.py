@@ -3,6 +3,8 @@ import pytest
 
 from pre_nixos import inventory
 import pre_nixos.tui as tui
+from pre_nixos.install import AutoInstallResult
+from pre_nixos.network import LanConfiguration
 
 
 class FakeWindow:
@@ -13,6 +15,7 @@ class FakeWindow:
         self.width = width
         self.lines: dict[int, str] = {}
         self.buffer: list[str] = []
+        self.key_queue: list[str] = []
 
     def clear(self) -> None:  # pragma: no cover - behaviour is a no-op
         pass
@@ -32,6 +35,11 @@ class FakeWindow:
 
     def getstr(self):  # pragma: no cover - only used for save/load tests
         raise NotImplementedError("FakeWindow requires explicit inputs")
+
+    def getkey(self):
+        if self.key_queue:
+            return self.key_queue.pop(0)
+        return "q"
 
 
 @pytest.fixture
@@ -82,7 +90,7 @@ def renderer(sample_plan, sample_disks) -> tui.PlanRenderer:
 
 @pytest.fixture
 def state(sample_plan, sample_disks) -> tui.TUIState:
-    return tui._initial_state(sample_plan, sample_disks)
+    return tui._initial_state(sample_plan, sample_disks, None)
 
 
 def test_tui_exposes_run():
@@ -158,6 +166,7 @@ def test_draw_plan_assigns_initial_focus(monkeypatch, state):
     monkeypatch.setattr(tui.network, "get_lan_status", lambda: "203.0.113.7")
     render = tui._draw_plan(win, state)
     assert "203.0.113.7" in win.lines[0]
+    assert "Auto-install:" in win.lines[0]
     assert state.focus is not None
     first_canvas_row = min(y for y in win.lines if y >= 2)
     assert win.lines[first_canvas_row].startswith("▶ ")
@@ -172,7 +181,7 @@ def test_draw_plan_displays_messages(monkeypatch, state):
 
 
 def test_move_focus_wraps_and_skips_empty_tokens():
-    state = tui._initial_state({}, [])
+    state = tui._initial_state({}, [], None)
     render = tui.RenderResult(
         lines=["", "", "", ""],
         row_tokens=[None, ("disk", "one", None), None, ("vg", "vg1", None)],
@@ -199,6 +208,49 @@ def test_cycle_profile_loops_through_sequence():
     for expected in sequence[1:]:
         current = tui._cycle_profile(current)
         assert current == expected
+
+
+def test_auto_install_header_updates(monkeypatch, sample_plan, sample_disks):
+    state = tui._initial_state(sample_plan, sample_disks, None)
+    win = FakeWindow(height=10, width=120)
+    monkeypatch.setattr(tui.network, "get_lan_status", lambda: "ready")
+    tui._draw_plan(win, state)
+    assert "Auto-install: Off" in win.lines[0]
+    state.auto_install_enabled = True
+    state.last_auto_install = AutoInstallResult(status="success")
+    tui._draw_plan(win, state)
+    assert "Auto-install: On (success)" in win.lines[0]
+
+
+def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan, sample_disks):
+    state = tui._initial_state(sample_plan, sample_disks, None)
+    lan_config = LanConfiguration(
+        authorized_key=tmp_path / "key.pub",
+        interface="lan",
+        rename_rule=None,
+        network_unit=None,
+    )
+    state.lan_config = lan_config
+    state.auto_install_enabled = True
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+    apply_calls = []
+    monkeypatch.setattr(tui.apply, "apply_plan", lambda plan: apply_calls.append(plan))
+    auto_calls: list[tuple] = []
+
+    def fake_auto(lan_config, *, enabled, dry_run):
+        auto_calls.append((lan_config, enabled, dry_run))
+        return AutoInstallResult(status="success")
+
+    monkeypatch.setattr(tui.install, "auto_install", fake_auto)
+
+    win = FakeWindow(height=5, width=120)
+    assert tui._handle_apply_plan(win, state) is True
+    assert apply_calls == [state.plan]
+    assert auto_calls == [(lan_config, True, False)]
+    assert state.last_auto_install is not None
+    assert state.last_auto_install.status == "success"
+    assert "Auto-install completed." in win.lines[1]
 
 
 def test_save_and_load_plan(tmp_path, monkeypatch):

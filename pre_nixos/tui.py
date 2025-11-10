@@ -14,6 +14,7 @@ from typing import Any, Iterable, Optional, Sequence, Tuple
 
 from . import (
     apply,
+    install,
     inventory,
     network,
     planner,
@@ -580,13 +581,26 @@ class TUIState:
     profile_override: str = "auto"
     expanded: set[FocusKey] = field(default_factory=set)
     cleanup_notice: list[str] = field(default_factory=list)
+    lan_config: network.LanConfiguration | None = None
+    auto_install_enabled: bool = False
+    last_auto_install: install.AutoInstallResult | None = None
 
 
-def _initial_state(plan: dict[str, Any], disks: list[inventory.Disk]) -> TUIState:
+def _initial_state(
+    plan: dict[str, Any],
+    disks: list[inventory.Disk],
+    lan_config: network.LanConfiguration | None,
+) -> TUIState:
     """Create a :class:`TUIState` from the current plan and inventory."""
 
-    state = TUIState(plan=plan, disks=disks, renderer=PlanRenderer(plan, disks))
+    state = TUIState(
+        plan=plan,
+        disks=disks,
+        renderer=PlanRenderer(plan, disks),
+        lan_config=lan_config,
+    )
     state.cleanup_notice = _initial_cleanup_notice()
+    state.auto_install_enabled = lan_config is not None
     return state
 
 
@@ -662,7 +676,13 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         state.focus = None
 
     focus_label = state.renderer.describe_focus(state.focus)
-    header = f"IP: {status}  View: Planned  Focus: {focus_label}  Profile: {render.profile}"
+    auto_status = "On" if state.auto_install_enabled else "Off"
+    if state.last_auto_install is not None:
+        auto_status = f"{auto_status} ({state.last_auto_install.status})"
+    header = (
+        f"IP: {status}  View: Planned  Focus: {focus_label}  Profile: {render.profile}  "
+        f"Auto-install: {auto_status}"
+    )
     stdscr.addstr(0, 0, _trim(header, width - 1))
     stdscr.addstr(1, 0, _trim(PlanRenderer.LEGEND, width - 1))
     for idx, line in enumerate(state.cleanup_notice):
@@ -684,6 +704,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         "[S]ave",
         "[L]oad",
         "[A]pply",
+        "[I]nstall toggle",
         "[Q]uit",
     ]
     footer = "  ".join(footer_parts)
@@ -935,13 +956,40 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     stdscr.clear()
     stdscr.addstr(0, 0, "Applying plan...\n")
     stdscr.refresh()
+    auto_message_row = 1
     try:
         apply.apply_plan(state.plan)
     except Exception as exc:  # pragma: no cover - subprocess failure is rare
         _show_modal(stdscr, [f"Failed to apply plan: {exc}"])
         return False
 
-    stdscr.addstr(1, 0, "Done. Press any key to exit.")
+    if state.auto_install_enabled and execute:
+        stdscr.addstr(auto_message_row, 0, "Running auto-install...\n")
+        stdscr.refresh()
+
+    try:
+        auto_result = install.auto_install(
+            state.lan_config,
+            enabled=state.auto_install_enabled,
+            dry_run=not execute,
+        )
+    except Exception as exc:  # pragma: no cover - unexpected errors
+        state.last_auto_install = install.AutoInstallResult(status="failed", reason=str(exc))
+        _show_modal(stdscr, [f"Auto-install failed: {exc}"])
+        return False
+
+    state.last_auto_install = auto_result
+    if auto_result.status == "failed":
+        message = auto_result.reason or "unknown error"
+        _show_modal(stdscr, [f"Auto-install failed: {message}"])
+        return False
+
+    summary_parts = ["Done."]
+    if auto_result.status == "success":
+        summary_parts.append("Auto-install completed.")
+    elif auto_result.status == "skipped" and auto_result.reason:
+        summary_parts.append(f"Auto-install skipped ({auto_result.reason}).")
+    stdscr.addstr(auto_message_row, 0, " ".join(summary_parts) + " Press any key to exit.")
     stdscr.refresh()
     while True:
         try:
@@ -955,10 +1003,11 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
 def run() -> None:
     """Launch the interactive provisioning TUI."""
 
+    lan_config = network.configure_lan()
     disks = inventory.enumerate_disks()
     ram_gb = inventory.detect_ram_gb()
     plan = planner.plan_storage("fast", disks, ram_gb=ram_gb)
-    state = _initial_state(plan, disks)
+    state = _initial_state(plan, disks, lan_config)
 
     def refresh_renderer() -> None:
         state.renderer = PlanRenderer(state.plan, state.disks)
@@ -1004,6 +1053,9 @@ def run() -> None:
                 if _handle_apply_plan(stdscr, state):
                     break
                 refresh_renderer()
+                continue
+            if key_lower == "i":
+                state.auto_install_enabled = not state.auto_install_enabled
                 continue
             if key_lower in {"KEY_UP", "k"}:
                 _move_focus(state, render, -1)
