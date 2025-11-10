@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
@@ -156,7 +156,99 @@ def _escape_nix_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def _inject_configuration(root_path: Path, key_text: str) -> None:
+def _extract_label(extra_args: Iterable[str]) -> Optional[str]:
+    """Return the filesystem/swap label from ``extra_args`` when present."""
+
+    args = list(extra_args)
+    for index, token in enumerate(args):
+        if token in {"-L", "--label", "-n"} and index + 1 < len(args):
+            label = args[index + 1]
+            if label:
+                return label
+    return None
+
+
+def _collect_storage_definitions(
+    storage_plan: Optional[Dict[str, Any]],
+) -> Tuple[list[Dict[str, Any]], list[str]]:
+    """Return filesystem and swap definitions extracted from ``storage_plan``."""
+
+    if not storage_plan:
+        return [], []
+
+    devices = storage_plan.get("disko") if isinstance(storage_plan, dict) else None
+    if not isinstance(devices, dict):
+        return [], []
+
+    filesystems: list[Dict[str, Any]] = []
+    swaps: list[str] = []
+
+    def handle_content(content: Any) -> None:
+        if not isinstance(content, dict):
+            return
+        ctype = content.get("type")
+        if ctype == "filesystem":
+            mountpoint = content.get("mountpoint")
+            if not isinstance(mountpoint, str) or not mountpoint:
+                return
+            extra_args = content.get("extraArgs") or []
+            label = _extract_label(extra_args)
+            if not label:
+                return
+            fs_type = content.get("format")
+            if not isinstance(fs_type, str) or not fs_type:
+                return
+            options = content.get("mountOptions") or []
+            if not isinstance(options, list):
+                options = []
+            filesystems.append(
+                {
+                    "mountpoint": mountpoint,
+                    "label": label,
+                    "fsType": fs_type,
+                    "options": [opt for opt in options if isinstance(opt, str) and opt],
+                }
+            )
+        elif ctype == "swap":
+            extra_args = content.get("extraArgs") or []
+            label = _extract_label(extra_args)
+            if label:
+                swaps.append(label)
+
+    for disk in devices.get("disk", {}).values():
+        partitions = (
+            disk.get("content", {}).get("partitions", {})
+            if isinstance(disk, dict)
+            else {}
+        )
+        for part in partitions.values():
+            content = part.get("content") if isinstance(part, dict) else None
+            handle_content(content)
+
+    for vg in devices.get("lvm_vg", {}).values():
+        lvs = vg.get("lvs", {}) if isinstance(vg, dict) else {}
+        for lv in lvs.values():
+            content = lv.get("content") if isinstance(lv, dict) else None
+            handle_content(content)
+
+    filesystems.sort(key=lambda entry: entry["mountpoint"])
+    swaps.sort()
+    return filesystems, swaps
+
+
+def _format_nix_list(items: Iterable[str]) -> str:
+    quoted = [f'"{_escape_nix_string(item)}"' for item in items]
+    if not quoted:
+        return "[ ]"
+    return "[ " + " ".join(quoted) + " ]"
+
+
+def _inject_configuration(
+    root_path: Path,
+    key_text: str,
+    lan: LanConfiguration,
+    storage_plan: Optional[Dict[str, Any]],
+) -> None:
     """Rewrite ``configuration.nix`` with the managed auto-install block."""
 
     config_dir = root_path / "etc/nixos"
@@ -183,6 +275,8 @@ def _inject_configuration(root_path: Path, key_text: str) -> None:
             continue
         filtered.append(line)
 
+    filesystems, swaps = _collect_storage_definitions(storage_plan)
+
     block_lines = [
         "  # pre-nixos auto-install start",
         "  networking.firewall = {",
@@ -191,6 +285,8 @@ def _inject_configuration(root_path: Path, key_text: str) -> None:
         "    allowedTCPPorts = [ 22 ];",
         "    allowedUDPPorts = [ ];",
         "  };",
+        "",
+        "  networking.useDHCP = false;",
         "",
         "  services.openssh = {",
         "    enable = true;",
@@ -207,12 +303,58 @@ def _inject_configuration(root_path: Path, key_text: str) -> None:
         "  systemd.network.enable = true;",
         '  systemd.network.networks."lan" = {',
         '    matchConfig.Name = "lan";',
-        '    networkConfig.DHCP = "yes";',
-        "  };",
-        "",
-        '  nix.settings.experimental-features = [ "nix-command" "flakes" ];',
-        "  # pre-nixos auto-install end",
     ]
+    if lan.mac_address:
+        block_lines.append(
+            f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
+        )
+    block_lines.extend(
+        [
+            '    networkConfig.DHCP = "yes";',
+            "  };",
+            "",
+        ]
+    )
+
+    if filesystems:
+        block_lines.append("  fileSystems = {")
+        for entry in filesystems:
+            mountpoint = entry["mountpoint"]
+            device = f"/dev/disk/by-label/{entry['label']}"
+            block_lines.append(f'    "{_escape_nix_string(mountpoint)}" = {{')
+            block_lines.append(
+                f'      device = "{_escape_nix_string(device)}";'
+            )
+            block_lines.append(
+                f'      fsType = "{_escape_nix_string(entry["fsType"])}";'
+            )
+            options = entry["options"]
+            if options:
+                block_lines.append(
+                    f"      options = {_format_nix_list(options)};"
+                )
+            block_lines.append("    };")
+        block_lines.append("  };")
+        block_lines.append("")
+
+    block_lines.append("  swapDevices = [")
+    if swaps:
+        for label in swaps:
+            device = f"/dev/disk/by-label/{label}"
+            block_lines.append("    {")
+            block_lines.append(
+                f'      device = "{_escape_nix_string(device)}";'
+            )
+            block_lines.append("    }")
+    block_lines.append("  ];")
+    block_lines.append("")
+
+    block_lines.extend(
+        [
+            '  nix.settings.experimental-features = [ "nix-command" "flakes" ];',
+            "  # pre-nixos auto-install end",
+        ]
+    )
 
     terminator_index = None
     for index in range(len(filtered) - 1, -1, -1):
@@ -230,6 +372,48 @@ def _inject_configuration(root_path: Path, key_text: str) -> None:
     if not text.endswith("\n"):
         text += "\n"
 
+    config_path.write_text(text, encoding="utf-8")
+
+
+def _rewrite_hardware_configuration(root_path: Path) -> None:
+    """Remove conflicting defaults from ``hardware-configuration.nix``."""
+
+    config_path = root_path / "etc/nixos/hardware-configuration.nix"
+    try:
+        existing = config_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return
+
+    lines = existing.splitlines()
+    filtered: list[str] = []
+    skipping = False
+    depth = 0
+
+    def depth_delta(line: str) -> int:
+        return line.count("{") + line.count("[") - line.count("}") - line.count("]")
+
+    for line in lines:
+        stripped = line.strip()
+        if "networking.useDHCP" in stripped:
+            continue
+        if not skipping and (
+            stripped.startswith("fileSystems.") or stripped.startswith("swapDevices")
+        ):
+            skipping = True
+            depth = depth_delta(line)
+            if ";" in line and depth <= 0:
+                skipping = False
+            continue
+        if skipping:
+            depth += depth_delta(line)
+            if ";" in line and depth <= 0:
+                skipping = False
+            continue
+        filtered.append(line)
+
+    text = "\n".join(filtered)
+    if filtered:
+        text += "\n"
     config_path.write_text(text, encoding="utf-8")
 
 
@@ -342,6 +526,7 @@ def _request_reboot() -> bool:
 
 def auto_install(
     lan: Optional[LanConfiguration],
+    storage_plan: Optional[Dict[str, Any]] = None,
     *,
     enabled: bool = True,
     dry_run: bool = False,
@@ -432,7 +617,8 @@ def auto_install(
     )
 
     try:
-        _inject_configuration(root_path, key_text)
+        _inject_configuration(root_path, key_text, lan, storage_plan)
+        _rewrite_hardware_configuration(root_path)
     except Exception as exc:  # pragma: no cover - unexpected filesystem errors
         log_event("pre_nixos.install.configuration_write_failed", error=str(exc))
         return _record_result(

@@ -206,6 +206,7 @@ def main(argv: list[str] | None = None) -> None:
             apply.apply_plan(plan, dry_run=args.dry_run)
             result = install.auto_install(
                 lan_config,
+                plan,
                 enabled=auto_install_enabled,
                 dry_run=args.dry_run,
             )

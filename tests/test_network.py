@@ -135,11 +135,14 @@ def test_write_lan_rename_rule(tmp_path):
         iface.mkdir()
         (iface / "device").mkdir()
         (iface / "carrier").write_text(carrier)
+        (iface / "address").write_text("00:11:22:33:44:55")
 
     rules_dir = tmp_path / "etc/systemd/network"
     path = write_lan_rename_rule(tmp_path, rules_dir)
     assert path == rules_dir / "10-lan.link"
-    assert path.read_text() == "[Match]\nOriginalName=eth1\n\n[Link]\nName=lan\n"
+    assert path.read_text() == (
+        "[Match]\nOriginalName=eth1\nMACAddress=00:11:22:33:44:55\n\n[Link]\nName=lan\n"
+    )
 
 
 def test_write_lan_rename_rule_no_iface(tmp_path):
@@ -151,11 +154,12 @@ def test_write_lan_rename_rule_no_iface(tmp_path):
 def test_configure_lan_writes_network_file(tmp_path):
     netdir = tmp_path / "sys/class/net"
     netdir.mkdir(parents=True)
-    for name, carrier in ("eth0", "0"), ("eth1", "1"):
+    for idx, (name, carrier) in enumerate((("eth0", "0"), ("eth1", "1"))):
         iface = netdir / name
         iface.mkdir()
         (iface / "device").mkdir()
         (iface / "carrier").write_text(carrier)
+        (iface / "address").write_text(f"00:11:22:33:44:{idx:02d}")
 
     network_dir = tmp_path / "etc/systemd/network"
     ssh_dir = tmp_path / "etc/ssh"
@@ -178,6 +182,7 @@ def test_configure_lan_writes_network_file(tmp_path):
     assert lan_config.rename_rule == network_dir / "10-lan.link"
     assert lan_config.interface == "lan"
     assert lan_config.authorized_key == key
+    assert lan_config.mac_address == "00:11:22:33:44:01"
     assert "DHCP=yes" in lan_config.network_unit.read_text()
     auth_keys = root_home / ".ssh/authorized_keys"
     assert auth_keys.read_text() == key.read_text()

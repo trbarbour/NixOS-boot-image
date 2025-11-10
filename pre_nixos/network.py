@@ -23,6 +23,7 @@ class LanConfiguration:
     interface: Optional[str] = None
     rename_rule: Optional[Path] = None
     network_unit: Optional[Path] = None
+    mac_address: Optional[str] = None
 
 
 _TRANSIENT_SYSFS_ERRNOS = {
@@ -198,9 +199,29 @@ def wait_for_lan(
     return None
 
 
+def _read_mac_address(net_path: Path, iface: str) -> Optional[str]:
+    """Return the MAC address for ``iface`` when available."""
+
+    address_path = net_path / iface / "address"
+    try:
+        address = address_path.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return None
+    except OSError as error:
+        if _is_transient_sysfs_error(error):
+            return None
+        raise
+    if address:
+        return address.lower()
+    return None
+
+
 def write_lan_rename_rule(
     net_path: Path = Path("/sys/class/net"),
     rules_dir: Path = Path("/etc/systemd/network"),
+    *,
+    interface: Optional[str] = None,
+    mac_address: Optional[str] = None,
 ) -> Optional[Path]:
     """Persistently rename the detected LAN interface to ``lan``.
 
@@ -218,7 +239,7 @@ def write_lan_rename_rule(
         rules_dir=rules_dir,
     )
 
-    iface = wait_for_lan(net_path)
+    iface = interface or wait_for_lan(net_path)
     if iface is None:
         log_event(
             "pre_nixos.network.write_lan_rename_rule.skipped",
@@ -226,16 +247,22 @@ def write_lan_rename_rule(
         )
         return None
 
+    if mac_address is None:
+        mac_address = _read_mac_address(net_path, iface)
+
     rules_dir.mkdir(parents=True, exist_ok=True)
     rule_path = rules_dir / "10-lan.link"
-    rule_path.write_text(
-        f"[Match]\nOriginalName={iface}\n\n[Link]\nName=lan\n",
-        encoding="utf-8",
-    )
+    match_lines = ["[Match]", f"OriginalName={iface}"]
+    if mac_address:
+        match_lines.append(f"MACAddress={mac_address}")
+    match_block = "\n".join(match_lines)
+    link_block = "[Link]\nName=lan"
+    rule_path.write_text(f"{match_block}\n\n{link_block}\n", encoding="utf-8")
     log_event(
         "pre_nixos.network.write_lan_rename_rule.finished",
         interface=iface,
         rule_path=rule_path,
+        mac_address=mac_address,
     )
     return rule_path
 
@@ -506,11 +533,19 @@ def configure_lan(
         )
         return lan_configuration
 
+    mac_address = _read_mac_address(net_path, iface)
+
     log_event(
         "pre_nixos.network.configure_lan.detected_interface",
         interface=iface,
+        mac_address=mac_address,
     )
-    rename_rule = write_lan_rename_rule(net_path, network_dir)
+    rename_rule = write_lan_rename_rule(
+        net_path,
+        network_dir,
+        interface=iface,
+        mac_address=mac_address,
+    )
 
     network_dir.mkdir(parents=True, exist_ok=True)
     net_path_conf = network_dir / "20-lan.network"
@@ -588,5 +623,6 @@ def configure_lan(
         interface="lan",
         rename_rule=rename_rule,
         network_unit=net_path_conf,
+        mac_address=mac_address,
     )
     return lan_configuration

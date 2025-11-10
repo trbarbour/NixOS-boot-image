@@ -970,6 +970,7 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     try:
         auto_result = install.auto_install(
             state.lan_config,
+            state.plan,
             enabled=state.auto_install_enabled,
             dry_run=not execute,
         )
