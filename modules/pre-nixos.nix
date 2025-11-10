@@ -23,7 +23,14 @@ in {
   options.services.pre-nixos.enable = lib.mkEnableOption "run pre-nixos planning tool";
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.pre-nixos pkgs.disko pkgs.util-linux pkgs.minicom ];
+    environment.systemPackages = [
+      pkgs.pre-nixos
+      pkgs.disko
+      pkgs.util-linux
+      pkgs.minicom
+      pkgs.nixos-install-tools
+      pkgs.nix
+    ];
     environment.sessionVariables = lib.mkMerge [
       preNixosExecEnv
       { NIX_PATH = lib.mkForce "nixpkgs=${pkgs.path}"; }
@@ -67,6 +74,8 @@ in {
         iproute2
         lvm2
         mdadm
+        nix
+        nixos-install-tools
         parted
         systemd
         util-linux

@@ -131,7 +131,7 @@ in ''
     {
       printf 'STATE=%s\n' "$status_state"
       printf 'DETAIL=%s\n' "$status_detail"
-      printf 'AUTO_INSTALL=%s\n' "${auto_install_state:-skipped}"
+      printf 'AUTO_INSTALL=%s\n' "''${auto_install_state:-skipped}"
       if [ -n "$auto_install_reason" ]; then
         printf 'AUTO_INSTALL_REASON=%s\n' "$auto_install_reason"
       fi
@@ -141,12 +141,12 @@ in ''
     {
       printf 'STATE=failed\n'
       printf 'DETAIL=%s\n' "$status_detail"
-      printf 'AUTO_INSTALL=%s\n' "${auto_install_state:-failed}"
+      printf 'AUTO_INSTALL=%s\n' "''${auto_install_state:-failed}"
       if [ -n "$auto_install_reason" ]; then
         printf 'AUTO_INSTALL_REASON=%s\n' "$auto_install_reason"
       fi
     } > "$status_file"
-    if [ "${auto_install_state}" = "failed" ] && [ -n "$auto_install_reason" ]; then
+    if [ "''${auto_install_state}" = "failed" ] && [ -n "$auto_install_reason" ]; then
       echo "pre-nixos: auto-install failed: $auto_install_reason" >&2
     fi
     announce_network
