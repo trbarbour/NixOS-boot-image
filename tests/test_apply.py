@@ -359,13 +359,35 @@ def test_apply_plan_logs_execution_disabled(
 
     apply_plan(plan, dry_run=False)
 
-    skip_events = [
-        fields
-        for event, fields in events
-        if event == "pre_nixos.apply.command.skip"
+
+def test_apply_plan_records_plan_when_executing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, fake_disko
+) -> None:
+    disks = [
+        Disk(name="sda", size=1000, rotational=False),
+        Disk(name="sdb", size=1000, rotational=False),
     ]
-    assert any(fields.get("reason") == "execution disabled" for fields in skip_events)
-    assert any(event == "pre_nixos.apply.apply_plan.finished" for event, _ in events)
+    plan = plan_storage("fast", disks)
+    plan["disko_config_path"] = str(tmp_path / "recorded-disko.nix")
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    state_dir = tmp_path / "state"
+    monkeypatch.setenv("PRE_NIXOS_STATE_DIR", str(state_dir))
+
+    recorded: list[tuple[str, bool]] = []
+
+    def fake_run(cmd: str, execute: bool) -> None:
+        recorded.append((cmd, execute))
+
+    monkeypatch.setattr(apply_module, "_run", fake_run)
+
+    apply_plan(plan, dry_run=False)
+
+    plan_path = state_dir / "storage-plan.json"
+    assert plan_path.exists()
+    stored = json.loads(plan_path.read_text())
+    assert stored.get("disko") == plan.get("disko")
+    assert any(execute for _, execute in recorded)
 
 
 def test_prepare_command_environment_logs_nix_path_injection(

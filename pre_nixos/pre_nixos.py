@@ -147,6 +147,14 @@ def main(argv: list[str] | None = None) -> None:
             "a root SSH key is available (defaults to enabled)."
         ),
     )
+    parser.add_argument(
+        "--install-now",
+        action="store_true",
+        help=(
+            "Immediately run nixos-install using the last applied storage plan. "
+            "Cannot be combined with planning options."
+        ),
+    )
     args = parser.parse_args(argv)
 
     console = _maybe_open_console()
@@ -160,6 +168,31 @@ def main(argv: list[str] | None = None) -> None:
         auto_install_enabled = args.auto_install
         if auto_install_enabled is None:
             auto_install_enabled = lan_config is not None
+
+        if args.install_now:
+            if args.plan_only or args.partition_boot or args.partition_lvm:
+                parser.error("--install-now cannot be combined with planning options")
+            if args.output != "plan":
+                parser.error("--install-now cannot be combined with --output")
+            if lan_config is None:
+                print("Unable to configure networking; aborting installation.")
+                sys.exit(1)
+
+            result = install.auto_install(
+                lan_config,
+                None,
+                enabled=True,
+                dry_run=args.dry_run,
+            )
+            if result.status == "failed":
+                reason = result.reason or "unknown error"
+                print(f"Install failed: {reason}", file=sys.stderr)
+                sys.exit(1)
+            if result.status == "success":
+                print("Install completed successfully.")
+            elif result.reason:
+                print(f"Install skipped: {result.reason}.")
+            return
 
         if args.partition_boot:
             partition.create_partitions(args.partition_boot, dry_run=args.dry_run)

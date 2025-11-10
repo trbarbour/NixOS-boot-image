@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Tuple
 
+from . import state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -156,93 +157,6 @@ def _escape_nix_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def _extract_label(extra_args: Iterable[str]) -> Optional[str]:
-    """Return the filesystem/swap label from ``extra_args`` when present."""
-
-    args = list(extra_args)
-    for index, token in enumerate(args):
-        if token in {"-L", "--label", "-n"} and index + 1 < len(args):
-            label = args[index + 1]
-            if label:
-                return label
-    return None
-
-
-def _collect_storage_definitions(
-    storage_plan: Optional[Dict[str, Any]],
-) -> Tuple[list[Dict[str, Any]], list[str]]:
-    """Return filesystem and swap definitions extracted from ``storage_plan``."""
-
-    if not storage_plan:
-        return [], []
-
-    devices = storage_plan.get("disko") if isinstance(storage_plan, dict) else None
-    if not isinstance(devices, dict):
-        return [], []
-
-    filesystems: list[Dict[str, Any]] = []
-    swaps: list[str] = []
-
-    def handle_content(content: Any) -> None:
-        if not isinstance(content, dict):
-            return
-        ctype = content.get("type")
-        if ctype == "filesystem":
-            mountpoint = content.get("mountpoint")
-            if not isinstance(mountpoint, str) or not mountpoint:
-                return
-            extra_args = content.get("extraArgs") or []
-            label = _extract_label(extra_args)
-            if not label:
-                return
-            fs_type = content.get("format")
-            if not isinstance(fs_type, str) or not fs_type:
-                return
-            options = content.get("mountOptions") or []
-            if not isinstance(options, list):
-                options = []
-            filesystems.append(
-                {
-                    "mountpoint": mountpoint,
-                    "label": label,
-                    "fsType": fs_type,
-                    "options": [opt for opt in options if isinstance(opt, str) and opt],
-                }
-            )
-        elif ctype == "swap":
-            extra_args = content.get("extraArgs") or []
-            label = _extract_label(extra_args)
-            if label:
-                swaps.append(label)
-
-    for disk in devices.get("disk", {}).values():
-        partitions = (
-            disk.get("content", {}).get("partitions", {})
-            if isinstance(disk, dict)
-            else {}
-        )
-        for part in partitions.values():
-            content = part.get("content") if isinstance(part, dict) else None
-            handle_content(content)
-
-    for vg in devices.get("lvm_vg", {}).values():
-        lvs = vg.get("lvs", {}) if isinstance(vg, dict) else {}
-        for lv in lvs.values():
-            content = lv.get("content") if isinstance(lv, dict) else None
-            handle_content(content)
-
-    filesystems.sort(key=lambda entry: entry["mountpoint"])
-    swaps.sort()
-    return filesystems, swaps
-
-
-def _format_nix_list(items: Iterable[str]) -> str:
-    quoted = [f'"{_escape_nix_string(item)}"' for item in items]
-    if not quoted:
-        return "[ ]"
-    return "[ " + " ".join(quoted) + " ]"
-
-
 def _inject_configuration(
     root_path: Path,
     key_text: str,
@@ -274,8 +188,6 @@ def _inject_configuration(
         if skipping:
             continue
         filtered.append(line)
-
-    filesystems, swaps = _collect_storage_definitions(storage_plan)
 
     block_lines = [
         "  # pre-nixos auto-install start",
@@ -316,41 +228,15 @@ def _inject_configuration(
         ]
     )
 
-    if filesystems:
-        block_lines.append("  fileSystems = {")
-        for entry in filesystems:
-            mountpoint = entry["mountpoint"]
-            device = f"/dev/disk/by-label/{entry['label']}"
-            block_lines.append(f'    "{_escape_nix_string(mountpoint)}" = {{')
-            block_lines.append(
-                f'      device = "{_escape_nix_string(device)}";'
-            )
-            block_lines.append(
-                f'      fsType = "{_escape_nix_string(entry["fsType"])}";'
-            )
-            options = entry["options"]
-            if options:
-                block_lines.append(
-                    f"      options = {_format_nix_list(options)};"
-                )
-            block_lines.append("    };")
-        block_lines.append("  };")
-        block_lines.append("")
-
-    block_lines.append("  swapDevices = [")
-    if swaps:
-        for label in swaps:
-            device = f"/dev/disk/by-label/{label}"
-            block_lines.append("    {")
-            block_lines.append(
-                f'      device = "{_escape_nix_string(device)}";'
-            )
-            block_lines.append("    }")
-    block_lines.append("  ];")
-    block_lines.append("")
-
     block_lines.extend(
         [
+            '  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];',
+            "  boot.loader.grub.extraConfig = ''",
+            "    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+            "    terminal_input serial console",
+            "    terminal_output serial console",
+            "  '';",
+            "",
             '  nix.settings.experimental-features = [ "nix-command" "flakes" ];',
             "  # pre-nixos auto-install end",
         ]
@@ -384,32 +270,9 @@ def _rewrite_hardware_configuration(root_path: Path) -> None:
     except FileNotFoundError:
         return
 
-    lines = existing.splitlines()
-    filtered: list[str] = []
-    skipping = False
-    depth = 0
-
-    def depth_delta(line: str) -> int:
-        return line.count("{") + line.count("[") - line.count("}") - line.count("]")
-
-    for line in lines:
-        stripped = line.strip()
-        if "networking.useDHCP" in stripped:
-            continue
-        if not skipping and (
-            stripped.startswith("fileSystems.") or stripped.startswith("swapDevices")
-        ):
-            skipping = True
-            depth = depth_delta(line)
-            if ";" in line and depth <= 0:
-                skipping = False
-            continue
-        if skipping:
-            depth += depth_delta(line)
-            if ";" in line and depth <= 0:
-                skipping = False
-            continue
-        filtered.append(line)
+    filtered = [
+        line for line in existing.splitlines() if "networking.useDHCP" not in line
+    ]
 
     text = "\n".join(filtered)
     if filtered:
@@ -554,6 +417,15 @@ def auto_install(
             status_dir=status_dir,
             reason="missing-network-configuration",
         )
+
+    if storage_plan is None:
+        storage_plan = state.load_storage_plan(state_dir=status_dir)
+        if storage_plan is None:
+            return _record_result(
+                "failed",
+                status_dir=status_dir,
+                reason="missing-storage-plan",
+            )
 
     execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
     if dry_run:

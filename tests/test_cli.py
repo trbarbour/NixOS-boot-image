@@ -45,6 +45,31 @@ def test_cli_plan_only(monkeypatch, capsys, tmp_path):
     assert net_called == [True]
 
 
+def test_cli_install_now(monkeypatch, capsys, tmp_path):
+    sample_lan = pre_nixos.network.LanConfiguration(
+        authorized_key=tmp_path / "key.pub",
+        interface="lan",
+        rename_rule=None,
+        network_unit=None,
+    )
+
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: sample_lan)
+
+    calls: list[tuple] = []
+
+    def fake_auto_install(lan_config, plan, *, enabled, dry_run):
+        calls.append((lan_config, plan, enabled, dry_run))
+        return AutoInstallResult(status="success")
+
+    monkeypatch.setattr(pre_nixos.install, "auto_install", fake_auto_install)
+
+    pre_nixos.main(["--install-now"])
+
+    assert calls == [(sample_lan, None, True, False)]
+    out = capsys.readouterr().out
+    assert "Install completed successfully." in out
+
+
 def test_cli_plan_only_disko_output(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(
         pre_nixos.inventory,

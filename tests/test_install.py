@@ -189,19 +189,17 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert "networking.firewall" in content
     assert "networking.useDHCP = false;" in content
     assert 'matchConfig.MACAddress = "00:11:22:33:44:55";' in content
-    assert "fileSystems =" in content
-    assert '"/" = {' in content
-    assert 'device = "/dev/disk/by-label/slash";' in content
-    assert 'fsType = "ext4";' in content
-    assert 'options = [ "relatime" ];' in content
-    assert '"/boot" = {' in content
-    assert 'device = "/dev/disk/by-label/EFI";' in content
-    assert 'options = [ "umask=0077" ];' in content
-    assert "swapDevices = [" in content
-    assert 'device = "/dev/disk/by-label/swap";' in content
+    assert 'boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];' in content
+    assert "boot.loader.grub.extraConfig = ''" in content
+    assert "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1" in content
     assert "experimental-features = [ \"nix-command\" \"flakes\" ]" in content
     authorized_line = '"ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local"'
     assert authorized_line in content
+
+    hardware_text = (root / "etc/nixos/hardware-configuration.nix").read_text()
+    assert 'fileSystems."/' in hardware_text
+    assert "swapDevices =" in hardware_text
+    assert "networking.useDHCP" not in hardware_text
 
     network_dir = root / "etc/systemd/network"
     assert (network_dir / "10-lan.link").read_text() == lan.rename_rule.read_text()
@@ -225,6 +223,28 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert "REBOOT=requested" in status_text
     assert "CONSOLE_WRITTEN=true" in status_text
     assert f"ISSUE_PATH={root}/etc/issue" in status_text
+
+
+def test_auto_install_missing_plan_fails(tmp_path, monkeypatch, broadcast_messages):
+    root = tmp_path / "mnt"
+    (root / "etc").mkdir(parents=True)
+    lan = _make_lan(tmp_path)
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+    result = install.auto_install(
+        lan,
+        None,
+        root_path=root,
+        status_dir=tmp_path / "status",
+    )
+
+    assert result.status == "failed"
+    assert result.reason == "missing-storage-plan"
+    status_text = (tmp_path / "status" / "auto-install-status").read_text()
+    assert "STATE=failed" in status_text
+    assert "REASON=missing-storage-plan" in status_text
+    assert broadcast_messages == []
 
 
 def test_auto_install_failure_returns_failed(tmp_path, monkeypatch, broadcast_messages):

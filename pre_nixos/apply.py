@@ -12,6 +12,7 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+from . import state
 from .logging_utils import log_event
 
 DISKO_CONFIG_PATH = Path("/var/log/pre-nixos/disko-config.nix")
@@ -125,6 +126,20 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
             command=follow_up,
         )
         _run(follow_up, execute)
+
+    if execute:
+        try:
+            plan_path = state.record_storage_plan(plan)
+        except OSError as exc:
+            log_event(
+                "pre_nixos.apply.storage_plan_record_failed",
+                error=str(exc),
+            )
+        else:
+            log_event(
+                "pre_nixos.apply.storage_plan_recorded",
+                path=str(plan_path),
+            )
 
     log_event(
         "pre_nixos.apply.apply_plan.finished",

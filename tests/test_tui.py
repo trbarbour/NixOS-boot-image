@@ -222,6 +222,15 @@ def test_auto_install_header_updates(monkeypatch, sample_plan, sample_disks):
     assert "Auto-install: On (success)" in win.lines[0]
 
 
+def test_draw_plan_footer_mentions_manual_install(monkeypatch, sample_plan, sample_disks):
+    state = tui._initial_state(sample_plan, sample_disks, None)
+    win = FakeWindow(height=10, width=120)
+    monkeypatch.setattr(tui.network, "get_lan_status", lambda: "ready")
+    tui._draw_plan(win, state)
+    footer = win.lines[win.height - 1]
+    assert "[N]Install" in footer
+
+
 def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan, sample_disks):
     state = tui._initial_state(sample_plan, sample_disks, None)
     lan_config = LanConfiguration(
@@ -256,6 +265,33 @@ def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan,
     assert state.last_auto_install is not None
     assert state.last_auto_install.status == "success"
     assert "Auto-install completed." in win.lines[1]
+
+
+def test_handle_manual_install_runs_auto_install(monkeypatch, tmp_path, sample_plan, sample_disks):
+    state = tui._initial_state(sample_plan, sample_disks, None)
+    lan_config = LanConfiguration(
+        authorized_key=tmp_path / "key.pub",
+        interface="lan",
+        rename_rule=None,
+        network_unit=None,
+    )
+    state.lan_config = lan_config
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+    auto_calls: list[tuple] = []
+
+    def fake_auto(lan_config, plan, *, enabled, dry_run):
+        auto_calls.append((lan_config, plan, enabled, dry_run))
+        return AutoInstallResult(status="success")
+
+    monkeypatch.setattr(tui.install, "auto_install", fake_auto)
+
+    win = FakeWindow(height=2, width=120)
+    assert tui._handle_manual_install(win, state) is True
+    assert auto_calls == [(lan_config, None, True, False)]
+    assert state.last_auto_install is not None
+    assert state.last_auto_install.status == "success"
+    assert "Install completed." in win.lines[0]
 
 
 def test_save_and_load_plan(tmp_path, monkeypatch):
