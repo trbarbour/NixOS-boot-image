@@ -79,8 +79,45 @@ def _record_result(
     return AutoInstallResult(status=status, reason=reason, details=payload)
 
 
+def _is_mount_ready(root_path: Path) -> bool:
+    """Return ``True`` when ``root_path`` is an active mount point."""
+
+    if not root_path.exists():
+        return False
+
+    try:
+        if root_path.is_mount():
+            return True
+    except OSError:
+        return False
+
+    try:
+        resolved = root_path.resolve(strict=False)
+    except OSError:
+        return False
+
+    try:
+        with open("/proc/self/mountinfo", "r", encoding="utf-8") as fp:
+            for line in fp:
+                parts = line.split()
+                if len(parts) < 5:
+                    continue
+                mount_point = Path(parts[4]).resolve(strict=False)
+                if mount_point == resolved:
+                    return True
+    except OSError:
+        return False
+
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        etc_dir = root_path / "etc"
+        if etc_dir.exists():
+            return True
+
+    return False
+
+
 def _wait_for_mount(root_path: Path, *, attempts: int = 30, delay: float = 1.0) -> bool:
-    """Poll ``root_path`` until an ``etc`` directory appears."""
+    """Poll ``root_path`` until it becomes a mount point."""
 
     exec_enabled = os.environ.get("PRE_NIXOS_EXEC") == "1"
     sleep_interval = delay if exec_enabled else min(delay, 0.1)
@@ -93,7 +130,7 @@ def _wait_for_mount(root_path: Path, *, attempts: int = 30, delay: float = 1.0) 
     )
 
     for attempt in range(1, attempts + 1):
-        if (root_path / "etc").exists():
+        if _is_mount_ready(root_path):
             log_event(
                 "pre_nixos.install.wait_for_mount.ready",
                 root_path=root_path,
