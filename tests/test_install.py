@@ -22,11 +22,77 @@ def broadcast_messages(monkeypatch) -> list[str]:
     return messages
 
 
+def _sample_storage_plan() -> dict:
+    return {
+        "disko": {
+            "disk": {
+                "sda": {
+                    "type": "disk",
+                    "device": "/dev/sda",
+                    "content": {
+                        "type": "gpt",
+                        "partitions": {
+                            "sda1": {
+                                "size": "1G",
+                                "type": "EF00",
+                                "content": {
+                                    "type": "filesystem",
+                                    "format": "vfat",
+                                    "mountpoint": "/boot",
+                                    "mountOptions": ["umask=0077"],
+                                    "extraArgs": ["-n", "EFI"],
+                                },
+                            },
+                            "sda2": {
+                                "size": "100%",
+                                "content": {
+                                    "type": "lvm_pv",
+                                    "vg": "main",
+                                },
+                            },
+                        },
+                    },
+                }
+            },
+            "lvm_vg": {
+                "main": {
+                    "type": "lvm_vg",
+                    "lvs": {
+                        "slash": {
+                            "size": "50G",
+                            "content": {
+                                "type": "filesystem",
+                                "format": "ext4",
+                                "mountpoint": "/",
+                                "mountOptions": ["relatime"],
+                                "extraArgs": ["-L", "slash"],
+                            },
+                        },
+                        "swap": {
+                            "size": "16G",
+                            "content": {
+                                "type": "swap",
+                                "extraArgs": ["--label", "swap"],
+                            },
+                        },
+                    },
+                }
+            },
+        }
+    }
+
+
 def _make_lan(tmp_path: Path) -> LanConfiguration:
     key_path = tmp_path / "key.pub"
     key_path.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
     rename_rule = tmp_path / "10-lan.link"
-    rename_rule.write_text("[Match]\nOriginalName=eth0\n[Link]\nName=lan\n")
+    rename_rule.write_text(
+        "[Match]\n"
+        "OriginalName=eth0\n"
+        "MACAddress=00:11:22:33:44:55\n\n"
+        "[Link]\n"
+        "Name=lan\n"
+    )
     network_unit = tmp_path / "20-lan.network"
     network_unit.write_text("[Match]\nName=lan\n[Network]\nDHCP=yes\n")
     return LanConfiguration(
@@ -34,6 +100,7 @@ def _make_lan(tmp_path: Path) -> LanConfiguration:
         interface="lan",
         rename_rule=rename_rule,
         network_unit=network_unit,
+        mac_address="00:11:22:33:44:55",
     )
 
 
@@ -42,6 +109,7 @@ def test_auto_install_skips_when_disabled(tmp_path, monkeypatch, broadcast_messa
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     result = install.auto_install(
         lan,
+        _sample_storage_plan(),
         enabled=False,
         root_path=tmp_path / "mnt",
         status_dir=tmp_path / "status",
@@ -81,6 +149,14 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
             config_dir = root / "etc/nixos"
             config_dir.mkdir(parents=True, exist_ok=True)
             (config_dir / "configuration.nix").write_text("{\n}\n", encoding="utf-8")
+            (config_dir / "hardware-configuration.nix").write_text(
+                "{\n"
+                "  fileSystems.\"/\" = { device = \"/dev/disk/by-uuid/OLD\"; };\n"
+                "  swapDevices = [ { device = \"/dev/disk/by-uuid/OLD-SWAP\"; } ];\n"
+                "  networking.useDHCP = lib.mkDefault true;\n"
+                "}\n",
+                encoding="utf-8",
+            )
         return Result()
 
     monkeypatch.setattr(install.subprocess, "run", fake_run)
@@ -95,7 +171,12 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
 
     monkeypatch.setattr(install, "_request_reboot", fake_reboot)
 
-    result = install.auto_install(lan, root_path=root, status_dir=tmp_path / "status")
+    result = install.auto_install(
+        lan,
+        _sample_storage_plan(),
+        root_path=root,
+        status_dir=tmp_path / "status",
+    )
     assert result.status == "success"
     assert commands == [
         ["nixos-generate-config", "--root", str(root)],
@@ -106,7 +187,18 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     config_path = root / "etc/nixos/configuration.nix"
     content = config_path.read_text()
     assert "networking.firewall" in content
-    assert 'PermitRootLogin = "prohibit-password"' in content
+    assert "networking.useDHCP = false;" in content
+    assert 'matchConfig.MACAddress = "00:11:22:33:44:55";' in content
+    assert "fileSystems =" in content
+    assert '"/" = {' in content
+    assert 'device = "/dev/disk/by-label/slash";' in content
+    assert 'fsType = "ext4";' in content
+    assert 'options = [ "relatime" ];' in content
+    assert '"/boot" = {' in content
+    assert 'device = "/dev/disk/by-label/EFI";' in content
+    assert 'options = [ "umask=0077" ];' in content
+    assert "swapDevices = [" in content
+    assert 'device = "/dev/disk/by-label/swap";' in content
     assert "experimental-features = [ \"nix-command\" \"flakes\" ]" in content
     authorized_line = '"ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local"'
     assert authorized_line in content
@@ -161,7 +253,12 @@ def test_auto_install_failure_returns_failed(tmp_path, monkeypatch, broadcast_me
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     monkeypatch.setattr(install, "datetime", FakeDateTime)
 
-    result = install.auto_install(lan, root_path=root, status_dir=tmp_path / "status")
+    result = install.auto_install(
+        lan,
+        _sample_storage_plan(),
+        root_path=root,
+        status_dir=tmp_path / "status",
+    )
     assert result.status == "failed"
     assert result.reason == "nixos-install"
     status_text = (tmp_path / "status" / "auto-install-status").read_text()
@@ -186,6 +283,7 @@ def test_auto_install_dry_run_skips(monkeypatch, tmp_path, broadcast_messages):
     monkeypatch.setattr(install.subprocess, "run", fail_run)
     result = install.auto_install(
         lan,
+        _sample_storage_plan(),
         dry_run=True,
         root_path=tmp_path / "mnt",
         status_dir=tmp_path / "status",

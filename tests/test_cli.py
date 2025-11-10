@@ -109,15 +109,20 @@ def test_cli_apply_called(monkeypatch, tmp_path, capsys):
         lambda: net_called.append(True) or sample_lan,
     )
 
-    def fake_auto_install(lan_config, *, enabled, dry_run):
-        install_calls.append((lan_config, enabled, dry_run))
+    def fake_auto_install(lan_config, plan, *, enabled, dry_run):
+        install_calls.append((lan_config, plan, enabled, dry_run))
         return AutoInstallResult(status="skipped", reason="execution-disabled")
 
     monkeypatch.setattr(pre_nixos.install, "auto_install", fake_auto_install)
     pre_nixos.main([])
     assert called == [False]
     assert net_called == [True]
-    assert install_calls == [(sample_lan, True, False)]
+    assert len(install_calls) == 1
+    recorded_lan, recorded_plan, recorded_enabled, recorded_dry_run = install_calls[0]
+    assert recorded_lan == sample_lan
+    assert isinstance(recorded_plan, dict)
+    assert recorded_enabled is True
+    assert recorded_dry_run is False
     out = capsys.readouterr()
     assert "Auto-install skipped: execution-disabled." in out.out
 
@@ -247,7 +252,7 @@ def test_cli_no_auto_install_flag(monkeypatch, tmp_path):
     monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: sample_lan)
     auto_flags: list[bool] = []
 
-    def fake_auto_install(lan_config, *, enabled, dry_run):
+    def fake_auto_install(lan_config, plan, *, enabled, dry_run):
         auto_flags.append(enabled)
         return AutoInstallResult(status="skipped", reason="disabled")
 
