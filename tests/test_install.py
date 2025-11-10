@@ -1,11 +1,24 @@
 """Tests for the automated installation helper."""
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
 from pre_nixos import install
 from pre_nixos.network import LanConfiguration
+
+
+@pytest.fixture
+def broadcast_messages(monkeypatch) -> list[str]:
+    messages: list[str] = []
+
+    def fake_broadcast(message: str, **_: object) -> dict[Path, bool]:
+        messages.append(message)
+        return {Path("/dev/console"): True}
+
+    monkeypatch.setattr(install, "broadcast_line", fake_broadcast)
+    return messages
 
 
 def _make_lan(tmp_path: Path) -> LanConfiguration:
@@ -23,7 +36,7 @@ def _make_lan(tmp_path: Path) -> LanConfiguration:
     )
 
 
-def test_auto_install_skips_when_disabled(tmp_path, monkeypatch):
+def test_auto_install_skips_when_disabled(tmp_path, monkeypatch, broadcast_messages):
     lan = _make_lan(tmp_path)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     result = install.auto_install(
@@ -36,14 +49,26 @@ def test_auto_install_skips_when_disabled(tmp_path, monkeypatch):
     assert result.reason == "disabled"
     status_file = (tmp_path / "status" / "auto-install-status")
     assert status_file.read_text() == "STATE=skipped\nREASON=disabled\n"
+    assert broadcast_messages == []
 
 
-def test_auto_install_success_writes_configuration(tmp_path, monkeypatch):
+def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadcast_messages):
     root = tmp_path / "mnt"
     (root / "etc").mkdir(parents=True)
     lan = _make_lan(tmp_path)
 
     commands: list[list[str]] = []
+
+    start_time = datetime(2025, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    completion_time = datetime(2025, 1, 2, 3, 14, 5, tzinfo=timezone.utc)
+
+    class FakeDateTime:
+        calls = 0
+
+        @classmethod
+        def now(cls, tz=None):
+            cls.calls += 1
+            return start_time if cls.calls == 1 else completion_time
 
     def fake_run(cmd, check=False):
         commands.append(cmd)
@@ -59,6 +84,15 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch):
 
     monkeypatch.setattr(install.subprocess, "run", fake_run)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(install, "datetime", FakeDateTime)
+
+    reboot_called: list[bool] = []
+
+    def fake_reboot() -> bool:
+        reboot_called.append(True)
+        return True
+
+    monkeypatch.setattr(install, "_request_reboot", fake_reboot)
 
     result = install.auto_install(lan, root_path=root, status_dir=tmp_path / "status")
     assert result.status == "success"
@@ -66,6 +100,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch):
         ["nixos-generate-config", "--root", str(root)],
         ["nixos-install", "--root", str(root), "--no-root-passwd"],
     ]
+    assert reboot_called == [True]
 
     config_path = root / "etc/nixos/configuration.nix"
     content = config_path.read_text()
@@ -79,14 +114,37 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch):
     assert (network_dir / "10-lan.link").read_text() == lan.rename_rule.read_text()
     assert (network_dir / "20-lan.network").read_text() == lan.network_unit.read_text()
 
+    start_stamp = start_time.strftime("%Y-%m-%d %H:%M:%SZ")
+    completion_stamp = completion_time.strftime("%Y-%m-%d %H:%M:%SZ")
+    assert broadcast_messages == [
+        f"Starting automatic NixOS installation at {start_stamp} UTC.",
+        f"Automatic NixOS installation completed at {completion_stamp} UTC.",
+    ]
+
+    issue_text = (root / "etc/issue").read_text()
+    assert "Automatic NixOS installation completed by pre-nixos." in issue_text
+    assert f"Installation timestamp (UTC): {completion_stamp}" in issue_text
+
     status_file = (tmp_path / "status" / "auto-install-status")
-    assert "STATE=success" in status_file.read_text()
+    status_text = status_file.read_text()
+    assert "STATE=success" in status_text
+    assert f"COMPLETED_AT={completion_stamp}" in status_text
+    assert "REBOOT=requested" in status_text
+    assert "CONSOLE_WRITTEN=true" in status_text
+    assert f"ISSUE_PATH={root}/etc/issue" in status_text
 
 
-def test_auto_install_failure_returns_failed(tmp_path, monkeypatch):
+def test_auto_install_failure_returns_failed(tmp_path, monkeypatch, broadcast_messages):
     root = tmp_path / "mnt"
     (root / "etc").mkdir(parents=True)
     lan = _make_lan(tmp_path)
+
+    start_time = datetime(2025, 2, 3, 4, 5, 6, tzinfo=timezone.utc)
+
+    class FakeDateTime:
+        @classmethod
+        def now(cls, tz=None):
+            return start_time
 
     def fake_run(cmd, check=False):
         class Result:
@@ -100,6 +158,7 @@ def test_auto_install_failure_returns_failed(tmp_path, monkeypatch):
 
     monkeypatch.setattr(install.subprocess, "run", fake_run)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(install, "datetime", FakeDateTime)
 
     result = install.auto_install(lan, root_path=root, status_dir=tmp_path / "status")
     assert result.status == "failed"
@@ -107,9 +166,13 @@ def test_auto_install_failure_returns_failed(tmp_path, monkeypatch):
     status_text = (tmp_path / "status" / "auto-install-status").read_text()
     assert "STATE=failed" in status_text
     assert "REASON=nixos-install" in status_text
+    start_stamp = start_time.strftime("%Y-%m-%d %H:%M:%SZ")
+    assert broadcast_messages == [
+        f"Starting automatic NixOS installation at {start_stamp} UTC.",
+    ]
 
 
-def test_auto_install_dry_run_skips(monkeypatch, tmp_path):
+def test_auto_install_dry_run_skips(monkeypatch, tmp_path, broadcast_messages):
     lan = _make_lan(tmp_path)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
 
@@ -131,3 +194,4 @@ def test_auto_install_dry_run_skips(monkeypatch, tmp_path):
     assert called == []
     status_text = (tmp_path / "status" / "auto-install-status").read_text()
     assert status_text.startswith("STATE=skipped\nREASON=dry-run")
+    assert broadcast_messages == []
