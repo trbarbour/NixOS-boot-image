@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from .console import broadcast_line
+from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
 
@@ -259,11 +259,8 @@ def _format_timestamp(moment: datetime) -> str:
 def _broadcast_install_message(message: str) -> Tuple[bool, Dict[str, bool]] | None:
     """Send ``message`` to all consoles and report success."""
 
-    if os.environ.get("PRE_NIXOS_EXEC") != "1":
-        return None
-
     try:
-        results = broadcast_line(message)
+        success, targets, results = broadcast_to_consoles(message)
     except Exception as error:  # pragma: no cover - unexpected device error
         log_event(
             "pre_nixos.install.console_broadcast_failed",
@@ -272,11 +269,14 @@ def _broadcast_install_message(message: str) -> Tuple[bool, Dict[str, bool]] | N
         )
         return None
 
-    success = any(results.values())
+    if not targets and not results:
+        return None
+
     payload = {str(path): value for path, value in results.items()}
     log_event(
         "pre_nixos.install.console_broadcast",
         message=message,
+        console_paths=[str(path) for path in targets],
         console_results=payload,
         console_written=success,
     )

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Tuple
 
 _DEFAULT_ACTIVE_PATH = Path("/sys/class/tty/console/active")
 _DEFAULT_FALLBACK = Path("/dev/console")
@@ -90,6 +91,48 @@ def broadcast_line(
             results[device] = False
 
     return results
+
+
+def broadcast_to_consoles(
+    message: str,
+    *,
+    active_path: Path = _DEFAULT_ACTIVE_PATH,
+    console_paths: Sequence[Path] | None = None,
+    execute: bool | None = None,
+) -> Tuple[bool, list[Path], dict[Path, bool]]:
+    """Broadcast ``message`` when execution is enabled.
+
+    Args:
+        message: Text to announce on each console.
+        active_path: Location of the kernel console list.
+        console_paths: Optional explicit console targets.
+        execute: Override for the ``PRE_NIXOS_EXEC`` environment flag.  When
+            ``None`` the environment variable is consulted.
+
+    Returns:
+        Tuple containing:
+
+        * ``bool`` indicating if any console write succeeded.
+        * ``list`` of console device paths that were targeted.
+        * ``dict`` mapping targeted console paths to their success results.
+
+        When execution is disabled, ``False`` and empty collections are
+        returned without performing any broadcast.
+    """
+
+    if execute is None:
+        execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
+
+    if not execute:
+        return False, [], {}
+
+    results = broadcast_line(
+        message,
+        active_path=active_path,
+        console_paths=console_paths,
+    )
+    targets = list(results.keys())
+    return any(results.values()), targets, results
 
 
 def _broadcast_cli(args: argparse.Namespace) -> int:

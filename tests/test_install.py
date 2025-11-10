@@ -13,11 +13,12 @@ from pre_nixos.network import LanConfiguration
 def broadcast_messages(monkeypatch) -> list[str]:
     messages: list[str] = []
 
-    def fake_broadcast(message: str, **_: object) -> dict[Path, bool]:
+    def fake_broadcast(message: str, **_: object):
         messages.append(message)
-        return {Path("/dev/console"): True}
+        path = Path("/dev/console")
+        return True, [path], {path: True}
 
-    monkeypatch.setattr(install, "broadcast_line", fake_broadcast)
+    monkeypatch.setattr(install, "broadcast_to_consoles", fake_broadcast)
     return messages
 
 

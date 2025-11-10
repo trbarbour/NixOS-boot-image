@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
 
-from .console import broadcast_line, get_console_paths
+from .console import broadcast_to_consoles
 from .logging_utils import log_event
 
 
@@ -550,14 +550,15 @@ def configure_lan(
         console_targets: Sequence[Path] = ()
         console_results: dict[str, bool] = {}
         console_written = False
-        if os.environ.get("PRE_NIXOS_EXEC") == "1":
-            if console_paths is None:
-                console_targets = get_console_paths()
-            else:
-                console_targets = console_paths
-            results = broadcast_line(announcement, console_paths=console_targets)
-            console_written = any(results.values())
+        success, targets, results = broadcast_to_consoles(
+            announcement,
+            console_paths=console_paths,
+        )
+        if targets:
+            console_targets = targets
+        if results:
             console_results = {str(path): success for path, success in results.items()}
+        console_written = success
         try:
             status_path = _write_network_status(ip_address, status_dir)
         except OSError as error:
