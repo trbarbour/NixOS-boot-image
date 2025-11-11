@@ -189,6 +189,8 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert "networking.firewall" in content
     assert "networking.useDHCP = false;" in content
     assert "networking.useNetworkd = true;" in content
+    assert "networking.interfaces.lan = {" in content
+    assert "useDHCP = true;" in content
     assert 'matchConfig.MACAddress = "00:11:22:33:44:55";' in content
     assert 'systemd.network.links."lan"' in content
     assert 'systemd.services."pre-nixos-auto-install-ip"' in content
