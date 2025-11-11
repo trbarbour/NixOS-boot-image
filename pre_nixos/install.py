@@ -220,16 +220,16 @@ def _collect_storage_definitions(
             locator = select_locator(context, label)
             if not locator:
                 return
-            filesystems.append(
-                {
-                    "mountpoint": mountpoint,
-                    "fsType": fs_type,
-                    "options": [
-                        opt for opt in options if isinstance(opt, str) and opt
-                    ],
-                    **locator,
-                }
-            )
+            entry = {
+                "mountpoint": mountpoint,
+                "fsType": fs_type,
+                "options": [opt for opt in options if isinstance(opt, str) and opt],
+                **locator,
+            }
+            permissions = content.get("mountpointPermissions")
+            if isinstance(permissions, int):
+                entry["mountpointPermissions"] = permissions
+            filesystems.append(entry)
         elif ctype == "swap":
             extra_args = content.get("extraArgs") or []
             label = _extract_label(extra_args)
@@ -418,6 +418,7 @@ def _inject_configuration(
         ]
     )
 
+    tmpfiles_rules: list[str] = []
     if filesystems:
         block_lines.append("  fileSystems = {")
         for entry in filesystems:
@@ -441,8 +442,19 @@ def _inject_configuration(
                 )
             if mountpoint in {"/", "/boot"}:
                 block_lines.append("      neededForBoot = true;")
+            permissions = entry.get("mountpointPermissions")
+            if isinstance(permissions, int) and mountpoint != "/":
+                mode = format(permissions & 0o777, "03o")
+                tmpfiles_rules.append(f"d {mountpoint} {mode} root root -")
             block_lines.append("    };")
         block_lines.append("  };")
+        block_lines.append("")
+
+    if tmpfiles_rules:
+        block_lines.append("  systemd.tmpfiles.rules = [")
+        for rule in tmpfiles_rules:
+            block_lines.append(f'    "{_escape_nix_string(rule)}";')
+        block_lines.append("  ];")
         block_lines.append("")
 
     block_lines.append("  swapDevices = [")

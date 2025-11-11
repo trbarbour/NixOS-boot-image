@@ -7,10 +7,11 @@ exposes the existing editing and apply workflows.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import contextlib
 import curses
 import json
 import os
-from typing import Any, Iterable, Optional, Sequence, Tuple
+from typing import Any, Iterable, Iterator, Optional, Sequence, Tuple
 
 from . import (
     apply,
@@ -24,6 +25,25 @@ from . import (
 
 
 FocusKey = Tuple[str, str, Optional[str]]
+
+
+@contextlib.contextmanager
+def _suspend_curses(stdscr: curses.window) -> Iterator[None]:
+    """Temporarily relinquish control of the terminal from curses."""
+
+    restorable = True
+    try:
+        curses.def_prog_mode()
+        curses.endwin()
+    except curses.error:
+        restorable = False
+    try:
+        yield
+    finally:
+        if restorable:
+            curses.reset_prog_mode()
+            stdscr.touchwin()
+            stdscr.refresh()
 
 
 @dataclass
@@ -945,11 +965,12 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
         if action != storage_cleanup.SKIP_CLEANUP:
             targets = [entry.device for entry in devices]
             try:
-                storage_cleanup.perform_storage_cleanup(
-                    action,
-                    targets,
-                    execute=execute,
-                )
+                with _suspend_curses(stdscr):
+                    storage_cleanup.perform_storage_cleanup(
+                        action,
+                        targets,
+                        execute=execute,
+                    )
             except Exception as exc:  # pragma: no cover - subprocess failure is rare
                 _show_modal(stdscr, [f"Failed to wipe storage: {exc}"])
                 return False
@@ -959,7 +980,8 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     stdscr.refresh()
     auto_message_row = 1
     try:
-        apply.apply_plan(state.plan)
+        with _suspend_curses(stdscr):
+            apply.apply_plan(state.plan)
     except Exception as exc:  # pragma: no cover - subprocess failure is rare
         _show_modal(stdscr, [f"Failed to apply plan: {exc}"])
         return False
@@ -969,12 +991,13 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
         stdscr.refresh()
 
     try:
-        auto_result = install.auto_install(
-            state.lan_config,
-            state.plan,
-            enabled=state.auto_install_enabled,
-            dry_run=not execute,
-        )
+        with _suspend_curses(stdscr):
+            auto_result = install.auto_install(
+                state.lan_config,
+                state.plan,
+                enabled=state.auto_install_enabled,
+                dry_run=not execute,
+            )
     except Exception as exc:  # pragma: no cover - unexpected errors
         state.last_auto_install = install.AutoInstallResult(status="failed", reason=str(exc))
         _show_modal(stdscr, [f"Auto-install failed: {exc}"])
@@ -1015,12 +1038,13 @@ def _handle_manual_install(stdscr: curses.window, state: TUIState) -> bool:
     stdscr.refresh()
 
     try:
-        result = install.auto_install(
-            state.lan_config,
-            None,
-            enabled=True,
-            dry_run=not execute,
-        )
+        with _suspend_curses(stdscr):
+            result = install.auto_install(
+                state.lan_config,
+                None,
+                enabled=True,
+                dry_run=not execute,
+            )
     except Exception as exc:  # pragma: no cover - unexpected errors
         state.last_auto_install = install.AutoInstallResult(status="failed", reason=str(exc))
         _show_modal(stdscr, [f"Install failed: {exc}"])
