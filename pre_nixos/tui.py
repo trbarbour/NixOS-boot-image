@@ -704,6 +704,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         "[S]ave",
         "[L]oad",
         "[A]pply",
+        "[N]Install",
         "[I]nstall toggle",
         "[Q]uit",
     ]
@@ -1001,6 +1002,61 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     return True
 
 
+def _handle_manual_install(stdscr: curses.window, state: TUIState) -> bool:
+    """Trigger installation using the recorded storage plan."""
+
+    execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
+    if state.lan_config is None:
+        _show_modal(stdscr, ["Cannot install without an active LAN configuration."])
+        return False
+
+    stdscr.clear()
+    stdscr.addstr(0, 0, "Starting installation...\n")
+    stdscr.refresh()
+
+    try:
+        result = install.auto_install(
+            state.lan_config,
+            None,
+            enabled=True,
+            dry_run=not execute,
+        )
+    except Exception as exc:  # pragma: no cover - unexpected errors
+        state.last_auto_install = install.AutoInstallResult(status="failed", reason=str(exc))
+        _show_modal(stdscr, [f"Install failed: {exc}"])
+        return False
+
+    state.last_auto_install = result
+    if result.status == "failed":
+        if result.reason == "missing-storage-plan":
+            _show_modal(
+                stdscr,
+                [
+                    "No recorded storage plan was found.",
+                    "Apply the storage plan before triggering installation.",
+                ],
+            )
+            return False
+        message = result.reason or "unknown error"
+        _show_modal(stdscr, [f"Install failed: {message}"])
+        return False
+
+    summary_parts = ["Done."]
+    if result.status == "success":
+        summary_parts.append("Install completed.")
+    elif result.status == "skipped" and result.reason:
+        summary_parts.append(f"Install skipped ({result.reason}).")
+    stdscr.addstr(0, 0, " ".join(summary_parts) + " Press any key to exit.")
+    stdscr.refresh()
+    while True:
+        try:
+            stdscr.getkey()
+            break
+        except curses.error:
+            continue
+    return result.status == "success"
+
+
 def run() -> None:
     """Launch the interactive provisioning TUI."""
 
@@ -1052,6 +1108,11 @@ def run() -> None:
                 continue
             if key_lower == "a":
                 if _handle_apply_plan(stdscr, state):
+                    break
+                refresh_renderer()
+                continue
+            if key_lower == "n":
+                if _handle_manual_install(stdscr, state):
                     break
                 refresh_renderer()
                 continue

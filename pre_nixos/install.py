@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Tuple
 
+from . import state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -183,7 +184,22 @@ def _collect_storage_definitions(
     filesystems: list[Dict[str, Any]] = []
     swaps: list[str] = []
 
-    def handle_content(content: Any) -> None:
+    def select_device(context: Dict[str, str], label: Optional[str]) -> Optional[str]:
+        kind = context.get("kind")
+        if kind == "lvm_lv":
+            vg = context.get("vg")
+            lv = context.get("lv")
+            if vg and lv:
+                return f"/dev/{vg}/{lv}"
+        elif kind == "partition":
+            part = context.get("partition")
+            if part:
+                return f"/dev/{part}"
+        if label:
+            return f"/dev/disk/by-label/{label}"
+        return None
+
+    def handle_content(content: Any, context: Dict[str, str]) -> None:
         if not isinstance(content, dict):
             return
         ctype = content.get("type")
@@ -193,43 +209,53 @@ def _collect_storage_definitions(
                 return
             extra_args = content.get("extraArgs") or []
             label = _extract_label(extra_args)
-            if not label:
-                return
             fs_type = content.get("format")
             if not isinstance(fs_type, str) or not fs_type:
                 return
             options = content.get("mountOptions") or []
             if not isinstance(options, list):
                 options = []
+            device = select_device(context, label)
+            if not device:
+                return
             filesystems.append(
                 {
                     "mountpoint": mountpoint,
-                    "label": label,
+                    "device": device,
                     "fsType": fs_type,
-                    "options": [opt for opt in options if isinstance(opt, str) and opt],
+                    "options": [
+                        opt for opt in options if isinstance(opt, str) and opt
+                    ],
                 }
             )
         elif ctype == "swap":
             extra_args = content.get("extraArgs") or []
             label = _extract_label(extra_args)
-            if label:
-                swaps.append(label)
+            device = select_device(context, label)
+            if device:
+                swaps.append(device)
 
-    for disk in devices.get("disk", {}).values():
+    for disk_name, disk in devices.get("disk", {}).items():
         partitions = (
             disk.get("content", {}).get("partitions", {})
             if isinstance(disk, dict)
             else {}
         )
-        for part in partitions.values():
+        for part_name, part in partitions.items():
             content = part.get("content") if isinstance(part, dict) else None
-            handle_content(content)
+            handle_content(
+                content,
+                {"kind": "partition", "disk": disk_name, "partition": part_name},
+            )
 
-    for vg in devices.get("lvm_vg", {}).values():
+    for vg_name, vg in devices.get("lvm_vg", {}).items():
         lvs = vg.get("lvs", {}) if isinstance(vg, dict) else {}
-        for lv in lvs.values():
+        for lv_name, lv in lvs.items():
             content = lv.get("content") if isinstance(lv, dict) else None
-            handle_content(content)
+            handle_content(
+                content,
+                {"kind": "lvm_lv", "vg": vg_name, "lv": lv_name},
+            )
 
     filesystems.sort(key=lambda entry: entry["mountpoint"])
     swaps.sort()
@@ -320,7 +346,7 @@ def _inject_configuration(
         block_lines.append("  fileSystems = {")
         for entry in filesystems:
             mountpoint = entry["mountpoint"]
-            device = f"/dev/disk/by-label/{entry['label']}"
+            device = entry["device"]
             block_lines.append(f'    "{_escape_nix_string(mountpoint)}" = {{')
             block_lines.append(
                 f'      device = "{_escape_nix_string(device)}";'
@@ -333,14 +359,15 @@ def _inject_configuration(
                 block_lines.append(
                     f"      options = {_format_nix_list(options)};"
                 )
+            if mountpoint in {"/", "/boot"}:
+                block_lines.append("      neededForBoot = true;")
             block_lines.append("    };")
         block_lines.append("  };")
         block_lines.append("")
 
     block_lines.append("  swapDevices = [")
     if swaps:
-        for label in swaps:
-            device = f"/dev/disk/by-label/{label}"
+        for device in swaps:
             block_lines.append("    {")
             block_lines.append(
                 f'      device = "{_escape_nix_string(device)}";'
@@ -351,6 +378,13 @@ def _inject_configuration(
 
     block_lines.extend(
         [
+            '  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];',
+            "  boot.loader.grub.extraConfig = ''",
+            "    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+            "    terminal_input serial console",
+            "    terminal_output serial console",
+            "  '';",
+            "",
             '  nix.settings.experimental-features = [ "nix-command" "flakes" ];',
             "  # pre-nixos auto-install end",
         ]
@@ -554,6 +588,15 @@ def auto_install(
             status_dir=status_dir,
             reason="missing-network-configuration",
         )
+
+    if storage_plan is None:
+        storage_plan = state.load_storage_plan(state_dir=status_dir)
+        if storage_plan is None:
+            return _record_result(
+                "failed",
+                status_dir=status_dir,
+                reason="missing-storage-plan",
+            )
 
     execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
     if dry_run:
