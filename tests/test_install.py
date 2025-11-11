@@ -203,6 +203,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'label = "EFI";' in content
     assert 'swapDevices = [' in content
     assert 'label = "swap";' in content
+    assert 'boot.swraid.enable = true;' in content
     assert 'boot.initrd.services.lvm.enable = true;' in content
 
     hardware_text = (root / "etc/nixos/hardware-configuration.nix").read_text()
