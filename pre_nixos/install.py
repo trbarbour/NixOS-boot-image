@@ -171,7 +171,7 @@ def _extract_label(extra_args: Iterable[str]) -> Optional[str]:
 
 def _collect_storage_definitions(
     storage_plan: Optional[Dict[str, Any]],
-) -> Tuple[list[Dict[str, Any]], list[str]]:
+) -> Tuple[list[Dict[str, Any]], list[Dict[str, str]]]:
     """Return filesystem and swap definitions extracted from ``storage_plan``."""
 
     if not storage_plan:
@@ -182,21 +182,23 @@ def _collect_storage_definitions(
         return [], []
 
     filesystems: list[Dict[str, Any]] = []
-    swaps: list[str] = []
+    swaps: list[Dict[str, str]] = []
 
-    def select_device(context: Dict[str, str], label: Optional[str]) -> Optional[str]:
+    def select_locator(
+        context: Dict[str, str], label: Optional[str]
+    ) -> Optional[Dict[str, str]]:
         kind = context.get("kind")
+        if label:
+            return {"label": label}
         if kind == "lvm_lv":
             vg = context.get("vg")
             lv = context.get("lv")
             if vg and lv:
-                return f"/dev/{vg}/{lv}"
+                return {"device": f"/dev/{vg}/{lv}"}
         elif kind == "partition":
             part = context.get("partition")
             if part:
-                return f"/dev/{part}"
-        if label:
-            return f"/dev/disk/by-label/{label}"
+                return {"device": f"/dev/{part}"}
         return None
 
     def handle_content(content: Any, context: Dict[str, str]) -> None:
@@ -215,25 +217,25 @@ def _collect_storage_definitions(
             options = content.get("mountOptions") or []
             if not isinstance(options, list):
                 options = []
-            device = select_device(context, label)
-            if not device:
+            locator = select_locator(context, label)
+            if not locator:
                 return
             filesystems.append(
                 {
                     "mountpoint": mountpoint,
-                    "device": device,
                     "fsType": fs_type,
                     "options": [
                         opt for opt in options if isinstance(opt, str) and opt
                     ],
+                    **locator,
                 }
             )
         elif ctype == "swap":
             extra_args = content.get("extraArgs") or []
             label = _extract_label(extra_args)
-            device = select_device(context, label)
-            if device:
-                swaps.append(device)
+            locator = select_locator(context, label)
+            if locator:
+                swaps.append(locator)
 
     for disk_name, disk in devices.get("disk", {}).items():
         partitions = (
@@ -258,7 +260,7 @@ def _collect_storage_definitions(
             )
 
     filesystems.sort(key=lambda entry: entry["mountpoint"])
-    swaps.sort()
+    swaps.sort(key=lambda entry: entry.get("label") or entry.get("device") or "")
     return filesystems, swaps
 
 
@@ -346,11 +348,15 @@ def _inject_configuration(
         block_lines.append("  fileSystems = {")
         for entry in filesystems:
             mountpoint = entry["mountpoint"]
-            device = entry["device"]
             block_lines.append(f'    "{_escape_nix_string(mountpoint)}" = {{')
-            block_lines.append(
-                f'      device = "{_escape_nix_string(device)}";'
-            )
+            if "label" in entry:
+                block_lines.append(
+                    f'      label = "{_escape_nix_string(entry["label"])}";'
+                )
+            elif "device" in entry:
+                block_lines.append(
+                    f'      device = "{_escape_nix_string(entry["device"])}";'
+                )
             block_lines.append(
                 f'      fsType = "{_escape_nix_string(entry["fsType"])}";'
             )
@@ -367,17 +373,23 @@ def _inject_configuration(
 
     block_lines.append("  swapDevices = [")
     if swaps:
-        for device in swaps:
+        for locator in swaps:
             block_lines.append("    {")
-            block_lines.append(
-                f'      device = "{_escape_nix_string(device)}";'
-            )
+            if "label" in locator:
+                block_lines.append(
+                    f'      label = "{_escape_nix_string(locator["label"])}";'
+                )
+            elif "device" in locator:
+                block_lines.append(
+                    f'      device = "{_escape_nix_string(locator["device"])}";'
+                )
             block_lines.append("    }")
     block_lines.append("  ];")
     block_lines.append("")
 
     block_lines.extend(
         [
+            "  boot.initrd.services.lvm.enable = true;",
             '  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];',
             "  boot.loader.grub.extraConfig = ''",
             "    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",

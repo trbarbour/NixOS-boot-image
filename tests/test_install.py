@@ -197,12 +197,13 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert authorized_line in content
     assert 'fileSystems = {' in content
     assert '"/" = {' in content
-    assert 'device = "/dev/main/slash";' in content
+    assert 'label = "slash";' in content
     assert 'neededForBoot = true;' in content
     assert '"/boot" = {' in content
-    assert 'device = "/dev/sda1";' in content
+    assert 'label = "EFI";' in content
     assert 'swapDevices = [' in content
-    assert 'device = "/dev/main/swap";' in content
+    assert 'label = "swap";' in content
+    assert 'boot.initrd.services.lvm.enable = true;' in content
 
     hardware_text = (root / "etc/nixos/hardware-configuration.nix").read_text()
     assert 'fileSystems."/' not in hardware_text
