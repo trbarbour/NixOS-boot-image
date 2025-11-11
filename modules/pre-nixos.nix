@@ -52,7 +52,7 @@ in {
     networking.useNetworkd = lib.mkForce true;
     networking.useDHCP = lib.mkForce false;
     networking.networkmanager.enable = lib.mkForce false;
-    boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
+    boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];
     boot.loader.grub.memtest86.enable = true;
     boot.loader.grub.extraConfig = ''
       serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
