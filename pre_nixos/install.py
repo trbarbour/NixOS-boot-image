@@ -315,6 +315,10 @@ def _inject_configuration(
         "  };",
         "",
         "  networking.useDHCP = false;",
+        "  networking.useNetworkd = true;",
+        "  networking.interfaces.lan = {",
+        "    useDHCP = true;",
+        "  };",
         "",
         "  services.openssh = {",
         "    enable = true;",
@@ -330,15 +334,85 @@ def _inject_configuration(
         "",
         "  systemd.network.enable = true;",
         '  systemd.network.networks."lan" = {',
-        '    matchConfig.Name = "lan";',
     ]
+
     if lan.mac_address:
         block_lines.append(
             f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
         )
+    if lan.interface and (not lan.mac_address or lan.interface != "lan"):
+        block_lines.append(
+            f'    matchConfig.Name = "{_escape_nix_string(lan.interface)}";'
+        )
+    else:
+        block_lines.append('    matchConfig.Name = "lan";')
+
     block_lines.extend(
         [
             '    networkConfig.DHCP = "yes";',
+            "  };",
+            "",
+        ]
+    )
+
+    if lan.mac_address:
+        block_lines.extend(
+            [
+                '  systemd.network.links."lan" = {',
+                f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";',
+                '    linkConfig.Name = "lan";',
+                "  };",
+                "",
+            ]
+        )
+
+    block_lines.extend(
+        [
+            '  systemd.services."pre-nixos-auto-install-ip" = {',
+            '    description = "Announce LAN IPv4 on boot";',
+            '    wantedBy = [ "multi-user.target" ];',
+            '    after = [ "network-online.target" ];',
+            '    wants = [ "network-online.target" ];',
+            '    serviceConfig = {',
+            '      Type = "oneshot";',
+            '      StandardOutput = "journal+console";',
+            '      StandardError = "journal+console";',
+            '    };',
+            "    script = ''"
+            "      set -euo pipefail"
+            "      ip=$(${pkgs.iproute2}/bin/ip -o -4 addr show dev lan | awk '{print $4}' | cut -d/ -f1 | head -n1)"
+            "      issue=/etc/issue"
+            "      tmp=$(mktemp)"
+            "      trap 'rm -f \"$tmp\"' EXIT"
+            "      if [ -f \"$issue\" ]; then"
+            "        sed '/^# pre-nixos auto-install ip start$/,/^# pre-nixos auto-install ip end$/d' \"$issue\" > \"$tmp\""
+            "      else"
+            "        : > \"$tmp\""
+            "      fi"
+            "      if [ -n \"$ip\" ]; then"
+            "        {"
+            "          cat \"$tmp\""
+            "          echo '# pre-nixos auto-install ip start'"
+            "          printf \"LAN IPv4 address: %s\\n\" \"$ip\""
+            "          echo '# pre-nixos auto-install ip end'"
+            "        } > \"$issue\""
+            "        message=\"LAN IPv4 address: $ip\""
+            "      else"
+            "        mv \"$tmp\" \"$issue\""
+            "        message=\"LAN IPv4 address unavailable\""
+            "      fi"
+            "      if [ -r /sys/class/tty/console/active ]; then"
+            "        for name in $(cat /sys/class/tty/console/active); do"
+            "          target=/dev/$name"
+            "          if [ -w \"$target\" ]; then"
+            "            printf \"%s\\n\" \"$message\" > \"$target\""
+            "          fi"
+            "        done"
+            "      fi"
+            "      if [ -w /dev/console ]; then"
+            "        printf \"%s\\n\" \"$message\" > /dev/console"
+            "      fi"
+            "    '';"
             "  };",
             "",
         ]
