@@ -389,6 +389,7 @@ def _inject_configuration(
 
     block_lines.extend(
         [
+            "  boot.swraid.enable = true;",
             "  boot.initrd.services.lvm.enable = true;",
             '  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];',
             "  boot.loader.grub.extraConfig = ''",
