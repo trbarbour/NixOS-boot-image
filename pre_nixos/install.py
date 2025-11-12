@@ -158,6 +158,12 @@ def _escape_nix_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
+def _escape_nix_indented_line(value: str) -> str:
+    """Return *value* with Nix indented string escapes applied."""
+
+    return value.replace("${", "''${")
+
+
 def _extract_label(extra_args: Iterable[str]) -> Optional[str]:
     """Return the filesystem/swap label from ``extra_args`` when present."""
 
@@ -484,7 +490,7 @@ def _inject_configuration(
 
     block_lines.append("    script = ''")
     for line in script_body:
-        block_lines.append(f"      {line}")
+        block_lines.append(f"      {_escape_nix_indented_line(line)}")
     block_lines.append("    '';")
     block_lines.append("  };")
     block_lines.append("")
