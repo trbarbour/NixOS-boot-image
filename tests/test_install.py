@@ -208,6 +208,10 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'systemd.network.links."lan"' in content
     assert 'systemd.services."pre-nixos-auto-install-ip"' in content
     assert 'description = "Announce LAN IPv4 on boot";' in content
+    script_lines = content.splitlines()
+    script_block_index = script_lines.index("    script = ''")
+    assert script_lines[script_block_index + 1].strip() == "set -euo pipefail"
+    assert script_lines[script_block_index + 2].strip().startswith("ip=$(")
     assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content
     assert "boot.loader.grub.extraConfig = ''" in content
     assert "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1" in content
