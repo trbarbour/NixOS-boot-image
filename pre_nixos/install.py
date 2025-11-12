@@ -453,7 +453,7 @@ def _inject_configuration(
     if tmpfiles_rules:
         block_lines.append("  systemd.tmpfiles.rules = [")
         for rule in tmpfiles_rules:
-            block_lines.append(f'    "{_escape_nix_string(rule)}";')
+            block_lines.append(f'    "{_escape_nix_string(rule)}"')
         block_lines.append("  ];")
         block_lines.append("")
 
