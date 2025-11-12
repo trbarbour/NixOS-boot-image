@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import textwrap
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -378,42 +379,59 @@ def _inject_configuration(
             '      StandardOutput = "journal+console";',
             '      StandardError = "journal+console";',
             '    };',
-            "    script = ''"
-            "      set -euo pipefail"
-            "      ip=$(${pkgs.iproute2}/bin/ip -o -4 addr show dev lan | awk '{print $4}' | cut -d/ -f1 | head -n1)"
-            "      issue=/etc/issue"
-            "      tmp=$(mktemp)"
-            "      trap 'rm -f \"$tmp\"' EXIT"
-            "      if [ -f \"$issue\" ]; then"
-            "        sed '/^# pre-nixos auto-install ip start$/,/^# pre-nixos auto-install ip end$/d' \"$issue\" > \"$tmp\""
-            "      else"
-            "        : > \"$tmp\""
-            "      fi"
-            "      if [ -n \"$ip\" ]; then"
-            "        {"
-            "          cat \"$tmp\""
-            "          echo '# pre-nixos auto-install ip start'"
-            "          printf \"LAN IPv4 address: %s\\n\" \"$ip\""
-            "          echo '# pre-nixos auto-install ip end'"
-            "        } > \"$issue\""
-            "        message=\"LAN IPv4 address: $ip\""
-            "      else"
-            "        mv \"$tmp\" \"$issue\""
-            "        message=\"LAN IPv4 address unavailable\""
-            "      fi"
-            "      if [ -r /sys/class/tty/console/active ]; then"
-            "        for name in $(cat /sys/class/tty/console/active); do"
-            "          target=/dev/$name"
-            "          if [ -w \"$target\" ]; then"
-            "            printf \"%s\\n\" \"$message\" > \"$target\""
-            "          fi"
-            "        done"
-            "      fi"
-            "      if [ -w /dev/console ]; then"
-            "        printf \"%s\\n\" \"$message\" > /dev/console"
-            "      fi"
-            "    '';"
-            "  };",
+        ]
+    )
+
+    script_body = textwrap.dedent(
+        """
+        set -euo pipefail
+        ip=$(${pkgs.iproute2}/bin/ip -o -4 addr show dev lan | awk '{{print $4}}' | cut -d/ -f1 | head -n1)
+        issue=/etc/issue
+        tmp=$(mktemp)
+        trap 'rm -f "$tmp"' EXIT
+        if [ -f "$issue" ]; then
+          sed '/^# pre-nixos auto-install ip start$/,/^# pre-nixos auto-install ip end$/d' "$issue" > "$tmp"
+        else
+          : > "$tmp"
+        fi
+        if [ -n "$ip" ]; then
+          {
+            cat "$tmp"
+            echo '# pre-nixos auto-install ip start'
+            printf "LAN IPv4 address: %s\n" "$ip"
+            echo '# pre-nixos auto-install ip end'
+          } > "$issue"
+          message="LAN IPv4 address: $ip"
+        else
+          mv "$tmp" "$issue"
+          message="LAN IPv4 address unavailable"
+        fi
+        if [ -r /sys/class/tty/console/active ]; then
+          for name in $(cat /sys/class/tty/console/active); do
+            target=/dev/$name
+            if [ -w "$target" ]; then
+              printf "%s\n" "$message" > "$target"
+            fi
+          done
+        fi
+        if [ -w /dev/console ]; then
+          printf "%s\n" "$message" > /dev/console
+        fi
+        """
+    ).strip("\n").splitlines()
+
+    block_lines.append("    script = ''")
+    for line in script_body:
+        block_lines.append(f"      {line}")
+    block_lines.append("    '';")
+    block_lines.append("  };")
+    block_lines.append("")
+
+    block_lines.extend(
+        [
+            "  boot.swraid.mdadmConf = ''",
+            "    MAILADDR root",
+            "  '';",
             "",
         ]
     )
