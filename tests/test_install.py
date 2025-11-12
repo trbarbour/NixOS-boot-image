@@ -38,6 +38,7 @@ def _sample_storage_plan() -> dict:
                                 "content": {
                                     "type": "filesystem",
                                     "format": "vfat",
+                                    "mountpointPermissions": 0,
                                     "mountpoint": "/boot",
                                     "mountOptions": ["umask=0077"],
                                     "extraArgs": ["-n", "EFI"],
@@ -63,9 +64,21 @@ def _sample_storage_plan() -> dict:
                             "content": {
                                 "type": "filesystem",
                                 "format": "ext4",
+                                "mountpointPermissions": 0,
                                 "mountpoint": "/",
                                 "mountOptions": ["relatime"],
                                 "extraArgs": ["-L", "slash"],
+                            },
+                        },
+                        "home": {
+                            "size": "25G",
+                            "content": {
+                                "type": "filesystem",
+                                "format": "ext4",
+                                "mountpointPermissions": 0,
+                                "mountpoint": "/home",
+                                "mountOptions": ["relatime"],
+                                "extraArgs": ["-L", "home"],
                             },
                         },
                         "swap": {
@@ -207,6 +220,11 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'neededForBoot = true;' in content
     assert '"/boot" = {' in content
     assert 'label = "EFI";' in content
+    assert '"/home" = {' in content
+    assert 'label = "home";' in content
+    assert 'systemd.tmpfiles.rules = [' in content
+    assert '  "d /boot 000 root root -";' in content
+    assert '  "d /home 000 root root -";' in content
     assert 'swapDevices = [' in content
     assert 'label = "swap";' in content
     assert 'boot.swraid.enable = true;' in content
