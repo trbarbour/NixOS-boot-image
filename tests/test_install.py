@@ -223,8 +223,8 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert '"/home" = {' in content
     assert 'label = "home";' in content
     assert 'systemd.tmpfiles.rules = [' in content
-    assert '  "d /boot 000 root root -";' in content
-    assert '  "d /home 000 root root -";' in content
+    assert '    "d /boot 000 root root -"' in content
+    assert '    "d /home 000 root root -"' in content
     assert 'swapDevices = [' in content
     assert 'label = "swap";' in content
     assert 'boot.swraid.enable = true;' in content
