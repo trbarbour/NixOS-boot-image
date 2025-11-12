@@ -272,6 +272,32 @@ def _format_nix_list(items: Iterable[str]) -> str:
     return "[ " + " ".join(quoted) + " ]"
 
 
+def _extract_original_name(rename_rule: Optional[Path]) -> Optional[str]:
+    """Return the ``OriginalName`` entry from a systemd ``.link`` file."""
+
+    if rename_rule is None:
+        return None
+
+    try:
+        lines = rename_rule.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() != "OriginalName":
+            continue
+        original = value.strip()
+        if original:
+            return original
+    return None
+
+
 def _inject_configuration(
     root_path: Path,
     key_text: str,
@@ -305,6 +331,8 @@ def _inject_configuration(
         filtered.append(line)
 
     filesystems, swaps = _collect_storage_definitions(storage_plan)
+
+    original_name = _extract_original_name(lan.rename_rule)
 
     block_lines = [
         "  # pre-nixos auto-install start",
@@ -356,11 +384,18 @@ def _inject_configuration(
         ]
     )
 
-    if lan.mac_address:
+    if lan.mac_address or original_name:
+        block_lines.append('  systemd.network.links."lan" = {')
+        if original_name:
+            block_lines.append(
+                f'    matchConfig.OriginalName = "{_escape_nix_string(original_name)}";'
+            )
+        if lan.mac_address:
+            block_lines.append(
+                f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
+            )
         block_lines.extend(
             [
-                '  systemd.network.links."lan" = {',
-                f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";',
                 '    linkConfig.Name = "lan";',
                 "  };",
                 "",
@@ -385,7 +420,34 @@ def _inject_configuration(
     script_body = textwrap.dedent(
         """
         set -euo pipefail
-        ip=$(${pkgs.iproute2}/bin/ip -o -4 addr show dev lan | awk '{{print $4}}' | cut -d/ -f1 | head -n1)
+        preferred_iface="lan"
+        ip=""
+        if ${pkgs.iproute2}/bin/ip link show dev "$preferred_iface" >/dev/null 2>&1; then
+          details=$(${pkgs.iproute2}/bin/ip -o -4 addr show dev "$preferred_iface" scope global || true)
+          if [ -n "$details" ]; then
+            set -- $details
+            while [ "$#" -gt 0 ]; do
+              if [ "$1" = "inet" ] && [ "$#" -ge 2 ]; then
+                ip=${2%%/*}
+                break
+              fi
+              shift
+            done
+          fi
+        fi
+        if [ -z "$ip" ]; then
+          route=$(${pkgs.iproute2}/bin/ip route get 1.1.1.1 2>/dev/null || true)
+          if [ -n "$route" ]; then
+            set -- $route
+            while [ "$#" -gt 0 ]; do
+              if [ "$1" = "src" ] && [ "$#" -ge 2 ]; then
+                ip=$2
+                break
+              fi
+              shift
+            done
+          fi
+        fi
         issue=/etc/issue
         tmp=$(mktemp)
         trap 'rm -f "$tmp"' EXIT
