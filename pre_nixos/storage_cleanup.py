@@ -68,6 +68,7 @@ def _command_to_str(cmd: Sequence[str]) -> str:
 
 _ALLOWED_NONZERO_EXIT_CODES: Mapping[Tuple[str, ...], Set[int]] = {
     ("sgdisk", "--zap-all"): {2},
+    ("partprobe",): {1},
 }
 
 
@@ -76,9 +77,12 @@ def _is_allowed_returncode(cmd: Sequence[str], returncode: int) -> bool:
 
     if returncode == 0:
         return True
-    key = tuple(cmd[:2])
-    allowed = _ALLOWED_NONZERO_EXIT_CODES.get(key)
-    return bool(allowed and returncode in allowed)
+    for prefix_length in range(len(cmd), 0, -1):
+        key = tuple(cmd[:prefix_length])
+        allowed = _ALLOWED_NONZERO_EXIT_CODES.get(key)
+        if allowed and returncode in allowed:
+            return True
+    return False
 
 
 def _commands_for_device(action: str, device: str) -> Iterable[Sequence[str]]:
