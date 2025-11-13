@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import textwrap
@@ -158,10 +159,19 @@ def _escape_nix_string(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
+_NIX_INTERPOLATION = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$")
+
+
 def _escape_nix_indented_line(value: str) -> str:
     """Return *value* with Nix indented string escapes applied."""
 
-    return value.replace("${", "''${")
+    def escape(match: re.Match[str]) -> str:
+        inner = match.group(1)
+        if _NIX_INTERPOLATION.fullmatch(inner):
+            return match.group(0)
+        return "''${" + inner + "}"
+
+    return re.sub(r"\$\{([^}]+)\}", escape, value)
 
 
 def _extract_label(extra_args: Iterable[str]) -> Optional[str]:

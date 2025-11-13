@@ -213,7 +213,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     script_block_index = script_lines.index("    script = ''")
     assert script_lines[script_block_index + 1].strip() == "set -euo pipefail"
     assert script_lines[script_block_index + 2].strip() == 'preferred_iface="lan"'
-    assert "if ''${pkgs.iproute2}/bin/ip link show dev \"$preferred_iface\"" in content
+    assert "if ${pkgs.iproute2}/bin/ip link show dev \"$preferred_iface\"" in content
     assert "ip=''${2%%/*}" in content
     assert "ip route get 1.1.1.1" in content
     assert "awk" not in content
