@@ -6,7 +6,6 @@ import os
 import re
 import shutil
 import subprocess
-import textwrap
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -314,6 +313,20 @@ def _extract_original_name(rename_rule: Optional[Path]) -> Optional[str]:
     return None
 
 
+def _load_ip_announcement_script() -> list[str]:
+    """Return the shared LAN IP announcement script as a list of lines."""
+
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "announce-lan-ip.sh"
+    try:
+        content = script_path.read_text(encoding="utf-8")
+    except OSError as error:  # pragma: no cover - unexpected packaging issue
+        raise FileNotFoundError(
+            f"Missing IP announcement helper at {script_path}: {error}"
+        ) from error
+    # Preserve interior blank lines while trimming trailing whitespace-only lines
+    return content.strip("\n").splitlines()
+
+
 def _inject_configuration(
     root_path: Path,
     key_text: str,
@@ -350,6 +363,8 @@ def _inject_configuration(
 
     original_name = _extract_original_name(lan.rename_rule)
 
+    broadcast_cmd = '${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast'
+
     block_lines = [
         "  # pre-nixos auto-install start",
         "  networking.firewall = {",
@@ -385,7 +400,7 @@ def _inject_configuration(
         block_lines.append(
             f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
         )
-    if lan.interface and (not lan.mac_address or lan.interface != "lan"):
+    elif lan.interface:
         block_lines.append(
             f'    matchConfig.Name = "{_escape_nix_string(lan.interface)}";'
         )
@@ -400,16 +415,23 @@ def _inject_configuration(
         ]
     )
 
-    if lan.mac_address or original_name:
+    link_match_lines: list[str] = []
+    if lan.mac_address:
+        link_match_lines.append(
+            f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
+        )
+    elif original_name:
+        link_match_lines.append(
+            f'    matchConfig.OriginalName = "{_escape_nix_string(original_name)}";'
+        )
+    elif lan.interface:
+        link_match_lines.append(
+            f'    matchConfig.OriginalName = "{_escape_nix_string(lan.interface)}";'
+        )
+
+    if link_match_lines:
         block_lines.append('  systemd.network.links."lan" = {')
-        if original_name:
-            block_lines.append(
-                f'    matchConfig.OriginalName = "{_escape_nix_string(original_name)}";'
-            )
-        if lan.mac_address:
-            block_lines.append(
-                f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
-            )
+        block_lines.extend(link_match_lines)
         block_lines.extend(
             [
                 '    linkConfig.Name = "lan";',
@@ -425,6 +447,20 @@ def _inject_configuration(
             '    wantedBy = [ "multi-user.target" ];',
             '    after = [ "network-online.target" ];',
             '    wants = [ "network-online.target" ];',
+            '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils ];',
+            '    environment = {',
+            '      PRE_NIXOS_STATE_DIR = "/run/pre-nixos";',
+            '      ANNOUNCE_STATUS_FILE = "/run/pre-nixos/network-status";',
+            '      ANNOUNCE_WRITE_STATUS = "1";',
+            '      ANNOUNCE_UPDATE_ISSUE = "1";',
+            '      ANNOUNCE_NOTIFY_CONSOLES = "1";',
+            '      ANNOUNCE_CONSOLE_FALLBACK = "1";',
+            '      ANNOUNCE_STDOUT_MESSAGE = "1";',
+            '      ANNOUNCE_PREFERRED_IFACE = "lan";',
+            '      ANNOUNCE_MAX_ATTEMPTS = "60";',
+            '      ANNOUNCE_DELAY = "1";',
+            f'      BROADCAST_CONSOLE_CMD = "{_escape_nix_string(broadcast_cmd)}";',
+            '    };',
             '    serviceConfig = {',
             '      Type = "oneshot";',
             '      StandardOutput = "journal+console";',
@@ -432,74 +468,9 @@ def _inject_configuration(
             '    };',
         ]
     )
-
-    script_body = textwrap.dedent(
-        """
-        set -euo pipefail
-        preferred_iface="lan"
-        ip=""
-        if ${pkgs.iproute2}/bin/ip link show dev "$preferred_iface" >/dev/null 2>&1; then
-          details=$(${pkgs.iproute2}/bin/ip -o -4 addr show dev "$preferred_iface" scope global || true)
-          if [ -n "$details" ]; then
-            set -- $details
-            while [ "$#" -gt 0 ]; do
-              if [ "$1" = "inet" ] && [ "$#" -ge 2 ]; then
-                ip=${2%%/*}
-                break
-              fi
-              shift
-            done
-          fi
-        fi
-        if [ -z "$ip" ]; then
-          route=$(${pkgs.iproute2}/bin/ip route get 1.1.1.1 2>/dev/null || true)
-          if [ -n "$route" ]; then
-            set -- $route
-            while [ "$#" -gt 0 ]; do
-              if [ "$1" = "src" ] && [ "$#" -ge 2 ]; then
-                ip=$2
-                break
-              fi
-              shift
-            done
-          fi
-        fi
-        issue=/etc/issue
-        tmp=$(mktemp)
-        trap 'rm -f "$tmp"' EXIT
-        if [ -f "$issue" ]; then
-          sed '/^# pre-nixos auto-install ip start$/,/^# pre-nixos auto-install ip end$/d' "$issue" > "$tmp"
-        else
-          : > "$tmp"
-        fi
-        if [ -n "$ip" ]; then
-          {
-            cat "$tmp"
-            echo '# pre-nixos auto-install ip start'
-            printf "LAN IPv4 address: %s\n" "$ip"
-            echo '# pre-nixos auto-install ip end'
-          } > "$issue"
-          message="LAN IPv4 address: $ip"
-        else
-          mv "$tmp" "$issue"
-          message="LAN IPv4 address unavailable"
-        fi
-        if [ -r /sys/class/tty/console/active ]; then
-          for name in $(cat /sys/class/tty/console/active); do
-            target=/dev/$name
-            if [ -w "$target" ]; then
-              printf "%s\n" "$message" > "$target"
-            fi
-          done
-        fi
-        if [ -w /dev/console ]; then
-          printf "%s\n" "$message" > /dev/console
-        fi
-        """
-    ).strip("\n").splitlines()
-
+    announcement_script = _load_ip_announcement_script()
     block_lines.append("    script = ''")
-    for line in script_body:
+    for line in announcement_script:
         block_lines.append(f"      {_escape_nix_indented_line(line)}")
     block_lines.append("    '';")
     block_lines.append("  };")

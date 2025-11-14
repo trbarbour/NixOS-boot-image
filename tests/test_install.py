@@ -95,13 +95,13 @@ def _sample_storage_plan() -> dict:
     }
 
 
-def _make_lan(tmp_path: Path) -> LanConfiguration:
+def _make_lan(tmp_path: Path, *, original_name: str = "eth0") -> LanConfiguration:
     key_path = tmp_path / "key.pub"
     key_path.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
     rename_rule = tmp_path / "10-lan.link"
     rename_rule.write_text(
         "[Match]\n"
-        "OriginalName=eth0\n"
+        f"OriginalName={original_name}\n"
         "MACAddress=00:11:22:33:44:55\n\n"
         "[Link]\n"
         "Name=lan\n"
@@ -206,17 +206,25 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert "useDHCP = true;" in content
     assert 'matchConfig.MACAddress = "00:11:22:33:44:55";' in content
     assert 'systemd.network.links."lan"' in content
-    assert 'matchConfig.OriginalName = "eth0";' in content
+    assert content.count('matchConfig.MACAddress = "00:11:22:33:44:55";') >= 2
+    assert 'matchConfig.OriginalName' not in content
+    assert 'matchConfig.Name = "lan";' not in content
     assert 'systemd.services."pre-nixos-auto-install-ip"' in content
     assert 'description = "Announce LAN IPv4 on boot";' in content
+    assert '    environment = {' in content
+    assert '      ANNOUNCE_UPDATE_ISSUE = "1";' in content
+    assert '      ANNOUNCE_NOTIFY_CONSOLES = "1";' in content
+    assert (
+        '      BROADCAST_CONSOLE_CMD = "${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast";'
+        in content
+    )
+    assert '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils ];' in content
     script_lines = content.splitlines()
     script_block_index = script_lines.index("    script = ''")
     assert script_lines[script_block_index + 1].strip() == "set -euo pipefail"
-    assert script_lines[script_block_index + 2].strip() == 'preferred_iface="lan"'
-    assert "if ${pkgs.iproute2}/bin/ip link show dev \"$preferred_iface\"" in content
-    assert "ip=''${2%%/*}" in content
-    assert "ip route get 1.1.1.1" in content
-    assert "awk" not in content
+    assert "read_iface_ipv4()" in content
+    assert "read_route_ipv4()" in content
+    assert "ANNOUNCE_STATUS_FILE" in content
     assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content
     assert "boot.loader.grub.extraConfig = ''" in content
     assert "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1" in content
@@ -268,6 +276,21 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert "REBOOT=requested" in status_text
     assert "CONSOLE_WRITTEN=true" in status_text
     assert f"ISSUE_PATH={root}/etc/issue" in status_text
+
+
+def test_inject_configuration_prefers_mac_matches(tmp_path):
+    root = tmp_path / "mnt"
+    lan = _make_lan(tmp_path, original_name="lan")
+    install._inject_configuration(
+        root,
+        lan.authorized_key.read_text(),
+        lan,
+        _sample_storage_plan(),
+    )
+    content = (root / "etc/nixos/configuration.nix").read_text()
+    assert 'matchConfig.MACAddress = "00:11:22:33:44:55";' in content
+    assert 'matchConfig.Name = "lan";' not in content
+    assert 'matchConfig.OriginalName' not in content
 
 
 def test_auto_install_missing_plan_fails(tmp_path, monkeypatch, broadcast_messages):

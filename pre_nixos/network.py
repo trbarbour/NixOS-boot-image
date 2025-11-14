@@ -239,6 +239,28 @@ def write_lan_rename_rule(
         rules_dir=rules_dir,
     )
 
+    def _read_original_name_from_rule(rule: Path) -> Optional[str]:
+        try:
+            for raw_line in rule.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                if key.strip() != "OriginalName":
+                    continue
+                original = value.strip()
+                if original:
+                    return original
+        except FileNotFoundError:
+            return None
+        except OSError as error:
+            if _is_transient_sysfs_error(error):
+                return None
+            raise
+        return None
+
     iface = interface or wait_for_lan(net_path)
     if iface is None:
         log_event(
@@ -252,7 +274,16 @@ def write_lan_rename_rule(
 
     rules_dir.mkdir(parents=True, exist_ok=True)
     rule_path = rules_dir / "10-lan.link"
-    match_lines = ["[Match]", f"OriginalName={iface}"]
+    existing_original = _read_original_name_from_rule(rule_path)
+    original_name: Optional[str] = None
+    if existing_original and existing_original != "lan":
+        original_name = existing_original
+    elif iface != "lan":
+        original_name = iface
+
+    match_lines = ["[Match]"]
+    if original_name:
+        match_lines.append(f"OriginalName={original_name}")
     if mac_address:
         match_lines.append(f"MACAddress={mac_address}")
     match_block = "\n".join(match_lines)
