@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import time
+from importlib import resources
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -316,12 +317,12 @@ def _extract_original_name(rename_rule: Optional[Path]) -> Optional[str]:
 def _load_ip_announcement_script() -> list[str]:
     """Return the shared LAN IP announcement script as a list of lines."""
 
-    script_path = Path(__file__).resolve().parents[1] / "scripts" / "announce-lan-ip.sh"
     try:
-        content = script_path.read_text(encoding="utf-8")
-    except OSError as error:  # pragma: no cover - unexpected packaging issue
+        script = resources.files(__package__).joinpath("scripts/announce-lan-ip.sh")
+        content = script.read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError) as error:  # pragma: no cover - unexpected packaging issue
         raise FileNotFoundError(
-            f"Missing IP announcement helper at {script_path}: {error}"
+            "Missing IP announcement helper packaged with pre_nixos"
         ) from error
     # Preserve interior blank lines while trimming trailing whitespace-only lines
     return content.strip("\n").splitlines()

@@ -4,7 +4,7 @@ let
   preNixosCmd = "${pkgs.pre-nixos}/bin/pre-nixos";
   broadcastConsoleCmd = "${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast";
   announceLanIpScript = pkgs.writeShellScript "pre-nixos-announce-lan-ip"
-    (builtins.readFile ../../scripts/announce-lan-ip.sh);
+    (builtins.readFile ../../pre_nixos/scripts/announce-lan-ip.sh);
 in ''
   set -euo pipefail
 
