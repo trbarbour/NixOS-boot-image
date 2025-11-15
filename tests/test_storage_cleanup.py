@@ -128,8 +128,28 @@ def test_sgdisk_exit_code_two_is_allowed() -> None:
     ]
 
 
+def test_partprobe_exit_code_one_is_allowed() -> None:
+    runner = SequenceRunner([0, 1, 0])
+    scheduled = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=True,
+        runner=runner,
+    )
+    assert runner.commands == [
+        ("sgdisk", "--zap-all", "/dev/sda"),
+        ("partprobe", "/dev/sda"),
+        ("wipefs", "-a", "/dev/sda"),
+    ]
+    assert scheduled == [
+        "sgdisk --zap-all /dev/sda",
+        "partprobe /dev/sda",
+        "wipefs -a /dev/sda",
+    ]
+
+
 def test_nonzero_exit_code_for_other_commands_fails() -> None:
-    runner = SequenceRunner([0, 1])
+    runner = SequenceRunner([0, 0, 1])
     with pytest.raises(subprocess.CalledProcessError):
         storage_cleanup.perform_storage_cleanup(
             storage_cleanup.WIPE_SIGNATURES,
