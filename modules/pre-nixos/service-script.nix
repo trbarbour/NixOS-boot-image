@@ -3,6 +3,8 @@ let
   detectStorageCmd = "${pkgs.pre-nixos}/bin/pre-nixos-detect-storage";
   preNixosCmd = "${pkgs.pre-nixos}/bin/pre-nixos";
   broadcastConsoleCmd = "${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast";
+  announceLanIpScript = pkgs.writeShellScript "pre-nixos-announce-lan-ip"
+    (builtins.readFile ../../pre_nixos/scripts/announce-lan-ip.sh);
 in ''
   set -euo pipefail
 
@@ -30,69 +32,17 @@ in ''
   }
 
   announce_network() {
-    local network_status lan_ipv4 recorded_ipv4 key value message attempt max_attempts ip_output ip_line ip_field
-    network_status="$status_dir/network-status"
-    lan_ipv4=""
-    recorded_ipv4=""
-    max_attempts=120
-    attempt=0
-
-    while [ "$attempt" -lt "$max_attempts" ]; do
-      attempt=$((attempt + 1))
-      recorded_ipv4=""
-      if [ -r "$network_status" ]; then
-        while IFS='=' read -r key value; do
-          if [ "$key" = "LAN_IPV4" ] && [ -n "$value" ]; then
-            recorded_ipv4=$(printf %s "$value" | tr -d "\r")
-            break
-          fi
-        done < "$network_status"
-      fi
-
-      lan_ipv4="$recorded_ipv4"
-
-      if [ -z "$lan_ipv4" ]; then
-        if ip_output=$(ip -4 -o addr show dev lan 2>/dev/null); then
-          ip_line=$(printf %s "$ip_output" | head -n1)
-          ip_field=''${ip_line#* inet }
-          if [ "$ip_field" != "$ip_line" ]; then
-            ip_field=''${ip_field%% *}
-            lan_ipv4=''${ip_field%%/*}
-          else
-            lan_ipv4=""
-          fi
-        else
-          lan_ipv4=""
-        fi
-      fi
-
-      if [ -n "$lan_ipv4" ]; then
-        lan_ipv4=$(printf %s "$lan_ipv4" | tr -d "\r\n")
-      fi
-
-      if [ -n "$lan_ipv4" ]; then
-        break
-      fi
-
-      sleep 1
-    done
-
-    if [ -z "$lan_ipv4" ]; then
-      return
-    fi
-
-    message="LAN IPv4 address: $lan_ipv4"
-    printf '%s\n' "$message"
-    if ! ${broadcastConsoleCmd} "$message"; then
-      if [ -w /dev/console ]; then
-        printf '%s\r\n' "$message" > /dev/console
-      fi
-    fi
-
-    if [ "$recorded_ipv4" != "$lan_ipv4" ] || [ ! -r "$network_status" ]; then
-      mkdir -p "$status_dir"
-      printf 'LAN_IPV4=%s\n' "$lan_ipv4" > "$network_status"
-    fi
+    PRE_NIXOS_STATE_DIR="$status_dir" \
+      ANNOUNCE_STATUS_FILE="$status_dir/network-status" \
+      ANNOUNCE_WRITE_STATUS=1 \
+      ANNOUNCE_NOTIFY_CONSOLES=1 \
+      ANNOUNCE_CONSOLE_FALLBACK=1 \
+      ANNOUNCE_STDOUT_MESSAGE=1 \
+      ANNOUNCE_PREFERRED_IFACE="lan" \
+      ANNOUNCE_MAX_ATTEMPTS=120 \
+      ANNOUNCE_DELAY=1 \
+      BROADCAST_CONSOLE_CMD='${broadcastConsoleCmd}' \
+      ${announceLanIpScript}
   }
 
   version_msg="pre-nixos boot image version ''${PRE_NIXOS_VERSION:-unknown}"
