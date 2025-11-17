@@ -212,13 +212,13 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'systemd.services."pre-nixos-auto-install-ip"' in content
     assert 'description = "Announce LAN IPv4 on boot";' in content
     assert '    environment = {' in content
-    assert '      ANNOUNCE_UPDATE_ISSUE = "1";' in content
+    assert '      ANNOUNCE_UPDATE_ISSUE = "0";' in content
     assert '      ANNOUNCE_NOTIFY_CONSOLES = "1";' in content
     assert (
         '      BROADCAST_CONSOLE_CMD = "${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast";'
         in content
     )
-    assert '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils ];' in content
+    assert '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils busybox ];' in content
     script_lines = content.splitlines()
     script_block_index = script_lines.index("    script = ''")
     assert script_lines[script_block_index + 1].strip() == "set -euo pipefail"
