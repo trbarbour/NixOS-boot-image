@@ -37,7 +37,8 @@ in {
     ];
     environment.interactiveShellInit = preNixosLoginNotice;
     environment.etc."issue".text = lib.mkForce ''
-      <<< Welcome to NixOS ${config.system.nixos.label} (\m) - \l >>>
+      <<< Welcome to the pre-nixos auto-install boot image (${config.system.nixos.label}, \m) - \l >>>
+      This environment installs NixOS automatically and will reboot into the installed system when finished.
       The "nixos" and "root" accounts have empty passwords for console logins.
 
       SSH access:
