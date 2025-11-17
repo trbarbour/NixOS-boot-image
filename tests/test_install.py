@@ -215,7 +215,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert '      ANNOUNCE_UPDATE_ISSUE = "0";' in content
     assert '      ANNOUNCE_NOTIFY_CONSOLES = "1";' in content
     assert (
-        '      BROADCAST_CONSOLE_CMD = "${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast";'
+        '      BROADCAST_CONSOLE_CMD = "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast";'
         in content
     )
     assert '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils busybox ];' in content

@@ -2,7 +2,7 @@
 let
   detectStorageCmd = "${pkgs.pre-nixos}/bin/pre-nixos-detect-storage";
   preNixosCmd = "${pkgs.pre-nixos}/bin/pre-nixos";
-  broadcastConsoleCmd = "${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast";
+  broadcastConsoleCmd = "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast";
   announceLanIpScript = pkgs.writeShellScript "pre-nixos-announce-lan-ip"
     (builtins.readFile ../../pre_nixos/scripts/announce-lan-ip.sh);
 in ''

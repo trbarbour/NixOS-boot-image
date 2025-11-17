@@ -364,7 +364,7 @@ def _inject_configuration(
 
     original_name = _extract_original_name(lan.rename_rule)
 
-    broadcast_cmd = '${pkgs.python3}/bin/python3 -m pre_nixos.console broadcast'
+    broadcast_cmd = '${pkgs.pre-nixos}/bin/pre-nixos-console broadcast'
 
     block_lines = [
         "  # pre-nixos auto-install start",
