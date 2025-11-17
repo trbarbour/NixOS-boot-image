@@ -26,11 +26,34 @@ def make_env(
     realpath: Callable[[str], str] | None = None,
     read_cmdline: Callable[[], Sequence[str]] | None = None,
 ) -> DetectionEnvironment:
+    base_commands: CommandMap = {
+        ("findmnt", "-n", "-o", "SOURCE", "/iso"): CommandOutput(
+            stdout="", returncode=1
+        ),
+        (
+            "findmnt",
+            "-n",
+            "-o",
+            "SOURCE",
+            "/run/archiso/bootmnt",
+        ): CommandOutput(stdout="", returncode=1),
+        ("findmnt", "-n", "-o", "SOURCE", "/nix/.ro-store"): CommandOutput(
+            stdout="", returncode=1
+        ),
+        ("findmnt", "-nr", "-t", "squashfs", "-o", "SOURCE"): CommandOutput(
+            stdout="", returncode=1
+        ),
+        ("findmnt", "-nr", "-t", "iso9660", "-o", "SOURCE"): CommandOutput(
+            stdout="", returncode=1
+        ),
+    }
+    merged_commands = {**base_commands, **commands}
+
     def run(cmd: Sequence[str]) -> CommandOutput:
         key = tuple(cmd)
-        if key not in commands:
+        if key not in merged_commands:
             raise AssertionError(f"unexpected command invocation: {cmd}")
-        return commands[key]
+        return merged_commands[key]
 
     return DetectionEnvironment(
         run=run,
@@ -265,3 +288,56 @@ def test_format_existing_storage_reasons() -> None:
         format_existing_storage_reasons(("partitions", "signatures"))
         == "partitions, signatures"
     )
+
+
+def test_logs_boot_resolution_and_device_filtering(monkeypatch) -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    commands = {
+        ("findmnt", "-n", "-o", "SOURCE", "/run/archiso/bootmnt"): CommandOutput(
+            stdout="/dev/sda1\n", returncode=0
+        ),
+        ("lsblk", "-npo", "PKNAME", "/dev/sda1"): CommandOutput(
+            stdout="sda\n", returncode=0
+        ),
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/sda disk 0\n/dev/nvme0n1 disk 0\n", returncode=0
+        ),
+        ("lsblk", "-rno", "TYPE", "/dev/nvme0n1"): CommandOutput(
+            stdout="disk\npart\n", returncode=0
+        ),
+        ("wipefs", "-n", "/dev/nvme0n1"): CommandOutput(
+            stdout="0x2345\tlvm", returncode=0
+        ),
+    }
+
+    known_paths = {"/dev/sda1", "/dev/sda", "/dev/nvme0n1"}
+
+    def path_exists(path: str) -> bool:
+        return path in known_paths
+
+    env = make_env(commands, path_exists=path_exists, realpath=lambda path: path)
+    monkeypatch.setattr("pre_nixos.storage_detection.log_event", record_event)
+
+    devices = detect_existing_storage(env)
+
+    boot_events = [event for event in events if event[0] == "pre_nixos.storage.resolve_boot_disk"]
+    assert boot_events
+    boot_fields = boot_events[-1][1]
+    assert boot_fields["boot_disk"] == "/dev/sda"
+
+    device_events = [event for event in events if event[0] == "pre_nixos.storage.device_filtered"]
+    assert any("boot_disk" in record[1].get("reasons", []) for record in device_events)
+
+    detection_events = [
+        event for event in events if event[0] == "pre_nixos.storage.device_detected"
+    ]
+    assert detection_events
+    assert detection_events[0][1]["reasons"] == ["partitions", "signatures"]
+
+    assert devices == [
+        ExistingStorageDevice(device="/dev/nvme0n1", reasons=("partitions", "signatures"))
+    ]

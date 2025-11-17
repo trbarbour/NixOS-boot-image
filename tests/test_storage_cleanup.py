@@ -157,3 +157,31 @@ def test_nonzero_exit_code_for_other_commands_fails() -> None:
             execute=True,
             runner=runner,
         )
+
+
+def test_wipefs_failure_logs_diagnostics(monkeypatch) -> None:
+    runner = SequenceRunner([0, 0, 1])
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    monkeypatch.setattr("pre_nixos.storage_cleanup.log_event", record_event)
+    monkeypatch.setattr(
+        "pre_nixos.storage_cleanup._collect_wipefs_diagnostics",
+        lambda device: {"mounts": ["/target /dev/sda1"], "boot_disk": device, "probes": []},
+    )
+
+    with pytest.raises(subprocess.CalledProcessError):
+        storage_cleanup.perform_storage_cleanup(
+            storage_cleanup.WIPE_SIGNATURES,
+            ["/dev/sda"],
+            execute=True,
+            runner=runner,
+        )
+
+    failure_events = [event for event in events if event[0] == "pre_nixos.cleanup.wipefs_failed"]
+    assert failure_events
+    fields = failure_events[0][1]
+    assert fields["device"] == "/dev/sda"
+    assert fields["mounts"] == ["/target /dev/sda1"]
