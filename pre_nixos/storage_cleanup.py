@@ -7,6 +7,7 @@ import shlex
 import subprocess
 from typing import Callable, Iterable, List, Mapping, Sequence, Set, Tuple
 
+from . import storage_detection
 from .logging_utils import log_event
 
 __all__ = [
@@ -64,6 +65,18 @@ def _default_runner(cmd: Sequence[str]) -> subprocess.CompletedProcess:
 
 def _command_to_str(cmd: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in cmd)
+
+
+def _collect_wipefs_diagnostics(device: str) -> dict[str, object]:
+    mounts_result = subprocess.run(
+        ["findmnt", "-rn", "-o", "TARGET,SOURCE", "-T", device],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    mount_lines = [line for line in mounts_result.stdout.splitlines() if line.strip()]
+    boot_probe_data = storage_detection.collect_boot_probe_data()
+    return {"mounts": mount_lines, **boot_probe_data}
 
 
 _ALLOWED_NONZERO_EXIT_CODES: Mapping[Tuple[str, ...], Set[int]] = {
@@ -148,6 +161,17 @@ def perform_storage_cleanup(
             result = runner(cmd)
             if isinstance(result, subprocess.CompletedProcess):
                 if not _is_allowed_returncode(cmd, result.returncode):
+                    diagnostics: dict[str, object] = {}
+                    if cmd[0] == "wipefs":
+                        diagnostics = _collect_wipefs_diagnostics(device)
+                        log_event(
+                            "pre_nixos.cleanup.wipefs_failed",
+                            action=action,
+                            device=device,
+                            command=cmd_str,
+                            returncode=result.returncode,
+                            **diagnostics,
+                        )
                     raise subprocess.CalledProcessError(result.returncode, cmd_str)
                 if result.returncode != 0:
                     log_event(

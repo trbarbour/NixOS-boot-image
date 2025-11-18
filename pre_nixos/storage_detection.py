@@ -8,12 +8,15 @@ import subprocess
 import sys
 from typing import Callable, Iterable, Optional, Sequence
 
+from .logging_utils import log_event
+
 __all__ = [
     "CommandOutput",
     "DetectionEnvironment",
     "ExistingStorageDevice",
     "detect_existing_storage",
     "format_existing_storage_reasons",
+    "collect_boot_probe_data",
     "resolve_boot_disk",
     "scan_existing_storage",
     "has_existing_storage",
@@ -154,41 +157,108 @@ def _candidate_paths_from_source(source: str) -> list[str]:
     return candidates
 
 
-def resolve_boot_disk(env: DetectionEnvironment | None = None) -> Optional[str]:
-    """Determine the disk that hosts the boot media, if possible."""
+_BOOT_MOUNT_TARGETS = (
+    "/iso",
+    "/run/archiso/bootmnt",
+    "/nix/.ro-store",
+)
 
-    env = env or DetectionEnvironment()
+_BOOT_FILESYSTEM_TYPES = ("squashfs", "iso9660")
+
+
+def _resolve_boot_disk_with_probes(
+    env: DetectionEnvironment,
+) -> tuple[Optional[str], list[dict[str, object]]]:
+    probes: list[dict[str, object]] = []
 
     for arg in env.read_cmdline():
         for prefix, base in _BOOT_ARG_PREFIXES.items():
             if not arg.startswith(prefix):
                 continue
             candidate = base + arg[len(prefix) :]
-            if not env.path_exists(candidate):
+            exists = env.path_exists(candidate)
+            resolved_candidate = env.realpath(candidate) if exists else None
+            probe: dict[str, object] = {
+                "probe": "cmdline",
+                "argument": arg,
+                "candidate": candidate,
+                "exists": exists,
+            }
+            if not exists:
+                probes.append(probe)
                 continue
-            boot_device = env.realpath(candidate)
+            boot_device = resolved_candidate
             parent = _run_command(
                 env, ["lsblk", "-npo", "PKNAME", boot_device], ignore_errors=True
             ).strip()
-            if parent:
-                return env.realpath(f"/dev/{parent}")
-            return boot_device
-
-    boot_source = _run_command(
-        env, ["findmnt", "-n", "-o", "SOURCE", "/iso"], ignore_errors=True
-    ).strip()
-    for candidate in _candidate_paths_from_source(boot_source):
-        if not env.path_exists(candidate):
-            continue
-        boot_device = env.realpath(candidate)
-        parent = _run_command(
-            env, ["lsblk", "-npo", "PKNAME", boot_device], ignore_errors=True
+            resolved_boot = (
+                env.realpath(f"/dev/{parent}") if parent else boot_device
+            )
+            probe["parent"] = parent or None
+            probe["resolved"] = resolved_boot
+            probes.append(probe)
+            return resolved_boot, probes
+    sources: list[dict[str, object]] = []
+    for target in _BOOT_MOUNT_TARGETS:
+        sources.append(
+            {
+                "probe": "mountpoint",
+                "target": target,
+                "source": _run_command(
+                    env, ["findmnt", "-n", "-o", "SOURCE", target], ignore_errors=True
+                ).strip(),
+            }
+        )
+    for fs_type in _BOOT_FILESYSTEM_TYPES:
+        listing = _run_command(
+            env, ["findmnt", "-nr", "-t", fs_type, "-o", "SOURCE"], ignore_errors=True
         ).strip()
-        if parent:
-            return env.realpath(f"/dev/{parent}")
-        return boot_device
+        if listing:
+            for source in listing.splitlines():
+                sources.append({"probe": "filesystem", "fs_type": fs_type, "source": source})
+    for source_info in sources:
+        source = str(source_info.get("source", "")).strip()
+        candidates_info: list[dict[str, object]] = []
+        for candidate in _candidate_paths_from_source(source):
+            exists = env.path_exists(candidate)
+            resolved_candidate = env.realpath(candidate) if exists else None
+            candidate_info: dict[str, object] = {
+                "candidate": candidate,
+                "exists": exists,
+            }
+            if not exists:
+                candidates_info.append(candidate_info)
+                continue
+            boot_device = resolved_candidate
+            parent = _run_command(
+                env, ["lsblk", "-npo", "PKNAME", boot_device], ignore_errors=True
+            ).strip()
+            resolved_boot = (
+                env.realpath(f"/dev/{parent}") if parent else boot_device
+            )
+            candidate_info["parent"] = parent or None
+            candidate_info["resolved"] = resolved_boot
+            source_info["selected"] = resolved_boot
+            candidates_info.append(candidate_info)
+            probes.append({**source_info, "candidates": candidates_info})
+            return resolved_boot, probes
+        probes.append({**source_info, "candidates": candidates_info})
+    return None, probes
 
-    return None
+
+def collect_boot_probe_data(env: DetectionEnvironment | None = None) -> dict[str, object]:
+    env = env or DetectionEnvironment()
+    boot_disk, probes = _resolve_boot_disk_with_probes(env)
+    return {"boot_disk": boot_disk, "probes": probes}
+
+
+def resolve_boot_disk(env: DetectionEnvironment | None = None) -> Optional[str]:
+    """Determine the disk that hosts the boot media, if possible."""
+
+    env = env or DetectionEnvironment()
+    boot_disk, probes = _resolve_boot_disk_with_probes(env)
+    log_event("pre_nixos.storage.resolve_boot_disk", boot_disk=boot_disk, probes=probes)
+    return boot_disk
 
 
 def _iter_lsblk_rows(output: str) -> Iterable[tuple[str, str, str | None]]:
@@ -215,15 +285,24 @@ def scan_existing_storage(
     for device, dev_type, removable in _iter_lsblk_rows(listing):
         if dev_type != "disk":
             continue
-        if device.startswith(_IGNORED_DEVICE_PREFIXES):
-            continue
         resolved = env.realpath(device)
+        skip_reasons: list[str] = []
+        detection_reasons: list[str] = []
+        if device.startswith(_IGNORED_DEVICE_PREFIXES):
+            skip_reasons.append("ignored_prefix")
         if removable == "1":
-            # ``lsblk`` reports removable disks for typical USB boot media.
-            # Avoid scheduling destructive operations on such devices because
-            # they frequently host the running pre-nixos environment.
-            continue
+            skip_reasons.append("removable_media")
         if boot_disk and resolved == boot_disk:
+            skip_reasons.append("boot_disk")
+        if skip_reasons:
+            log_event(
+                "pre_nixos.storage.device_filtered",
+                device=device,
+                resolved=resolved,
+                reasons=skip_reasons,
+                removable=removable == "1",
+                boot_disk=boot_disk,
+            )
             continue
         type_result = env.run(["lsblk", "-rno", "TYPE", device])
         if type_result.returncode in _DISAPPEARED_DEVICE_RETURN_CODES:
@@ -240,9 +319,8 @@ def scan_existing_storage(
             )
         type_listing = type_result.stdout
         type_lines = [line for line in type_listing.splitlines() if line.strip()]
-        reasons: list[str] = []
         if len(type_lines) > 1:
-            reasons.append("partitions")
+            detection_reasons.append("partitions")
         wipefs_result = env.run(["wipefs", "-n", device])
         if wipefs_result.returncode in _DISAPPEARED_DEVICE_RETURN_CODES:
             if env.path_exists(device):
@@ -257,10 +335,28 @@ def scan_existing_storage(
                 f"{wipefs_result.returncode}"
             )
         if wipefs_result.stdout.strip():
-            reasons.append("signatures")
-        if reasons:
-            detected.append(
-                ExistingStorageDevice(device=resolved, reasons=tuple(reasons))
+            detection_reasons.append("signatures")
+        if detection_reasons:
+            device_info = ExistingStorageDevice(
+                device=resolved, reasons=tuple(detection_reasons)
+            )
+            detected.append(device_info)
+            log_event(
+                "pre_nixos.storage.device_detected",
+                device=device,
+                resolved=resolved,
+                reasons=detection_reasons,
+                removable=removable == "1",
+                boot_disk=boot_disk,
+            )
+        else:
+            log_event(
+                "pre_nixos.storage.device_filtered",
+                device=device,
+                resolved=resolved,
+                reasons=["no_signatures"],
+                removable=removable == "1",
+                boot_disk=boot_disk,
             )
     return detected
 
