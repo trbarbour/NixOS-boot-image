@@ -365,8 +365,9 @@ def _inject_configuration(
     original_name = _extract_original_name(lan.rename_rule)
 
     broadcast_cmd = (
-        '${if pkgs ? pre-nixos then "${pkgs.pre-nixos}/bin/pre-nixos-console" '
-        'else "pre-nixos-console"} broadcast'
+        '${if builtins.hasAttr "pre-nixos" pkgs then '
+        '"${pkgs.pre-nixos}/bin/pre-nixos-console" else "pre-nixos-console"} '
+        "broadcast"
     )
 
     block_lines = [
