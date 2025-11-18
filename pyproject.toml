@@ -20,6 +20,7 @@ pre_nixos = ["root_key.pub", "VERSION", "scripts/announce-lan-ip.sh"]
 pre-nixos = "pre_nixos.pre_nixos:main"
 pre-nixos-detect-storage = "pre_nixos.storage_detection:main"
 pre-nixos-tui = "pre_nixos.tui:run"
+pre-nixos-console = "pre_nixos.console:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]
