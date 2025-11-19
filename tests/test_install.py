@@ -211,12 +211,16 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'matchConfig.Name = "lan";' not in content
     assert 'systemd.services."pre-nixos-auto-install-ip"' in content
     assert 'description = "Announce LAN IPv4 on boot";' in content
-    assert '    environment = {' in content
+    assert '    environment = let' in content
+    assert '      broadcastConsoleCmd =' in content
+    assert '        if builtins.hasAttr "pre-nixos" pkgs then' in content
+    assert '          "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast"' in content
+    assert '        else "pre-nixos-console broadcast";' in content
+    assert '    in {' in content
     assert '      ANNOUNCE_UPDATE_ISSUE = "0";' in content
     assert '      ANNOUNCE_NOTIFY_CONSOLES = "1";' in content
     assert (
-        '      BROADCAST_CONSOLE_CMD = "${if builtins.hasAttr \\\"pre-nixos\\\" pkgs then \\\"${pkgs.pre-nixos}/bin/pre-nixos-console\\\" '
-        'else \\\"pre-nixos-console\\\"} broadcast";'
+        '      BROADCAST_CONSOLE_CMD = broadcastConsoleCmd;'
         in content
     )
     assert '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils busybox ];' in content
