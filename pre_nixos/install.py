@@ -364,12 +364,6 @@ def _inject_configuration(
 
     original_name = _extract_original_name(lan.rename_rule)
 
-    broadcast_cmd = (
-        '${if builtins.hasAttr "pre-nixos" pkgs then '
-        '"${pkgs.pre-nixos}/bin/pre-nixos-console" else "pre-nixos-console"} '
-        "broadcast"
-    )
-
     block_lines = [
         "  # pre-nixos auto-install start",
         "  networking.firewall = {",
@@ -453,7 +447,12 @@ def _inject_configuration(
             '    after = [ "network-online.target" ];',
             '    wants = [ "network-online.target" ];',
             '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils busybox ];',
-            '    environment = {',
+            '    environment = let',
+            '      broadcastConsoleCmd =',
+            '        if builtins.hasAttr "pre-nixos" pkgs then',
+            '          "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast"',
+            '        else "pre-nixos-console broadcast";',
+            '    in {',
             '      PRE_NIXOS_STATE_DIR = "/run/pre-nixos";',
             '      ANNOUNCE_STATUS_FILE = "/run/pre-nixos/network-status";',
             '      ANNOUNCE_WRITE_STATUS = "1";',
@@ -464,7 +463,7 @@ def _inject_configuration(
             '      ANNOUNCE_PREFERRED_IFACE = "lan";',
             '      ANNOUNCE_MAX_ATTEMPTS = "60";',
             '      ANNOUNCE_DELAY = "1";',
-            f'      BROADCAST_CONSOLE_CMD = "{_escape_nix_string(broadcast_cmd)}";',
+            '      BROADCAST_CONSOLE_CMD = broadcastConsoleCmd;',
             '    };',
             '    serviceConfig = {',
             '      Type = "oneshot";',
