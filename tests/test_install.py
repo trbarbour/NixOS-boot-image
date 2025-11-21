@@ -209,27 +209,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert content.count('matchConfig.MACAddress = "00:11:22:33:44:55";') >= 2
     assert 'matchConfig.OriginalName' not in content
     assert 'matchConfig.Name = "lan";' not in content
-    assert 'systemd.services."pre-nixos-auto-install-ip"' in content
-    assert 'description = "Announce LAN IPv4 on boot";' in content
-    assert '    environment = let' in content
-    assert '      broadcastConsoleCmd =' in content
-    assert '        if builtins.hasAttr "pre-nixos" pkgs then' in content
-    assert '          "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast"' in content
-    assert '        else "pre-nixos-console broadcast";' in content
-    assert '    in {' in content
-    assert '      ANNOUNCE_UPDATE_ISSUE = "0";' in content
-    assert '      ANNOUNCE_NOTIFY_CONSOLES = "1";' in content
-    assert (
-        '      BROADCAST_CONSOLE_CMD = broadcastConsoleCmd;'
-        in content
-    )
-    assert '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils busybox ];' in content
-    script_lines = content.splitlines()
-    script_block_index = script_lines.index("    script = ''")
-    assert script_lines[script_block_index + 1].strip() == "set -euo pipefail"
-    assert "read_iface_ipv4()" in content
-    assert "read_route_ipv4()" in content
-    assert "ANNOUNCE_STATUS_FILE" in content
+    assert "./pre-nixos-auto-install-ip.nix" in content
     assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content
     assert "boot.loader.grub.extraConfig = ''" in content
     assert "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1" in content
@@ -258,6 +238,18 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'fileSystems."/' not in hardware_text
     assert "swapDevices" not in hardware_text
     assert "networking.useDHCP" not in hardware_text
+
+    module_content = (root / "etc/nixos/pre-nixos-auto-install-ip.nix").read_text()
+    assert 'systemd.services."pre-nixos-auto-install-ip"' in module_content
+    assert 'description = "Announce LAN IPv4 on boot";' in module_content
+    assert 'BROADCAST_CONSOLE_CMD = broadcastConsoleCmd;' in module_content
+    assert '++ preNixosPath;' in module_content
+    assert 'systemd.services."pre-nixos-network-report"' in module_content
+    assert "ip -br link" in module_content
+    assert "networkctl status --all" in module_content
+
+    announce_script = (root / "etc/nixos/pre-nixos-announce-lan-ip.sh").read_text()
+    assert "preferred interface" in announce_script
 
     network_dir = root / "etc/systemd/network"
     assert (network_dir / "10-lan.link").read_text() == lan.rename_rule.read_text()

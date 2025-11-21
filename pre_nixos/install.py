@@ -21,6 +21,7 @@ from .network import LanConfiguration
 _AUTO_STATUS_FILENAME = "auto-install-status"
 _BLOCK_START = "# pre-nixos auto-install start"
 _BLOCK_END = "# pre-nixos auto-install end"
+_AUTO_INSTALL_MODULE = "./pre-nixos-auto-install-ip.nix"
 
 
 @dataclass(frozen=True)
@@ -328,6 +329,82 @@ def _load_ip_announcement_script() -> list[str]:
     return content.strip("\n").splitlines()
 
 
+def _load_auto_install_module_template() -> str:
+    """Return the NixOS module used for IP announcement and diagnostics."""
+
+    try:
+        template_path = resources.files(__package__).joinpath(
+            "templates/auto-install-ip.nix"
+        )
+        return template_path.read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError) as error:  # pragma: no cover - packaging issue
+        raise FileNotFoundError(
+            "Missing auto-install IP module template packaged with pre_nixos"
+        ) from error
+
+
+def _write_auto_install_module(root_path: Path) -> Path:
+    """Write the auto-install helper module and script into ``/etc/nixos``."""
+
+    module_text = _load_auto_install_module_template()
+    script_lines = _load_ip_announcement_script()
+
+    config_dir = root_path / "etc/nixos"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    module_path = config_dir / Path(_AUTO_INSTALL_MODULE).name
+    module_path.write_text(module_text, encoding="utf-8")
+
+    script_path = config_dir / "pre-nixos-announce-lan-ip.sh"
+    script_text = "\n".join(script_lines)
+    if not script_text.endswith("\n"):
+        script_text += "\n"
+    script_path.write_text(script_text, encoding="utf-8")
+    os.chmod(script_path, 0o755)
+
+    return module_path
+
+
+def _ensure_auto_install_import(lines: list[str]) -> list[str]:
+    """Ensure ``configuration.nix`` imports the auto-install helper module."""
+
+    target = _AUTO_INSTALL_MODULE
+    in_imports = False
+    open_index: int | None = None
+    close_index: int | None = None
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("imports"):
+            in_imports = True
+        if not in_imports:
+            continue
+        if "[" in line and open_index is None:
+            open_index = index
+        if "]" in line:
+            close_index = index
+            break
+
+    if open_index is not None and close_index is not None:
+        block = "\n".join(lines[open_index: close_index + 1])
+        if target in block:
+            return lines
+        indentation_match = re.match(r"(\s*)", lines[close_index])
+        indent = indentation_match.group(1) if indentation_match else "  "
+        insertion = f"{indent}  {target}"
+        updated = lines[:close_index] + [insertion] + lines[close_index:]
+        return updated
+
+    insertion_block = [
+        "  imports = [",
+        f"    {target}",
+        "  ];",
+        "",
+    ]
+    insertion_point = 1 if lines else 0
+    return lines[:insertion_point] + insertion_block + lines[insertion_point:]
+
+
 def _inject_configuration(
     root_path: Path,
     key_text: str,
@@ -359,6 +436,9 @@ def _inject_configuration(
         if skipping:
             continue
         filtered.append(line)
+
+    _write_auto_install_module(root_path)
+    filtered = _ensure_auto_install_import(filtered)
 
     filesystems, swaps = _collect_storage_definitions(storage_plan)
 
@@ -419,66 +499,21 @@ def _inject_configuration(
         link_match_lines.append(
             f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
         )
-    elif original_name:
+    else:
+        fallback_name = original_name or lan.interface or "lan"
         link_match_lines.append(
-            f'    matchConfig.OriginalName = "{_escape_nix_string(original_name)}";'
-        )
-    elif lan.interface:
-        link_match_lines.append(
-            f'    matchConfig.OriginalName = "{_escape_nix_string(lan.interface)}";'
+            f'    matchConfig.OriginalName = "{_escape_nix_string(fallback_name)}";'
         )
 
-    if link_match_lines:
-        block_lines.append('  systemd.network.links."lan" = {')
-        block_lines.extend(link_match_lines)
-        block_lines.extend(
-            [
-                '    linkConfig.Name = "lan";',
-                "  };",
-                "",
-            ]
-        )
-
+    block_lines.append('  systemd.network.links."lan" = {')
+    block_lines.extend(link_match_lines)
     block_lines.extend(
         [
-            '  systemd.services."pre-nixos-auto-install-ip" = {',
-            '    description = "Announce LAN IPv4 on boot";',
-            '    wantedBy = [ "multi-user.target" ];',
-            '    after = [ "network-online.target" ];',
-            '    wants = [ "network-online.target" ];',
-            '    path = with pkgs; [ coreutils gnused gnugrep iproute2 util-linux findutils busybox ];',
-            '    environment = let',
-            '      broadcastConsoleCmd =',
-            '        if builtins.hasAttr "pre-nixos" pkgs then',
-            '          "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast"',
-            '        else "pre-nixos-console broadcast";',
-            '    in {',
-            '      PRE_NIXOS_STATE_DIR = "/run/pre-nixos";',
-            '      ANNOUNCE_STATUS_FILE = "/run/pre-nixos/network-status";',
-            '      ANNOUNCE_WRITE_STATUS = "1";',
-            '      ANNOUNCE_UPDATE_ISSUE = "0";',
-            '      ANNOUNCE_NOTIFY_CONSOLES = "1";',
-            '      ANNOUNCE_CONSOLE_FALLBACK = "1";',
-            '      ANNOUNCE_STDOUT_MESSAGE = "1";',
-            '      ANNOUNCE_PREFERRED_IFACE = "lan";',
-            '      ANNOUNCE_MAX_ATTEMPTS = "60";',
-            '      ANNOUNCE_DELAY = "1";',
-            '      BROADCAST_CONSOLE_CMD = broadcastConsoleCmd;',
-            '    };',
-            '    serviceConfig = {',
-            '      Type = "oneshot";',
-            '      StandardOutput = "journal+console";',
-            '      StandardError = "journal+console";',
-            '    };',
+            '    linkConfig.Name = "lan";',
+            "  };",
+            "",
         ]
     )
-    announcement_script = _load_ip_announcement_script()
-    block_lines.append("    script = ''")
-    for line in announcement_script:
-        block_lines.append(f"      {_escape_nix_indented_line(line)}")
-    block_lines.append("    '';")
-    block_lines.append("  };")
-    block_lines.append("")
 
     block_lines.extend(
         [
