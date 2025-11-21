@@ -16,6 +16,7 @@ max_attempts="${ANNOUNCE_MAX_ATTEMPTS:-60}"
 delay="${ANNOUNCE_DELAY:-1}"
 route_target="${ANNOUNCE_ROUTE_TARGET:-1.1.1.1}"
 broadcast_cmd="${BROADCAST_CONSOLE_CMD:-}"
+preferred_missing_message=""
 
 read_recorded_ipv4() {
   local path="$1" key value record=""
@@ -87,6 +88,11 @@ while [ "$attempt" -lt "$max_attempts" ]; do
   if [ -z "$ip_address" ] && route_ip=$(read_route_ipv4 "$route_target"); then
     ip_address="$route_ip"
   fi
+  if [ -z "$ip_address" ] && [ -n "$preferred_iface" ]; then
+    if ! ip link show dev "$preferred_iface" >/dev/null 2>&1; then
+      preferred_missing_message="preferred interface \"$preferred_iface\" not found"
+    fi
+  fi
   if [ -n "$ip_address" ]; then
     break
   fi
@@ -103,6 +109,8 @@ if [ -n "$ip_address" ]; then
     mkdir -p "$(dirname "$status_file")"
     printf 'LAN_IPV4=%s\n' "$ip_address" > "$status_file"
   fi
+elif [ -n "$preferred_missing_message" ]; then
+  message="LAN IPv4 address unavailable ($preferred_missing_message)"
 fi
 
 if [ "$stdout_message" != "0" ]; then

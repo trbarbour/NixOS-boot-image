@@ -14,7 +14,12 @@ include-package-data = true
 version = {file = "pre_nixos/VERSION"}
 
 [tool.setuptools.package-data]
-pre_nixos = ["root_key.pub", "VERSION", "scripts/announce-lan-ip.sh"]
+pre_nixos = [
+    "root_key.pub",
+    "VERSION",
+    "scripts/announce-lan-ip.sh",
+    "templates/auto-install-ip.nix",
+]
 
 [project.scripts]
 pre-nixos = "pre_nixos.pre_nixos:main"
