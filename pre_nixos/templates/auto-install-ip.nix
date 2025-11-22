@@ -75,7 +75,7 @@ in {
       StandardOutput = "journal+console";
       StandardError = "journal+console";
     };
-    script = announceLanIpScript;
+    script = "${announceLanIpScript}";
   };
 
   systemd.services."pre-nixos-network-report" = {
@@ -89,6 +89,6 @@ in {
       StandardOutput = "journal";
       StandardError = "journal";
     };
-    script = networkReportScript;
+    script = "${networkReportScript}";
   };
 }
