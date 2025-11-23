@@ -245,6 +245,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'BROADCAST_CONSOLE_CMD = broadcastConsoleCmd;' in module_content
     assert '++ preNixosPath;' in module_content
     assert 'systemd.services."pre-nixos-network-report"' in module_content
+    assert "report_dir=\"''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}\"" in module_content
     assert "ip -br link" in module_content
     assert "networkctl status --all" in module_content
 
