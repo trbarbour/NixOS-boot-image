@@ -23,7 +23,7 @@ let
   networkReportScript = pkgs.writeShellScript "pre-nixos-network-report" ''
     set -euo pipefail
 
-    report_dir="${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
+    report_dir="''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
     mkdir -p "$report_dir"
     report_path="$report_dir/network-report"
 
