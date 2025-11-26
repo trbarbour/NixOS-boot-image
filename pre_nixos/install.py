@@ -505,7 +505,14 @@ def _inject_configuration(
             f'    matchConfig.OriginalName = "{_escape_nix_string(fallback_name)}";'
         )
 
-    block_lines.append('  systemd.network.links."lan" = {')
+    link_unit_name = (
+        lan.rename_rule.stem if lan.rename_rule is not None else "lan"
+    )
+    # Double "{" is required in the f-string to emit a single "{" in the
+    # generated Nix attribute set.
+    block_lines.append(
+        f'  systemd.network.links."{_escape_nix_string(link_unit_name)}" = {{'
+    )
     block_lines.extend(link_match_lines)
     block_lines.extend(
         [
