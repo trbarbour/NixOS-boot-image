@@ -205,7 +205,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert "networking.interfaces.lan = {" in content
     assert "useDHCP = true;" in content
     assert 'matchConfig.MACAddress = "00:11:22:33:44:55";' in content
-    assert 'systemd.network.links."lan"' in content
+    assert 'systemd.network.links."10-lan"' in content
     assert content.count('matchConfig.MACAddress = "00:11:22:33:44:55";') >= 2
     assert 'matchConfig.OriginalName' not in content
     assert 'matchConfig.Name = "lan";' not in content
