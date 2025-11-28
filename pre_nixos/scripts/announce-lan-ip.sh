@@ -119,8 +119,15 @@ fi
 
 broadcast_failed=1
 if [ -n "$broadcast_cmd" ]; then
-  if sh -c "$broadcast_cmd \"\$1\"" broadcast "$message"; then
-    broadcast_failed=0
+  set -- $broadcast_cmd
+  broadcast_bin=$1
+  if command -v "$broadcast_bin" >/dev/null 2>&1; then
+    if sh -c "$broadcast_cmd \"\\$1\"" broadcast "$message"; then
+      broadcast_failed=0
+    fi
+  else
+    logger -t pre-nixos-announce-lan-ip \
+      "broadcast command '$broadcast_bin' not found; skipping LAN IP console broadcast" || true
   fi
 fi
 
