@@ -119,6 +119,7 @@ fi
 
 broadcast_failed=1
 if [ -n "$broadcast_cmd" ]; then
+  # Split the configured broadcast command so we can verify the executable exists
   set -- $broadcast_cmd
   broadcast_bin=$1
   if command -v "$broadcast_bin" >/dev/null 2>&1; then
