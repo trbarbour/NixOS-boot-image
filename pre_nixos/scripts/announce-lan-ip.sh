@@ -120,10 +120,12 @@ fi
 broadcast_failed=1
 if [ -n "$broadcast_cmd" ]; then
   # Split the configured broadcast command so we can verify the executable exists
+  # and invoke it directly without an additional shell layer (which would
+  # complicate quoting of the message argument).
   set -- $broadcast_cmd
   broadcast_bin=$1
   if command -v "$broadcast_bin" >/dev/null 2>&1; then
-    if sh -c "$broadcast_cmd \"\\$1\"" broadcast "$message"; then
+    if "$@" "$message"; then
       broadcast_failed=0
     fi
   else
