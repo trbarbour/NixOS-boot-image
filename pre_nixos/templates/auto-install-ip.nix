@@ -40,7 +40,7 @@ let
       echo
       echo "## .link files"
       for dir in /etc/systemd/network /run/systemd/network; do
-        if compgen -G "$dir/*.link" > /dev/null; then
+        if ls "$dir"/*.link > /dev/null 2>&1; then
           for file in "$dir"/*.link; do
             echo "-- $file --"
             cat "$file" || true
