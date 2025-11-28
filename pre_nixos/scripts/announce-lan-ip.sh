@@ -119,8 +119,18 @@ fi
 
 broadcast_failed=1
 if [ -n "$broadcast_cmd" ]; then
-  if sh -c "$broadcast_cmd \"\$1\"" broadcast "$message"; then
-    broadcast_failed=0
+  # Parse the configured broadcast command with the shell so quoted arguments are
+  # preserved, allowing paths with spaces or additional flags. The first token is
+  # used to verify the executable exists before invoking the full command with
+  # the message passed as the first positional parameter.
+  broadcast_bin=$(sh -c "set -- $broadcast_cmd; printf '%s' \"\$1\"")
+  if command -v "$broadcast_bin" >/dev/null 2>&1; then
+    if sh -c "exec $broadcast_cmd \"\$1\"" broadcast "$message"; then
+      broadcast_failed=0
+    fi
+  else
+    logger -t pre-nixos-announce-lan-ip \
+      "broadcast command '$broadcast_bin' not found; skipping LAN IP console broadcast" || true
   fi
 fi
 
