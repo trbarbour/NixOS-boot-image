@@ -178,7 +178,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     args = parser.parse_args(argv)
 
-    install_network = None
+    install_network: install.InstallNetworkConfig | None = install.load_install_network_config()
     install_network_args: tuple[str, str | None, str | None] | None = None
     ip_args = (
         args.install_ip_address,
@@ -218,20 +218,12 @@ def main(argv: list[str] | None = None) -> None:
             except ValueError as exc:
                 parser.error(str(exc))
 
-        if install_network is not None:
+        if install_network_args is not None and install_network is not None:
             try:
                 state.record_install_network_config(install_network.to_payload())
             except OSError as exc:
                 print(
                     f"Warning: failed to record install network configuration: {exc}",
-                    file=sys.stderr,
-                )
-        else:
-            try:
-                state.clear_install_network_config()
-            except OSError as exc:
-                print(
-                    f"Warning: failed to clear install network configuration: {exc}",
                     file=sys.stderr,
                 )
 

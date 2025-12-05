@@ -363,6 +363,58 @@ def test_cli_static_network_defaults_from_dhcp(monkeypatch, tmp_path):
     ]
 
 
+def test_cli_reuses_saved_install_network(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        pre_nixos.inventory,
+        "enumerate_disks",
+        lambda: [Disk(name="sda", size=1000, rotational=False)],
+    )
+
+    sample_lan = pre_nixos.network.LanConfiguration(
+        authorized_key=tmp_path / "key.pub",
+        interface="lan",
+        rename_rule=None,
+        network_unit=None,
+    )
+
+    saved_network = pre_nixos.install.InstallNetworkConfig(
+        address="192.0.2.40",
+        netmask="255.255.255.0",
+        gateway="192.0.2.1",
+        prefix_length=24,
+    )
+
+    recorded_clears: list[bool] = []
+    recorded_saves: list[dict[str, str]] = []
+    auto_install_calls: list[pre_nixos.install.InstallNetworkConfig | None] = []
+
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: sample_lan)
+    monkeypatch.setattr(pre_nixos.install, "load_install_network_config", lambda: saved_network)
+    monkeypatch.setattr(pre_nixos.apply, "apply_plan", lambda plan, dry_run=False: None)
+    monkeypatch.setattr(
+        pre_nixos.state,
+        "clear_install_network_config",
+        lambda: recorded_clears.append(True),
+    )
+    monkeypatch.setattr(
+        pre_nixos.state,
+        "record_install_network_config",
+        lambda payload: recorded_saves.append(payload),
+    )
+
+    def fake_auto_install(lan_config, plan, *, enabled, dry_run, install_network=None):
+        auto_install_calls.append(install_network)
+        return AutoInstallResult(status="skipped", reason="disabled")
+
+    monkeypatch.setattr(pre_nixos.install, "auto_install", fake_auto_install)
+
+    pre_nixos.main([])
+
+    assert auto_install_calls == [saved_network]
+    assert recorded_clears == []
+    assert recorded_saves == []
+
+
 def test_cli_auto_install_failure_exits(monkeypatch, tmp_path):
     monkeypatch.setattr(
         pre_nixos.inventory,
