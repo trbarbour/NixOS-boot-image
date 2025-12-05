@@ -14,6 +14,7 @@ from . import (
     network,
     partition,
     planner,
+    state,
     storage_cleanup,
     storage_detection,
 )
@@ -51,6 +52,14 @@ def _confirm_storage_reset() -> bool:
         if choice in {"", "n", "no"}:
             return False
         print("Please respond with 'yes' or 'no'.")
+
+
+def _auto_install_default(lan_config: network.LanConfiguration | None) -> bool:
+    """Return ``True`` when auto-install should be enabled by default."""
+
+    env_value = os.environ.get("PRE_NIXOS_AUTO_INSTALL", "").strip().lower()
+    env_enabled = env_value in {"1", "true", "yes", "on"}
+    return env_enabled and lan_config is not None
 
 
 def _prompt_storage_cleanup(
@@ -155,7 +164,35 @@ def main(argv: list[str] | None = None) -> None:
             "Cannot be combined with planning options."
         ),
     )
+    parser.add_argument(
+        "--install-ip-address",
+        help="Static IPv4 address to apply to the installed system (disables DHCP).",
+    )
+    parser.add_argument(
+        "--install-netmask",
+        help="Netmask for the installed system's static IPv4 configuration.",
+    )
+    parser.add_argument(
+        "--install-gateway",
+        help="Default gateway for the installed system's static IPv4 configuration.",
+    )
     args = parser.parse_args(argv)
+
+    install_network: install.InstallNetworkConfig | None = install.load_install_network_config()
+    install_network_args: tuple[str, str | None, str | None] | None = None
+    ip_args = (
+        args.install_ip_address,
+        args.install_netmask,
+        args.install_gateway,
+    )
+    if any(ip_args):
+        if not args.install_ip_address:
+            parser.error("--install-ip-address is required when setting install networking")
+        install_network_args = (
+            args.install_ip_address,
+            args.install_netmask,
+            args.install_gateway,
+        )
 
     console = _maybe_open_console()
 
@@ -167,7 +204,28 @@ def main(argv: list[str] | None = None) -> None:
         lan_config = network.configure_lan()
         auto_install_enabled = args.auto_install
         if auto_install_enabled is None:
-            auto_install_enabled = lan_config is not None
+            auto_install_enabled = _auto_install_default(lan_config)
+
+        if install_network_args is not None:
+            iface = lan_config.interface if lan_config and lan_config.interface else "lan"
+            try:
+                install_network = install.build_install_network_config_with_defaults(
+                    install_network_args[0],
+                    netmask=install_network_args[1],
+                    gateway=install_network_args[2],
+                    iface=iface,
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+
+        if install_network_args is not None and install_network is not None:
+            try:
+                state.record_install_network_config(install_network.to_payload())
+            except OSError as exc:
+                print(
+                    f"Warning: failed to record install network configuration: {exc}",
+                    file=sys.stderr,
+                )
 
         if args.install_now:
             if args.plan_only or args.partition_boot or args.partition_lvm:
@@ -181,6 +239,7 @@ def main(argv: list[str] | None = None) -> None:
             result = install.auto_install(
                 lan_config,
                 None,
+                install_network=install_network,
                 enabled=True,
                 dry_run=args.dry_run,
             )
@@ -240,6 +299,7 @@ def main(argv: list[str] | None = None) -> None:
             result = install.auto_install(
                 lan_config,
                 plan,
+                install_network=install_network,
                 enabled=auto_install_enabled,
                 dry_run=args.dry_run,
             )

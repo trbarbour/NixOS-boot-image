@@ -1,6 +1,7 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.services.pre-nixos;
+  autoInstallFlag = builtins.getEnv "PRE_NIXOS_AUTO_INSTALL";
   # ``pre-nixos`` only executes disk and network commands when PRE_NIXOS_EXEC is
   # set.  Propagate it to login shells for the TUI and to the systemd unit so the
   # boot-time invocation can configure networking.  ``disko`` relies on
@@ -11,8 +12,12 @@ let
     PRE_NIXOS_EXEC = "1";
     PRE_NIXOS_NIXPKGS = "${pkgs.path}";
     PRE_NIXOS_STATE_DIR = "/run/pre-nixos";
-  } // lib.optionalAttrs cfg.enable {
+  }
+  // lib.optionalAttrs cfg.enable {
     PRE_NIXOS_VERSION = pkgs.pre-nixos.version;
+  }
+  // lib.optionalAttrs (autoInstallFlag != "") {
+    PRE_NIXOS_AUTO_INSTALL = autoInstallFlag;
   };
   preNixosServiceEnv = preNixosExecEnv // {
     NIX_PATH = "nixpkgs=${pkgs.path}";
@@ -38,7 +43,8 @@ in {
     environment.interactiveShellInit = preNixosLoginNotice;
     environment.etc."issue".text = lib.mkForce ''
       <<< Welcome to the pre-nixos auto-install boot image (${config.system.nixos.label}, \m) - \l >>>
-      This environment installs NixOS automatically and will reboot into the installed system when finished.
+      This environment installs NixOS automatically when PRE_NIXOS_AUTO_INSTALL=1 was set during the build and will reboot into the installed system when finished.
+      Otherwise, run pre-nixos manually to configure networking and launch installation.
       The "nixos" and "root" accounts have empty passwords for console logins.
 
       SSH access:

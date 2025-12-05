@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import os
 import re
 import shutil
@@ -13,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Tuple
 
-from . import state
+from . import network, state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -31,6 +32,31 @@ class AutoInstallResult:
     status: str
     reason: Optional[str] = None
     details: Dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class InstallNetworkConfig:
+    """Static IPv4 settings for the installed system."""
+
+    address: str
+    netmask: str
+    gateway: str
+    prefix_length: int
+
+    @property
+    def cidr(self) -> str:
+        """Return ``address/prefix`` for systemd.network configuration."""
+
+        return f"{self.address}/{self.prefix_length}"
+
+    def to_payload(self) -> Dict[str, str]:
+        """Return a JSON-serialisable representation of the configuration."""
+
+        return {
+            "address": self.address,
+            "netmask": self.netmask,
+            "gateway": self.gateway,
+        }
 
 
 def _record_result(
@@ -83,6 +109,77 @@ def _record_result(
         )
 
     return AutoInstallResult(status=status, reason=reason, details=payload)
+
+
+def build_install_network_config(
+    address: str, netmask: str, gateway: str
+) -> InstallNetworkConfig:
+    """Return a validated :class:`InstallNetworkConfig`.
+
+    Raises ``ValueError`` when any input is not a valid IPv4 element.
+    """
+
+    try:
+        ip_address = ipaddress.IPv4Address(address)
+    except ipaddress.AddressValueError as exc:
+        raise ValueError(f"Invalid IPv4 address: {address}") from exc
+
+    try:
+        ipaddress.IPv4Address(gateway)
+    except ipaddress.AddressValueError as exc:
+        raise ValueError(f"Invalid IPv4 gateway: {gateway}") from exc
+
+    try:
+        ipv4_network = ipaddress.IPv4Network((address, netmask), strict=False)
+    except (ipaddress.NetmaskValueError, ipaddress.AddressValueError) as exc:
+        raise ValueError(f"Invalid IPv4 netmask: {netmask}") from exc
+
+    return InstallNetworkConfig(
+        address=str(ip_address),
+        netmask=str(ipv4_network.netmask),
+        gateway=gateway,
+        prefix_length=ipv4_network.prefixlen,
+    )
+
+
+def build_install_network_config_with_defaults(
+    address: str,
+    netmask: str | None = None,
+    gateway: str | None = None,
+    *,
+    iface: str = "lan",
+) -> InstallNetworkConfig:
+    """Return a validated :class:`InstallNetworkConfig` using observed defaults.
+
+    ``netmask`` and ``gateway`` may be omitted; when they are, the current IPv4
+    configuration for ``iface`` is used to fill the missing values.  When no
+    defaults can be derived, ``ValueError`` is raised describing the missing
+    element(s).
+    """
+
+    resolved_netmask = netmask
+    resolved_gateway = gateway
+
+    if resolved_netmask is None or resolved_gateway is None:
+        details = network.get_ipv4_details(iface)
+        if details is not None:
+            if resolved_netmask is None:
+                resolved_netmask = details.netmask
+            if resolved_gateway is None:
+                resolved_gateway = details.gateway
+
+    missing: list[str] = []
+    if resolved_netmask is None:
+        missing.append("netmask")
+    if resolved_gateway is None:
+        missing.append("gateway")
+    if missing:
+        missing_text = " and ".join(missing)
+        raise ValueError(
+            f"Unable to determine install {missing_text}; supply explicit values or ensure DHCP is active"
+        )
+
+    return build_install_network_config(address, resolved_netmask, resolved_gateway)
 
 
 def _is_mount_ready(root_path: Path) -> bool:
@@ -315,6 +412,25 @@ def _extract_original_name(rename_rule: Optional[Path]) -> Optional[str]:
     return None
 
 
+def load_install_network_config(
+    *, state_dir: Path = Path("/run/pre-nixos")
+) -> Optional[InstallNetworkConfig]:
+    """Return the persisted install-time network configuration when present."""
+
+    data = state.load_install_network_config(state_dir=state_dir)
+    if not data:
+        return None
+    try:
+        return build_install_network_config(
+            data["address"], data["netmask"], data["gateway"]
+        )
+    except ValueError as exc:
+        log_event(
+            "pre_nixos.install.install_network.invalid", reason=str(exc)
+        )
+    return None
+
+
 def _load_ip_announcement_script() -> list[str]:
     """Return the shared LAN IP announcement script as a list of lines."""
 
@@ -410,6 +526,7 @@ def _inject_configuration(
     key_text: str,
     lan: LanConfiguration,
     storage_plan: Optional[Dict[str, Any]],
+    install_network: Optional[InstallNetworkConfig] = None,
 ) -> None:
     """Rewrite ``configuration.nix`` with the managed auto-install block."""
 
@@ -443,6 +560,7 @@ def _inject_configuration(
     filesystems, swaps = _collect_storage_definitions(storage_plan)
 
     original_name = _extract_original_name(lan.rename_rule)
+    use_dhcp = install_network is None
 
     block_lines = [
         "  # pre-nixos auto-install start",
@@ -456,24 +574,38 @@ def _inject_configuration(
         "  networking.useDHCP = false;",
         "  networking.useNetworkd = true;",
         "  networking.interfaces.lan = {",
-        "    useDHCP = true;",
-        "  };",
-        "",
-        "  services.openssh = {",
-        "    enable = true;",
-        "    settings = {",
-        "      PasswordAuthentication = false;",
-        '      PermitRootLogin = "prohibit-password";',
-        "    };",
-        "  };",
-        "",
-        "  users.users.root.openssh.authorizedKeys.keys = [",
-        f'    "{_escape_nix_string(key_text)}"',
-        "  ];",
-        "",
-        "  systemd.network.enable = true;",
-        '  systemd.network.networks."lan" = {',
+        f"    useDHCP = {'true' if use_dhcp else 'false'};",
     ]
+
+    if not use_dhcp:
+        block_lines.append(
+            "    ipv4.addresses = [ { address = \""
+            + _escape_nix_string(install_network.address)
+            + "\"; prefixLength = "
+            + str(install_network.prefix_length)
+            + "; } ];"
+        )
+
+    block_lines.extend(
+        [
+            "  };",
+            "",
+            "  services.openssh = {",
+            "    enable = true;",
+            "    settings = {",
+            "      PasswordAuthentication = false;",
+            '      PermitRootLogin = "prohibit-password";',
+            "    };",
+            "  };",
+            "",
+            "  users.users.root.openssh.authorizedKeys.keys = [",
+            f'    "{_escape_nix_string(key_text)}"',
+            "  ];",
+            "",
+            "  systemd.network.enable = true;",
+            '  systemd.network.networks."lan" = {',
+        ]
+    )
 
     if lan.mac_address:
         block_lines.append(
@@ -486,13 +618,22 @@ def _inject_configuration(
     else:
         block_lines.append('    matchConfig.Name = "lan";')
 
-    block_lines.extend(
-        [
-            '    networkConfig.DHCP = "yes";',
-            "  };",
-            "",
+    if use_dhcp:
+        network_block = ['    networkConfig.DHCP = "yes";']
+    else:
+        network_block = [
+            '    networkConfig.DHCP = "no";',
+            f'    networkConfig.Address = [ "{install_network.cidr}" ];',
+            f'    networkConfig.Gateway = "{_escape_nix_string(install_network.gateway)}";',
         ]
-    )
+
+    block_lines.extend(network_block + ["  };", ""])
+
+    if not use_dhcp:
+        block_lines.append(
+            f'  networking.defaultGateway = "{_escape_nix_string(install_network.gateway)}";'
+        )
+        block_lines.append("")
 
     link_match_lines: list[str] = []
     if lan.mac_address:
@@ -774,6 +915,7 @@ def auto_install(
     lan: Optional[LanConfiguration],
     storage_plan: Optional[Dict[str, Any]] = None,
     *,
+    install_network: Optional[InstallNetworkConfig] = None,
     enabled: bool = True,
     dry_run: bool = False,
     root_path: Path = Path("/mnt"),
@@ -809,6 +951,9 @@ def auto_install(
                 status_dir=status_dir,
                 reason="missing-storage-plan",
             )
+
+    if install_network is None:
+        install_network = load_install_network_config(state_dir=status_dir)
 
     execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
     if dry_run:
@@ -872,7 +1017,7 @@ def auto_install(
     )
 
     try:
-        _inject_configuration(root_path, key_text, lan, storage_plan)
+        _inject_configuration(root_path, key_text, lan, storage_plan, install_network)
         _rewrite_hardware_configuration(root_path)
     except Exception as exc:  # pragma: no cover - unexpected filesystem errors
         log_event("pre_nixos.install.configuration_write_failed", error=str(exc))
