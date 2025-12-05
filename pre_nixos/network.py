@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import errno
+import ipaddress
 import json
 import os
 import subprocess
@@ -24,6 +25,16 @@ class LanConfiguration:
     rename_rule: Optional[Path] = None
     network_unit: Optional[Path] = None
     mac_address: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class IPv4Details:
+    """Observed IPv4 configuration for a network interface."""
+
+    address: str
+    netmask: str
+    prefix_length: int
+    gateway: Optional[str] = None
 
 
 _TRANSIENT_SYSFS_ERRNOS = {
@@ -339,6 +350,111 @@ def get_ip_address(iface: str = "lan") -> Optional[str]:
             if isinstance(local, str) and local:
                 return local
     return None
+
+
+def get_ipv4_details(iface: str = "lan") -> Optional[IPv4Details]:
+    """Return the IPv4 address, netmask, and gateway for ``iface`` when set."""
+
+    try:
+        result = subprocess.run(
+            ["ip", "-j", "-4", "addr", "show", iface],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        return None
+
+    try:
+        payload = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(payload, list):
+        return None
+
+    address = None
+    prefix_length = None
+
+    for entry in payload:
+        if not isinstance(entry, dict):
+            continue
+        for addr in entry.get("addr_info", []):
+            if not isinstance(addr, dict):
+                continue
+            if addr.get("family") != "inet":
+                continue
+            local = addr.get("local")
+            if not isinstance(local, str) or not local:
+                continue
+            prefix_len = addr.get("prefixlen")
+            if not isinstance(prefix_len, int):
+                continue
+            address = local
+            prefix_length = prefix_len
+            break
+        if address:
+            break
+
+    if not address or prefix_length is None:
+        return None
+
+    try:
+        netmask = str(
+            ipaddress.IPv4Network((address, prefix_length), strict=False).netmask
+        )
+    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError):
+        return None
+
+    def _parse_gateway(output: str, preferred_iface: str | None) -> Optional[str]:
+        for line in output.splitlines():
+            if not line.startswith("default"):
+                continue
+            tokens = line.split()
+            if "via" in tokens:
+                via_index = tokens.index("via")
+                if via_index + 1 < len(tokens):
+                    gateway_candidate = tokens[via_index + 1]
+                else:
+                    continue
+            else:
+                continue
+            if preferred_iface and "dev" in tokens:
+                dev_index = tokens.index("dev")
+                if dev_index + 1 < len(tokens):
+                    dev = tokens[dev_index + 1]
+                    if dev != preferred_iface:
+                        continue
+            return gateway_candidate
+        return None
+
+    gateway = None
+    try:
+        route_result = subprocess.run(
+            ["ip", "-4", "route", "show", "default", "dev", iface],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        gateway = _parse_gateway(route_result.stdout or "", iface)
+    except subprocess.CalledProcessError:
+        gateway = None
+
+    if gateway is None:
+        try:
+            default_route = subprocess.run(
+                ["ip", "-4", "route", "show", "default"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            gateway = _parse_gateway(default_route.stdout or "", iface)
+        except subprocess.CalledProcessError:
+            gateway = None
+
+    return IPv4Details(
+        address=address, netmask=netmask, prefix_length=prefix_length, gateway=gateway
+    )
 
 
 def get_lan_status(authorized_key: Optional[Path] = None, iface: str = "lan") -> str:

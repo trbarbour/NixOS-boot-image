@@ -291,6 +291,61 @@ def test_inject_configuration_prefers_mac_matches(tmp_path):
     assert 'matchConfig.OriginalName' not in content
 
 
+def test_inject_configuration_static_network(tmp_path):
+    root = tmp_path / "mnt"
+    lan = _make_lan(tmp_path, original_name="lan")
+    network_config = install.build_install_network_config(
+        "192.0.2.10", "255.255.255.0", "192.0.2.1"
+    )
+    install._inject_configuration(
+        root,
+        lan.authorized_key.read_text(),
+        lan,
+        _sample_storage_plan(),
+        network_config,
+    )
+    content = (root / "etc/nixos/configuration.nix").read_text()
+    assert 'networking.interfaces.lan = {' in content
+    assert 'useDHCP = false;' in content
+    assert 'ipv4.addresses = [ { address = "192.0.2.10"; prefixLength = 24; } ];' in content
+    assert 'networkConfig.DHCP = "no";' in content
+    assert 'networkConfig.Address = [ "192.0.2.10/24" ];' in content
+    assert 'networkConfig.Gateway = "192.0.2.1";' in content
+    assert 'networking.defaultGateway = "192.0.2.1";' in content
+    assert 'networkConfig.DHCP = "yes";' not in content
+
+
+def test_build_install_network_config_validates_inputs():
+    with pytest.raises(ValueError):
+        install.build_install_network_config("192.0.2.10", "255.0.0", "192.0.2.1")
+
+
+def test_build_install_network_config_with_defaulted_values(monkeypatch):
+    monkeypatch.setattr(
+        install.network,
+        "get_ipv4_details",
+        lambda iface="lan": install.network.IPv4Details(
+            address="192.0.2.10",
+            netmask="255.255.255.0",
+            prefix_length=24,
+            gateway="192.0.2.1",
+        ),
+    )
+
+    config = install.build_install_network_config_with_defaults("192.0.2.50")
+
+    assert config.netmask == "255.255.255.0"
+    assert config.gateway == "192.0.2.1"
+    assert config.prefix_length == 24
+
+
+def test_build_install_network_config_with_defaults_requires_values(monkeypatch):
+    monkeypatch.setattr(install.network, "get_ipv4_details", lambda iface="lan": None)
+
+    with pytest.raises(ValueError):
+        install.build_install_network_config_with_defaults("192.0.2.50")
+
+
 def test_auto_install_missing_plan_fails(tmp_path, monkeypatch, broadcast_messages):
     root = tmp_path / "mnt"
     (root / "etc").mkdir(parents=True)

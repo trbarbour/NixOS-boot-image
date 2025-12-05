@@ -33,12 +33,22 @@ Structured JSON debug logs are now opt-in. Set
 `PRE_NIXOS_LOG_EVENTS=1` in the environment before running the CLI to emit the
 previous diagnostic stream to `stderr` during troubleshooting or test runs.
 
-When a root SSH key is embedded via `PRE_NIXOS_ROOT_KEY`, the CLI automatically
-generates a minimal NixOS configuration (firewall enabled with SSH + ping, root
-key authorised, flakes enabled, and the `lan` interface managed by
+When a root SSH key is embedded via `PRE_NIXOS_ROOT_KEY`, the CLI can generate a
+minimal NixOS configuration (firewall enabled with SSH + ping, root key
+authorised, flakes enabled, and the `lan` interface managed by
 systemd-networkd) and runs `nixos-install --no-root-passwd` after the storage
-plan completes. Disable this behaviour with `--no-auto-install` when you prefer
-to inspect the generated configuration manually.
+plan completes. Automatic progression now requires the boot image to have been
+built with `PRE_NIXOS_AUTO_INSTALL=1`; otherwise the CLI leaves installation
+disabled by default so you can adjust settings first. Toggle auto-install at
+runtime with `--auto-install/--no-auto-install`.
+
+For systems that should not use DHCP after installation, supply static network
+details with `--install-ip-address`, `--install-netmask`, and
+`--install-gateway`. Netmask and gateway default to the DHCP values obtained by
+the boot image, so you only need to provide an IP address when the live network
+matches the target install-time network. These options persist the chosen
+network values for the next installation run and emit the equivalent static
+`systemd.network` configuration in the generated NixOS config.
 
 For an interactive review and to apply the plan manually, use the TUI helper,
 which displays the current IP address or a diagnostic message when the
@@ -51,7 +61,9 @@ Within the interface press `S` to save the current plan to a JSON file or `L`
 to load an existing plan. The footer now shows an `I` toggle that controls
 whether the TUI should launch the same minimal `nixos-install` workflow after
 applying the storage plan; the header reflects the most recent auto-install
-outcome.
+outcome. Press `C` to set static install-time network details, which default to
+the network information assigned via DHCP so you can enter only the host
+portion of the desired static address.
 
 ## SSH access
 

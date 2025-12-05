@@ -19,6 +19,7 @@ from . import (
     inventory,
     network,
     planner,
+    state as state_store,
     storage_cleanup,
     storage_detection,
 )
@@ -604,6 +605,7 @@ class TUIState:
     lan_config: network.LanConfiguration | None = None
     auto_install_enabled: bool = False
     last_auto_install: install.AutoInstallResult | None = None
+    install_network: install.InstallNetworkConfig | None = None
 
 
 def _initial_state(
@@ -618,10 +620,35 @@ def _initial_state(
         disks=disks,
         renderer=PlanRenderer(plan, disks),
         lan_config=lan_config,
+        install_network=install.load_install_network_config(),
     )
     state.cleanup_notice = _initial_cleanup_notice()
-    state.auto_install_enabled = lan_config is not None
+    state.auto_install_enabled = _default_auto_install_enabled(lan_config)
     return state
+
+
+def _default_auto_install_enabled(
+    lan_config: network.LanConfiguration | None,
+) -> bool:
+    """Return whether auto-install should default to enabled."""
+
+    env_value = os.environ.get("PRE_NIXOS_AUTO_INSTALL", "").strip().lower()
+    env_enabled = env_value in {"1", "true", "yes", "on"}
+    return env_enabled and lan_config is not None
+
+
+def _network_prefix_hint(details: network.IPv4Details | None) -> str:
+    """Return a prefix hint derived from the current DHCP assignment."""
+
+    if details is None:
+        return ""
+    if details.prefix_length % 8 != 0:
+        return ""
+    octets = details.address.split(".")
+    keep = min(details.prefix_length // 8, len(octets))
+    if keep >= len(octets):
+        return details.address
+    return ".".join(octets[:keep]) + "."
 
 
 def _short_cleanup_description(text: str) -> str:
@@ -699,8 +726,9 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
     auto_status = "On" if state.auto_install_enabled else "Off"
     if state.last_auto_install is not None:
         auto_status = f"{auto_status} ({state.last_auto_install.status})"
+    install_net_status = "DHCP" if state.install_network is None else f"{state.install_network.address}/{state.install_network.prefix_length}"
     header = (
-        f"IP: {status}  View: Planned  Focus: {focus_label}  Profile: {render.profile}  "
+        f"IP: {status}  Install net: {install_net_status}  View: Planned  Focus: {focus_label}  Profile: {render.profile}  "
         f"Auto-install: {auto_status}"
     )
     stdscr.addstr(0, 0, _trim(header, width - 1))
@@ -723,6 +751,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         "[E]dit",
         "[S]ave",
         "[L]oad",
+        "[C]onfigure net",
         "[A]pply",
         "[N]Install",
         "[I]nstall toggle",
@@ -947,6 +976,95 @@ def _prompt_storage_cleanup(
         message = "Please choose one of the listed options."
 
 
+def _configure_install_network(stdscr: curses.window, state: TUIState) -> None:
+    """Prompt for static install-time network configuration."""
+
+    dhcp_details = network.get_ipv4_details()
+    prefix_hint = _network_prefix_hint(dhcp_details)
+
+    address_hint = state.install_network.address if state.install_network else ""
+    if not address_hint:
+        if prefix_hint:
+            address_hint = prefix_hint
+        elif dhcp_details is not None:
+            address_hint = dhcp_details.address
+
+    netmask_hint = state.install_network.netmask if state.install_network else ""
+    if not netmask_hint and dhcp_details is not None:
+        netmask_hint = dhcp_details.netmask
+
+    gateway_hint = state.install_network.gateway if state.install_network else ""
+    if not gateway_hint and dhcp_details is not None and dhcp_details.gateway:
+        gateway_hint = dhcp_details.gateway
+
+    stdscr.clear()
+    height, width = stdscr.getmaxyx()
+    curses.echo()
+    stdscr.addstr(
+        0,
+        0,
+        _trim("Configure install networking (leave address blank for DHCP)", width - 1),
+    )
+
+    stdscr.addstr(2, 0, _trim(f"Static IPv4 address [{address_hint}]: ", width - 1))
+    raw_address = stdscr.getstr().decode().strip()
+    address_value = raw_address
+    if prefix_hint and raw_address.isdigit():
+        address_value = f"{prefix_hint}{raw_address}"
+    curses.noecho()
+
+    if not address_value:
+        state.install_network = None
+        try:
+            state_store.clear_install_network_config()
+        except OSError as exc:  # pragma: no cover - rare filesystem issues
+            _show_modal(
+                stdscr,
+                [
+                    "Using DHCP for installation.",
+                    f"Warning: failed to clear saved config: {exc}",
+                ],
+            )
+            return
+        _show_modal(stdscr, ["Using DHCP for installation."])
+        return
+
+    curses.echo()
+    stdscr.addstr(3, 0, _trim(f"Netmask [{netmask_hint}]: ", width - 1))
+    raw_netmask = stdscr.getstr().decode().strip()
+    stdscr.addstr(4, 0, _trim(f"Gateway [{gateway_hint}]: ", width - 1))
+    raw_gateway = stdscr.getstr().decode().strip()
+    curses.noecho()
+
+    netmask_value = raw_netmask or netmask_hint
+    gateway_value = raw_gateway or gateway_hint
+
+    iface = state.lan_config.interface if state.lan_config else "lan"
+    try:
+        install_network = install.build_install_network_config_with_defaults(
+            address_value,
+            netmask=netmask_value or None,
+            gateway=gateway_value or None,
+            iface=iface,
+        )
+    except ValueError as exc:
+        _show_modal(stdscr, [f"Invalid network settings: {exc}"])
+        return
+
+    state.install_network = install_network
+    try:
+        state_store.record_install_network_config(install_network.to_payload())
+    except OSError as exc:  # pragma: no cover - unexpected filesystem issues
+        _show_modal(
+            stdscr,
+            ["Static settings captured but failed to persist:", str(exc)],
+        )
+        return
+
+    summary = f"Saved {install_network.address}/{install_network.prefix_length}"
+    _show_modal(stdscr, [summary])
+
+
 def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     """Handle the apply-plan workflow. Returns ``True`` when exiting."""
 
@@ -997,6 +1115,7 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
                 state.plan,
                 enabled=state.auto_install_enabled,
                 dry_run=not execute,
+                install_network=state.install_network,
             )
     except Exception as exc:  # pragma: no cover - unexpected errors
         state.last_auto_install = install.AutoInstallResult(status="failed", reason=str(exc))
@@ -1044,6 +1163,7 @@ def _handle_manual_install(stdscr: curses.window, state: TUIState) -> bool:
                 None,
                 enabled=True,
                 dry_run=not execute,
+                install_network=state.install_network,
             )
     except Exception as exc:  # pragma: no cover - unexpected errors
         state.last_auto_install = install.AutoInstallResult(status="failed", reason=str(exc))
@@ -1134,6 +1254,9 @@ def run() -> None:
                 if _handle_apply_plan(stdscr, state):
                     break
                 refresh_renderer()
+                continue
+            if key_lower == "c":
+                _configure_install_network(stdscr, state)
                 continue
             if key_lower == "n":
                 if _handle_manual_install(stdscr, state):
