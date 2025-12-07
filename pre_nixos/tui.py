@@ -728,7 +728,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         auto_status = f"{auto_status} ({state.last_auto_install.status})"
     install_net_status = "DHCP" if state.install_network is None else f"{state.install_network.address}/{state.install_network.prefix_length}"
     header = (
-        f"IP: {status}  Install net: {install_net_status}  View: Planned  Focus: {focus_label}  Profile: {render.profile}  "
+        f"IP: {status}  Install: {install_net_status}  Focus: {focus_label}  Profile: {render.profile}  "
         f"Auto-install: {auto_status}"
     )
     stdscr.addstr(0, 0, _trim(header, width - 1))

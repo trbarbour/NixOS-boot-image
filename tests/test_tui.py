@@ -247,8 +247,8 @@ def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan,
     monkeypatch.setattr(tui.apply, "apply_plan", lambda plan: apply_calls.append(plan))
     auto_calls: list[tuple] = []
 
-    def fake_auto(lan_config, plan, *, enabled, dry_run):
-        auto_calls.append((lan_config, plan, enabled, dry_run))
+    def fake_auto(lan_config, plan, *, enabled, dry_run, install_network=None):
+        auto_calls.append((lan_config, plan, enabled, dry_run, install_network))
         return AutoInstallResult(status="success")
 
     monkeypatch.setattr(tui.install, "auto_install", fake_auto)
@@ -257,11 +257,14 @@ def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan,
     assert tui._handle_apply_plan(win, state) is True
     assert apply_calls == [state.plan]
     assert len(auto_calls) == 1
-    recorded_lan, recorded_plan, recorded_enabled, recorded_dry_run = auto_calls[0]
+    recorded_lan, recorded_plan, recorded_enabled, recorded_dry_run, recorded_install_network = (
+        auto_calls[0]
+    )
     assert recorded_lan == lan_config
     assert recorded_plan == state.plan
     assert recorded_enabled is True
     assert recorded_dry_run is False
+    assert recorded_install_network is None
     assert state.last_auto_install is not None
     assert state.last_auto_install.status == "success"
     assert "Auto-install completed." in win.lines[1]
@@ -280,15 +283,15 @@ def test_handle_manual_install_runs_auto_install(monkeypatch, tmp_path, sample_p
 
     auto_calls: list[tuple] = []
 
-    def fake_auto(lan_config, plan, *, enabled, dry_run):
-        auto_calls.append((lan_config, plan, enabled, dry_run))
+    def fake_auto(lan_config, plan, *, enabled, dry_run, install_network=None):
+        auto_calls.append((lan_config, plan, enabled, dry_run, install_network))
         return AutoInstallResult(status="success")
 
     monkeypatch.setattr(tui.install, "auto_install", fake_auto)
 
     win = FakeWindow(height=2, width=120)
     assert tui._handle_manual_install(win, state) is True
-    assert auto_calls == [(lan_config, None, True, False)]
+    assert auto_calls == [(lan_config, None, True, False, None)]
     assert state.last_auto_install is not None
     assert state.last_auto_install.status == "success"
     assert "Install completed." in win.lines[0]

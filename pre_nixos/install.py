@@ -631,7 +631,10 @@ def _inject_configuration(
 
     if not use_dhcp:
         block_lines.append(
-            f'  networking.defaultGateway = "{_escape_nix_string(install_network.gateway)}";'
+            "  networking.defaultGateway = {"
+            f' address = "{_escape_nix_string(install_network.gateway)}";'
+            ' interface = "lan";'
+            " };"
         )
         block_lines.append("")
 

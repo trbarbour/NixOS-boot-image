@@ -311,7 +311,10 @@ def test_inject_configuration_static_network(tmp_path):
     assert 'networkConfig.DHCP = "no";' in content
     assert 'networkConfig.Address = [ "192.0.2.10/24" ];' in content
     assert 'networkConfig.Gateway = "192.0.2.1";' in content
-    assert 'networking.defaultGateway = "192.0.2.1";' in content
+    assert "  networking.defaultGateway = {" in content
+    assert ' address = "192.0.2.1";' in content
+    assert ' interface = "lan";' in content
+    assert " };" in content
     assert 'networkConfig.DHCP = "yes";' not in content
 
 
