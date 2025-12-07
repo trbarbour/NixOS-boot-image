@@ -2,6 +2,39 @@
 let
   cfg = config.services.pre-nixos;
   autoInstallFlag = builtins.getEnv "PRE_NIXOS_AUTO_INSTALL";
+  autoInstallEnabled = autoInstallFlag != "";
+  rootKeyEnv = builtins.getEnv "PRE_NIXOS_ROOT_KEY";
+  rootKeyFromEnv =
+    if rootKeyEnv != "" then
+      let candidate = builtins.toString rootKeyEnv; in
+      if builtins.pathExists candidate then candidate else null
+    else
+      null;
+  rootKeyCandidate =
+    if rootKeyFromEnv != null then
+      rootKeyFromEnv
+    else
+      let candidate = ../pre_nixos/root_key.pub; in
+      if builtins.pathExists candidate then candidate else null;
+  rootKeyEmbedded = rootKeyCandidate != null;
+  autoInstallNotice =
+    if autoInstallEnabled then
+      "Automatic installation is enabled; pre-nixos will provision NixOS and reboot into the installed system when finished."
+    else
+      "Automatic installation is disabled; run pre-nixos to configure networking and start installation.";
+  sshNotice =
+    if rootKeyEmbedded then
+      ''
+      SSH access:
+        - Use the matching private key for the embedded root SSH key to log in as root.
+        - Add additional public keys to /root/.ssh/authorized_keys if needed.
+      ''
+    else
+      ''
+      SSH access:
+        - No root SSH key is embedded in this image.
+        - Set a root password with passwd or add your public key to /root/.ssh/authorized_keys before enabling remote logins.
+      '';
   # ``pre-nixos`` only executes disk and network commands when PRE_NIXOS_EXEC is
   # set.  Propagate it to login shells for the TUI and to the systemd unit so the
   # boot-time invocation can configure networking.  ``disko`` relies on
@@ -43,13 +76,11 @@ in {
     environment.interactiveShellInit = preNixosLoginNotice;
     environment.etc."issue".text = lib.mkForce ''
       <<< Welcome to the pre-nixos auto-install boot image (${config.system.nixos.label}, \m) - \l >>>
-      This environment installs NixOS automatically when PRE_NIXOS_AUTO_INSTALL=1 was set during the build and will reboot into the installed system when finished.
-      Otherwise, run pre-nixos manually to configure networking and launch installation.
+      ${autoInstallNotice}
+      (PRE_NIXOS_AUTO_INSTALL=${autoInstallFlag})
       The "nixos" and "root" accounts have empty passwords for console logins.
 
-      SSH access:
-        - If this image was built with PRE_NIXOS_ROOT_KEY, use the matching private key to log in as root.
-        - Otherwise, add your public key to /root/.ssh/authorized_keys or set a password with passwd.
+      ${sshNotice}
 
       Networking starts automatically; verify connectivity with ip addr or networkctl.
 
