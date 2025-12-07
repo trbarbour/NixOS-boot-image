@@ -1039,6 +1039,8 @@ def auto_install(
         }.items():
             if source is None:
                 continue
+            if label == "network_unit" and install_network is not None:
+                continue
             destination = _copy_unit(source, target_dir)
             copied_units[label] = str(destination)
         if copied_units:

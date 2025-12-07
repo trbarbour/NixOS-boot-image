@@ -276,6 +276,87 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert f"ISSUE_PATH={root}/etc/issue" in status_text
 
 
+def test_auto_install_static_network_skips_dhcp_unit(
+    tmp_path, monkeypatch, broadcast_messages
+):
+    root = tmp_path / "mnt"
+    (root / "etc").mkdir(parents=True)
+    lan = _make_lan(tmp_path)
+
+    commands: list[list[str]] = []
+
+    start_time = datetime(2025, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    completion_time = datetime(2025, 1, 2, 3, 14, 5, tzinfo=timezone.utc)
+
+    class FakeDateTime:
+        calls = 0
+
+        @classmethod
+        def now(cls, tz=None):
+            cls.calls += 1
+            return start_time if cls.calls == 1 else completion_time
+
+    def fake_run(cmd, check=False):
+        commands.append(cmd)
+
+        class Result:
+            returncode = 0
+
+        if cmd[0] == "nixos-generate-config":
+            config_dir = root / "etc/nixos"
+            config_dir.mkdir(parents=True, exist_ok=True)
+            (config_dir / "configuration.nix").write_text("{\n}\n", encoding="utf-8")
+            (config_dir / "hardware-configuration.nix").write_text(
+                "{\n"
+                "  fileSystems.\"/\" = { device = \"/dev/disk/by-uuid/OLD\"; };\n"
+                "  swapDevices = [ { device = \"/dev/disk/by-uuid/OLD-SWAP\"; } ];\n"
+                "  networking.useDHCP = lib.mkDefault true;\n"
+                "}\n",
+                encoding="utf-8",
+            )
+        return Result()
+
+    monkeypatch.setattr(install.subprocess, "run", fake_run)
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(install, "datetime", FakeDateTime)
+
+    reboot_called: list[bool] = []
+
+    def fake_reboot() -> bool:
+        reboot_called.append(True)
+        return True
+
+    monkeypatch.setattr(install, "_request_reboot", fake_reboot)
+
+    install_network = install.build_install_network_config(
+        "192.0.2.10", "255.255.255.0", "192.0.2.1"
+    )
+
+    result = install.auto_install(
+        lan,
+        _sample_storage_plan(),
+        root_path=root,
+        status_dir=tmp_path / "status",
+        install_network=install_network,
+    )
+
+    assert result.status == "success"
+    assert commands == [
+        ["nixos-generate-config", "--root", str(root)],
+        ["nixos-install", "--root", str(root), "--no-root-passwd"],
+    ]
+    assert reboot_called == [True]
+
+    network_dir = root / "etc/systemd/network"
+    assert (network_dir / "10-lan.link").exists()
+    assert not (network_dir / "20-lan.network").exists()
+
+    content = (root / "etc/nixos/configuration.nix").read_text()
+    assert 'networkConfig.DHCP = "no";' in content
+    assert 'networkConfig.Address = [ "192.0.2.10/24" ];' in content
+    assert 'networkConfig.Gateway = "192.0.2.1";' in content
+
+
 def test_inject_configuration_prefers_mac_matches(tmp_path):
     root = tmp_path / "mnt"
     lan = _make_lan(tmp_path, original_name="lan")
