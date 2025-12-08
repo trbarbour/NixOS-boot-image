@@ -278,6 +278,84 @@ def test_teardown_failure_skips_wipe(monkeypatch) -> None:
     assert scheduled == ["umount /target"]
 
 
+def test_descendant_raid_metadata_is_wiped(monkeypatch) -> None:
+    runner = RecordingRunner()
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_list_block_devices",
+        lambda: [
+            {
+                "name": "/dev/sda",
+                "type": "disk",
+                "children": [
+                    {"name": "/dev/sda1", "type": "part", "fstype": "linux_raid_member"}
+                ],
+            }
+        ],
+    )
+
+    scheduled = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=True,
+        runner=runner,
+    )
+
+    assert scheduled[0] == "wipefs -a /dev/sda1"
+    assert ("mdadm", "--zero-superblock", "--force", "/dev/sda1") in runner.commands
+
+
+def test_recursive_descendant_metadata_is_wiped(monkeypatch) -> None:
+    runner = RecordingRunner()
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_list_block_devices",
+        lambda: [
+            {
+                "name": "/dev/sda",
+                "type": "disk",
+                "children": [
+                    {
+                        "name": "/dev/sda1",
+                        "type": "part",
+                        "fstype": "linux_raid_member",
+                        "children": [
+                            {
+                                "name": "/dev/md0",
+                                "type": "raid1",
+                                "children": [
+                                    {
+                                        "name": "/dev/main-slash",
+                                        "type": "lvm",
+                                        "fstype": "ext4",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    )
+
+    scheduled = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=True,
+        runner=runner,
+    )
+
+    wipefs_commands = [cmd for cmd in scheduled if cmd.startswith("wipefs")]
+    descendant_wipes = [cmd for cmd in wipefs_commands if not cmd.endswith("/dev/sda")]
+    assert descendant_wipes == [
+        "wipefs -a /dev/main-slash",
+        "wipefs -a /dev/md0",
+        "wipefs -a /dev/sda1",
+    ]
+    assert ("mdadm", "--zero-superblock", "--force", "/dev/sda1") in runner.commands
+    assert ("mdadm", "--zero-superblock", "--force", "/dev/md0") in runner.commands
+
+
 def test_partition_refresh_failure_aborts_wipe(empty_lsblk) -> None:
     runner = SequenceRunner([0, 1, 1, 0, 1, 1, 0, 1, 1, 0])
     scheduled = storage_cleanup.perform_storage_cleanup(
