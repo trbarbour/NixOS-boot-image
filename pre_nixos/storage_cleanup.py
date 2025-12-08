@@ -199,15 +199,48 @@ def _flatten_lsblk(entry: dict[str, object], parents: list[str]) -> Iterable[dic
             yield from _flatten_lsblk(child, parents + [name])
 
 
-def _device_usage_entries(device: str) -> list[dict[str, object]]:
+def _build_device_hierarchy() -> tuple[list[dict[str, object]], dict[str, list[dict[str, object]]]]:
+    """Return flattened lsblk data and a parent->children mapping."""
+
     entries: list[dict[str, object]] = []
     for entry in _list_block_devices():
         entries.extend(_flatten_lsblk(entry, []))
-    relevant = [
-        entry
-        for entry in entries
-        if device == entry["name"] or device in entry.get("parents", [])
-    ]
+
+    children: dict[str, list[dict[str, object]]] = {}
+    for entry in entries:
+        parents = entry.get("parents", []) or []
+        if parents:
+            parent = parents[-1]
+            children.setdefault(parent, []).append(entry)
+
+    return entries, children
+
+
+def _descendant_entries(device: str) -> list[dict[str, object]]:
+    """Return all descendant block devices of *device*.
+
+    Descendants are discovered via the lsblk tree and include grandchildren and
+    deeper levels. The returned list is ordered depth-first so that the deepest
+    nodes appear first.
+    """
+
+    _, children = _build_device_hierarchy()
+
+    ordered: list[dict[str, object]] = []
+
+    def visit(current: str) -> None:
+        for child in children.get(current, []):
+            visit(str(child.get("name", "")))
+            ordered.append(child)
+
+    visit(device)
+    return ordered
+
+
+def _device_usage_entries(device: str) -> list[dict[str, object]]:
+    entries, _ = _build_device_hierarchy()
+    relevant = [entry for entry in entries if device == entry["name"]]
+    relevant.extend(_descendant_entries(device))
     relevant.sort(key=lambda entry: len(entry.get("parents", [])), reverse=True)
     return relevant
 
@@ -278,6 +311,58 @@ def _teardown_device_usage(
     if not success:
         log_event(
             "pre_nixos.cleanup.teardown_failed",
+            action=action,
+            device=device,
+            execute=execute,
+        )
+    return success
+
+
+def _wipe_descendant_metadata(
+    action: str,
+    device: str,
+    *,
+    execute: bool,
+    runner: CommandRunner,
+    scheduled: List[str],
+) -> bool:
+    """Remove filesystem and RAID signatures from *device*'s descendants."""
+
+    success = True
+    for entry in _descendant_entries(device):
+        name = str(entry.get("name") or "")
+        if not name:
+            continue
+        result = _execute_command(
+            ["wipefs", "-a", name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+        fstype = str(entry.get("fstype") or "")
+        entry_type = str(entry.get("type") or "")
+        if fstype == "linux_raid_member" or entry_type.startswith("raid"):
+            result = _execute_command(
+                ["mdadm", "--zero-superblock", "--force", name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+
+    if not success:
+        log_event(
+            "pre_nixos.cleanup.descendant_wipe_failed",
             action=action,
             device=device,
             execute=execute,
@@ -394,6 +479,14 @@ def perform_storage_cleanup(
             scheduled=scheduled,
         ):
             continue
+
+        _wipe_descendant_metadata(
+            action,
+            device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        )
 
         _execute_command(
             ("sgdisk", "--zap-all", device),
