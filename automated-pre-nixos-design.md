@@ -1,7 +1,7 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.18
-**Date:** 2025-09-11 (America/New_York)
+**Doc status:** Draft v0.19
+**Date:** 2025-09-12 (America/New_York)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
@@ -141,6 +141,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - LVM volume groups surface as `lvm_vg.<name>.lvs`. Logical volumes render as either `filesystem` (ext4, `relatime`, mountpoints such as `/`, `/home`, `/var/tmp`, `/var/log`, and `/data`) or `swap` content. This mirrors today's manual mkfs/mkswap labelling policy.
 - After Disko runs, the applier iterates over any `post_apply_commands` and executes them in order, logging each invocation.
 - The applier serialises the structure via `builtins.fromJSON` to keep the config legible, then shells out to Disko to execute the destroy/format/mount pipeline in one idempotent step.
+- **Storage erasure + metadata handling:** The pre-confirmation storage cleanup tears down what `lsblk` reports *at that moment* (unmount/swapoff → stop md/LVs → `wipefs` + `mdadm --zero-superblock` → GPT zap). Because it cannot target partitions that do not yet exist, RAID headers located at the same offsets can survive until after Disko recreates the new partition table. To avoid a full-disk overwrite, the applier now collects the planned md member device paths and, if Disko returns non-zero, performs a cheap follow-up scrub (`mdadm --stop --scan`, `mdadm --zero-superblock --force`, `wipefs -a` on those members) and retries Disko once. This targeted pass runs only after partitions exist and avoids the cost of whole-disk shredding while covering post-partition auto-assembly cases.
 
 ---
 
