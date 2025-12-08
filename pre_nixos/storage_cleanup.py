@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import time
 from dataclasses import dataclass
 import shlex
 import subprocess
@@ -98,30 +100,251 @@ def _is_allowed_returncode(cmd: Sequence[str], returncode: int) -> bool:
     return False
 
 
-def _commands_for_device(action: str, device: str) -> Iterable[Sequence[str]]:
-    if action == WIPE_SIGNATURES:
-        return (
-            ("sgdisk", "--zap-all", device),
-            ("partprobe", device),
-            ("wipefs", "-a", device),
+def _execute_command(
+    cmd: Sequence[str],
+    *,
+    action: str,
+    device: str,
+    execute: bool,
+    runner: CommandRunner,
+    scheduled: List[str],
+    tolerate_failure: bool = False,
+) -> subprocess.CompletedProcess:
+    cmd_str = _command_to_str(cmd)
+    scheduled.append(cmd_str)
+    log_event(
+        "pre_nixos.cleanup.command",
+        action=action,
+        device=device,
+        command=cmd_str,
+        execute=execute,
+    )
+    if not execute:
+        return subprocess.CompletedProcess(cmd, 0)
+
+    result = runner(cmd)
+    if result is None:
+        return subprocess.CompletedProcess(cmd, 0)
+    if isinstance(result, subprocess.CompletedProcess):
+        if not _is_allowed_returncode(cmd, result.returncode):
+            if cmd[0] == "wipefs":
+                diagnostics = _collect_wipefs_diagnostics(device)
+                log_event(
+                    "pre_nixos.cleanup.wipefs_failed",
+                    action=action,
+                    device=device,
+                    command=cmd_str,
+                    returncode=result.returncode,
+                    **diagnostics,
+                )
+            if tolerate_failure:
+                log_event(
+                    "pre_nixos.cleanup.command_failed",
+                    action=action,
+                    device=device,
+                    command=cmd_str,
+                    returncode=result.returncode,
+                )
+                return result
+            raise subprocess.CalledProcessError(result.returncode, cmd_str)
+        if result.returncode != 0:
+            log_event(
+                "pre_nixos.cleanup.command_nonzero",
+                action=action,
+                device=device,
+                command=cmd_str,
+                returncode=result.returncode,
+            )
+        return result
+    raise TypeError("Command runner must return CompletedProcess or None")
+
+
+def _list_block_devices() -> list[dict[str, object]]:
+    result = subprocess.run(
+        [
+            "lsblk",
+            "--json",
+            "--paths",
+            "-o",
+            "NAME,TYPE,MOUNTPOINT,PKNAME,FSTYPE",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return []
+    try:
+        parsed = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError:
+        return []
+    devices = parsed.get("blockdevices")
+    return devices if isinstance(devices, list) else []
+
+
+def _flatten_lsblk(entry: dict[str, object], parents: list[str]) -> Iterable[dict[str, object]]:
+    name = str(entry.get("name", ""))
+    children = entry.get("children") or []
+    record = {
+        "name": name,
+        "type": entry.get("type"),
+        "mountpoint": entry.get("mountpoint"),
+        "pkname": entry.get("pkname"),
+        "fstype": entry.get("fstype"),
+        "parents": list(parents),
+    }
+    yield record
+    for child in children:
+        if isinstance(child, dict):
+            yield from _flatten_lsblk(child, parents + [name])
+
+
+def _device_usage_entries(device: str) -> list[dict[str, object]]:
+    entries: list[dict[str, object]] = []
+    for entry in _list_block_devices():
+        entries.extend(_flatten_lsblk(entry, []))
+    relevant = [
+        entry
+        for entry in entries
+        if device == entry["name"] or device in entry.get("parents", [])
+    ]
+    relevant.sort(key=lambda entry: len(entry.get("parents", [])), reverse=True)
+    return relevant
+
+
+def _teardown_device_usage(
+    action: str,
+    device: str,
+    *,
+    execute: bool,
+    runner: CommandRunner,
+    scheduled: List[str],
+) -> bool:
+    success = True
+    entries = _device_usage_entries(device)
+    for entry in entries:
+        if entry.get("name") == device:
+            continue
+        mountpoint = entry.get("mountpoint")
+        if mountpoint:
+            result = _execute_command(
+                ["umount", str(mountpoint)],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+        if entry.get("fstype") == "swap" or entry.get("mountpoint") == "[SWAP]":
+            result = _execute_command(
+                ["swapoff", str(entry.get("name"))],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+        entry_type = str(entry.get("type") or "")
+        if entry_type.startswith("raid"):
+            result = _execute_command(
+                ["mdadm", "--stop", str(entry.get("name"))],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+        if entry_type in {"crypt", "dm", "lvm"}:
+            result = _execute_command(
+                ["dmsetup", "remove", str(entry.get("name"))],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+    if not success:
+        log_event(
+            "pre_nixos.cleanup.teardown_failed",
+            action=action,
+            device=device,
+            execute=execute,
         )
-    if action == DISCARD_BLOCKS:
-        return (
-            ("sgdisk", "--zap-all", device),
-            ("partprobe", device),
-            ("blkdiscard", "--force", device),
-            ("wipefs", "-a", device),
+    return success
+
+
+def _collect_partition_refresh_diagnostics(device: str) -> dict[str, object]:
+    return {
+        "usage": _device_usage_entries(device),
+        **storage_detection.collect_boot_probe_data(),
+    }
+
+
+def _refresh_partition_table(
+    action: str,
+    device: str,
+    *,
+    execute: bool,
+    runner: CommandRunner,
+    scheduled: List[str],
+    attempts: int = 3,
+    delay_seconds: float = 0.5,
+) -> bool:
+    for attempt in range(attempts):
+        blockdev_result = _execute_command(
+            ["blockdev", "--rereadpt", device],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
         )
-    if action == OVERWRITE_RANDOM:
-        return (
-            ("sgdisk", "--zap-all", device),
-            ("partprobe", device),
-            ("shred", "-n", "1", "-vz", device),
-            ("wipefs", "-a", device),
+        partprobe_result = _execute_command(
+            ["partprobe", device],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
         )
-    if action == SKIP_CLEANUP:
-        return ()
-    raise ValueError(f"unknown storage cleanup action: {action}")
+        settle_result = _execute_command(
+            ["udevadm", "settle"],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if (
+            blockdev_result.returncode == 0
+            and partprobe_result.returncode == 0
+            and settle_result.returncode == 0
+        ):
+            return True
+        time.sleep(delay_seconds)
+    log_event(
+        "pre_nixos.cleanup.partition_refresh_failed",
+        action=action,
+        device=device,
+        execute=execute,
+        **_collect_partition_refresh_diagnostics(device),
+    )
+    return False
 
 
 def perform_storage_cleanup(
@@ -145,44 +368,78 @@ def perform_storage_cleanup(
         devices=list(devices),
         execute=execute,
     )
+    if action == SKIP_CLEANUP:
+        log_event(
+            "pre_nixos.cleanup.finished",
+            action=action,
+            devices=list(devices),
+            execute=execute,
+            commands=scheduled,
+        )
+        return scheduled
+
+    if action not in {
+        WIPE_SIGNATURES,
+        DISCARD_BLOCKS,
+        OVERWRITE_RANDOM,
+    }:
+        raise ValueError(f"unknown storage cleanup action: {action}")
+
     for device in devices:
-        for cmd in _commands_for_device(action, device):
-            cmd_str = _command_to_str(cmd)
-            scheduled.append(cmd_str)
-            log_event(
-                "pre_nixos.cleanup.command",
+        if not _teardown_device_usage(
+            action,
+            device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        ):
+            continue
+
+        _execute_command(
+            ("sgdisk", "--zap-all", device),
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        )
+
+        if not _refresh_partition_table(
+            action,
+            device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        ):
+            continue
+
+        if action == DISCARD_BLOCKS:
+            _execute_command(
+                ("blkdiscard", "--force", device),
                 action=action,
                 device=device,
-                command=cmd_str,
                 execute=execute,
+                runner=runner,
+                scheduled=scheduled,
             )
-            if not execute:
-                continue
-            result = runner(cmd)
-            if isinstance(result, subprocess.CompletedProcess):
-                if not _is_allowed_returncode(cmd, result.returncode):
-                    diagnostics: dict[str, object] = {}
-                    if cmd[0] == "wipefs":
-                        diagnostics = _collect_wipefs_diagnostics(device)
-                        log_event(
-                            "pre_nixos.cleanup.wipefs_failed",
-                            action=action,
-                            device=device,
-                            command=cmd_str,
-                            returncode=result.returncode,
-                            **diagnostics,
-                        )
-                    raise subprocess.CalledProcessError(result.returncode, cmd_str)
-                if result.returncode != 0:
-                    log_event(
-                        "pre_nixos.cleanup.command_nonzero",
-                        action=action,
-                        device=device,
-                        command=cmd_str,
-                        returncode=result.returncode,
-                    )
-            elif result is not None:
-                raise TypeError("Command runner must return CompletedProcess or None")
+        elif action == OVERWRITE_RANDOM:
+            _execute_command(
+                ("shred", "-n", "1", "-vz", device),
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+            )
+
+        _execute_command(
+            ("wipefs", "-a", device),
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        )
     log_event(
         "pre_nixos.cleanup.finished",
         action=action,
