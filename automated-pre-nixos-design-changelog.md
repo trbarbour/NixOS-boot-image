@@ -84,3 +84,12 @@
   existing-versus-planned comparisons.
 - Linked the main design doc to those mocks so implementers have copy-ready
   targets for rendering behaviour.
+
+### v0.18 — 2025-09-11
+- Synced main design doc to Draft v0.18 with storage erasure notes matching the
+  recent cleanup flow changes.
+
+### v0.19 — 2025-09-12
+- Documented the limitation of pre-apply storage erasure (only existing
+  descendants are visible pre-partition) and the new cheap follow-up scrub that
+  zeros planned md member metadata and retries Disko once after a failure.

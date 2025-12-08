@@ -79,6 +79,19 @@ def _run(cmd: str, execute: bool) -> None:
         raise subprocess.CalledProcessError(result.returncode, cmd)
 
 
+def _run_best_effort(cmd: str, execute: bool) -> None:
+    """Run ``cmd`` and log failures without raising."""
+
+    try:
+        _run(cmd, execute)
+    except subprocess.CalledProcessError as exc:
+        log_event(
+            "pre_nixos.apply.command.error_ignored",
+            command=cmd,
+            returncode=exc.returncode,
+        )
+
+
 def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     """Apply a storage plan."""
 
@@ -117,7 +130,23 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         "pre_nixos.apply.apply_plan.command_scheduled",
         command=cmd,
     )
-    _run(cmd, execute)
+
+    planned_md_members = _collect_planned_md_members(plan)
+
+    try:
+        _run(cmd, execute)
+    except subprocess.CalledProcessError:
+        if execute and planned_md_members:
+            scrubbed = _scrub_planned_md_members(planned_md_members, execute)
+            commands.extend(scrubbed)
+            log_event(
+                "pre_nixos.apply.apply_plan.retry_after_md_scrub",
+                command=cmd,
+                scrubbed_devices=planned_md_members,
+            )
+            _run(cmd, execute)
+        else:
+            raise
 
     for follow_up in plan.get("post_apply_commands", []):
         commands.append(follow_up)
@@ -173,6 +202,55 @@ def _render_disko_config(devices: Dict[str, Any]) -> str:
     json_blob = json.dumps(sanitised, indent=2, sort_keys=True)
     body = textwrap.indent(json_blob, "    ")
     return "{\n  disko.devices = builtins.fromJSON ''\n" + body + "\n  '';\n}\n"
+
+
+def _collect_planned_md_members(plan: Dict[str, Any]) -> List[str]:
+    """Return absolute paths for planned md member devices."""
+
+    members = []
+    for array in plan.get("arrays", []):
+        for device in array.get("devices", []):
+            path = str(device)
+            if not path.startswith("/dev/"):
+                path = "/dev/" + path
+            members.append(path)
+    unique_members = sorted(set(members))
+    log_event(
+        "pre_nixos.apply.md_member_collection",
+        members=unique_members,
+    )
+    return unique_members
+
+
+def _scrub_planned_md_members(devices: List[str], execute: bool) -> List[str]:
+    """Best-effort removal of mdraid signatures on *devices*."""
+
+    commands: List[str] = []
+    log_event(
+        "pre_nixos.apply.md_member_scrub.start",
+        devices=devices,
+        execute=execute,
+    )
+
+    stop_cmd = "mdadm --stop --scan"
+    commands.append(stop_cmd)
+    _run_best_effort(stop_cmd, execute)
+
+    for device in devices:
+        escaped = shlex.quote(device)
+        zero_cmd = f"mdadm --zero-superblock --force {escaped}"
+        wipefs_cmd = f"wipefs -a {escaped}"
+        commands.extend([zero_cmd, wipefs_cmd])
+        _run_best_effort(zero_cmd, execute)
+        _run_best_effort(wipefs_cmd, execute)
+
+    log_event(
+        "pre_nixos.apply.md_member_scrub.finished",
+        devices=devices,
+        execute=execute,
+        commands=commands,
+    )
+    return commands
 def _select_disko_mode() -> Tuple[str, bool]:
     """Return the preferred disko mode and whether ``--yes-wipe-all-disks`` is supported."""
 

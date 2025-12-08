@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import json
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Callable
@@ -388,6 +389,42 @@ def test_apply_plan_records_plan_when_executing(
     stored = json.loads(plan_path.read_text())
     assert stored.get("disko") == plan.get("disko")
     assert any(execute for _, execute in recorded)
+
+
+def test_apply_plan_retries_after_md_scrub(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    plan = {
+        "disko": {"disk": {}},
+        "arrays": [
+            {"name": "md0", "devices": ["sda1", "sdb1"]},
+        ],
+        "disko_config_path": str(tmp_path / "retry-disko.nix"),
+    }
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
+
+    run_calls: list[str] = []
+
+    def fake_run(cmd: str, execute: bool) -> None:
+        run_calls.append(cmd)
+        if len(run_calls) == 1:
+            raise subprocess.CalledProcessError(1, cmd)
+
+    monkeypatch.setattr(apply_module, "_run", fake_run)
+    monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
+
+    scrubbed_commands = ["mdadm --stop --scan"]
+
+    def fake_scrub(devices: list[str], execute: bool) -> list[str]:
+        assert devices == ["/dev/sda1", "/dev/sdb1"]
+        return scrubbed_commands
+
+    monkeypatch.setattr(apply_module, "_scrub_planned_md_members", fake_scrub)
+
+    commands = apply_plan(plan, dry_run=False)
+
+    assert run_calls == [disko_cmd, disko_cmd]
+    assert commands == [disko_cmd, *scrubbed_commands]
 
 
 def test_prepare_command_environment_logs_nix_path_injection(
