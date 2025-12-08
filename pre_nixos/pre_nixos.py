@@ -5,7 +5,7 @@ import io
 import json
 import os
 import sys
-from typing import Sequence
+from typing import Iterable, Sequence, Set
 
 from . import (
     apply,
@@ -84,7 +84,65 @@ def _prompt_storage_cleanup(
         print("Please choose one of the listed options.")
 
 
-def _handle_existing_storage(execute: bool) -> bool:
+def _normalise_device_path(device: str) -> str:
+    device = device.strip()
+    if device.startswith("/dev/"):
+        return device
+    return f"/dev/{device}" if device else device
+
+
+def _collect_plan_devices(plan: dict[str, object]) -> Set[str]:
+    devices: set[str] = set()
+
+    def add(value: object) -> None:
+        if not isinstance(value, str):
+            return
+        path = _normalise_device_path(value)
+        if path:
+            devices.add(path)
+
+    for disk, partitions in (plan.get("partitions") or {}).items():
+        if isinstance(disk, str):
+            add(disk)
+        if isinstance(partitions, Iterable):
+            for entry in partitions:
+                if isinstance(entry, dict):
+                    add(entry.get("name"))
+
+    for array in plan.get("arrays", []):
+        if not isinstance(array, dict):
+            continue
+        add(array.get("name"))
+        for device in array.get("devices", []) or []:
+            add(device)
+
+    for vg in plan.get("vgs", []):
+        if not isinstance(vg, dict):
+            continue
+        for device in vg.get("devices", []) or []:
+            add(device)
+
+    return devices
+
+
+def _expand_devices_with_lsblk(devices: Set[str]) -> Set[str]:
+    expanded = set(devices)
+    entries, _ = storage_cleanup._build_device_hierarchy()
+    for entry in entries:
+        name = str(entry.get("name") or "")
+        if not name.startswith("/dev/"):
+            continue
+        parents = entry.get("parents") or []
+        pkname = entry.get("pkname")
+        related = list(parents)
+        if pkname:
+            related.append(str(pkname))
+        if any(_normalise_device_path(rel) in devices for rel in related):
+            expanded.add(name)
+    return expanded
+
+
+def _handle_existing_storage(plan: dict[str, object], execute: bool) -> bool:
     try:
         devices = storage_detection.detect_existing_storage()
     except Exception as exc:
@@ -102,10 +160,18 @@ def _handle_existing_storage(execute: bool) -> bool:
     if action is None:
         print("Aborting without modifying storage.")
         return False
+    cleanup_targets = _collect_plan_devices(plan)
+    cleanup_targets.update(entry.device for entry in devices)
+    cleanup_targets = _expand_devices_with_lsblk(cleanup_targets)
+    if cleanup_targets:
+        print(
+            "The selected cleanup will be applied to all devices referenced in "
+            "the storage plan, including the detected devices listed above."
+        )
     if action != storage_cleanup.SKIP_CLEANUP:
         storage_cleanup.perform_storage_cleanup(
             action,
-            [entry.device for entry in devices],
+            sorted(cleanup_targets),
             execute=execute,
         )
     return True
@@ -288,7 +354,7 @@ def main(argv: list[str] | None = None) -> None:
             and os.environ.get("PRE_NIXOS_EXEC") == "1"
         )
         if will_modify_storage:
-            if not _handle_existing_storage(execute=will_modify_storage):
+            if not _handle_existing_storage(plan, execute=will_modify_storage):
                 return
             if _is_interactive() and not _confirm_storage_reset():
                 print("Aborting without modifying storage.")

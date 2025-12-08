@@ -2,7 +2,7 @@
 
 import pytest
 
-from pre_nixos import pre_nixos
+from pre_nixos import pre_nixos, storage_cleanup, storage_detection
 from pre_nixos.install import AutoInstallResult
 from pre_nixos.inventory import Disk
 
@@ -440,3 +440,82 @@ def test_cli_auto_install_failure_exits(monkeypatch, tmp_path):
 
     with pytest.raises(SystemExit):
         pre_nixos.main([])
+
+
+def test_cleanup_covers_plan_devices(monkeypatch):
+    plan = {
+        "arrays": [
+            {"name": "md0", "devices": ["nvme0n1p2", "nvme1n1p2"]},
+        ],
+        "vgs": [{"name": "main", "devices": ["md0"]}],
+        "partitions": {
+            "nvme0n1": [{"name": "nvme0n1p1"}, {"name": "nvme0n1p2"}],
+            "nvme1n1": [{"name": "nvme1n1p1"}, {"name": "nvme1n1p2"}],
+        },
+    }
+    detected = [
+        storage_detection.ExistingStorageDevice(
+            device="/dev/nvme0n1", reasons=("partitions",)
+        )
+    ]
+    cleanup_calls: list[tuple[str, list[str]]] = []
+
+    monkeypatch.setattr(
+        pre_nixos.storage_detection,
+        "detect_existing_storage",
+        lambda: detected,
+    )
+    monkeypatch.setattr(
+        pre_nixos, "_prompt_storage_cleanup", lambda devices: storage_cleanup.WIPE_SIGNATURES
+    )
+    monkeypatch.setattr(pre_nixos, "_is_interactive", lambda: True)
+    monkeypatch.setattr(
+        pre_nixos.storage_cleanup,
+        "perform_storage_cleanup",
+        lambda action, devices, **kwargs: cleanup_calls.append((action, devices)),
+    )
+    monkeypatch.setattr(
+        pre_nixos.storage_cleanup,
+        "_build_device_hierarchy",
+        lambda: (
+            [
+                {
+                    "name": "/dev/nvme0n1",
+                    "parents": [],
+                    "type": "disk",
+                    "mountpoint": None,
+                    "pkname": None,
+                },
+                {
+                    "name": "/dev/nvme0n1p2",
+                    "parents": ["/dev/nvme0n1"],
+                    "type": "part",
+                    "mountpoint": None,
+                    "pkname": "/dev/nvme0n1",
+                },
+                {
+                    "name": "/dev/md126",
+                    "parents": ["/dev/nvme0n1", "/dev/nvme0n1p2"],
+                    "type": "raid0",
+                    "mountpoint": None,
+                    "pkname": "/dev/nvme0n1p2",
+                },
+            ],
+            {},
+        ),
+    )
+
+    assert pre_nixos._handle_existing_storage(plan, execute=True) is True
+
+    assert cleanup_calls
+    _, devices = cleanup_calls[0]
+    assert set(devices) == {
+        "/dev/md0",
+        "/dev/md126",
+        "/dev/nvme0n1",
+        "/dev/nvme0n1p1",
+        "/dev/nvme0n1p2",
+        "/dev/nvme1n1",
+        "/dev/nvme1n1p1",
+        "/dev/nvme1n1p2",
+    }

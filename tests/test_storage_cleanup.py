@@ -278,6 +278,61 @@ def test_teardown_failure_skips_wipe(monkeypatch) -> None:
     assert scheduled == ["umount /target"]
 
 
+def test_teardown_failure_logs_stack_diagnostics(monkeypatch) -> None:
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_list_block_devices",
+        lambda: [
+            {
+                "name": "/dev/sda",
+                "type": "disk",
+                "children": [
+                    {
+                        "name": "/dev/sda1",
+                        "type": "part",
+                        "mountpoint": "/target",
+                        "fstype": "ext4",
+                    }
+                ],
+            }
+        ],
+    )
+    runner = SequenceRunner([1])
+    events: list[tuple[str, dict[str, object]]] = []
+
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_collect_storage_stack_state",
+        lambda: {
+            "lsblk_json": "{}",
+            "mdadm_detail_scan": "scan",
+            "dmsetup_tree": "tree",
+        },
+    )
+    monkeypatch.setattr(
+        "pre_nixos.storage_cleanup.log_event",
+        lambda event, **fields: events.append((event, fields)),
+    )
+
+    storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=True,
+        runner=runner,
+    )
+
+    failure_events = [
+        fields
+        for name, fields in events
+        if name == "pre_nixos.cleanup.teardown_failed"
+    ]
+    assert failure_events
+    diagnostics = failure_events[0]
+    assert diagnostics["lsblk_json"] == "{}"
+    assert diagnostics["mdadm_detail_scan"] == "scan"
+    assert diagnostics["dmsetup_tree"] == "tree"
+
+
 def test_descendant_raid_metadata_is_wiped(monkeypatch) -> None:
     runner = RecordingRunner()
     monkeypatch.setattr(
@@ -377,3 +432,40 @@ def test_partition_refresh_failure_aborts_wipe(empty_lsblk) -> None:
         "partprobe /dev/sda",
         "udevadm settle",
     ]
+
+
+def test_partition_refresh_failure_logs_diagnostics(monkeypatch, empty_lsblk) -> None:
+    runner = SequenceRunner([0, 1, 1, 0, 1, 1, 0, 1, 1, 0])
+    events: list[tuple[str, dict[str, object]]] = []
+
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_collect_storage_stack_state",
+        lambda: {
+            "lsblk_json": "{}",
+            "mdadm_detail_scan": "detail",
+            "dmsetup_tree": "tree",
+        },
+    )
+    monkeypatch.setattr(
+        "pre_nixos.storage_cleanup.log_event",
+        lambda event, **fields: events.append((event, fields)),
+    )
+
+    storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=True,
+        runner=runner,
+    )
+
+    failures = [
+        fields
+        for name, fields in events
+        if name == "pre_nixos.cleanup.partition_refresh_failed"
+    ]
+    assert failures
+    diagnostics = failures[0]
+    assert diagnostics["lsblk_json"] == "{}"
+    assert diagnostics["mdadm_detail_scan"] == "detail"
+    assert diagnostics["dmsetup_tree"] == "tree"
