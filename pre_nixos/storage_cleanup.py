@@ -81,6 +81,38 @@ def _collect_wipefs_diagnostics(device: str) -> dict[str, object]:
     return {"mounts": mount_lines, **boot_probe_data}
 
 
+def _capture_diagnostic_output(cmd: Sequence[str]) -> str:
+    """Return combined stdout/stderr from *cmd* for diagnostics."""
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:  # pragma: no cover - defensive
+        return f"{cmd[0]}: {exc}"
+
+    output = (result.stdout or "") + (result.stderr or "")
+    output = output.strip()
+    if output:
+        return output
+    if result.returncode != 0:
+        return f"{cmd[0]} exited with {result.returncode}"
+    return ""
+
+
+def _collect_storage_stack_state() -> dict[str, object]:
+    """Return a snapshot of block-layer state for diagnostics."""
+
+    return {
+        "lsblk_json": _capture_diagnostic_output(["lsblk", "--output-all", "--json"]),
+        "mdadm_detail_scan": _capture_diagnostic_output(["mdadm", "--detail", "--scan"]),
+        "dmsetup_tree": _capture_diagnostic_output(["dmsetup", "ls", "--tree"]),
+    }
+
+
 _ALLOWED_NONZERO_EXIT_CODES: Mapping[Tuple[str, ...], Set[int]] = {
     ("sgdisk", "--zap-all"): {2},
     ("partprobe",): {1},
@@ -314,6 +346,7 @@ def _teardown_device_usage(
             action=action,
             device=device,
             execute=execute,
+            **_collect_storage_stack_state(),
         )
     return success
 
@@ -428,6 +461,7 @@ def _refresh_partition_table(
         device=device,
         execute=execute,
         **_collect_partition_refresh_diagnostics(device),
+        **_collect_storage_stack_state(),
     )
     return False
 
