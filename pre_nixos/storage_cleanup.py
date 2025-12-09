@@ -62,11 +62,31 @@ CLEANUP_OPTIONS: Tuple[CleanupOption, ...] = (
 
 
 def _default_runner(cmd: Sequence[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, check=False)
+    """Run *cmd* with output captured to avoid noisy stderr/tty chatter."""
+
+    return subprocess.run(
+        cmd,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
 
 
 def _command_to_str(cmd: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in cmd)
+
+
+def _command_output_fields(result: subprocess.CompletedProcess) -> dict[str, str]:
+    """Return a mapping of non-empty output streams for logging."""
+
+    fields = {}
+    stdout = (result.stdout or "").strip()
+    stderr = (result.stderr or "").strip()
+    if stdout:
+        fields["stdout"] = stdout
+    if stderr:
+        fields["stderr"] = stderr
+    return fields
 
 
 def _collect_wipefs_diagnostics(device: str) -> dict[str, object]:
@@ -167,6 +187,7 @@ def _execute_command(
                     device=device,
                     command=cmd_str,
                     returncode=result.returncode,
+                    **_command_output_fields(result),
                     **diagnostics,
                 )
             if tolerate_failure:
@@ -176,9 +197,15 @@ def _execute_command(
                     device=device,
                     command=cmd_str,
                     returncode=result.returncode,
+                    **_command_output_fields(result),
                 )
                 return result
-            raise subprocess.CalledProcessError(result.returncode, cmd_str)
+            raise subprocess.CalledProcessError(
+                result.returncode,
+                cmd_str,
+                output=result.stdout,
+                stderr=result.stderr,
+            )
         if result.returncode != 0:
             log_event(
                 "pre_nixos.cleanup.command_nonzero",
@@ -186,6 +213,7 @@ def _execute_command(
                 device=device,
                 command=cmd_str,
                 returncode=result.returncode,
+                **_command_output_fields(result),
             )
         return result
     raise TypeError("Command runner must return CompletedProcess or None")
