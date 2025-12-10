@@ -31,7 +31,10 @@ apply changes on a running system.
 
 Structured JSON debug logs are now opt-in. Set
 `PRE_NIXOS_LOG_EVENTS=1` in the environment before running the CLI to emit the
-previous diagnostic stream to `stderr` during troubleshooting or test runs.
+previous diagnostic stream to `stderr` during troubleshooting or test runs. Log
+entries are also appended to `PRE_NIXOS_LOG_FILE` (defaulting to
+`/var/log/pre-nixos/actions.log`, which the boot image service creates) so they
+persist outside of the journal.
 
 When a root SSH key is embedded via `PRE_NIXOS_ROOT_KEY`, the CLI can generate a
 minimal NixOS configuration (firewall enabled with SSH + ping, root key

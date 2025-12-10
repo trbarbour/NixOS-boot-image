@@ -8,6 +8,10 @@ let
 in ''
   set -euo pipefail
 
+  log_file="''${PRE_NIXOS_LOG_FILE:-/var/log/pre-nixos/actions.log}"
+  mkdir -p "$(dirname "$log_file")"
+  export PRE_NIXOS_LOG_FILE="$log_file"
+
   status_dir="''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
   status_file=$status_dir/storage-status
   auto_status_file=$status_dir/auto-install-status
