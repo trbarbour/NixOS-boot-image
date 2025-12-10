@@ -17,6 +17,7 @@ version = {file = "pre_nixos/VERSION"}
 pre_nixos = [
     "root_key.pub",
     "VERSION",
+    "default_log_file_path.txt",
     "scripts/announce-lan-ip.sh",
     "templates/auto-install-ip.nix",
 ]

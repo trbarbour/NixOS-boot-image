@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
-from pre_nixos.logging_utils import log_event
+from pre_nixos.logging_utils import (
+    _DEFAULT_LOG_FILE,
+    _DEFAULT_LOG_FILE_PATH,
+    log_event,
+)
 
 
 def test_log_event_emits_json_to_stderr(capsys, monkeypatch) -> None:
@@ -18,6 +22,11 @@ def test_log_event_emits_json_to_stderr(capsys, monkeypatch) -> None:
     assert record["path"] == "/tmp/demo"
     assert record["value"] == 5
     assert "timestamp" in record
+
+
+def test_default_log_file_path_packaged() -> None:
+    assert _DEFAULT_LOG_FILE_PATH.exists()
+    assert _DEFAULT_LOG_FILE == Path(_DEFAULT_LOG_FILE_PATH.read_text().strip())
 
 
 def test_log_event_appends_to_file(tmp_path, capsys, monkeypatch) -> None:

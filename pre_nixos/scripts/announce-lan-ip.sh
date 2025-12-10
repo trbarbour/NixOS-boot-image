@@ -17,6 +17,7 @@ delay="${ANNOUNCE_DELAY:-1}"
 route_target="${ANNOUNCE_ROUTE_TARGET:-1.1.1.1}"
 broadcast_cmd="${BROADCAST_CONSOLE_CMD:-}"
 preferred_missing_message=""
+shell_bin="${BASH:-sh}"
 
 read_recorded_ipv4() {
   local path="$1" key value record=""
@@ -123,9 +124,9 @@ if [ -n "$broadcast_cmd" ]; then
   # preserved, allowing paths with spaces or additional flags. The first token is
   # used to verify the executable exists before invoking the full command with
   # the message passed as the first positional parameter.
-  broadcast_bin=$(sh -c "set -- $broadcast_cmd; printf '%s' \"\$1\"")
+  broadcast_bin=$("$shell_bin" -c "set -- $broadcast_cmd; printf '%s' \"\$1\"")
   if command -v "$broadcast_bin" >/dev/null 2>&1; then
-    if sh -c "exec $broadcast_cmd \"\$1\"" broadcast "$message"; then
+    if "$shell_bin" -c "exec $broadcast_cmd \"\$1\"" broadcast "$message"; then
       broadcast_failed=0
     fi
   else
