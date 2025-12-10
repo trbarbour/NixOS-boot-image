@@ -51,6 +51,37 @@ def log_event(event: str, **fields: Any) -> None:
     for key, value in fields.items():
         record[str(key)] = _serialise(value)
 
-    sys.stderr.write(json.dumps(record, sort_keys=True) + "\n")
-    sys.stderr.flush()
+    message = json.dumps(record, sort_keys=True)
 
+    sys.stderr.write(message + "\n")
+    sys.stderr.flush()
+    _append_to_log_file(message)
+
+_DEFAULT_LOG_FILE_PATH = Path(__file__).with_name("default_log_file_path.txt")
+_DEFAULT_LOG_FILE = Path(_DEFAULT_LOG_FILE_PATH.read_text().strip())
+
+
+def _log_file_path() -> Path:
+    """Return the configured log file path.
+
+    When ``PRE_NIXOS_LOG_FILE`` is not set or is empty, fall back to the
+    default location used by the boot image.
+    """
+
+    value = os.environ.get("PRE_NIXOS_LOG_FILE")
+    if value is None or value.strip() == "":
+        return _DEFAULT_LOG_FILE
+    return Path(value)
+
+
+def _append_to_log_file(message: str) -> None:
+    """Append the given JSON *message* to the configured log file."""
+
+    log_file = _log_file_path()
+    try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        with log_file.open("a", encoding="utf-8") as handle:
+            handle.write(message + "\n")
+    except OSError as exc:  # pragma: no cover - defensive logging path
+        sys.stderr.write(f"pre-nixos: failed to write log to {log_file}: {exc}\n")
+        sys.stderr.flush()

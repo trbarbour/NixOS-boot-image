@@ -18,3 +18,23 @@ def test_log_event_emits_json_to_stderr(capsys, monkeypatch) -> None:
     assert record["path"] == "/tmp/demo"
     assert record["value"] == 5
     assert "timestamp" in record
+
+
+def test_log_event_appends_to_file(tmp_path, capsys, monkeypatch) -> None:
+    monkeypatch.setenv("PRE_NIXOS_LOG_EVENTS", "1")
+    log_path = tmp_path / "logs" / "actions.log"
+    monkeypatch.setenv("PRE_NIXOS_LOG_FILE", str(log_path))
+
+    log_event("pre_nixos.test.file", payload={"key": "value"})
+
+    captured = capsys.readouterr()
+    stderr_lines = [line for line in captured.err.splitlines() if line.strip()]
+    assert len(stderr_lines) == 1
+    stderr_record = json.loads(stderr_lines[0])
+
+    file_lines = log_path.read_text(encoding="utf-8").splitlines()
+    assert len(file_lines) == 1
+    file_record = json.loads(file_lines[0])
+
+    assert file_record == stderr_record
+    assert file_record["event"] == "pre_nixos.test.file"

@@ -5,8 +5,14 @@ let
   broadcastConsoleCmd = "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast";
   announceLanIpScript = pkgs.writeShellScript "pre-nixos-announce-lan-ip"
     (builtins.readFile ../../pre_nixos/scripts/announce-lan-ip.sh);
+  defaultLogFile = builtins.replaceStrings ["\n"] [""]
+    (builtins.readFile ../../pre_nixos/default_log_file_path.txt);
 in ''
   set -euo pipefail
+
+  log_file="''${PRE_NIXOS_LOG_FILE:-${defaultLogFile}}"
+  mkdir -p "$(dirname "$log_file")"
+  export PRE_NIXOS_LOG_FILE="$log_file"
 
   status_dir="''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
   status_file=$status_dir/storage-status
