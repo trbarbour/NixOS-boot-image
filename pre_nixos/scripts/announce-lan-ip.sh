@@ -15,9 +15,9 @@ issue_path="${ANNOUNCE_ISSUE_PATH:-/etc/issue}"
 max_attempts="${ANNOUNCE_MAX_ATTEMPTS:-60}"
 delay="${ANNOUNCE_DELAY:-1}"
 route_target="${ANNOUNCE_ROUTE_TARGET:-1.1.1.1}"
-  broadcast_cmd="${BROADCAST_CONSOLE_CMD:-}"
-  preferred_missing_message=""
-  shell_bin="${BASH:-sh}"
+broadcast_cmd="${BROADCAST_CONSOLE_CMD:-}"
+preferred_missing_message=""
+shell_bin="${BASH:-sh}"
 
 read_recorded_ipv4() {
   local path="$1" key value record=""
@@ -119,17 +119,17 @@ if [ "$stdout_message" != "0" ]; then
 fi
 
 broadcast_failed=1
-  if [ -n "$broadcast_cmd" ]; then
-    # Parse the configured broadcast command with the shell so quoted arguments are
-    # preserved, allowing paths with spaces or additional flags. The first token is
-    # used to verify the executable exists before invoking the full command with
-    # the message passed as the first positional parameter.
-    broadcast_bin=$("$shell_bin" -c "set -- $broadcast_cmd; printf '%s' \"\$1\"")
-    if command -v "$broadcast_bin" >/dev/null 2>&1; then
-      if "$shell_bin" -c "exec $broadcast_cmd \"\$1\"" broadcast "$message"; then
-        broadcast_failed=0
-      fi
-    else
+if [ -n "$broadcast_cmd" ]; then
+  # Parse the configured broadcast command with the shell so quoted arguments are
+  # preserved, allowing paths with spaces or additional flags. The first token is
+  # used to verify the executable exists before invoking the full command with
+  # the message passed as the first positional parameter.
+  broadcast_bin=$("$shell_bin" -c "set -- $broadcast_cmd; printf '%s' \"\$1\"")
+  if command -v "$broadcast_bin" >/dev/null 2>&1; then
+    if "$shell_bin" -c "exec $broadcast_cmd \"\$1\"" broadcast "$message"; then
+      broadcast_failed=0
+    fi
+  else
     logger -t pre-nixos-announce-lan-ip \
       "broadcast command '$broadcast_bin' not found; skipping LAN IP console broadcast" || true
   fi
