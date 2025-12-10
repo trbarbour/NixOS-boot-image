@@ -57,7 +57,8 @@ def log_event(event: str, **fields: Any) -> None:
     sys.stderr.flush()
     _append_to_log_file(message)
 
-_DEFAULT_LOG_FILE = Path("/var/log/pre-nixos/actions.log")
+_DEFAULT_LOG_FILE_PATH = Path(__file__).with_name("default_log_file_path.txt")
+_DEFAULT_LOG_FILE = Path(_DEFAULT_LOG_FILE_PATH.read_text().strip())
 
 
 def _log_file_path() -> Path:
