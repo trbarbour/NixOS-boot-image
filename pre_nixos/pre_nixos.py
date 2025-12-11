@@ -62,6 +62,15 @@ def _auto_install_default(lan_config: network.LanConfiguration | None) -> bool:
     return env_enabled and lan_config is not None
 
 
+def _plan_stdout_enabled() -> bool:
+    """Return ``True`` when the storage plan should be printed to stdout."""
+
+    value = os.environ.get("PRE_NIXOS_PLAN_STDOUT")
+    if value is None:
+        return True
+    return value.strip().lower() not in {"", "0", "false", "no"}
+
+
 def _prompt_storage_cleanup(
     devices: Sequence[storage_detection.ExistingStorageDevice],
 ) -> str | None:
@@ -338,15 +347,17 @@ def main(argv: list[str] | None = None) -> None:
         else:
             devices = plan.get("disko") or {}
             output = apply._render_disko_config(devices)
-        print(output)
-        if console is not None:
-            # ``/dev/console`` expects carriage return + line feed for proper
-            # rendering on some terminals. Ensure each newline in the rendered
-            # output resets the cursor to the start of the line before returning
-            # control to the caller.
-            console_output = output.replace("\n", "\r\n") + "\r\n"
-            console.write(console_output)
-            console.flush()
+
+        if _plan_stdout_enabled():
+            print(output)
+            if console is not None:
+                # ``/dev/console`` expects carriage return + line feed for proper
+                # rendering on some terminals. Ensure each newline in the rendered
+                # output resets the cursor to the start of the line before returning
+                # control to the caller.
+                console_output = output.replace("\n", "\r\n") + "\r\n"
+                console.write(console_output)
+                console.flush()
 
         will_modify_storage = (
             not args.plan_only

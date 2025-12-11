@@ -152,8 +152,9 @@ the prerequisites are available.
 
 ## Nix flake
 
-Build a bootable ISO that prints the plan at boot. Run `pre-nixos-tui` manually
-to apply it:
+Build a bootable ISO. The storage plan no longer prints to the console at boot
+unless `PRE_NIXOS_PLAN_STDOUT=1` is set for debugging. Run `pre-nixos-tui`
+manually to apply the plan:
 
 ```bash
 nix build
