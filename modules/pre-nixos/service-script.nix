@@ -14,6 +14,10 @@ in ''
   mkdir -p "$(dirname "$log_file")"
   export PRE_NIXOS_LOG_FILE="$log_file"
 
+  if [ -z "''${PRE_NIXOS_PLAN_STDOUT:-}" ]; then
+    export PRE_NIXOS_PLAN_STDOUT=0
+  fi
+
   status_dir="''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
   status_file=$status_dir/storage-status
   auto_status_file=$status_dir/auto-install-status
