@@ -370,6 +370,7 @@ def _build_storage_graph() -> dict[str, StorageNode]:
         if not pv_name or not vg_name:
             continue
         pv_node = ensure_node(pv_name)
+        pv_node.metadata["vg_name"] = vg_name
         vg_node = vg_nodes.get(vg_name) or ensure_node(f"lvm-vg:{vg_name}", "lvm_vg")
         vg_node.metadata["vg_name"] = vg_name
         pv_node.children.add(vg_node.name)
@@ -460,7 +461,7 @@ def _compute_depths(graph: dict[str, StorageNode], subset: set[str]) -> dict[str
 
 def _ordered_nodes_leaf_to_root(graph: dict[str, StorageNode], subset: set[str]) -> list[str]:
     depths = _compute_depths(graph, subset)
-    return sorted(subset, key=lambda name: depths.get(name, 0))
+    return sorted(subset, key=lambda name: (depths.get(name, 0), name))
 
 
 def _is_swap_node(node: StorageNode) -> bool:
@@ -632,8 +633,58 @@ def _wipe_descendant_metadata_graph(
         node = graph.get(name)
         if not node:
             continue
-        if node.node_type == "lvm_vg" or node.node_type == "file":
+        if node.node_type == "file":
             continue
+        if node.node_type in {"lvm", "lvm_lv"}:
+            result = _execute_command(
+                ["wipefs", "-a", node.name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+            result = _execute_command(
+                ["lvremove", "-fy", node.name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+            continue
+        if node.node_type == "lvm_vg":
+            vg_name = node.metadata.get("vg_name", node.name.replace("lvm-vg:", ""))
+            result = _execute_command(
+                ["vgremove", "-ff", "-y", vg_name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+            continue
+        if node.metadata.get("vg_name"):
+            result = _execute_command(
+                ["pvremove", "-ff", "-y", node.name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
         if _is_raid_node(node):
             result = _execute_command(
                 ["mdadm", "--zero-superblock", "--force", node.name],

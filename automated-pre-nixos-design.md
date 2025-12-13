@@ -1,7 +1,7 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.20
-**Date:** 2025-12-12 (UTC)
+**Doc status:** Draft v0.21
+**Date:** 2025-12-13 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
@@ -141,7 +141,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - LVM volume groups surface as `lvm_vg.<name>.lvs`. Logical volumes render as either `filesystem` (ext4, `relatime`, mountpoints such as `/`, `/home`, `/var/tmp`, `/var/log`, and `/data`) or `swap` content. This mirrors today's manual mkfs/mkswap labelling policy.
 - After Disko runs, the applier iterates over any `post_apply_commands` and executes them in order, logging each invocation.
 - The applier serialises the structure via `builtins.fromJSON` to keep the config legible, then shells out to Disko to execute the destroy/format/mount pipeline in one idempotent step.
-- **Storage erasure + metadata handling:** The pre-confirmation storage cleanup now builds a single global graph from `lsblk` (plus `pvs/vgs/lvs` and `losetup`) so shared stacks (md/LVM/loops) are handled once. It walks the reachable forest **leaf-to-root**, unmounting/swapoff → LV deactivate → VG deactivate → md stop → dm/crypt/loop detach, logs any failures, and **still wipes metadata** (`mdadm --zero-superblock` + `wipefs`) even if teardown was partial. Root devices then receive GPT zap + reread + optional discard/shred + final `wipefs`. Partition refresh failures and wipefs errors capture diagnostics for RCA instead of silently skipping work.
+- **Storage erasure + metadata handling:** The pre-confirmation storage cleanup now builds a single global graph from `lsblk` (plus `pvs/vgs/lvs` and `losetup`) so shared stacks (md/LVM/loops) are handled once. It walks the reachable forest **leaf-to-root**, unmounting/swapoff → LV deactivate → VG deactivate → md stop → dm/crypt/loop detach, and then **destroys LVM metadata** (`lvremove -fy`, `vgremove -ff -y`, `pvremove -ff -y`), **md metadata** (`mdadm --zero-superblock`), and remaining signatures (`wipefs`). Root devices then receive GPT zap + reread + optional discard/shred + final `wipefs`. Partition refresh failures and wipefs errors capture diagnostics for RCA instead of silently skipping work.
 
 ---
 
