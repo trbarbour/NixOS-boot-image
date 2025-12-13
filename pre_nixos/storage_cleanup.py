@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import shlex
 import subprocess
 from typing import Callable, Iterable, List, Mapping, Sequence, Set, Tuple
@@ -38,6 +38,19 @@ class CleanupOption:
     key: str
     action: str | None
     description: str
+
+
+@dataclass
+class StorageNode:
+    """A storage element participating in cleanup."""
+
+    name: str
+    node_type: str
+    fstype: str | None = None
+    mountpoints: list[str] = field(default_factory=list)
+    parents: set[str] = field(default_factory=set)
+    children: set[str] = field(default_factory=set)
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 CLEANUP_OPTIONS: Tuple[CleanupOption, ...] = (
@@ -219,15 +232,19 @@ def _execute_command(
     raise TypeError("Command runner must return CompletedProcess or None")
 
 
+def _run_json_command(cmd: Sequence[str]) -> dict[str, object]:
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        return {}
+    try:
+        return json.loads(result.stdout or "{}")
+    except json.JSONDecodeError:
+        return {}
+
+
 def _list_block_devices() -> list[dict[str, object]]:
     result = subprocess.run(
-        [
-            "lsblk",
-            "--json",
-            "--paths",
-            "-o",
-            "NAME,TYPE,MOUNTPOINT,PKNAME,FSTYPE",
-        ],
+        ["lsblk", "--json", "--paths", "--output-all"],
         capture_output=True,
         text=True,
         check=False,
@@ -242,13 +259,59 @@ def _list_block_devices() -> list[dict[str, object]]:
     return devices if isinstance(devices, list) else []
 
 
+def _list_pvs() -> list[dict[str, object]]:
+    data = _run_json_command(["pvs", "--reportformat", "json", "-o", "pv_name,vg_name"])
+    records: list[dict[str, object]] = []
+    for report in data.get("report", []) or []:
+        for pv in report.get("pv", []) or []:
+            if isinstance(pv, dict):
+                records.append(pv)
+    return records
+
+
+def _list_vgs() -> list[dict[str, object]]:
+    data = _run_json_command(["vgs", "--reportformat", "json", "-o", "vg_name"])
+    records: list[dict[str, object]] = []
+    for report in data.get("report", []) or []:
+        for vg in report.get("vg", []) or []:
+            if isinstance(vg, dict):
+                records.append(vg)
+    return records
+
+
+def _list_lvs() -> list[dict[str, object]]:
+    data = _run_json_command(["lvs", "--reportformat", "json", "-o", "lv_path,vg_name"])
+    records: list[dict[str, object]] = []
+    for report in data.get("report", []) or []:
+        for lv in report.get("lv", []) or []:
+            if isinstance(lv, dict):
+                records.append(lv)
+    return records
+
+
+def _list_losetup() -> list[dict[str, object]]:
+    data = _run_json_command(["losetup", "--list", "--json"])
+    loopdevices: list[dict[str, object]] = []
+    devices = data.get("loopdevices")
+    if isinstance(devices, list):
+        loopdevices = [entry for entry in devices if isinstance(entry, dict)]
+    return loopdevices
+
+
 def _flatten_lsblk(entry: dict[str, object], parents: list[str]) -> Iterable[dict[str, object]]:
     name = str(entry.get("name", ""))
     children = entry.get("children") or []
+    mountpoints: list[str] = []
+    raw_mount = entry.get("mountpoint")
+    if isinstance(raw_mount, str) and raw_mount:
+        mountpoints.append(raw_mount)
+    raw_mounts = entry.get("mountpoints")
+    if isinstance(raw_mounts, list):
+        mountpoints.extend(str(item) for item in raw_mounts if item)
     record = {
         "name": name,
         "type": entry.get("type"),
-        "mountpoint": entry.get("mountpoint"),
+        "mountpoints": mountpoints,
         "pkname": entry.get("pkname"),
         "fstype": entry.get("fstype"),
         "parents": list(parents),
@@ -259,8 +322,88 @@ def _flatten_lsblk(entry: dict[str, object], parents: list[str]) -> Iterable[dic
             yield from _flatten_lsblk(child, parents + [name])
 
 
+def _build_storage_graph() -> dict[str, StorageNode]:
+    nodes: dict[str, StorageNode] = {}
+
+    def ensure_node(name: str, node_type: str | None = None) -> StorageNode:
+        node = nodes.get(name)
+        if node is None:
+            node = StorageNode(name=name, node_type=node_type or "unknown")
+            nodes[name] = node
+        elif node_type and node.node_type == "unknown":
+            node.node_type = node_type
+        return node
+
+    for entry in _list_block_devices():
+        for flat in _flatten_lsblk(entry, []):
+            name = flat.get("name")
+            if not isinstance(name, str) or not name:
+                continue
+            node = ensure_node(name, str(flat.get("type") or "unknown"))
+            if flat.get("fstype"):
+                node.fstype = str(flat.get("fstype"))
+            node.mountpoints = list({*node.mountpoints, *flat.get("mountpoints", [])})
+            parents = flat.get("parents", []) or []
+            if parents:
+                parent = str(parents[-1])
+                parent_node = ensure_node(parent)
+                parent_node.children.add(node.name)
+                node.parents.add(parent_node.name)
+            pkname = flat.get("pkname")
+            if pkname:
+                parent_node = ensure_node(str(pkname))
+                parent_node.children.add(node.name)
+                node.parents.add(parent_node.name)
+
+    vg_nodes: dict[str, StorageNode] = {}
+    for vg in _list_vgs():
+        vg_name = str(vg.get("vg_name") or "")
+        if not vg_name:
+            continue
+        vg_node = ensure_node(f"lvm-vg:{vg_name}", "lvm_vg")
+        vg_node.metadata["vg_name"] = vg_name
+        vg_nodes[vg_name] = vg_node
+
+    for pv in _list_pvs():
+        pv_name = str(pv.get("pv_name") or "")
+        vg_name = str(pv.get("vg_name") or "")
+        if not pv_name or not vg_name:
+            continue
+        pv_node = ensure_node(pv_name)
+        pv_node.metadata["vg_name"] = vg_name
+        vg_node = vg_nodes.get(vg_name) or ensure_node(f"lvm-vg:{vg_name}", "lvm_vg")
+        vg_node.metadata["vg_name"] = vg_name
+        pv_node.children.add(vg_node.name)
+        vg_node.parents.add(pv_node.name)
+
+    for lv in _list_lvs():
+        lv_name = str(lv.get("lv_path") or "")
+        vg_name = str(lv.get("vg_name") or "")
+        if not lv_name or not vg_name:
+            continue
+        lv_node = ensure_node(lv_name, "lvm_lv")
+        lv_node.metadata["vg_name"] = vg_name
+        vg_node = vg_nodes.get(vg_name) or ensure_node(f"lvm-vg:{vg_name}", "lvm_vg")
+        vg_node.metadata["vg_name"] = vg_name
+        vg_node.children.add(lv_node.name)
+        lv_node.parents.add(vg_node.name)
+
+    loop_data = _list_losetup()
+    for loop_entry in loop_data:
+        loop_name = str(loop_entry.get("name") or "")
+        backing = str(loop_entry.get("back-file") or "")
+        if not loop_name or not backing:
+            continue
+        loop_node = ensure_node(loop_name, "loop")
+        file_node = ensure_node(backing, "file")
+        file_node.children.add(loop_node.name)
+        loop_node.parents.add(file_node.name)
+
+    return nodes
+
+
 def _build_device_hierarchy() -> tuple[list[dict[str, object]], dict[str, list[dict[str, object]]]]:
-    """Return flattened lsblk data and a parent->children mapping."""
+    """Compatibility wrapper returning flattened lsblk data and children mapping."""
 
     entries: list[dict[str, object]] = []
     for entry in _list_block_devices():
@@ -276,98 +419,194 @@ def _build_device_hierarchy() -> tuple[list[dict[str, object]], dict[str, list[d
     return entries, children
 
 
-def _descendant_entries(device: str) -> list[dict[str, object]]:
-    """Return all descendant block devices of *device*.
+def _reachable_nodes(graph: dict[str, StorageNode], roots: Sequence[str]) -> set[str]:
+    reachable: set[str] = set()
 
-    Descendants are discovered via the lsblk tree and include grandchildren and
-    deeper levels. The returned list is ordered depth-first so that the deepest
-    nodes appear first.
-    """
+    def visit(name: str) -> None:
+        if name in reachable:
+            return
+        reachable.add(name)
+        node = graph.get(name)
+        if not node:
+            return
+        for child in node.children:
+            visit(child)
 
-    _, children = _build_device_hierarchy()
-
-    ordered: list[dict[str, object]] = []
-
-    def visit(current: str) -> None:
-        for child in children.get(current, []):
-            visit(str(child.get("name", "")))
-            ordered.append(child)
-
-    visit(device)
-    return ordered
+    for root in roots:
+        visit(root)
+    return reachable
 
 
-def _device_usage_entries(device: str) -> list[dict[str, object]]:
-    entries, _ = _build_device_hierarchy()
-    relevant = [entry for entry in entries if device == entry["name"]]
-    relevant.extend(_descendant_entries(device))
-    relevant.sort(key=lambda entry: len(entry.get("parents", [])), reverse=True)
-    return relevant
+def _compute_depths(graph: dict[str, StorageNode], subset: set[str]) -> dict[str, int]:
+    depths: dict[str, int] = {}
+    visiting: set[str] = set()
+
+    def depth(name: str) -> int:
+        if name in depths:
+            return depths[name]
+        if name in visiting:
+            return 0
+        visiting.add(name)
+        node = graph.get(name)
+        child_depths = [depth(child) for child in (node.children if node else []) if child in subset]
+        visiting.remove(name)
+        value = 0 if not child_depths else 1 + max(child_depths)
+        depths[name] = value
+        return value
+
+    for name in subset:
+        depth(name)
+    return depths
 
 
-def _teardown_device_usage(
+def _ordered_nodes_leaf_to_root(graph: dict[str, StorageNode], subset: set[str]) -> list[str]:
+    depths = _compute_depths(graph, subset)
+    return sorted(subset, key=lambda name: (depths.get(name, 0), name))
+
+
+def _is_swap_node(node: StorageNode) -> bool:
+    return node.fstype == "swap" or any(mp == "[SWAP]" for mp in node.mountpoints)
+
+
+def _is_raid_node(node: StorageNode) -> bool:
+    node_type = node.node_type or ""
+    return node_type.startswith("raid") or node.name.startswith("/dev/md") or node.fstype == "linux_raid_member"
+
+
+def _is_dm_node(node: StorageNode) -> bool:
+    return node.node_type in {"crypt", "dm"} or node.name.startswith("/dev/dm")
+
+
+def _teardown_node(
     action: str,
     device: str,
+    node: StorageNode,
     *,
     execute: bool,
     runner: CommandRunner,
     scheduled: List[str],
 ) -> bool:
     success = True
-    entries = _device_usage_entries(device)
-    for entry in entries:
-        if entry.get("name") == device:
+    for mountpoint in list(dict.fromkeys(node.mountpoints)):
+        result = _execute_command(
+            ["umount", mountpoint],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    if _is_swap_node(node):
+        result = _execute_command(
+            ["swapoff", node.name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    if node.node_type in {"lvm", "lvm_lv"}:
+        result = _execute_command(
+            ["lvchange", "-an", node.name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    if node.node_type == "lvm_vg":
+        vg_name = node.metadata.get("vg_name", node.name.replace("lvm-vg:", ""))
+        result = _execute_command(
+            ["vgchange", "-an", vg_name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    if _is_raid_node(node):
+        result = _execute_command(
+            ["mdadm", "--stop", node.name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    if _is_dm_node(node):
+        result = _execute_command(
+            ["dmsetup", "remove", node.name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    if node.node_type == "loop":
+        result = _execute_command(
+            ["losetup", "-d", node.name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    return success
+
+
+def _teardown_graph(
+    action: str,
+    device: str,
+    nodes: list[str],
+    graph: dict[str, StorageNode],
+    *,
+    execute: bool,
+    runner: CommandRunner,
+    scheduled: List[str],
+) -> bool:
+    success = True
+    for name in nodes:
+        node = graph.get(name)
+        if not node:
             continue
-        mountpoint = entry.get("mountpoint")
-        if mountpoint:
-            result = _execute_command(
-                ["umount", str(mountpoint)],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
-        if entry.get("fstype") == "swap" or entry.get("mountpoint") == "[SWAP]":
-            result = _execute_command(
-                ["swapoff", str(entry.get("name"))],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
-        entry_type = str(entry.get("type") or "")
-        if entry_type.startswith("raid"):
-            result = _execute_command(
-                ["mdadm", "--stop", str(entry.get("name"))],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
-        if entry_type in {"crypt", "dm", "lvm"}:
-            result = _execute_command(
-                ["dmsetup", "remove", str(entry.get("name"))],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
+        node_success = _teardown_node(
+            action,
+            device,
+            node,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        )
+        if not node_success:
+            success = False
     if not success:
         log_event(
             "pre_nixos.cleanup.teardown_failed",
@@ -379,38 +618,26 @@ def _teardown_device_usage(
     return success
 
 
-def _wipe_descendant_metadata(
+def _wipe_descendant_metadata_graph(
     action: str,
     device: str,
+    nodes: list[str],
+    graph: dict[str, StorageNode],
     *,
     execute: bool,
     runner: CommandRunner,
     scheduled: List[str],
 ) -> bool:
-    """Remove filesystem and RAID signatures from *device*'s descendants."""
-
     success = True
-    for entry in _descendant_entries(device):
-        name = str(entry.get("name") or "")
-        if not name:
+    for name in nodes:
+        node = graph.get(name)
+        if not node:
             continue
-        result = _execute_command(
-            ["wipefs", "-a", name],
-            action=action,
-            device=device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-            tolerate_failure=True,
-        )
-        if result.returncode != 0:
-            success = False
-
-        fstype = str(entry.get("fstype") or "")
-        entry_type = str(entry.get("type") or "")
-        if fstype == "linux_raid_member" or entry_type.startswith("raid"):
+        if node.node_type == "file":
+            continue
+        if node.node_type in {"lvm", "lvm_lv"}:
             result = _execute_command(
-                ["mdadm", "--zero-superblock", "--force", name],
+                ["wipefs", "-a", node.name],
                 action=action,
                 device=device,
                 execute=execute,
@@ -420,7 +647,67 @@ def _wipe_descendant_metadata(
             )
             if result.returncode != 0:
                 success = False
-
+            result = _execute_command(
+                ["lvremove", "-fy", node.name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+            continue
+        if node.node_type == "lvm_vg":
+            vg_name = node.metadata.get("vg_name", node.name.replace("lvm-vg:", ""))
+            result = _execute_command(
+                ["vgremove", "-ff", "-y", vg_name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+            continue
+        if node.metadata.get("vg_name"):
+            result = _execute_command(
+                ["pvremove", "-ff", "-y", node.name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+        if _is_raid_node(node):
+            result = _execute_command(
+                ["mdadm", "--zero-superblock", "--force", node.name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+        result = _execute_command(
+            ["wipefs", "-a", node.name],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
     if not success:
         log_event(
             "pre_nixos.cleanup.descendant_wipe_failed",
@@ -433,8 +720,9 @@ def _wipe_descendant_metadata(
 
 def _collect_partition_refresh_diagnostics(device: str) -> dict[str, object]:
     return {
-        "usage": _device_usage_entries(device),
+        "device": device,
         **storage_detection.collect_boot_probe_data(),
+        **_collect_storage_stack_state(),
     }
 
 
@@ -477,8 +765,8 @@ def _refresh_partition_table(
             tolerate_failure=True,
         )
         if (
-            blockdev_result.returncode == 0
-            and partprobe_result.returncode == 0
+            blockdev_result.returncode in {0, 16}
+            and partprobe_result.returncode in {0, 1}
             and settle_result.returncode == 0
         ):
             return True
@@ -489,9 +777,63 @@ def _refresh_partition_table(
         device=device,
         execute=execute,
         **_collect_partition_refresh_diagnostics(device),
-        **_collect_storage_stack_state(),
     )
     return False
+
+
+def _wipe_root_device(
+    action: str,
+    device: str,
+    *,
+    execute: bool,
+    runner: CommandRunner,
+    scheduled: List[str],
+) -> None:
+    _execute_command(
+        ("sgdisk", "--zap-all", device),
+        action=action,
+        device=device,
+        execute=execute,
+        runner=runner,
+        scheduled=scheduled,
+    )
+
+    if not _refresh_partition_table(
+        action,
+        device,
+        execute=execute,
+        runner=runner,
+        scheduled=scheduled,
+    ):
+        return
+
+    if action == DISCARD_BLOCKS:
+        _execute_command(
+            ("blkdiscard", "--force", device),
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        )
+    elif action == OVERWRITE_RANDOM:
+        _execute_command(
+            ("shred", "-n", "1", "-vz", device),
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        )
+
+    _execute_command(
+        ("wipefs", "-a", device),
+        action=action,
+        device=device,
+        execute=execute,
+        runner=runner,
+        scheduled=scheduled,
+    )
 
 
 def perform_storage_cleanup(
@@ -532,17 +874,33 @@ def perform_storage_cleanup(
     }:
         raise ValueError(f"unknown storage cleanup action: {action}")
 
+    graph = _build_storage_graph()
+    reachable = _reachable_nodes(graph, devices)
+    ordered_nodes = _ordered_nodes_leaf_to_root(graph, reachable)
+
+    _teardown_graph(
+        action,
+        ",".join(devices),
+        ordered_nodes,
+        graph,
+        execute=execute,
+        runner=runner,
+        scheduled=scheduled,
+    )
+
+    descendant_nodes = [name for name in ordered_nodes if name not in set(devices)]
+    _wipe_descendant_metadata_graph(
+        action,
+        ",".join(devices),
+        descendant_nodes,
+        graph,
+        execute=execute,
+        runner=runner,
+        scheduled=scheduled,
+    )
+
     for device in devices:
-        if not _teardown_device_usage(
-            action,
-            device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-        ):
-            continue
-
-        _wipe_descendant_metadata(
+        _wipe_root_device(
             action,
             device,
             execute=execute,
@@ -550,51 +908,6 @@ def perform_storage_cleanup(
             scheduled=scheduled,
         )
 
-        _execute_command(
-            ("sgdisk", "--zap-all", device),
-            action=action,
-            device=device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-        )
-
-        if not _refresh_partition_table(
-            action,
-            device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-        ):
-            continue
-
-        if action == DISCARD_BLOCKS:
-            _execute_command(
-                ("blkdiscard", "--force", device),
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-            )
-        elif action == OVERWRITE_RANDOM:
-            _execute_command(
-                ("shred", "-n", "1", "-vz", device),
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-            )
-
-        _execute_command(
-            ("wipefs", "-a", device),
-            action=action,
-            device=device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-        )
     log_event(
         "pre_nixos.cleanup.finished",
         action=action,

@@ -93,3 +93,13 @@
 - Documented the limitation of pre-apply storage erasure (only existing
   descendants are visible pre-partition) and the new cheap follow-up scrub that
   zeros planned md member metadata and retries Disko once after a failure.
+
+### v0.20 — 2025-12-12
+- Updated the main design to the global graph-based cleanup (lsblk + LVM +
+  losetup), leaf-to-root teardown with explicit LV/VG deactivation, resilient
+  metadata wiping even after partial teardown, and richer diagnostics for wipe
+  and partition-refresh failures.
+
+### v0.21 — 2025-12-13
+- Clarified that storage cleanup now deletes LVM metadata (lvremove/vgremove/
+  pvremove) before zeroing md superblocks and wiping residual signatures.
