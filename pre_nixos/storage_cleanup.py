@@ -720,7 +720,6 @@ def _wipe_descendant_metadata_graph(
 
 def _collect_partition_refresh_diagnostics(device: str) -> dict[str, object]:
     return {
-        "device": device,
         **storage_detection.collect_boot_probe_data(),
         **_collect_storage_stack_state(),
     }
@@ -776,7 +775,7 @@ def _refresh_partition_table(
         action=action,
         device=device,
         execute=execute,
-        **_collect_partition_refresh_diagnostics(device),
+        **{k: v for k, v in _collect_partition_refresh_diagnostics(device).items() if k != "device"},
     )
     return False
 

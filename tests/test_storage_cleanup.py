@@ -158,6 +158,55 @@ def test_global_teardown_and_wipe_leaf_to_root(monkeypatch) -> None:
     assert scheduled == [" ".join(cmd) for cmd in expected]
 
 
+def test_refresh_partition_table_logs_diagnostics(monkeypatch) -> None:
+    events: list[tuple[str, dict[str, object]]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    def fake_execute_command(
+        cmd: Sequence[str],
+        *,
+        action: str,
+        device: str,
+        execute: bool,
+        runner,
+        scheduled: list[str],
+        tolerate_failure: bool = False,
+    ) -> subprocess.CompletedProcess:
+        return subprocess.CompletedProcess(cmd, 1)
+
+    monkeypatch.setattr(storage_cleanup, "log_event", record_event)
+    monkeypatch.setattr(storage_cleanup, "_execute_command", fake_execute_command)
+    monkeypatch.setattr(
+        storage_cleanup.storage_detection,
+        "collect_boot_probe_data",
+        lambda: {"boot_probe": {"ok": True}},
+    )
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_collect_storage_stack_state",
+        lambda: {"stack": "state"},
+    )
+    monkeypatch.setattr(storage_cleanup.time, "sleep", lambda *_args, **_kwargs: None)
+
+    result = storage_cleanup._refresh_partition_table(
+        storage_cleanup.WIPE_SIGNATURES,
+        "/dev/test",
+        execute=True,
+        runner=lambda cmd: subprocess.CompletedProcess(cmd, 1),
+        scheduled=[],
+        attempts=1,
+    )
+
+    assert result is False
+    assert events and events[0][0] == "pre_nixos.cleanup.partition_refresh_failed"
+    fields = events[0][1]
+    assert fields["device"] == "/dev/test"
+    assert fields["boot_probe"] == {"ok": True}
+    assert fields["stack"] == "state"
+
+
 def test_teardown_failure_keeps_wiping(monkeypatch) -> None:
     monkeypatch.setattr(
         storage_cleanup,
