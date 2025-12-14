@@ -427,6 +427,52 @@ def test_apply_plan_retries_after_md_scrub(monkeypatch: pytest.MonkeyPatch, tmp_
     assert commands == [disko_cmd, *scrubbed_commands]
 
 
+def test_apply_plan_scrubs_planned_volume_groups(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    plan = {
+        "disko": {"disk": {}},
+        "arrays": [
+            {"name": "md0", "devices": ["sda1", "sdb1"]},
+        ],
+        "vgs": [
+            {"name": "main"},
+            {"name": "swap"},
+        ],
+        "disko_config_path": str(tmp_path / "retry-disko.nix"),
+    }
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
+
+    run_calls: list[str] = []
+
+    def fake_run(cmd: str, execute: bool) -> None:
+        run_calls.append(cmd)
+        if len(run_calls) == 1:
+            raise subprocess.CalledProcessError(1, cmd)
+
+    monkeypatch.setattr(apply_module, "_run", fake_run)
+    monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
+
+    vg_commands = ["vgchange -an main", "vgchange -an swap"]
+    md_commands = ["mdadm --stop --scan"]
+
+    def fake_vg_scrub(names: list[str], execute: bool) -> list[str]:
+        assert names == ["main", "swap"]
+        return vg_commands
+
+    def fake_md_scrub(devices: list[str], execute: bool) -> list[str]:
+        assert devices == ["/dev/sda1", "/dev/sdb1"]
+        return md_commands
+
+    monkeypatch.setattr(apply_module, "_scrub_planned_volume_groups", fake_vg_scrub)
+    monkeypatch.setattr(apply_module, "_scrub_planned_md_members", fake_md_scrub)
+
+    commands = apply_plan(plan, dry_run=False)
+
+    assert run_calls == [disko_cmd, disko_cmd]
+    assert commands == [disko_cmd, *vg_commands, *md_commands]
+
+
 def test_prepare_command_environment_logs_nix_path_injection(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

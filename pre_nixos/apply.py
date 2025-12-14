@@ -132,11 +132,14 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     )
 
     planned_md_members = _collect_planned_md_members(plan)
+    planned_volume_groups = _collect_planned_volume_groups(plan)
 
     try:
         _run(cmd, execute)
     except subprocess.CalledProcessError:
         if execute and planned_md_members:
+            vg_commands = _scrub_planned_volume_groups(planned_volume_groups, execute)
+            commands.extend(vg_commands)
             scrubbed = _scrub_planned_md_members(planned_md_members, execute)
             commands.extend(scrubbed)
             log_event(
@@ -222,6 +225,22 @@ def _collect_planned_md_members(plan: Dict[str, Any]) -> List[str]:
     return unique_members
 
 
+def _collect_planned_volume_groups(plan: Dict[str, Any]) -> List[str]:
+    """Return the volume group names present in *plan*."""
+
+    vgs = []
+    for group in plan.get("vgs", []):
+        name = group.get("name")
+        if name:
+            vgs.append(str(name))
+    unique = sorted(set(vgs))
+    log_event(
+        "pre_nixos.apply.vg_collection",
+        vgs=unique,
+    )
+    return unique
+
+
 def _scrub_planned_md_members(devices: List[str], execute: bool) -> List[str]:
     """Best-effort removal of mdraid signatures on *devices*."""
 
@@ -247,6 +266,31 @@ def _scrub_planned_md_members(devices: List[str], execute: bool) -> List[str]:
     log_event(
         "pre_nixos.apply.md_member_scrub.finished",
         devices=devices,
+        execute=execute,
+        commands=commands,
+    )
+    return commands
+
+
+def _scrub_planned_volume_groups(names: List[str], execute: bool) -> List[str]:
+    """Best-effort deactivation of volume groups referenced in *names*."""
+
+    commands: List[str] = []
+    log_event(
+        "pre_nixos.apply.vg_scrub.start",
+        vgs=names,
+        execute=execute,
+    )
+
+    for name in names:
+        escaped = shlex.quote(name)
+        cmd = f"vgchange -an {escaped}"
+        commands.append(cmd)
+        _run_best_effort(cmd, execute)
+
+    log_event(
+        "pre_nixos.apply.vg_scrub.finished",
+        vgs=names,
         execute=execute,
         commands=commands,
     )
