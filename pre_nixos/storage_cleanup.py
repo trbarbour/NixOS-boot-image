@@ -718,7 +718,14 @@ def _wipe_descendant_metadata_graph(
     return success
 
 
-def _collect_partition_refresh_diagnostics(device: str) -> dict[str, object]:
+def _collect_partition_refresh_diagnostics() -> dict[str, object]:
+    """Collect context for partition refresh failures.
+
+    The device is logged separately by :func:`log_event`, so it is intentionally
+    omitted here to avoid passing multiple ``device`` keyword arguments while
+    still capturing the rest of the diagnostics we care about.
+    """
+
     return {
         **storage_detection.collect_boot_probe_data(),
         **_collect_storage_stack_state(),
@@ -775,7 +782,7 @@ def _refresh_partition_table(
         action=action,
         device=device,
         execute=execute,
-        **{k: v for k, v in _collect_partition_refresh_diagnostics(device).items() if k != "device"},
+        **_collect_partition_refresh_diagnostics(),
     )
     return False
 
