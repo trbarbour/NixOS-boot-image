@@ -47,6 +47,7 @@ def test_basic_root_cleanup_commands() -> None:
     )
 
     assert runner.commands == [
+        ("wipefs", "-a", "/dev/sda"),
         ("sgdisk", "--zap-all", "/dev/sda"),
         ("blockdev", "--rereadpt", "/dev/sda"),
         ("partprobe", "/dev/sda"),
@@ -142,6 +143,8 @@ def test_global_teardown_and_wipe_leaf_to_root(monkeypatch) -> None:
         ("wipefs", "-a", "/dev/sda1"),
         ("mdadm", "--zero-superblock", "--force", "/dev/sdb1"),
         ("wipefs", "-a", "/dev/sdb1"),
+        ("wipefs", "-a", "/dev/sda"),
+        ("wipefs", "-a", "/dev/sdb"),
         ("sgdisk", "--zap-all", "/dev/sda"),
         ("blockdev", "--rereadpt", "/dev/sda"),
         ("partprobe", "/dev/sda"),
@@ -156,6 +159,69 @@ def test_global_teardown_and_wipe_leaf_to_root(monkeypatch) -> None:
 
     assert runner.commands == expected
     assert scheduled == [" ".join(cmd) for cmd in expected]
+
+
+def test_consecutive_cleanup_handles_existing_mdraid(monkeypatch) -> None:
+    def fake_lsblk() -> list[dict[str, object]]:
+        return [
+            {
+                "name": "/dev/sda",
+                "type": "disk",
+                "children": [
+                    {
+                        "name": "/dev/sda1",
+                        "type": "part",
+                        "fstype": "linux_raid_member",
+                        "children": [
+                            {"name": "/dev/md0", "type": "raid1"},
+                        ],
+                    }
+                ],
+            },
+            {
+                "name": "/dev/sdb",
+                "type": "disk",
+                "children": [
+                    {
+                        "name": "/dev/sdb1",
+                        "type": "part",
+                        "fstype": "linux_raid_member",
+                        "children": [
+                            {"name": "/dev/md0", "type": "raid1"},
+                        ],
+                    }
+                ],
+            },
+        ]
+
+    monkeypatch.setattr(storage_cleanup, "_list_block_devices", fake_lsblk)
+
+    devices = ["/dev/sda1", "/dev/sdb1", "/dev/md0"]
+
+    def assert_mdraid_cleaned(commands: list[str]) -> None:
+        for name in devices:
+            assert any(cmd.startswith(f"mdadm --stop {name}") for cmd in commands)
+            assert any(
+                cmd.startswith(f"mdadm --zero-superblock --force {name}")
+                for cmd in commands
+            )
+            assert any(cmd.startswith(f"wipefs -a {name}") for cmd in commands)
+
+    first_run = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        devices,
+        execute=True,
+        runner=RecordingRunner(),
+    )
+    assert_mdraid_cleaned(first_run)
+
+    second_run = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        devices,
+        execute=True,
+        runner=RecordingRunner(),
+    )
+    assert_mdraid_cleaned(second_run)
 
 
 def test_refresh_partition_table_logs_diagnostics(monkeypatch) -> None:

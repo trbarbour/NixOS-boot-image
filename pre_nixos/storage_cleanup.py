@@ -881,6 +881,8 @@ def perform_storage_cleanup(
         raise ValueError(f"unknown storage cleanup action: {action}")
 
     graph = _build_storage_graph()
+    for device in devices:
+        graph.setdefault(device, StorageNode(name=device, node_type="unknown"))
     reachable = _reachable_nodes(graph, devices)
     ordered_nodes = _ordered_nodes_leaf_to_root(graph, reachable)
 
@@ -894,11 +896,10 @@ def perform_storage_cleanup(
         scheduled=scheduled,
     )
 
-    descendant_nodes = [name for name in ordered_nodes if name not in set(devices)]
     _wipe_descendant_metadata_graph(
         action,
         ",".join(devices),
-        descendant_nodes,
+        ordered_nodes,
         graph,
         execute=execute,
         runner=runner,
