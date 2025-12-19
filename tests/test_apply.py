@@ -424,7 +424,7 @@ def test_apply_plan_retries_after_md_scrub(monkeypatch: pytest.MonkeyPatch, tmp_
     commands = apply_plan(plan, dry_run=False)
 
     assert run_calls == [disko_cmd, disko_cmd]
-    assert commands == [disko_cmd, *scrubbed_commands]
+    assert commands == [*scrubbed_commands, disko_cmd, *scrubbed_commands]
 
 
 def test_apply_plan_scrubs_planned_volume_groups(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -470,7 +470,43 @@ def test_apply_plan_scrubs_planned_volume_groups(monkeypatch: pytest.MonkeyPatch
     commands = apply_plan(plan, dry_run=False)
 
     assert run_calls == [disko_cmd, disko_cmd]
-    assert commands == [disko_cmd, *vg_commands, *md_commands]
+    assert commands == [*vg_commands, *md_commands, disko_cmd, *vg_commands, *md_commands]
+
+
+def test_apply_plan_pre_scrubs_before_first_attempt(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    plan = {
+        "disko": {"disk": {}},
+        "arrays": [
+            {"name": "md0", "devices": ["sda1", "sdb1"]},
+        ],
+        "disko_config_path": str(tmp_path / "pre-scrub-disko.nix"),
+    }
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
+
+    run_calls: list[str] = []
+
+    def fake_run(cmd: str, execute: bool) -> None:
+        run_calls.append(cmd)
+
+    monkeypatch.setattr(apply_module, "_run", fake_run)
+    monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
+
+    scrubbed_commands = ["mdadm --stop --scan", "mdadm --zero-superblock --force /dev/sda1"]
+
+    def fake_scrub(devices: list[str], execute: bool) -> list[str]:
+        assert devices == ["/dev/sda1", "/dev/sdb1"]
+        return scrubbed_commands
+
+    monkeypatch.setattr(apply_module, "_scrub_planned_md_members", fake_scrub)
+
+    commands = apply_plan(plan, dry_run=False)
+
+    assert run_calls == [disko_cmd]
+    assert commands == [*scrubbed_commands, disko_cmd]
 
 
 def test_prepare_command_environment_logs_nix_path_injection(
