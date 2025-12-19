@@ -120,6 +120,15 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         config_path=config_path,
     )
 
+    planned_md_members = _collect_planned_md_members(plan)
+    planned_volume_groups = _collect_planned_volume_groups(plan)
+
+    if planned_md_members or planned_volume_groups:
+        vg_commands = _scrub_planned_volume_groups(planned_volume_groups, execute)
+        md_commands = _scrub_planned_md_members(planned_md_members, execute)
+        commands.extend(vg_commands)
+        commands.extend(md_commands)
+
     cmd_parts = ["disko", "--mode", disko_mode]
     if allow_yes_wipe and disko_mode == "destroy,format,mount":
         cmd_parts.append("--yes-wipe-all-disks")
@@ -130,9 +139,6 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         "pre_nixos.apply.apply_plan.command_scheduled",
         command=cmd,
     )
-
-    planned_md_members = _collect_planned_md_members(plan)
-    planned_volume_groups = _collect_planned_volume_groups(plan)
 
     try:
         _run(cmd, execute)
