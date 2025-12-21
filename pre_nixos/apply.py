@@ -153,6 +153,15 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
                 execute=execute,
             )
             commands.extend(cleanup_commands)
+            for device in planned_root_devices:
+                storage_cleanup._refresh_partition_table(
+                    storage_cleanup.WIPE_SIGNATURES,
+                    device,
+                    execute=execute,
+                    runner=storage_cleanup._default_runner,
+                    scheduled=commands,
+                    attempts=1,
+                )
             log_event(
                 "pre_nixos.apply.apply_plan.retry_after_cleanup",
                 command=cmd,

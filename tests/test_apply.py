@@ -440,7 +440,14 @@ def test_apply_plan_retries_after_cleanup(monkeypatch: pytest.MonkeyPatch, tmp_p
         (apply_module.storage_cleanup.WIPE_SIGNATURES, ("/dev/loop0",)),
         (apply_module.storage_cleanup.WIPE_SIGNATURES, ("/dev/loop0",)),
     ]
-    assert commands == ["cleanup-1", disko_cmd, "cleanup-2"]
+    assert commands == [
+        "cleanup-1",
+        disko_cmd,
+        "cleanup-2",
+        "blockdev --rereadpt /dev/loop0",
+        "partprobe /dev/loop0",
+        "udevadm settle",
+    ]
 
 
 def test_apply_plan_cleans_stale_loopback_stack_before_retry(
@@ -483,7 +490,17 @@ def test_apply_plan_cleans_stale_loopback_stack_before_retry(
 
     assert run_calls == [disko_cmd, disko_cmd]
     assert cleanup_log == [["/dev/loop0", "/dev/loop1"], ["/dev/loop0", "/dev/loop1"]]
-    assert commands == ["wipe-1-/dev/loop0,/dev/loop1", disko_cmd, "wipe-2-/dev/loop0,/dev/loop1"]
+    assert commands == [
+        "wipe-1-/dev/loop0,/dev/loop1",
+        disko_cmd,
+        "wipe-2-/dev/loop0,/dev/loop1",
+        "blockdev --rereadpt /dev/loop0",
+        "partprobe /dev/loop0",
+        "udevadm settle",
+        "blockdev --rereadpt /dev/loop1",
+        "partprobe /dev/loop1",
+        "udevadm settle",
+    ]
 
 
 def test_apply_plan_runs_cleanup_before_first_attempt(

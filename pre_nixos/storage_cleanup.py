@@ -77,16 +77,27 @@ CLEANUP_OPTIONS: Tuple[CleanupOption, ...] = (
 def _default_runner(cmd: Sequence[str]) -> subprocess.CompletedProcess:
     """Run *cmd* with output captured to avoid noisy stderr/tty chatter."""
 
-    return subprocess.run(
-        cmd,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        return subprocess.run(
+            cmd,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        return subprocess.CompletedProcess(cmd, 127, stdout="", stderr=str(exc))
 
 
 def _command_to_str(cmd: Sequence[str]) -> str:
     return " ".join(shlex.quote(part) for part in cmd)
+
+
+def _normalize_md_name(name: str) -> str:
+    if name.startswith("/dev/md"):
+        return name
+    if name.startswith("md"):
+        return f"/dev/{name}"
+    return name
 
 
 def _command_output_fields(result: subprocess.CompletedProcess) -> dict[str, str]:
@@ -485,6 +496,7 @@ def _teardown_node(
     execute: bool,
     runner: CommandRunner,
     scheduled: List[str],
+    graph: Mapping[str, StorageNode] | None = None,
 ) -> bool:
     success = True
     for mountpoint in list(dict.fromkeys(node.mountpoints)):
@@ -541,17 +553,38 @@ def _teardown_node(
             success = False
 
     if _is_raid_node(node):
-        result = _execute_command(
-            ["mdadm", "--stop", node.name],
-            action=action,
-            device=device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-            tolerate_failure=True,
-        )
-        if result.returncode != 0:
-            success = False
+        md_name = _normalize_md_name(node.name)
+        is_md_array = node.node_type.startswith("raid") or md_name.startswith("/dev/md")
+        if is_md_array:
+            result = _execute_command(
+                ["mdadm", "--stop", "--force", md_name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+        if is_md_array:
+            member_components = []
+            for parent in sorted(node.parents):
+                parent_node = graph.get(parent) if graph else None
+                if parent_node:
+                    member_components.append(parent_node.name)
+            for member in member_components:
+                zero_result = _execute_command(
+                    ["mdadm", "--zero-superblock", "--force", member],
+                    action=action,
+                    device=device,
+                    execute=execute,
+                    runner=runner,
+                    scheduled=scheduled,
+                    tolerate_failure=True,
+                )
+                if zero_result.returncode != 0:
+                    success = False
 
     if _is_dm_node(node):
         result = _execute_command(
@@ -604,6 +637,7 @@ def _teardown_graph(
             execute=execute,
             runner=runner,
             scheduled=scheduled,
+            graph=graph,
         )
         if not node_success:
             success = False
@@ -716,6 +750,65 @@ def _wipe_descendant_metadata_graph(
             execute=execute,
         )
     return success
+
+
+def _verify_md_lvm_absent(
+    action: str,
+    device: str,
+    roots: Sequence[str],
+    *,
+    attempts: int = 3,
+    delay_seconds: float = 0.5,
+) -> None:
+    lingering_md: list[str] = []
+    lingering_lvm: list[str] = []
+
+    for attempt in range(1, attempts + 1):
+        graph = _build_storage_graph()
+        reachable = _reachable_nodes(graph, roots)
+        lingering_md = sorted(
+            name
+            for name in reachable
+            if (node := graph.get(name)) and _is_raid_node(node)
+        )
+        lingering_lvm = sorted(
+            name
+            for name in reachable
+            if (node := graph.get(name)) and node.node_type in {"lvm", "lvm_lv", "lvm_vg"}
+        )
+        if not lingering_md and not lingering_lvm:
+            log_event(
+                "pre_nixos.cleanup.verification_passed",
+                action=action,
+                device=device,
+                attempt=attempt,
+            )
+            return
+
+        log_event(
+            "pre_nixos.cleanup.verification_pending",
+            action=action,
+            device=device,
+            attempt=attempt,
+            lingering_md=lingering_md,
+            lingering_lvm=lingering_lvm,
+            **_collect_storage_stack_state(),
+        )
+        if attempt < attempts:
+            time.sleep(delay_seconds)
+
+    log_event(
+        "pre_nixos.cleanup.verification_failed",
+        action=action,
+        device=device,
+        lingering_md=lingering_md,
+        lingering_lvm=lingering_lvm,
+        **_collect_storage_stack_state(),
+    )
+
+    raise RuntimeError(
+        "cleanup verification failed: lingering md/LVM devices remain"
+    )
 
 
 def _collect_partition_refresh_diagnostics() -> dict[str, object]:
@@ -904,6 +997,12 @@ def perform_storage_cleanup(
         execute=execute,
         runner=runner,
         scheduled=scheduled,
+    )
+
+    _verify_md_lvm_absent(
+        action,
+        ",".join(devices),
+        devices,
     )
 
     for device in devices:
