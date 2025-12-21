@@ -999,11 +999,12 @@ def perform_storage_cleanup(
         scheduled=scheduled,
     )
 
-    _verify_md_lvm_absent(
-        action,
-        ",".join(devices),
-        devices,
-    )
+    if execute:
+        _verify_md_lvm_absent(
+            action,
+            ",".join(devices),
+            devices,
+        )
 
     for device in devices:
         _wipe_root_device(

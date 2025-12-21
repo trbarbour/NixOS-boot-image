@@ -268,6 +268,35 @@ def test_verification_fails_with_lingering_md(monkeypatch) -> None:
         )
 
 
+def test_dry_run_skips_verification(monkeypatch) -> None:
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_verify_md_lvm_absent",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("verification should be skipped when execute is False")
+        ),
+    )
+
+    runner = RecordingRunner()
+
+    scheduled = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=False,
+        runner=runner,
+    )
+
+    assert runner.commands == []
+    assert scheduled == [
+        "wipefs -a /dev/sda",
+        "sgdisk --zap-all /dev/sda",
+        "blockdev --rereadpt /dev/sda",
+        "partprobe /dev/sda",
+        "udevadm settle",
+        "wipefs -a /dev/sda",
+    ]
+
+
 def test_refresh_partition_table_logs_diagnostics(monkeypatch) -> None:
     events: list[tuple[str, dict[str, object]]] = []
 
