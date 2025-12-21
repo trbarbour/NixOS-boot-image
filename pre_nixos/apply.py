@@ -109,20 +109,28 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
 
     planned_root_devices = _collect_root_devices(plan)
 
+    disko_available = shutil.which("disko") is not None
+
     if planned_root_devices:
-        if execute:
+        if not execute:
+            log_event(
+                "pre_nixos.apply.apply_plan.cleanup_skipped",
+                reason="execution disabled",
+                planned_root_devices=planned_root_devices,
+            )
+        elif not disko_available:
+            log_event(
+                "pre_nixos.apply.apply_plan.cleanup_skipped",
+                reason="disko missing",
+                planned_root_devices=planned_root_devices,
+            )
+        else:
             cleanup_commands = storage_cleanup.perform_storage_cleanup(
                 storage_cleanup.WIPE_SIGNATURES,
                 planned_root_devices,
                 execute=execute,
             )
             commands.extend(cleanup_commands)
-        else:
-            log_event(
-                "pre_nixos.apply.apply_plan.cleanup_skipped",
-                reason="execution disabled",
-                planned_root_devices=planned_root_devices,
-            )
 
     cmd_parts = ["disko", "--mode", disko_mode]
     if allow_yes_wipe and disko_mode == "destroy,format,mount":

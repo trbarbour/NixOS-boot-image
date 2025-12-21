@@ -431,6 +431,7 @@ def test_apply_plan_retries_after_cleanup(monkeypatch: pytest.MonkeyPatch, tmp_p
     monkeypatch.setattr(apply_module, "_run", fake_run)
     monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
     monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
+    monkeypatch.setattr(apply_module.shutil, "which", lambda exe: "disko")
 
     commands = apply_plan(plan, dry_run=False)
 
@@ -476,6 +477,7 @@ def test_apply_plan_cleans_stale_loopback_stack_before_retry(
     monkeypatch.setattr(apply_module, "_run", fake_run)
     monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
     monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
+    monkeypatch.setattr(apply_module.shutil, "which", lambda exe: "disko")
 
     commands = apply_plan(plan, dry_run=False)
 
@@ -509,6 +511,7 @@ def test_apply_plan_runs_cleanup_before_first_attempt(
     monkeypatch.setattr(apply_module, "_run", fake_run)
     monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
     monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
+    monkeypatch.setattr(apply_module.shutil, "which", lambda exe: "disko")
 
     commands = apply_plan(plan, dry_run=False)
 
@@ -516,6 +519,80 @@ def test_apply_plan_runs_cleanup_before_first_attempt(
     assert run_calls == [disko_cmd]
     assert commands == ["cleaned", disko_cmd]
 
+
+def test_apply_plan_skips_cleanup_when_disko_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    plan = {
+        "disko": {"disk": {"loop0": {"device": "/dev/loop0"}}},
+        "partitions": {"loop0": []},
+        "disko_config_path": str(tmp_path / "missing-disko.nix"),
+    }
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
+
+    cleanup_calls: list[list[str]] = []
+    events: list[tuple[str, dict[str, object]]] = []
+    run_calls: list[tuple[str, bool]] = []
+
+    def record_event(event: str, **fields: object) -> None:
+        events.append((event, fields))
+
+    def fake_cleanup(action: str, devices: list[str], *, execute: bool, runner=None) -> list[str]:
+        cleanup_calls.append(devices)
+        return ["should-not-run"]
+
+    def fake_run(cmd: str, execute: bool) -> None:
+        run_calls.append((cmd, execute))
+
+    monkeypatch.setattr(apply_module, "log_event", record_event)
+    monkeypatch.setattr(apply_module, "_run", fake_run)
+    monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
+    monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
+    monkeypatch.setattr(apply_module.shutil, "which", lambda exe: None)
+
+    commands = apply_plan(plan, dry_run=False)
+
+    assert cleanup_calls == []
+    assert run_calls == [(disko_cmd, True)]
+    assert commands == [disko_cmd]
+
+    skip_events = [fields for event, fields in events if event == "pre_nixos.apply.apply_plan.cleanup_skipped"]
+    assert any(fields.get("reason") == "disko missing" for fields in skip_events)
+
+
+def test_apply_plan_does_not_cleanup_during_dry_run(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    plan = {
+        "disko": {"disk": {"loop0": {"device": "/dev/loop0"}}},
+        "partitions": {"loop0": []},
+        "disko_config_path": str(tmp_path / "dry-run-disko.nix"),
+    }
+
+    disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
+
+    cleanup_calls: list[list[str]] = []
+    run_calls: list[tuple[str, bool]] = []
+
+    def fake_cleanup(action: str, devices: list[str], *, execute: bool, runner=None) -> list[str]:
+        cleanup_calls.append(devices)
+        return ["should-not-run"]
+
+    def fake_run(cmd: str, execute: bool) -> None:
+        run_calls.append((cmd, execute))
+
+    monkeypatch.setattr(apply_module, "_run", fake_run)
+    monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
+    monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
+    monkeypatch.setattr(apply_module.shutil, "which", lambda exe: "disko")
+
+    commands = apply_plan(plan, dry_run=True)
+
+    assert cleanup_calls == []
+    assert run_calls == [(disko_cmd, False)]
+    assert commands == [disko_cmd]
 
 def test_prepare_command_environment_logs_nix_path_injection(
     monkeypatch: pytest.MonkeyPatch,
