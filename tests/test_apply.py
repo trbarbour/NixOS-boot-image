@@ -194,6 +194,11 @@ def test_apply_plan_logs_command_execution(
 
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     monkeypatch.setenv("PRE_NIXOS_LOG_EVENTS", "1")
+    monkeypatch.setattr(
+        apply_module.storage_cleanup,
+        "perform_storage_cleanup",
+        lambda *_, **__: [],
+    )
 
     calls: list[str] = []
 
@@ -234,6 +239,11 @@ def test_apply_plan_injects_nix_path_from_pre_nixos_env(
     monkeypatch.setenv("PRE_NIXOS_NIXPKGS", "/nix/store/fallback-nixpkgs")
     monkeypatch.setattr("pre_nixos.apply._select_disko_mode", lambda: ("disko", False))
     monkeypatch.setattr("pre_nixos.apply.shutil.which", lambda exe: "/nix/store/disko")
+    monkeypatch.setattr(
+        apply_module.storage_cleanup,
+        "perform_storage_cleanup",
+        lambda *_, **__: [],
+    )
 
     captured_env: dict[str, str] = {}
 
@@ -374,6 +384,11 @@ def test_apply_plan_records_plan_when_executing(
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     state_dir = tmp_path / "state"
     monkeypatch.setenv("PRE_NIXOS_STATE_DIR", str(state_dir))
+    monkeypatch.setattr(
+        apply_module.storage_cleanup,
+        "perform_storage_cleanup",
+        lambda *_, **__: [],
+    )
 
     recorded: list[tuple[str, bool]] = []
 
@@ -391,12 +406,10 @@ def test_apply_plan_records_plan_when_executing(
     assert any(execute for _, execute in recorded)
 
 
-def test_apply_plan_retries_after_md_scrub(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_apply_plan_retries_after_cleanup(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     plan = {
-        "disko": {"disk": {}},
-        "arrays": [
-            {"name": "md0", "devices": ["sda1", "sdb1"]},
-        ],
+        "disko": {"disk": {"loop0": {"device": "/dev/loop0"}}},
+        "partitions": {"loop0": []},
         "disko_config_path": str(tmp_path / "retry-disko.nix"),
     }
 
@@ -404,109 +417,104 @@ def test_apply_plan_retries_after_md_scrub(monkeypatch: pytest.MonkeyPatch, tmp_
     disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
 
     run_calls: list[str] = []
+    cleanup_calls: list[tuple[str, tuple[str, ...]]] = []
 
     def fake_run(cmd: str, execute: bool) -> None:
         run_calls.append(cmd)
         if len(run_calls) == 1:
             raise subprocess.CalledProcessError(1, cmd)
 
+    def fake_cleanup(action: str, devices: list[str], *, execute: bool, runner=None) -> list[str]:
+        cleanup_calls.append((action, tuple(devices)))
+        return [f"cleanup-{len(cleanup_calls)}"]
+
     monkeypatch.setattr(apply_module, "_run", fake_run)
     monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
-
-    scrubbed_commands = ["mdadm --stop --scan"]
-
-    def fake_scrub(devices: list[str], execute: bool) -> list[str]:
-        assert devices == ["/dev/sda1", "/dev/sdb1"]
-        return scrubbed_commands
-
-    monkeypatch.setattr(apply_module, "_scrub_planned_md_members", fake_scrub)
+    monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
 
     commands = apply_plan(plan, dry_run=False)
 
     assert run_calls == [disko_cmd, disko_cmd]
-    assert commands == [*scrubbed_commands, disko_cmd, *scrubbed_commands]
+    assert cleanup_calls == [
+        (apply_module.storage_cleanup.WIPE_SIGNATURES, ("/dev/loop0",)),
+        (apply_module.storage_cleanup.WIPE_SIGNATURES, ("/dev/loop0",)),
+    ]
+    assert commands == ["cleanup-1", disko_cmd, "cleanup-2"]
 
 
-def test_apply_plan_scrubs_planned_volume_groups(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    plan = {
-        "disko": {"disk": {}},
-        "arrays": [
-            {"name": "md0", "devices": ["sda1", "sdb1"]},
-        ],
-        "vgs": [
-            {"name": "main"},
-            {"name": "swap"},
-        ],
-        "disko_config_path": str(tmp_path / "retry-disko.nix"),
-    }
-
-    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
-    disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
-
-    run_calls: list[str] = []
-
-    def fake_run(cmd: str, execute: bool) -> None:
-        run_calls.append(cmd)
-        if len(run_calls) == 1:
-            raise subprocess.CalledProcessError(1, cmd)
-
-    monkeypatch.setattr(apply_module, "_run", fake_run)
-    monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
-
-    vg_commands = ["vgchange -an main", "vgchange -an swap"]
-    md_commands = ["mdadm --stop --scan"]
-
-    def fake_vg_scrub(names: list[str], execute: bool) -> list[str]:
-        assert names == ["main", "swap"]
-        return vg_commands
-
-    def fake_md_scrub(devices: list[str], execute: bool) -> list[str]:
-        assert devices == ["/dev/sda1", "/dev/sdb1"]
-        return md_commands
-
-    monkeypatch.setattr(apply_module, "_scrub_planned_volume_groups", fake_vg_scrub)
-    monkeypatch.setattr(apply_module, "_scrub_planned_md_members", fake_md_scrub)
-
-    commands = apply_plan(plan, dry_run=False)
-
-    assert run_calls == [disko_cmd, disko_cmd]
-    assert commands == [*vg_commands, *md_commands, disko_cmd, *vg_commands, *md_commands]
-
-
-def test_apply_plan_pre_scrubs_before_first_attempt(
+def test_apply_plan_cleans_stale_loopback_stack_before_retry(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     plan = {
-        "disko": {"disk": {}},
-        "arrays": [
-            {"name": "md0", "devices": ["sda1", "sdb1"]},
-        ],
-        "disko_config_path": str(tmp_path / "pre-scrub-disko.nix"),
+        "disko": {
+            "disk": {
+                "loop0": {"device": "/dev/loop0", "content": {"type": "none"}},
+                "loop1": {"device": "/dev/loop1", "content": {"type": "none"}},
+            }
+        },
+        "partitions": {"loop0": [], "loop1": []},
+        "arrays": [{"name": "md1", "devices": ["loop0p1", "loop1p1"]}],
+        "vgs": [{"name": "swap", "devices": ["md1"]}],
+        "disko_config_path": str(tmp_path / "loopback-disko.nix"),
     }
 
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
 
     run_calls: list[str] = []
+    cleanup_log: list[list[str]] = []
+
+    def fake_run(cmd: str, execute: bool) -> None:
+        run_calls.append(cmd)
+        if len(run_calls) == 1:
+            raise subprocess.CalledProcessError(1, cmd)
+
+    def fake_cleanup(action: str, devices: list[str], *, execute: bool, runner=None) -> list[str]:
+        cleanup_log.append(devices)
+        return [f"wipe-{len(cleanup_log)}-{','.join(devices)}"]
+
+    monkeypatch.setattr(apply_module, "_run", fake_run)
+    monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
+    monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
+
+    commands = apply_plan(plan, dry_run=False)
+
+    assert run_calls == [disko_cmd, disko_cmd]
+    assert cleanup_log == [["/dev/loop0", "/dev/loop1"], ["/dev/loop0", "/dev/loop1"]]
+    assert commands == ["wipe-1-/dev/loop0,/dev/loop1", disko_cmd, "wipe-2-/dev/loop0,/dev/loop1"]
+
+
+def test_apply_plan_runs_cleanup_before_first_attempt(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    plan = {
+        "disko": {"disk": {"loop0": {"device": "/dev/loop0"}}},
+        "partitions": {"loop0": []},
+        "disko_config_path": str(tmp_path / "pre-clean-disko.nix"),
+    }
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    disko_cmd = f"disko --mode disko --root-mountpoint /mnt {plan['disko_config_path']}"
+
+    run_calls: list[str] = []
+    cleanup_calls: list[list[str]] = []
 
     def fake_run(cmd: str, execute: bool) -> None:
         run_calls.append(cmd)
 
+    def fake_cleanup(action: str, devices: list[str], *, execute: bool, runner=None) -> list[str]:
+        cleanup_calls.append(devices)
+        return ["cleaned"]
+
     monkeypatch.setattr(apply_module, "_run", fake_run)
     monkeypatch.setattr(apply_module, "_select_disko_mode", lambda: ("disko", False))
-
-    scrubbed_commands = ["mdadm --stop --scan", "mdadm --zero-superblock --force /dev/sda1"]
-
-    def fake_scrub(devices: list[str], execute: bool) -> list[str]:
-        assert devices == ["/dev/sda1", "/dev/sdb1"]
-        return scrubbed_commands
-
-    monkeypatch.setattr(apply_module, "_scrub_planned_md_members", fake_scrub)
+    monkeypatch.setattr(apply_module.storage_cleanup, "perform_storage_cleanup", fake_cleanup)
 
     commands = apply_plan(plan, dry_run=False)
 
+    assert cleanup_calls == [["/dev/loop0"]]
     assert run_calls == [disko_cmd]
-    assert commands == [*scrubbed_commands, disko_cmd]
+    assert commands == ["cleaned", disko_cmd]
 
 
 def test_prepare_command_environment_logs_nix_path_injection(
