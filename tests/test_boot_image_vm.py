@@ -13,7 +13,7 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Generator, List, Optional, Tuple
 
 import pytest
 
@@ -262,6 +262,133 @@ def vm_disk_image(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return disk_path
 
 
+def _launch_boot_image_vm(
+    *,
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    disk_images: List[Path],
+    tmp_path_factory: pytest.TempPathFactory,
+    ssh_executable: str,
+    ssh_forward_port: int,
+    request: pytest.FixtureRequest,
+) -> Generator[BootImageVM, None, None]:
+    if not disk_images:
+        raise AssertionError("at least one disk image is required to launch the VM")
+
+    log_dir = tmp_path_factory.mktemp("boot-image-logs")
+    log_path = log_dir / "serial.log"
+    harness_log_path = log_dir / "harness.log"
+    metadata_path = log_dir / "metadata.json"
+    harness_log_path.write_text("", encoding="utf-8")
+    log_handle = log_path.open("w", encoding="utf-8")
+    cmd: List[str] = [
+        qemu_executable,
+        "-m",
+        "2048",
+        "-smp",
+        "2",
+        "-display",
+        "none",
+        "-no-reboot",
+        "-boot",
+        "d",
+        "-serial",
+        "stdio",
+        "-cdrom",
+        str(boot_image_build.iso_path),
+        "-device",
+        "virtio-rng-pci",
+        "-netdev",
+        f"user,id=net0,hostfwd=tcp:127.0.0.1:{ssh_forward_port}-:22",
+        "-device",
+        "virtio-net-pci,netdev=net0",
+    ]
+    for disk_image in disk_images:
+        cmd.extend(["-drive", f"file={disk_image},if=virtio,format=raw"])
+
+    qemu_version = probe_qemu_version(qemu_executable)
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=boot_image_build,
+        harness_log=harness_log_path,
+        serial_log=log_path,
+        qemu_command=cmd,
+        qemu_version=qemu_version,
+        disk_image=disk_images[0],
+        extra_disk_images=disk_images[1:],
+        ssh_host="127.0.0.1",
+        ssh_port=ssh_forward_port,
+        ssh_executable=ssh_executable,
+    )
+
+    child = _pexpect.spawn(
+        cmd[0],
+        cmd[1:],
+        encoding="utf-8",
+        codec_errors="ignore",
+        timeout=VM_SPAWN_TIMEOUT,
+    )
+    child.logfile = log_handle
+    debug_enabled = bool(request.config.getoption("boot_image_debug"))
+    initial_failures = request.session.testsfailed
+    vm: Optional[BootImageVM] = None
+    debug_session_started = False
+
+    def _log_debug(message: str) -> None:
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        with harness_log_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{timestamp}] {message}\n")
+
+    try:
+        vm = BootImageVM(
+            child=child,
+            log_path=log_path,
+            harness_log_path=harness_log_path,
+            metadata_path=metadata_path,
+            ssh_port=ssh_forward_port,
+            ssh_host="127.0.0.1",
+            ssh_executable=ssh_executable,
+            artifact=boot_image_build,
+            qemu_version=qemu_version,
+            qemu_command=tuple(cmd),
+            disk_image=disk_images[0],
+            extra_disk_images=tuple(disk_images[1:]),
+        )
+        try:
+            yield vm
+        finally:
+            should_debug = debug_enabled and (
+                request.session.testsfailed > initial_failures
+            )
+            if should_debug and not debug_session_started:
+                vm.interact()
+                debug_session_started = True
+    except Exception:
+        if debug_enabled and not debug_session_started:
+            if vm is not None:
+                vm.interact()
+            else:
+                _log_debug(
+                    "Entering interactive debug session (setup failure)"
+                )
+                try:
+                    child.interact(escape_character=chr(29))
+                finally:
+                    _log_debug("Exited interactive debug session")
+            debug_session_started = True
+        raise
+    finally:
+        if vm is not None:
+            vm.shutdown()
+        else:
+            try:
+                child.close(force=True)
+            except Exception:
+                pass
+        log_handle.close()
+
+
 @dataclass(frozen=True)
 class SSHKeyPair:
     """Filesystem paths for a generated SSH key pair."""
@@ -282,6 +409,7 @@ def write_boot_image_metadata(
     ssh_host: str,
     ssh_port: int,
     ssh_executable: str,
+    extra_disk_images: Optional[List[Path]] = None,
 ) -> None:
     """Persist structured metadata describing the active BootImageVM session."""
 
@@ -315,6 +443,10 @@ def write_boot_image_metadata(
             "artifacts": [],
         },
     }
+    if extra_disk_images:
+        metadata["qemu"]["extra_disk_images"] = [
+            str(path) for path in extra_disk_images
+        ]
     if qemu_version:
         metadata["qemu"]["version"] = qemu_version
     metadata_path.write_text(
@@ -383,6 +515,7 @@ class BootImageVM:
     qemu_version: Optional[str] = None
     qemu_command: Optional[Tuple[str, ...]] = None
     disk_image: Optional[Path] = None
+    extra_disk_images: Tuple[Path, ...] = field(default_factory=tuple, repr=False)
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
     _log_dir: Path = field(init=False, repr=False)
@@ -398,6 +531,8 @@ class BootImageVM:
         self._diagnostic_dir.mkdir(exist_ok=True)
         if self.qemu_command is not None and not isinstance(self.qemu_command, tuple):
             self.qemu_command = tuple(self.qemu_command)
+        if not isinstance(self.extra_disk_images, tuple):
+            self.extra_disk_images = tuple(self.extra_disk_images)
         self._log_step(
             "Boot image artifact metadata",
             body="\n".join(self._format_artifact_metadata()),
@@ -428,6 +563,11 @@ class BootImageVM:
             except AttributeError:
                 command_repr = " ".join(self.qemu_command)
             metadata.append(f"QEMU command: {command_repr}")
+        if self.extra_disk_images:
+            metadata.append(
+                "Additional disk images: "
+                + ", ".join(str(path) for path in self.extra_disk_images)
+            )
         return metadata
 
     def _log_step(self, message: str, body: Optional[str] = None) -> None:
@@ -1631,6 +1771,7 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
     vm.artifact = artifact
     vm.qemu_command = ("qemu", "--version")
     vm.disk_image = disk_image
+    vm.extra_disk_images = tuple()
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -1746,6 +1887,7 @@ def test_raise_with_transcript_includes_qemu_version(tmp_path: Path) -> None:
     vm.qemu_version = qemu_version
     vm.qemu_command = ("qemu", "--version")
     vm.disk_image = disk_image
+    vm.extra_disk_images = tuple()
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -1850,6 +1992,7 @@ def test_run_command_eof_records_diagnostics(
     vm.artifact = artifact
     vm.qemu_command = ("qemu", "--version")
     vm.disk_image = disk_image
+    vm.extra_disk_images = tuple()
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -1940,6 +2083,7 @@ def test_run_ssh_failure_records_diagnostics(
     vm.artifact = artifact
     vm.qemu_command = ("qemu", "--version")
     vm.disk_image = disk_image
+    vm.extra_disk_images = tuple()
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -2103,6 +2247,7 @@ def test_storage_timeout_records_systemd_jobs(
     vm.artifact = artifact
     vm.qemu_command = ("qemu", "--version")
     vm.disk_image = disk_image
+    vm.extra_disk_images = tuple()
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -2259,6 +2404,7 @@ def test_ipv4_timeout_records_systemd_jobs(
     vm.artifact = artifact
     vm.qemu_command = ("qemu", "--version")
     vm.disk_image = disk_image
+    vm.extra_disk_images = tuple()
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -2489,6 +2635,7 @@ def test_unit_inactive_timeout_records_failed_units(
     vm.artifact = artifact
     vm.qemu_command = ("qemu", "--version")
     vm.disk_image = disk_image
+    vm.extra_disk_images = tuple()
     vm._transcript = []
     vm._has_root_privileges = False
     vm._log_dir = metadata_path.parent
@@ -2610,114 +2757,52 @@ def boot_image_vm(
     ssh_forward_port: int,
     request: pytest.FixtureRequest,
 ) -> BootImageVM:
-    log_dir = tmp_path_factory.mktemp("boot-image-logs")
-    log_path = log_dir / "serial.log"
-    harness_log_path = log_dir / "harness.log"
-    metadata_path = log_dir / "metadata.json"
-    harness_log_path.write_text("", encoding="utf-8")
-    log_handle = log_path.open("w", encoding="utf-8")
-    cmd = [
-        qemu_executable,
-        "-m",
-        "2048",
-        "-smp",
-        "2",
-        "-display",
-        "none",
-        "-no-reboot",
-        "-boot",
-        "d",
-        "-serial",
-        "stdio",
-        "-cdrom",
-        str(boot_image_build.iso_path),
-        "-drive",
-        f"file={vm_disk_image},if=virtio,format=raw",
-        "-device",
-        "virtio-rng-pci",
-        "-netdev",
-        f"user,id=net0,hostfwd=tcp:127.0.0.1:{ssh_forward_port}-:22",
-        "-device",
-        "virtio-net-pci,netdev=net0",
-    ]
-    qemu_version = probe_qemu_version(qemu_executable)
-    write_boot_image_metadata(
-        metadata_path,
-        artifact=boot_image_build,
-        harness_log=harness_log_path,
-        serial_log=log_path,
-        qemu_command=cmd,
-        qemu_version=qemu_version,
-        disk_image=vm_disk_image,
-        ssh_host="127.0.0.1",
-        ssh_port=ssh_forward_port,
+    disk_images = [vm_disk_image]
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        qemu_executable=qemu_executable,
+        boot_image_build=boot_image_build,
+        disk_images=disk_images,
+        tmp_path_factory=tmp_path_factory,
         ssh_executable=ssh_executable,
+        ssh_forward_port=ssh_forward_port,
+        request=request,
     )
 
-    child = _pexpect.spawn(
-        cmd[0],
-        cmd[1:],
-        encoding="utf-8",
-        codec_errors="ignore",
-        timeout=VM_SPAWN_TIMEOUT,
+
+@pytest.fixture(scope="function")
+def vm_mirror_disk_images(tmp_path_factory: pytest.TempPathFactory) -> List[Path]:
+    disk_dir = tmp_path_factory.mktemp("boot-image-raid-disks")
+    disks: List[Path] = []
+    for idx in range(2):
+        path = disk_dir / f"disk{idx}.img"
+        with path.open("wb") as handle:
+            handle.truncate(4 * 1024 * 1024 * 1024)
+        disks.append(path)
+    return disks
+
+
+@pytest.fixture(scope="function")
+def boot_image_vm_mirrored(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    vm_mirror_disk_images: List[Path],
+    tmp_path_factory: pytest.TempPathFactory,
+    ssh_executable: str,
+    ssh_forward_port: int,
+    request: pytest.FixtureRequest,
+) -> BootImageVM:
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        qemu_executable=qemu_executable,
+        boot_image_build=boot_image_build,
+        disk_images=vm_mirror_disk_images,
+        tmp_path_factory=tmp_path_factory,
+        ssh_executable=ssh_executable,
+        ssh_forward_port=ssh_forward_port,
+        request=request,
     )
-    child.logfile = log_handle
-    debug_enabled = bool(request.config.getoption("boot_image_debug"))
-    initial_failures = request.session.testsfailed
-    vm: Optional[BootImageVM] = None
-    debug_session_started = False
-
-    def _log_debug(message: str) -> None:
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        with harness_log_path.open("a", encoding="utf-8") as handle:
-            handle.write(f"[{timestamp}] {message}\n")
-
-    try:
-        vm = BootImageVM(
-            child=child,
-            log_path=log_path,
-            harness_log_path=harness_log_path,
-            metadata_path=metadata_path,
-            ssh_port=ssh_forward_port,
-            ssh_host="127.0.0.1",
-            ssh_executable=ssh_executable,
-            artifact=boot_image_build,
-            qemu_version=qemu_version,
-            qemu_command=tuple(cmd),
-            disk_image=vm_disk_image,
-        )
-        try:
-            yield vm
-        finally:
-            should_debug = debug_enabled and (
-                request.session.testsfailed > initial_failures
-            )
-            if should_debug and not debug_session_started:
-                vm.interact()
-                debug_session_started = True
-    except Exception:
-        if debug_enabled and not debug_session_started:
-            if vm is not None:
-                vm.interact()
-            else:
-                _log_debug(
-                    "Entering interactive debug session (setup failure)"
-                )
-                try:
-                    child.interact(escape_character=chr(29))
-                finally:
-                    _log_debug("Exited interactive debug session")
-            debug_session_started = True
-        raise
-    finally:
-        if vm is not None:
-            vm.shutdown()
-        else:
-            try:
-                child.close(force=True)
-            except Exception:
-                pass
-        log_handle.close()
 
 
 def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
@@ -2771,3 +2856,103 @@ def test_boot_image_announces_lan_ipv4_on_serial_console(
     assert re.search(
         r"LAN IPv4 address: \d+\.\d+\.\d+\.\d+", serial_content
     ), "expected LAN IPv4 announcement in serial console log"
+
+
+def test_pre_nixos_applies_plan_over_preseeded_mdraid(
+    boot_image_vm_mirrored: BootImageVM,
+) -> None:
+    vm = boot_image_vm_mirrored
+    vm.assert_commands_available(
+        "pre-nixos",
+        "sgdisk",
+        "mdadm",
+        "pvcreate",
+        "vgcreate",
+        "lvcreate",
+        "lsblk",
+        "vgs",
+        "lvs",
+    )
+
+    pre_nixos_output = ""
+    try:
+        vm.run_as_root("sgdisk -Z /dev/vda /dev/vdb", timeout=240)
+        for device in ("vda", "vdb"):
+            vm.run_as_root(
+                f"sgdisk -n1:0:+512M -t1:ef00 /dev/{device}", timeout=240
+            )
+            vm.run_as_root(
+                f"sgdisk -n2:0:0 -t2:fd00 /dev/{device}", timeout=240
+            )
+
+        vm.run_as_root(
+            "mdadm --create /dev/md127 --force --run --metadata=1.2 "
+            "--level=1 --raid-devices=2 /dev/vda2 /dev/vdb2",
+            timeout=360,
+        )
+        vm.run_as_root("udevadm settle", timeout=120)
+        vm.run_as_root("pvcreate -ff -y /dev/md127", timeout=240)
+        vm.run_as_root("vgcreate --yes legacy /dev/md127", timeout=240)
+        vm.run_as_root("lvcreate -L 256M -n oldswap legacy", timeout=240)
+        vm.run_as_root("lvcreate -L 512M -n oldroot legacy", timeout=240)
+
+        pre_nixos_output = vm.run_as_root(
+            "PRE_NIXOS_PLAN_STDOUT=0 PRE_NIXOS_AUTO_INSTALL=0 PRE_NIXOS_EXEC=1 "
+            "bash -lc \"printf '1\\ny\\n' | pre-nixos --mode fast\"",
+            timeout=1200,
+        )
+
+        mdadm_output = vm.run_as_root("mdadm --detail --scan", timeout=240)
+        assert not mdadm_output.strip(), "expected mdadm to report no assembled arrays"
+
+        vg_output = vm.run_as_root(
+            "vgs --noheadings --separator '|' -o vg_name", timeout=120
+        )
+        vg_names = {line.strip() for line in vg_output.splitlines() if line.strip()}
+        assert "main" in vg_names, "main VG should exist after applying plan"
+
+        lv_output = vm.run_as_root(
+            "lvs --noheadings --separator '|' -o lv_name,vg_name", timeout=120
+        )
+        lv_pairs = {
+            tuple(part.strip() for part in line.split("|"))
+            for line in lv_output.splitlines()
+            if line.strip()
+        }
+        assert ("slash", "main") in lv_pairs
+        assert ("swap", "main") in lv_pairs
+
+        lsblk_raw = vm.run_as_root(
+            "lsblk --json --paths -o NAME,TYPE", timeout=240
+        )
+        lsblk_data = json.loads(lsblk_raw or "{}")
+        names: set[str] = set()
+
+        def _collect(node: Dict[str, object]) -> None:
+            name = str(node.get("name") or "")
+            if name:
+                names.add(name)
+            for child in node.get("children", []) or []:
+                if isinstance(child, dict):
+                    _collect(child)
+
+        for block in lsblk_data.get("blockdevices", []) or []:
+            if isinstance(block, dict):
+                _collect(block)
+
+        assert "/dev/md0" in names, "expected md0 RAID device present"
+        assert any(name.startswith("/dev/mapper/main-") for name in names)
+    except Exception:
+        if pre_nixos_output:
+            vm._write_diagnostic_artifact(
+                "pre-nixos-cli-output",
+                pre_nixos_output,
+                metadata_label="pre-nixos CLI output",
+            )
+        vm._write_diagnostic_artifact(
+            "pre-nixos-actions-log",
+            vm.run("cat /var/log/pre-nixos/actions.log 2>/dev/null || true"),
+            metadata_label="/var/log/pre-nixos/actions.log",
+        )
+        vm._capture_dmesg("pre-nixos mdraid plan failure")
+        raise
