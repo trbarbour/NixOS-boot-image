@@ -1,5 +1,6 @@
 from typing import List, Sequence
 import subprocess
+from typing import List, Sequence
 
 import pytest
 
@@ -116,6 +117,7 @@ def test_global_teardown_and_wipe_leaf_to_root(monkeypatch) -> None:
         "_list_lvs",
         lambda: [{"lv_path": "/dev/main/slash", "vg_name": "main"}],
     )
+    monkeypatch.setattr(storage_cleanup, "_verify_md_lvm_absent", lambda *_args, **_kwargs: None)
 
     runner = RecordingRunner()
 
@@ -130,9 +132,9 @@ def test_global_teardown_and_wipe_leaf_to_root(monkeypatch) -> None:
         ("umount", "/target"),
         ("lvchange", "-an", "/dev/main/slash"),
         ("vgchange", "-an", "main"),
-        ("mdadm", "--stop", "/dev/md0"),
-        ("mdadm", "--stop", "/dev/sda1"),
-        ("mdadm", "--stop", "/dev/sdb1"),
+        ("mdadm", "--stop", "--force", "/dev/md0"),
+        ("mdadm", "--zero-superblock", "--force", "/dev/sda1"),
+        ("mdadm", "--zero-superblock", "--force", "/dev/sdb1"),
         ("wipefs", "-a", "/dev/main/slash"),
         ("lvremove", "-fy", "/dev/main/slash"),
         ("vgremove", "-ff", "-y", "main"),
@@ -195,12 +197,15 @@ def test_consecutive_cleanup_handles_existing_mdraid(monkeypatch) -> None:
         ]
 
     monkeypatch.setattr(storage_cleanup, "_list_block_devices", fake_lsblk)
+    monkeypatch.setattr(storage_cleanup, "_verify_md_lvm_absent", lambda *_args, **_kwargs: None)
 
     devices = ["/dev/sda1", "/dev/sdb1", "/dev/md0"]
 
     def assert_mdraid_cleaned(commands: list[str]) -> None:
+        assert any(
+            cmd.startswith("mdadm --stop --force /dev/md0") for cmd in commands
+        )
         for name in devices:
-            assert any(cmd.startswith(f"mdadm --stop {name}") for cmd in commands)
             assert any(
                 cmd.startswith(f"mdadm --zero-superblock --force {name}")
                 for cmd in commands
@@ -222,6 +227,74 @@ def test_consecutive_cleanup_handles_existing_mdraid(monkeypatch) -> None:
         runner=RecordingRunner(),
     )
     assert_mdraid_cleaned(second_run)
+
+
+def test_verification_fails_with_lingering_md(monkeypatch) -> None:
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_list_block_devices",
+        lambda: [
+            {
+                "name": "/dev/sda",
+                "type": "disk",
+                "children": [
+                    {
+                        "name": "/dev/sda1",
+                        "type": "part",
+                        "fstype": "linux_raid_member",
+                        "children": [
+                            {"name": "/dev/md127", "type": "raid1"},
+                        ],
+                    }
+                ],
+            }
+        ],
+    )
+    monkeypatch.setattr(storage_cleanup.time, "sleep", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_collect_storage_stack_state",
+        lambda: {"lsblk_json": "", "mdadm_detail_scan": "ARRAY /dev/md127", "dmsetup_tree": ""},
+    )
+
+    runner = RecordingRunner()
+
+    with pytest.raises(RuntimeError):
+        storage_cleanup.perform_storage_cleanup(
+            storage_cleanup.WIPE_SIGNATURES,
+            ["/dev/sda"],
+            execute=True,
+            runner=runner,
+        )
+
+
+def test_dry_run_skips_verification(monkeypatch) -> None:
+    monkeypatch.setattr(
+        storage_cleanup,
+        "_verify_md_lvm_absent",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("verification should be skipped when execute is False")
+        ),
+    )
+
+    runner = RecordingRunner()
+
+    scheduled = storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.WIPE_SIGNATURES,
+        ["/dev/sda"],
+        execute=False,
+        runner=runner,
+    )
+
+    assert runner.commands == []
+    assert scheduled == [
+        "wipefs -a /dev/sda",
+        "sgdisk --zap-all /dev/sda",
+        "blockdev --rereadpt /dev/sda",
+        "partprobe /dev/sda",
+        "udevadm settle",
+        "wipefs -a /dev/sda",
+    ]
 
 
 def test_refresh_partition_table_logs_diagnostics(monkeypatch) -> None:
