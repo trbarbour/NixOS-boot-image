@@ -22,28 +22,16 @@ try:
 except ImportError:  # pragma: no cover - handled by pytest skip
     pexpect = None  # type: ignore
 
+from tests.vm.fixtures import (
+    VM_LOGIN_TIMEOUT,
+    VM_SPAWN_TIMEOUT,
+    _require_executable,
+)
+from tests.vm.metadata import DMESG_CAPTURE_COMMAND
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SHELL_PROMPT = "PRE-NIXOS> "
-
-
-def _read_timeout_env(name: str, default: int) -> int:
-    """Return a positive integer timeout configured via environment variable."""
-
-    value = os.environ.get(name)
-    if value is None:
-        return default
-    try:
-        parsed = int(value)
-    except ValueError as exc:  # pragma: no cover - defensive configuration guard
-        raise ValueError(f"{name} must be an integer value") from exc
-    if parsed <= 0:  # pragma: no cover - defensive configuration guard
-        raise ValueError(f"{name} must be greater than zero")
-    return parsed
-
-
-VM_SPAWN_TIMEOUT = _read_timeout_env("BOOT_IMAGE_VM_SPAWN_TIMEOUT", 600)
-VM_LOGIN_TIMEOUT = _read_timeout_env("BOOT_IMAGE_VM_LOGIN_TIMEOUT", 600)
 
 ANSI_ESCAPE_PATTERN = re.compile(
     r"""
@@ -58,16 +46,6 @@ ANSI_ESCAPE_PATTERN = re.compile(
     """,
     re.VERBOSE,
 )
-
-
-DMESG_CAPTURE_COMMAND = "dmesg --color=never 2>&1 || dmesg 2>&1 || true"
-
-
-def _require_executable(executable: str) -> str:
-    path = shutil.which(executable)
-    if path is None:
-        pytest.skip(f"required executable '{executable}' is not available in PATH")
-    return path
 
 
 def probe_qemu_version(executable: str) -> Optional[str]:
