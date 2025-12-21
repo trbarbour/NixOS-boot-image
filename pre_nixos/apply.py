@@ -12,7 +12,7 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from . import state
+from . import state, storage_cleanup
 from .logging_utils import log_event
 
 DISKO_CONFIG_PATH = Path("/var/log/pre-nixos/disko-config.nix")
@@ -79,19 +79,6 @@ def _run(cmd: str, execute: bool) -> None:
         raise subprocess.CalledProcessError(result.returncode, cmd)
 
 
-def _run_best_effort(cmd: str, execute: bool) -> None:
-    """Run ``cmd`` and log failures without raising."""
-
-    try:
-        _run(cmd, execute)
-    except subprocess.CalledProcessError as exc:
-        log_event(
-            "pre_nixos.apply.command.error_ignored",
-            command=cmd,
-            returncode=exc.returncode,
-        )
-
-
 def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     """Apply a storage plan."""
 
@@ -120,22 +107,30 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
         config_path=config_path,
     )
 
-    planned_md_members = _collect_planned_md_members(plan)
-    planned_volume_groups = _collect_planned_volume_groups(plan)
+    planned_root_devices = _collect_root_devices(plan)
 
-    if planned_md_members or planned_volume_groups:
-        if execute:
-            vg_commands = _scrub_planned_volume_groups(planned_volume_groups, execute)
-            md_commands = _scrub_planned_md_members(planned_md_members, execute)
-            commands.extend(vg_commands)
-            commands.extend(md_commands)
-        else:
+    disko_available = shutil.which("disko") is not None
+
+    if planned_root_devices:
+        if not execute:
             log_event(
-                "pre_nixos.apply.apply_plan.scrub_skipped",
+                "pre_nixos.apply.apply_plan.cleanup_skipped",
                 reason="execution disabled",
-                planned_md_members=planned_md_members,
-                planned_volume_groups=planned_volume_groups,
+                planned_root_devices=planned_root_devices,
             )
+        elif not disko_available:
+            log_event(
+                "pre_nixos.apply.apply_plan.cleanup_skipped",
+                reason="disko missing",
+                planned_root_devices=planned_root_devices,
+            )
+        else:
+            cleanup_commands = storage_cleanup.perform_storage_cleanup(
+                storage_cleanup.WIPE_SIGNATURES,
+                planned_root_devices,
+                execute=execute,
+            )
+            commands.extend(cleanup_commands)
 
     cmd_parts = ["disko", "--mode", disko_mode]
     if allow_yes_wipe and disko_mode == "destroy,format,mount":
@@ -151,15 +146,17 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     try:
         _run(cmd, execute)
     except subprocess.CalledProcessError:
-        if execute and planned_md_members:
-            vg_commands = _scrub_planned_volume_groups(planned_volume_groups, execute)
-            commands.extend(vg_commands)
-            scrubbed = _scrub_planned_md_members(planned_md_members, execute)
-            commands.extend(scrubbed)
+        if execute and planned_root_devices:
+            cleanup_commands = storage_cleanup.perform_storage_cleanup(
+                storage_cleanup.WIPE_SIGNATURES,
+                planned_root_devices,
+                execute=execute,
+            )
+            commands.extend(cleanup_commands)
             log_event(
-                "pre_nixos.apply.apply_plan.retry_after_md_scrub",
+                "pre_nixos.apply.apply_plan.retry_after_cleanup",
                 command=cmd,
-                scrubbed_devices=planned_md_members,
+                cleaned_devices=planned_root_devices,
             )
             _run(cmd, execute)
         else:
@@ -221,94 +218,22 @@ def _render_disko_config(devices: Dict[str, Any]) -> str:
     return "{\n  disko.devices = builtins.fromJSON ''\n" + body + "\n  '';\n}\n"
 
 
-def _collect_planned_md_members(plan: Dict[str, Any]) -> List[str]:
-    """Return absolute paths for planned md member devices."""
+def _collect_root_devices(plan: Dict[str, Any]) -> List[str]:
+    """Return absolute paths for root disks referenced in *plan*."""
 
-    members = []
-    for array in plan.get("arrays", []):
-        for device in array.get("devices", []):
-            path = str(device)
-            if not path.startswith("/dev/"):
-                path = "/dev/" + path
-            members.append(path)
-    unique_members = sorted(set(members))
-    log_event(
-        "pre_nixos.apply.md_member_collection",
-        members=unique_members,
-    )
-    return unique_members
+    def _normalize(device: str) -> str:
+        path = str(device)
+        return path if path.startswith("/dev/") else f"/dev/{path}"
 
+    devices = {_normalize(disk) for disk in plan.get("partitions", {})}
+    disko_devices = plan.get("disko", {}).get("disk", {})
+    for name, entry in disko_devices.items():
+        device = entry.get("device", name)
+        devices.add(_normalize(device))
 
-def _collect_planned_volume_groups(plan: Dict[str, Any]) -> List[str]:
-    """Return the volume group names present in *plan*."""
-
-    vgs = []
-    for group in plan.get("vgs", []):
-        name = group.get("name")
-        if name:
-            vgs.append(str(name))
-    unique = sorted(set(vgs))
-    log_event(
-        "pre_nixos.apply.vg_collection",
-        vgs=unique,
-    )
-    return unique
-
-
-def _scrub_planned_md_members(devices: List[str], execute: bool) -> List[str]:
-    """Best-effort removal of mdraid signatures on *devices*."""
-
-    commands: List[str] = []
-    log_event(
-        "pre_nixos.apply.md_member_scrub.start",
-        devices=devices,
-        execute=execute,
-    )
-
-    stop_cmd = "mdadm --stop --scan"
-    commands.append(stop_cmd)
-    _run_best_effort(stop_cmd, execute)
-
-    for device in devices:
-        escaped = shlex.quote(device)
-        zero_cmd = f"mdadm --zero-superblock --force {escaped}"
-        wipefs_cmd = f"wipefs -a {escaped}"
-        commands.extend([zero_cmd, wipefs_cmd])
-        _run_best_effort(zero_cmd, execute)
-        _run_best_effort(wipefs_cmd, execute)
-
-    log_event(
-        "pre_nixos.apply.md_member_scrub.finished",
-        devices=devices,
-        execute=execute,
-        commands=commands,
-    )
-    return commands
-
-
-def _scrub_planned_volume_groups(names: List[str], execute: bool) -> List[str]:
-    """Best-effort deactivation of volume groups referenced in *names*."""
-
-    commands: List[str] = []
-    log_event(
-        "pre_nixos.apply.vg_scrub.start",
-        vgs=names,
-        execute=execute,
-    )
-
-    for name in names:
-        escaped = shlex.quote(name)
-        cmd = f"vgchange -an {escaped}"
-        commands.append(cmd)
-        _run_best_effort(cmd, execute)
-
-    log_event(
-        "pre_nixos.apply.vg_scrub.finished",
-        vgs=names,
-        execute=execute,
-        commands=commands,
-    )
-    return commands
+    unique_devices = sorted(devices)
+    log_event("pre_nixos.apply.root_device_collection", devices=unique_devices)
+    return unique_devices
 def _select_disko_mode() -> Tuple[str, bool]:
     """Return the preferred disko mode and whether ``--yes-wipe-all-disks`` is supported."""
 
