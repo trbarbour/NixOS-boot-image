@@ -1,6 +1,6 @@
 """Cleanup helpers for RAID/LVM residue regression scenarios.
 
-"""Document the RAID/LVM residue seeding recipe for cleanup regression tests.
+Document the RAID/LVM residue seeding recipe for cleanup regression tests.
 
 This module will eventually host helpers for executing the residue plan inside
 the VM. Keeping the canonical commands here ensures ad-hoc debugging flows and
