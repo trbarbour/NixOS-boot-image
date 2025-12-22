@@ -2,6 +2,8 @@ from pathlib import Path
 import sys
 import pytest
 
+pytest_plugins = ["tests.vm.fixtures"]
+
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(

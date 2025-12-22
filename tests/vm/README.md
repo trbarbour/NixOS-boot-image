@@ -5,8 +5,8 @@ image end-to-end. The code is being split out of `tests/test_boot_image_vm.py`
 into focused modules so fixtures, helpers, and scenarios can be maintained
 separately.
 
-## Modules (planned)
-- `fixtures.py` – host/tool checks, ISO build helpers, disk/SSH fixtures
+## Modules
+- `fixtures.py` – host/tool checks, ISO build helpers, disk/SSH fixtures, timeout defaults
 - `metadata.py` – utilities for collecting logs and diagnostics from VM runs
 - `controller.py` – `BootImageVM` controller and interaction helpers
 - `cleanup_plan.py` – reusable RAID/LVM seeding and teardown checks
@@ -14,10 +14,10 @@ separately.
 - `test_pre_nixos_cleanup.py` – RAID/LVM residue regression scenario
 
 ### Fixture shim
-`tests/vm/conftest.py` will import and re-export fixtures to keep existing test
-names stable while the migration is in progress. The legacy
-`tests/test_boot_image_vm.py` will shrink to imports once helpers and scenarios
-are relocated here.
+Fixtures live in `tests/vm/fixtures.py` and are loaded via `pytest_plugins`
+in `tests/conftest.py` so existing test files (including the legacy
+`tests/test_boot_image_vm.py`) can continue using the same names while the
+migration is in progress.
 
 ## Running the VM tests
 - All VM scenarios should be marked with `@pytest.mark.vm` and `@pytest.mark.slow`.
@@ -48,5 +48,8 @@ are relocated here.
   can reuse it without diverging from the regression case.
 
 ## Status
-The modules here are scaffolding for the migration. Functionality remains in
-`tests/test_boot_image_vm.py` until helpers are extracted incrementally.
+Core fixtures, timeout defaults, metadata helpers, and the `BootImageVM`
+controller now live under `tests/vm/`. The legacy
+`tests/test_boot_image_vm.py` consumes them and still holds the primary
+scenarios until they are migrated into `tests/vm/test_pre_nixos_vm.py` and
+`tests/vm/test_pre_nixos_cleanup.py`.
