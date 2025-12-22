@@ -38,14 +38,21 @@ migration is in progress.
 ## Logging and artifacts
 - For every VM run, capture console output, `dmesg`, and `/tmp/pre-nixos*.log`
   into a run-specific directory under `notes/` with a UTC timestamp.
-- The VM fixture records build duration, boot-to-login, boot-to-SSH, and
-  total wall-clock timings in `metadata.json` so individual runs can be
-  compared. Include the commands and any environment overrides used so runs
-  remain reproducible.
-- A JSONL run ledger is written to `notes/vm-run-ledger.jsonl` by default.
-  Override the location with `BOOT_IMAGE_VM_LEDGER_PATH` or disable ledger
-  writes via `BOOT_IMAGE_VM_DISABLE_LEDGER=1` when running purely ad-hoc
-  experiments that should not touch the working tree.
+- The VM fixture records timing data in `metadata.json` for each run:
+  - `build_seconds` from the `nix build .#bootImage` invocation
+  - `boot_to_login_seconds` when the serial console login prompt becomes
+    available
+  - `boot_to_ssh_seconds` when IPv4 and SSH are reachable inside the guest
+  - `total_seconds` for the entire test, plus UTC `start`/`end` timestamps
+- Include the commands and any environment overrides used so runs remain
+  reproducible. If a run exceeds roughly one hour, the metadata will note that
+  the session ceiling may have been hit.
+- A JSONL run ledger is written to `notes/vm-run-ledger.jsonl` by default
+  with the above timings, pytest arguments, QEMU command/version, SSH host and
+  port, and the measured session ceiling flag. Override the location with
+  `BOOT_IMAGE_VM_LEDGER_PATH` or disable ledger writes via
+  `BOOT_IMAGE_VM_DISABLE_LEDGER=1` when running purely ad-hoc experiments that
+  should not touch the working tree.
 
 ## RAID/LVM residue recipe
 - The regression scenario seeds `/dev/md127` backed by `/dev/vdb` and `/dev/vdc`,
