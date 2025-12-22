@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from tests.test_boot_image_vm import (
-    BootImageBuild,
+from tests.vm.fixtures import BootImageBuild
+from tests.vm.metadata import (
     record_boot_image_diagnostic,
     write_boot_image_metadata,
 )

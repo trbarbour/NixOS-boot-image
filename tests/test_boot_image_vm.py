@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import datetime
 import importlib.util
 import json
-import re
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List
 
 import pytest
 
@@ -20,7 +18,7 @@ else:  # pragma: no cover - exercised in integration environments
     import pexpect  # type: ignore
 
 from tests.vm.controller import BootImageVM
-from tests.vm.fixtures import BootImageBuild, SSHKeyPair, VM_SPAWN_TIMEOUT, probe_qemu_version
+from tests.vm.fixtures import BootImageBuild, probe_qemu_version
 from tests.vm.metadata import write_boot_image_metadata
 
 def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
@@ -1044,175 +1042,3 @@ def test_unit_inactive_timeout_records_failed_units(
         assert Path(entry["path"]).exists()
 
 
-@pytest.fixture(scope="session")
-def boot_image_vm(
-    _pexpect: "pexpect",
-    qemu_executable: str,
-    boot_image_build: BootImageBuild,
-    vm_disk_image: Path,
-    tmp_path_factory: pytest.TempPathFactory,
-    ssh_executable: str,
-    ssh_forward_port: int,
-    request: pytest.FixtureRequest,
-) -> BootImageVM:
-    log_dir = tmp_path_factory.mktemp("boot-image-logs")
-    log_path = log_dir / "serial.log"
-    harness_log_path = log_dir / "harness.log"
-    metadata_path = log_dir / "metadata.json"
-    harness_log_path.write_text("", encoding="utf-8")
-    log_handle = log_path.open("w", encoding="utf-8")
-    cmd = [
-        qemu_executable,
-        "-m",
-        "2048",
-        "-smp",
-        "2",
-        "-display",
-        "none",
-        "-no-reboot",
-        "-boot",
-        "d",
-        "-serial",
-        "stdio",
-        "-cdrom",
-        str(boot_image_build.iso_path),
-        "-drive",
-        f"file={vm_disk_image},if=virtio,format=raw",
-        "-device",
-        "virtio-rng-pci",
-        "-netdev",
-        f"user,id=net0,hostfwd=tcp:127.0.0.1:{ssh_forward_port}-:22",
-        "-device",
-        "virtio-net-pci,netdev=net0",
-    ]
-    qemu_version = probe_qemu_version(qemu_executable)
-    write_boot_image_metadata(
-        metadata_path,
-        artifact=boot_image_build,
-        harness_log=harness_log_path,
-        serial_log=log_path,
-        qemu_command=cmd,
-        qemu_version=qemu_version,
-        disk_image=vm_disk_image,
-        ssh_host="127.0.0.1",
-        ssh_port=ssh_forward_port,
-        ssh_executable=ssh_executable,
-    )
-
-    child = _pexpect.spawn(
-        cmd[0],
-        cmd[1:],
-        encoding="utf-8",
-        codec_errors="ignore",
-        timeout=VM_SPAWN_TIMEOUT,
-    )
-    child.logfile = log_handle
-    debug_enabled = bool(request.config.getoption("boot_image_debug"))
-    initial_failures = request.session.testsfailed
-    vm: Optional[BootImageVM] = None
-    debug_session_started = False
-
-    def _log_debug(message: str) -> None:
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        with harness_log_path.open("a", encoding="utf-8") as handle:
-            handle.write(f"[{timestamp}] {message}\n")
-
-    try:
-        vm = BootImageVM(
-            child=child,
-            log_path=log_path,
-            harness_log_path=harness_log_path,
-            metadata_path=metadata_path,
-            ssh_port=ssh_forward_port,
-            ssh_host="127.0.0.1",
-            ssh_executable=ssh_executable,
-            artifact=boot_image_build,
-            qemu_version=qemu_version,
-            qemu_command=tuple(cmd),
-            disk_image=vm_disk_image,
-        )
-        try:
-            yield vm
-        finally:
-            should_debug = debug_enabled and (
-                request.session.testsfailed > initial_failures
-            )
-            if should_debug and not debug_session_started:
-                vm.interact()
-                debug_session_started = True
-    except Exception:
-        if debug_enabled and not debug_session_started:
-            if vm is not None:
-                vm.interact()
-            else:
-                _log_debug(
-                    "Entering interactive debug session (setup failure)"
-                )
-                try:
-                    child.interact(escape_character=chr(29))
-                finally:
-                    _log_debug("Exited interactive debug session")
-            debug_session_started = True
-        raise
-    finally:
-        if vm is not None:
-            vm.shutdown()
-        else:
-            try:
-                child.close(force=True)
-            except Exception:
-                pass
-        log_handle.close()
-
-
-def test_boot_image_provisions_clean_disk(boot_image_vm: BootImageVM) -> None:
-    boot_image_vm.assert_commands_available("disko", "findmnt", "lsblk", "wipefs")
-    status = boot_image_vm.wait_for_storage_status()
-    if status.get("STATE") != "applied" or status.get("DETAIL") != "auto-applied":
-        journal = boot_image_vm.collect_journal("pre-nixos.service")
-        pytest.fail(
-            "pre-nixos did not auto-apply provisioning:\n"
-            f"status={status}\n"
-            f"journalctl -u pre-nixos.service:\n{journal}"
-        )
-
-    vg_output = boot_image_vm.run_as_root(
-        "vgs --noheadings --separator '|' -o vg_name", timeout=120
-    )
-    vg_names = {line.strip() for line in vg_output.splitlines() if line.strip()}
-    assert "main" in vg_names
-
-    lv_output = boot_image_vm.run_as_root(
-        "lvs --noheadings --separator '|' -o lv_name,vg_name", timeout=120
-    )
-    lv_pairs = {tuple(part.strip() for part in line.split("|")) for line in lv_output.splitlines() if line.strip()}
-    assert ("slash", "main") in lv_pairs
-
-
-def test_boot_image_configures_network(
-    boot_image_vm: BootImageVM,
-    boot_ssh_key_pair: SSHKeyPair,
-) -> None:
-    addr_lines = boot_image_vm.wait_for_ipv4()
-    assert any("inet " in line for line in addr_lines)
-
-    status = boot_image_vm.wait_for_unit_inactive("pre-nixos", timeout=180)
-    assert status == "inactive"
-
-    ssh_identity = boot_image_vm.run_ssh(
-        private_key=boot_ssh_key_pair.private_key,
-        command="id -un",
-    )
-    assert ssh_identity == "root"
-
-
-def test_boot_image_announces_lan_ipv4_on_serial_console(
-    boot_image_vm: BootImageVM,
-) -> None:
-    boot_image_vm.wait_for_ipv4()
-    serial_content = boot_image_vm.log_path.read_text(
-        encoding="utf-8", errors="ignore"
-    ).replace("\r", "")
-    assert re.search(
-        r"LAN IPv4 address: \d+\.\d+\.\d+\.\d+", serial_content
-    ), "expected LAN IPv4 announcement in serial console log"

@@ -11,6 +11,7 @@ DMESG_CAPTURE_COMMAND = "dmesg --color=never 2>&1 || dmesg 2>&1 || true"
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from tests.vm.fixtures import BootImageBuild
+    from tests.vm.fixtures import RunTimings
 
 
 def write_boot_image_metadata(
@@ -27,6 +28,7 @@ def write_boot_image_metadata(
     ssh_executable: str,
     started_at: Optional[datetime.datetime] = None,
     completed_at: Optional[datetime.datetime] = None,
+    run_timings: Optional["RunTimings"] = None,
 ) -> None:
     """Persist structured metadata describing the active BootImageVM session."""
 
@@ -67,6 +69,10 @@ def write_boot_image_metadata(
             "start": started_at.isoformat(),
             "end": (completed_at or datetime.datetime.now(datetime.timezone.utc)).isoformat(),
         }
+    elif run_timings:
+        timings = run_timings.to_metadata()
+        if timings:
+            metadata["timings"] = timings
     metadata_path.write_text(
         json.dumps(metadata, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -107,8 +113,40 @@ def record_boot_image_diagnostic(
     )
 
 
+def record_run_timings(
+    metadata_path: Path, *, run_timings: "RunTimings"
+) -> None:
+    """Merge timing measurements into the metadata file without dropping diagnostics."""
+
+    try:
+        raw_metadata = metadata_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return
+
+    if not raw_metadata.strip():
+        return
+
+    try:
+        metadata = json.loads(raw_metadata)
+    except json.JSONDecodeError:
+        return
+
+    timings = run_timings.to_metadata()
+    if not timings:
+        return
+
+    existing = metadata.get("timings", {})
+    merged = {**existing, **timings}
+    metadata["timings"] = merged
+    metadata_path.write_text(
+        json.dumps(metadata, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 __all__ = [
     "DMESG_CAPTURE_COMMAND",
+    "record_run_timings",
     "record_boot_image_diagnostic",
     "write_boot_image_metadata",
 ]
