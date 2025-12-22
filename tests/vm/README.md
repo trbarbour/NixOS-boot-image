@@ -42,6 +42,10 @@ migration is in progress.
   total wall-clock timings in `metadata.json` so individual runs can be
   compared. Include the commands and any environment overrides used so runs
   remain reproducible.
+- A JSONL run ledger is written to `notes/vm-run-ledger.jsonl` by default.
+  Override the location with `BOOT_IMAGE_VM_LEDGER_PATH` or disable ledger
+  writes via `BOOT_IMAGE_VM_DISABLE_LEDGER=1` when running purely ad-hoc
+  experiments that should not touch the working tree.
 
 ## RAID/LVM residue recipe
 - The regression scenario seeds `/dev/md127` backed by `/dev/vdb` and `/dev/vdc`,
