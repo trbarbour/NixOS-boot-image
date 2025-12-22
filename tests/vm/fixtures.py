@@ -20,7 +20,11 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 
 import pytest
 
-from tests.vm.metadata import record_run_timings, write_boot_image_metadata
+from tests.vm.metadata import (
+    append_run_ledger_entry,
+    record_run_timings,
+    write_boot_image_metadata,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from tests.vm.controller import BootImageVM
@@ -28,6 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
 DEFAULT_SPAWN_TIMEOUT = 900
 DEFAULT_LOGIN_TIMEOUT = 300
 REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_LEDGER_PATH = REPO_ROOT / "notes" / "vm-run-ledger.jsonl"
 
 
 @dataclass(frozen=True)
@@ -100,6 +105,16 @@ def _read_timeout_env(name: str, default: int) -> int:
 
 VM_SPAWN_TIMEOUT: int = _read_timeout_env("BOOT_IMAGE_VM_SPAWN_TIMEOUT", DEFAULT_SPAWN_TIMEOUT)
 VM_LOGIN_TIMEOUT: int = _read_timeout_env("BOOT_IMAGE_VM_LOGIN_TIMEOUT", DEFAULT_LOGIN_TIMEOUT)
+
+
+def _resolve_ledger_path() -> Optional[Path]:
+    disabled = os.environ.get("BOOT_IMAGE_VM_DISABLE_LEDGER", "").strip().lower()
+    if disabled in {"1", "true", "yes"}:
+        return None
+    override = os.environ.get("BOOT_IMAGE_VM_LEDGER_PATH")
+    if override:
+        return Path(override)
+    return DEFAULT_LEDGER_PATH
 
 
 def _require_executable(executable: str) -> str:
@@ -325,8 +340,15 @@ def boot_image_vm(
     log_path = log_dir / "serial.log"
     harness_log_path = log_dir / "harness.log"
     metadata_path = log_dir / "metadata.json"
+    ledger_path = _resolve_ledger_path()
     harness_log_path.write_text("", encoding="utf-8")
     log_handle = log_path.open("w", encoding="utf-8")
+    invocation_params = getattr(request.config, "invocation_params", None)
+    invocation_args = (
+        list(invocation_params.args)
+        if invocation_params and invocation_params.args is not None
+        else []
+    )
 
     run_timings = RunTimings(
         build_seconds=boot_image_build.build_duration_seconds,
@@ -387,6 +409,7 @@ def boot_image_vm(
     debug_session_started = False
     total_started_at = time.perf_counter()
     boot_started_at = total_started_at
+    run_outcome = "unknown"
 
     def _log_debug(message: str) -> None:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -412,6 +435,11 @@ def boot_image_vm(
         record_run_timings(metadata_path, run_timings=run_timings)
         try:
             yield vm
+            run_outcome = (
+                "failed"
+                if request.session.testsfailed > initial_failures
+                else "passed"
+            )
         finally:
             should_debug = debug_enabled and (
                 request.session.testsfailed > initial_failures
@@ -432,11 +460,34 @@ def boot_image_vm(
                 finally:
                     _log_debug("Exited interactive debug session")
             debug_session_started = True
+        run_outcome = "error"
         raise
     finally:
         run_timings.total_seconds = time.perf_counter() - total_started_at
         run_timings.completed_at = datetime.datetime.now(datetime.timezone.utc)
         record_run_timings(metadata_path, run_timings=run_timings)
+        if ledger_path is not None:
+            try:
+                append_run_ledger_entry(
+                    ledger_path,
+                    metadata_path=metadata_path,
+                    run_timings=run_timings,
+                    harness_log=harness_log_path,
+                    serial_log=log_path,
+                    qemu_command=cmd,
+                    qemu_version=qemu_version,
+                    ssh_host="127.0.0.1",
+                    ssh_port=ssh_forward_port,
+                    invocation_args=invocation_args,
+                    spawn_timeout=VM_SPAWN_TIMEOUT,
+                    login_timeout=VM_LOGIN_TIMEOUT,
+                    outcome=run_outcome,
+                )
+            except Exception:
+                # Recording the ledger should never fail the test run.
+                _log_debug(
+                    "Failed to append VM run entry to the ledger; continuing",
+                )
         if vm is not None:
             vm.shutdown()
         else:
@@ -451,6 +502,7 @@ __all__ = [
     "BootImageBuild",
     "RunTimings",
     "DEFAULT_LOGIN_TIMEOUT",
+    "DEFAULT_LEDGER_PATH",
     "DEFAULT_SPAWN_TIMEOUT",
     "REPO_ROOT",
     "SSHKeyPair",
@@ -458,6 +510,7 @@ __all__ = [
     "VM_SPAWN_TIMEOUT",
     "_pexpect",
     "_read_timeout_env",
+    "_resolve_ledger_path",
     "_require_executable",
     "boot_image_build",
     "boot_image_iso",

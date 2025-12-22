@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 DMESG_CAPTURE_COMMAND = "dmesg --color=never 2>&1 || dmesg 2>&1 || true"
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
@@ -144,8 +146,62 @@ def record_run_timings(
     )
 
 
+def append_run_ledger_entry(
+    ledger_path: Path,
+    *,
+    metadata_path: Path,
+    run_timings: "RunTimings",
+    harness_log: Path,
+    serial_log: Path,
+    qemu_command: List[str],
+    qemu_version: Optional[str],
+    ssh_host: str,
+    ssh_port: int,
+    invocation_args: List[str],
+    spawn_timeout: int,
+    login_timeout: int,
+    outcome: str,
+) -> None:
+    """Append a JSON line capturing a VM test attempt to the run ledger.
+
+    The ledger is stored under ``notes/`` by default so that timing and
+    diagnostic metadata can be reviewed across sessions without trawling
+    through temporary directories. Entries are additive and should not be
+    rewritten.
+    """
+
+    entry: Dict[str, object] = {
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "metadata": str(metadata_path),
+        "harness_log": str(harness_log),
+        "serial_log": str(serial_log),
+        "ssh": {"host": ssh_host, "port": ssh_port},
+        "qemu": {"command": qemu_command, "version": qemu_version},
+        "pytest_args": invocation_args,
+        "timeouts": {
+            "spawn_seconds": spawn_timeout,
+            "login_seconds": login_timeout,
+        },
+        "outcome": outcome,
+    }
+    timings = run_timings.to_metadata()
+    if timings:
+        entry["timings"] = timings
+        total_seconds = timings.get("total_seconds")
+        if isinstance(total_seconds, (int, float)):
+            entry["session_ceiling_exceeded"] = total_seconds >= 3600
+
+    ledger_path = ledger_path.resolve()
+    if not ledger_path.is_absolute():  # pragma: no cover - defensive fallback
+        ledger_path = (REPO_ROOT / ledger_path).resolve()
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    with ledger_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, sort_keys=True) + "\n")
+
+
 __all__ = [
     "DMESG_CAPTURE_COMMAND",
+    "append_run_ledger_entry",
     "record_run_timings",
     "record_boot_image_diagnostic",
     "write_boot_image_metadata",
