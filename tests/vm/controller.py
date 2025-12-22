@@ -13,7 +13,7 @@ from typing import Callable, List, Optional, Tuple
 
 import pexpect
 
-from tests.vm.fixtures import BootImageBuild, VM_LOGIN_TIMEOUT
+from tests.vm.fixtures import BootImageBuild, RunTimings, VM_LOGIN_TIMEOUT
 from tests.vm.metadata import DMESG_CAPTURE_COMMAND, record_boot_image_diagnostic
 
 SHELL_PROMPT = "PRE-NIXOS> "
@@ -45,9 +45,11 @@ class BootImageVM:
     ssh_host: str
     ssh_executable: str
     artifact: BootImageBuild
+    run_timings: Optional[RunTimings] = None
     qemu_version: Optional[str] = None
     qemu_command: Optional[Tuple[str, ...]] = None
     disk_image: Optional[Path] = None
+    boot_started_at: Optional[float] = None
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
     _log_dir: Path = field(init=False, repr=False)
@@ -69,6 +71,14 @@ class BootImageVM:
         )
         self._log_step(f"Harness metadata written to {self.metadata_path}")
         self._login()
+        if (
+            self.run_timings is not None
+            and self.boot_started_at is not None
+            and self.run_timings.boot_to_login_seconds is None
+        ):
+            self.run_timings.boot_to_login_seconds = (
+                time.perf_counter() - self.boot_started_at
+            )
 
     def _format_artifact_metadata(self) -> List[str]:
         metadata = [
@@ -831,6 +841,14 @@ class BootImageVM:
             lines = [line for line in output.splitlines() if line.strip()]
             if any("inet " in line for line in lines):
                 # Run a no-op so any buffered ip output is consumed before returning
+                if (
+                    self.run_timings is not None
+                    and self.boot_started_at is not None
+                    and self.run_timings.boot_to_ssh_seconds is None
+                ):
+                    self.run_timings.boot_to_ssh_seconds = (
+                        time.perf_counter() - self.boot_started_at
+                    )
                 self.run(":")
                 return lines
             time.sleep(5)

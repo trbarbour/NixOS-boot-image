@@ -1,5 +1,44 @@
-"""RAID/LVM residue regression scenario placeholder."""
+"""RAID/LVM residue regression scenario."""
 
-# The regression case will be implemented after the fixture/controller split
-# settles. Keeping a dedicated module now avoids churn when the scenario is
-# added.
+from __future__ import annotations
+
+import pytest
+
+from tests.vm.cleanup_plan import build_raid_residue_plan
+from tests.vm.controller import BootImageVM
+
+pytestmark = [pytest.mark.vm, pytest.mark.slow]
+
+
+def test_pre_nixos_cleans_raid_lvm_residue(boot_image_vm: BootImageVM) -> None:
+    plan = build_raid_residue_plan()
+    boot_image_vm.assert_commands_available(
+        "mdadm", "pvcreate", "vgcreate", "lvcreate", "blkid"
+    )
+
+    for command in plan.preseed_commands:
+        boot_image_vm.run_as_root(command, timeout=300)
+
+    sentinel_content = boot_image_vm.run_as_root(
+        f"cat {plan.sentinel_path} 2>/dev/null || true", timeout=120
+    )
+    assert "residue-marker" in sentinel_content
+
+    boot_image_vm.run_as_root("systemctl restart pre-nixos.service", timeout=240)
+    boot_image_vm.wait_for_unit_inactive("pre-nixos", timeout=240)
+
+    verification_outputs = [
+        boot_image_vm.run_as_root(command, timeout=240)
+        for command in plan.verification_commands
+    ]
+    combined_output = "\n".join(verification_outputs)
+
+    assert "/dev/md127" not in combined_output
+    assert "vg_residue" not in combined_output
+    assert "lv_residue" not in combined_output
+
+    sentinel_after_cleanup = boot_image_vm.run_as_root(
+        f"if [ -e {plan.sentinel_path} ]; then cat {plan.sentinel_path}; fi",
+        timeout=120,
+    )
+    assert "residue-marker" not in sentinel_after_cleanup

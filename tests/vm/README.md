@@ -7,6 +7,9 @@ separately.
 
 ## Modules
 - `fixtures.py` – host/tool checks, ISO build helpers, disk/SSH fixtures, timeout defaults
+- `fixtures.py` also exposes the `boot_image_vm` session fixture and captures
+  per-run timings for boot-image build, boot-to-login, boot-to-SSH, and total
+  test wall-clock duration in `metadata.json`
 - `metadata.py` – utilities for collecting logs and diagnostics from VM runs
 - `controller.py` – `BootImageVM` controller and interaction helpers
 - `cleanup_plan.py` – reusable RAID/LVM seeding and teardown checks
@@ -35,9 +38,10 @@ migration is in progress.
 ## Logging and artifacts
 - For every VM run, capture console output, `dmesg`, and `/tmp/pre-nixos*.log`
   into a run-specific directory under `notes/` with a UTC timestamp.
-- Record three timings per run: boot-image build duration, VM boot-to-SSH time,
-  and total test wall-clock time. Include the commands and any environment
-  overrides used so runs remain reproducible.
+- The VM fixture records build duration, boot-to-login, boot-to-SSH, and
+  total wall-clock timings in `metadata.json` so individual runs can be
+  compared. Include the commands and any environment overrides used so runs
+  remain reproducible.
 
 ## RAID/LVM residue recipe
 - The regression scenario seeds `/dev/md127` backed by `/dev/vdb` and `/dev/vdc`,
@@ -49,7 +53,5 @@ migration is in progress.
 
 ## Status
 Core fixtures, timeout defaults, metadata helpers, and the `BootImageVM`
-controller now live under `tests/vm/`. The legacy
-`tests/test_boot_image_vm.py` consumes them and still holds the primary
-scenarios until they are migrated into `tests/vm/test_pre_nixos_vm.py` and
-`tests/vm/test_pre_nixos_cleanup.py`.
+controller now live under `tests/vm/`. Integration scenarios have moved into
+`tests/vm/test_pre_nixos_vm.py` and `tests/vm/test_pre_nixos_cleanup.py`.

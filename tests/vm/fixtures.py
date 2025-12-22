@@ -6,17 +6,24 @@ helpers, SSH key generation, and storage for common constants.
 """
 
 from __future__ import annotations
+import datetime
 import importlib.util
 import json
 import os
 import socket
 import subprocess
 import shutil
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import pytest
+
+from tests.vm.metadata import record_run_timings, write_boot_image_metadata
+
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from tests.vm.controller import BootImageVM
 
 DEFAULT_SPAWN_TIMEOUT = 900
 DEFAULT_LOGIN_TIMEOUT = 300
@@ -40,6 +47,35 @@ class BootImageBuild:
     deriver: Optional[str]
     nar_hash: Optional[str]
     root_key_fingerprint: str
+    build_duration_seconds: Optional[float] = None
+
+
+@dataclass
+class RunTimings:
+    """Wall-clock measurements captured during a VM integration test run."""
+
+    build_seconds: Optional[float] = None
+    boot_to_login_seconds: Optional[float] = None
+    boot_to_ssh_seconds: Optional[float] = None
+    total_seconds: Optional[float] = None
+    started_at: Optional[datetime.datetime] = None
+    completed_at: Optional[datetime.datetime] = None
+
+    def to_metadata(self) -> Dict[str, object]:
+        timings: Dict[str, object] = {}
+        if self.started_at:
+            timings["start"] = self.started_at.isoformat()
+        if self.completed_at:
+            timings["end"] = self.completed_at.isoformat()
+        if self.build_seconds is not None:
+            timings["build_seconds"] = round(self.build_seconds, 3)
+        if self.boot_to_login_seconds is not None:
+            timings["boot_to_login_seconds"] = round(self.boot_to_login_seconds, 3)
+        if self.boot_to_ssh_seconds is not None:
+            timings["boot_to_ssh_seconds"] = round(self.boot_to_ssh_seconds, 3)
+        if self.total_seconds is not None:
+            timings["total_seconds"] = round(self.total_seconds, 3)
+        return timings
 
 
 def _read_timeout_env(name: str, default: int) -> int:
@@ -182,6 +218,7 @@ def boot_image_build(
 ) -> BootImageBuild:
     env = os.environ.copy()
     env["PRE_NIXOS_ROOT_KEY"] = str(boot_ssh_key_pair.public_key)
+    build_started = time.perf_counter()
     result = subprocess.run(
         [
             nix_executable,
@@ -197,6 +234,7 @@ def boot_image_build(
         text=True,
         env=env,
     )
+    build_duration = time.perf_counter() - build_started
     paths = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if not paths:
         raise AssertionError("nix build did not return a store path")
@@ -252,6 +290,7 @@ def boot_image_build(
         deriver=deriver,
         nar_hash=nar_hash,
         root_key_fingerprint=fingerprint,
+        build_duration_seconds=build_duration,
     )
 
 
@@ -269,8 +308,148 @@ def vm_disk_image(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return disk_path
 
 
+@pytest.fixture(scope="session")
+def boot_image_vm(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    vm_disk_image: Path,
+    tmp_path_factory: pytest.TempPathFactory,
+    ssh_executable: str,
+    ssh_forward_port: int,
+    request: pytest.FixtureRequest,
+) -> "BootImageVM":
+    from tests.vm.controller import BootImageVM
+
+    log_dir = tmp_path_factory.mktemp("boot-image-logs")
+    log_path = log_dir / "serial.log"
+    harness_log_path = log_dir / "harness.log"
+    metadata_path = log_dir / "metadata.json"
+    harness_log_path.write_text("", encoding="utf-8")
+    log_handle = log_path.open("w", encoding="utf-8")
+
+    run_timings = RunTimings(
+        build_seconds=boot_image_build.build_duration_seconds,
+        started_at=datetime.datetime.now(datetime.timezone.utc),
+    )
+
+    cmd = [
+        qemu_executable,
+        "-m",
+        "2048",
+        "-smp",
+        "2",
+        "-display",
+        "none",
+        "-no-reboot",
+        "-boot",
+        "d",
+        "-serial",
+        "stdio",
+        "-cdrom",
+        str(boot_image_build.iso_path),
+        "-drive",
+        f"file={vm_disk_image},if=virtio,format=raw",
+        "-device",
+        "virtio-rng-pci",
+        "-netdev",
+        f"user,id=net0,hostfwd=tcp:127.0.0.1:{ssh_forward_port}-:22",
+        "-device",
+        "virtio-net-pci,netdev=net0",
+    ]
+    qemu_version = probe_qemu_version(qemu_executable)
+    write_boot_image_metadata(
+        metadata_path,
+        artifact=boot_image_build,
+        harness_log=harness_log_path,
+        serial_log=log_path,
+        qemu_command=cmd,
+        qemu_version=qemu_version,
+        disk_image=vm_disk_image,
+        ssh_host="127.0.0.1",
+        ssh_port=ssh_forward_port,
+        ssh_executable=ssh_executable,
+        run_timings=run_timings,
+    )
+    record_run_timings(metadata_path, run_timings=run_timings)
+
+    child = _pexpect.spawn(
+        cmd[0],
+        cmd[1:],
+        encoding="utf-8",
+        codec_errors="ignore",
+        timeout=VM_SPAWN_TIMEOUT,
+    )
+    child.logfile = log_handle
+    debug_enabled = bool(request.config.getoption("boot_image_debug"))
+    initial_failures = request.session.testsfailed
+    vm: Optional[BootImageVM] = None
+    debug_session_started = False
+    total_started_at = time.perf_counter()
+    boot_started_at = total_started_at
+
+    def _log_debug(message: str) -> None:
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        with harness_log_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"[{timestamp}] {message}\n")
+
+    try:
+        vm = BootImageVM(
+            child=child,
+            log_path=log_path,
+            harness_log_path=harness_log_path,
+            metadata_path=metadata_path,
+            ssh_port=ssh_forward_port,
+            ssh_host="127.0.0.1",
+            ssh_executable=ssh_executable,
+            artifact=boot_image_build,
+            qemu_version=qemu_version,
+            qemu_command=tuple(cmd),
+            disk_image=vm_disk_image,
+            run_timings=run_timings,
+            boot_started_at=boot_started_at,
+        )
+        record_run_timings(metadata_path, run_timings=run_timings)
+        try:
+            yield vm
+        finally:
+            should_debug = debug_enabled and (
+                request.session.testsfailed > initial_failures
+            )
+            if should_debug and not debug_session_started:
+                vm.interact()
+                debug_session_started = True
+    except Exception:
+        if debug_enabled and not debug_session_started:
+            if vm is not None:
+                vm.interact()
+            else:
+                _log_debug(
+                    "Entering interactive debug session (setup failure)"
+                )
+                try:
+                    child.interact(escape_character=chr(29))
+                finally:
+                    _log_debug("Exited interactive debug session")
+            debug_session_started = True
+        raise
+    finally:
+        run_timings.total_seconds = time.perf_counter() - total_started_at
+        run_timings.completed_at = datetime.datetime.now(datetime.timezone.utc)
+        record_run_timings(metadata_path, run_timings=run_timings)
+        if vm is not None:
+            vm.shutdown()
+        else:
+            try:
+                child.close(force=True)
+            except Exception:
+                pass
+        log_handle.close()
+
+
 __all__ = [
     "BootImageBuild",
+    "RunTimings",
     "DEFAULT_LOGIN_TIMEOUT",
     "DEFAULT_SPAWN_TIMEOUT",
     "REPO_ROOT",
@@ -283,6 +462,7 @@ __all__ = [
     "boot_image_build",
     "boot_image_iso",
     "boot_ssh_key_pair",
+    "boot_image_vm",
     "nix_executable",
     "probe_qemu_version",
     "qemu_executable",

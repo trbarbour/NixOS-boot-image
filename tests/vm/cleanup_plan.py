@@ -1,9 +1,10 @@
 """Cleanup helpers for RAID/LVM residue regression scenarios.
 
-This module documents (and will eventually execute) the recipe used to create
-mdadm and LVM residue inside the VM before running ``pre-nixos``. The recipe is
-kept here so both the regression test and any ad-hoc debugging flows can reuse
-the same commands and expectations.
+Document the RAID/LVM residue seeding recipe for cleanup regression tests.
+
+This module will eventually host helpers for executing the residue plan inside
+the VM. Keeping the canonical commands here ensures ad-hoc debugging flows and
+regression tests exercise the same behavior.
 """
 
 from __future__ import annotations
