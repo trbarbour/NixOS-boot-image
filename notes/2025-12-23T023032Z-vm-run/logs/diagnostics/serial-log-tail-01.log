@@ -1,0 +1,50 @@
+(PRE_NIXOS_AUTO_INSTALL=)
+
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+
+
+SSH access:
+
+  - Use the matching private key for the embedded root SSH key to log in as root.
+
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+
+
+Run "nixos-help" for the NixOS manual.
+
+nixos login: nixos (automatic login)
+
+
+
+
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766457009651__\n'
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766457009651__\n'
+
+LAN IPv4 address: 10.0.2.15
+
+
+LAN IPv4 address: 10.0.2.15
+
+
+pre-nixos boot image version 0.7.9
+
+LAN IPv4 address: 10.0.2.15
+
+[?2004h
+
+
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '; printfprintf '__UID_MARK__1766457022694__%s__UID_MARK__1766457022694__\n' "$(id -u)"
+ '__PROMPT_READY__1766457009651__\n'
+
+[?2004l
+__PROMPT_READY__1766457009651__
+
+[?2004hPRE-NIXOS> 
