@@ -1,0 +1,54 @@
+Escalation method: sudo -i
+Failure reason: sudo -i completed without root privileges
+Captured at: 2025-12-23T00:46:02.417302+00:00
+
+export PS1='PRE-NIXOS> '
+
+id -u
+id -u
+
+LAN IPv4 address: 10.0.2.15
+
+
+LAN IPv4 address: 10.0.2.15
+
+
+pre-nixos boot image version 0.7.9
+
+LAN IPv4 address: 10.0.2.15
+
+[?2004h
+
+
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '
+
+sudo -i
+[?2004l
+[?2004hPRE-NIXOS> id -u
+
+[?2004l
+sudo -i
+
+1000
+
+[?2004hPRE-NIXOS> sudo -i
+
+[?2004l
+pre-nixos boot image version 0.7.9
+
+LAN IPv4 address: 10.0.2.15
+
+[?2004h
+
+
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> '
+export PS1='PRE-NIXOS> 'id -u
+
+
+[?2004l
+[?2004hPRE-NIXOS> id -u
+
+[?2004l
+0
+
+[?2004hPRE-NIXOS> 
