@@ -1042,3 +1042,24 @@ def test_unit_inactive_timeout_records_failed_units(
         assert Path(entry["path"]).exists()
 
 
+def test_read_uid_uses_markers_to_filter_noise() -> None:
+    """Marker-wrapped UID output should be returned even with extra lines."""
+
+    vm = object.__new__(BootImageVM)
+    vm.run = lambda command, timeout=120: "noise\n__UID_MARK__0__UID_MARK__\n"  # type: ignore[assignment]
+    vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
+
+    assert vm._read_uid() == "0"
+
+
+def test_read_uid_raises_when_marker_missing() -> None:
+    """UID parsing should fail loudly if the marker is absent."""
+
+    vm = object.__new__(BootImageVM)
+    vm.run = lambda command, timeout=120: "unexpected\noutput"  # type: ignore[assignment]
+    vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
+
+    with pytest.raises(AssertionError):
+        vm._read_uid()
+
+
