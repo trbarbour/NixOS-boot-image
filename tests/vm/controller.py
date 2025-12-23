@@ -119,6 +119,26 @@ class BootImageVM:
                     for line in lines:
                         handle.write(f"[{timestamp}]   {line}\n")
 
+    def _synchronise_prompt(self, *, context: str, timeout: int = 120) -> None:
+        """Flush stray console output so the next command begins at the prompt."""
+
+        self.child.sendline("")
+        try:
+            self.child.expect(SHELL_PROMPT, timeout=timeout)
+        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+            self._raise_with_transcript(
+                f"Timed out while resynchronising prompt during {context}: {exc}"
+            )
+        except pexpect.EOF as exc:  # pragma: no cover - integration timing
+            self._raise_with_transcript(
+                f"Unexpected EOF while resynchronising prompt during {context}: {exc}"
+            )
+        except pexpect.ExceptionPexpect as exc:  # pragma: no cover - defensive
+            self._raise_with_transcript(
+                "pexpect error while resynchronising prompt during "
+                f"{context}: {exc}"
+            )
+
     def _write_diagnostic_artifact(
         self,
         slug: str,
@@ -475,32 +495,65 @@ class BootImageVM:
     def _set_shell_prompt(self) -> None:
         self._configure_prompt()
 
-    def _read_uid(self) -> str:
-        """Return the numeric UID reported by ``id -u`` using a marker guard."""
+    @staticmethod
+    def _extract_uid_from_block(block: str, marker: str) -> Optional[str]:
+        """Parse a UID surrounded by markers even when extra lines are present."""
 
-        marker = f"__UID_MARK__{int(time.time() * 1000)}__"
-        uid_command = f"printf '{marker}%s{marker}\\n' \"$(id -u)\""
-        output = self.run(uid_command, timeout=120)
-        match = re.search(rf"{re.escape(marker)}(\d+){re.escape(marker)}", output)
+        cleaned = block.replace("\r", "")
+        match = re.search(
+            rf"{re.escape(marker)}\s*(\d+)\s*{re.escape(marker)}",
+            cleaned,
+            re.DOTALL,
+        )
         if match:
             return match.group(1)
+        return None
 
-        self._log_step(
-            "Failed to parse id -u output; resynchronising prompt before retry",
-            body=output,
-        )
-        self._configure_prompt(context="uid validation resync")
+    def _read_uid(self) -> str:
+        """Return the numeric UID reported by ``id -u`` using marker guards."""
 
-        retry_output = self.run(uid_command, timeout=120)
-        retry_match = re.search(
-            rf"{re.escape(marker)}(\d+){re.escape(marker)}", retry_output
+        marker = f"__UID_MARK__{int(time.time() * 1000)}__"
+        uid_command = (
+            f"printf '%s\n' '{marker}' && id -u && printf '%s\n' '{marker}'"
         )
-        if retry_match:
-            return retry_match.group(1)
+
+        for attempt in range(2):
+            self._synchronise_prompt(
+                context=f"uid validation attempt {attempt + 1}", timeout=120
+            )
+            self.child.sendline(uid_command)
+            try:
+                self.child.expect(
+                    re.compile(
+                        rf"{re.escape(marker)}\s*(\d+)\s*{re.escape(marker)}",
+                        re.DOTALL,
+                    ),
+                    timeout=120,
+                )
+                block = self.child.match.group(0) if self.child.match else ""
+                uid_value = self._extract_uid_from_block(block, marker)
+                if uid_value is None:
+                    raise ValueError("UID marker not found in output block")
+                self.child.expect(SHELL_PROMPT, timeout=120)
+                return uid_value
+            except (pexpect.TIMEOUT, pexpect.EOF, pexpect.ExceptionPexpect) as exc:
+                self._log_step(
+                    "Failed to parse id -u output; resynchronising prompt before retry",
+                    body=(
+                        f"attempt={attempt + 1}, error={exc}, buffer="
+                        f"{getattr(self.child, 'before', '')}"
+                    ),
+                )
+            except ValueError as exc:
+                self._log_step(
+                    "Failed to parse id -u output; resynchronising prompt before retry",
+                    body=f"attempt={attempt + 1}, error={exc}",
+                )
+            self._configure_prompt(context="uid validation resync")
+
         self._raise_with_transcript(
-            "Failed to parse id -u output while validating shell privileges"
+            "Failed to parse id -u output while validating shell privileges",
         )
-
     def _escalate_with_sudo(self) -> bool:
         """Attempt to escalate privileges with ``sudo -i``."""
 

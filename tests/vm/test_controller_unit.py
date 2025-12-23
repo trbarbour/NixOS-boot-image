@@ -18,7 +18,7 @@ if pexpect_spec is None:  # pragma: no cover - environment specific
 else:  # pragma: no cover - exercised in integration environments
     import pexpect  # type: ignore
 
-from tests.vm.controller import BootImageVM
+from tests.vm.controller import BootImageVM, SHELL_PROMPT
 from tests.vm.fixtures import BootImageBuild, probe_qemu_version
 from tests.vm.metadata import write_boot_image_metadata
 
@@ -206,6 +206,25 @@ def test_raise_with_transcript_includes_qemu_version(tmp_path: Path) -> None:
     assert f"Disk image: {disk_image}" in message
     assert "QEMU command: qemu --version" in message
 
+
+
+def test_extract_uid_from_block_handles_noise() -> None:
+    """UID extraction should survive stray console output around markers."""
+
+    marker = "__UID_MARK__123__"
+    noisy_block = """
+    [nixos@nixos:~]$ export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1700000000000__'\n
+    __PROMPT_READY__1700000000000__
+    PRE-NIXOS> printf '__UID_MARK__123__%s__UID_MARK__123__' "$(id -u)"
+    PRE-NIXOS> __UID_MARK__123__
+    0
+    __UID_MARK__123__
+    PRE-NIXOS>
+    """
+
+    uid = BootImageVM._extract_uid_from_block(noisy_block, marker)
+
+    assert uid == "0"
 
 def test_run_command_eof_records_diagnostics(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -1052,8 +1071,36 @@ def test_read_uid_uses_markers_to_filter_noise(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(controller.time, "time", lambda: 1.0)
 
     marker = "__UID_MARK__1000__"
-    vm.run = lambda command, timeout=120: f"noise\n{marker}0{marker}\n"  # type: ignore[assignment]
+    vm._configure_prompt = lambda *args, **kwargs: None  # type: ignore[assignment]
+    vm._synchronise_prompt = (  # type: ignore[assignment]
+        lambda *args, **kwargs: None
+    )
     vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
+
+    class StubChild:
+        def __init__(self) -> None:
+            self.before = ""
+            self.match = None
+            self._output = f"{marker}\n0\n{marker}\n"
+
+        def sendline(self, command: str) -> None:  # pragma: no cover - simple stub
+            marker_match = re.search(r"__UID_MARK__\d+__", command)
+            active_marker = marker_match.group(0) if marker_match else marker
+            self._output = f"{active_marker}\n0\n{active_marker}\n"
+
+        def expect(self, pattern, timeout: int | None = None) -> int:
+            if pattern == SHELL_PROMPT:
+                self.before = ""
+                return 0
+            if isinstance(pattern, re.Pattern):
+                self.match = pattern.search(self._output)
+                self.before = self._output
+                if self.match:
+                    return 0
+                raise pexpect.TIMEOUT("uid marker not found")
+            raise AssertionError(f"Unexpected pattern: {pattern!r}")
+
+    vm.child = StubChild()  # type: ignore[assignment]
 
     assert vm._read_uid() == "0"
 
@@ -1062,27 +1109,50 @@ def test_read_uid_raises_when_marker_missing() -> None:
     """UID parsing should fail loudly if the marker is absent."""
 
     vm = object.__new__(BootImageVM)
-    call_count = {"value": 0}
+    attempts = []
 
     def stub_log_step(self, message: str, body: str | None = None) -> None:
-        return None
+        attempts.append(message)
 
     def stub_configure_prompt(self, *, context: str = "shell") -> None:
-        return None
+        attempts.append(context)
 
-    def stub_run(self, command: str, *, timeout: int = 120) -> str:
-        call_count["value"] += 1
-        return "unexpected\noutput"
+    def stub_raise_with_transcript(self, message: str) -> None:
+        raise AssertionError(message)
+
+    class StubChild:
+        def __init__(self) -> None:
+            self.before = ""
+            self.match = None
+            self.outputs = ["noise without marker", "still missing"]
+
+        def sendline(self, command: str) -> None:  # pragma: no cover - simple stub
+            self._current = self.outputs.pop(0)
+
+        def expect(self, pattern, timeout: int | None = None) -> int:
+            if pattern == SHELL_PROMPT:
+                self.before = ""
+                return 0
+            if isinstance(pattern, re.Pattern):
+                self.match = pattern.search(self._current)
+                self.before = self._current
+                if self.match:
+                    return 0
+                raise pexpect.TIMEOUT("uid marker not found")
+            raise AssertionError(f"Unexpected pattern: {pattern!r}")
 
     vm._log_step = stub_log_step.__get__(vm, BootImageVM)
     vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)
-    vm.run = stub_run.__get__(vm, BootImageVM)  # type: ignore[assignment]
-    vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
+    vm._synchronise_prompt = (  # type: ignore[assignment]
+        lambda *args, **kwargs: None
+    )
+    vm._raise_with_transcript = stub_raise_with_transcript.__get__(vm, BootImageVM)
+    vm.child = StubChild()  # type: ignore[assignment]
 
     with pytest.raises(AssertionError):
         vm._read_uid()
 
-    assert call_count["value"] == 2
+    assert attempts.count("uid validation resync") == 2
 
 
 def test_read_uid_resynchronises_after_parse_failure() -> None:
@@ -1090,34 +1160,51 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
 
     vm = object.__new__(BootImageVM)
     contexts: List[str] = []
-    call_count = {"value": 0}
 
     def stub_log_step(self, message: str, body: str | None = None) -> None:
-        return None
+        contexts.append(message)
 
     def stub_configure_prompt(self, *, context: str = "shell") -> None:
         contexts.append(context)
 
-    def stub_raise_with_transcript(self, message: str) -> None:
-        raise AssertionError(message)
+    class StubChild:
+        def __init__(self) -> None:
+            self.before = ""
+            self.match = None
+            self.outputs = ["noise without marker", "marker"]
 
-    def stub_run(self, command: str, *, timeout: int = 180) -> str:
-        call_index = call_count["value"]
-        call_count["value"] += 1
-        marker_match = re.search(r"__UID_MARK__\d+__", command)
-        marker = marker_match.group(0) if marker_match else "__UID_MARK__missing__"
-        if call_index == 0:
-            return "noise without marker"
-        return f"{marker}0{marker}"
+        def sendline(self, command: str) -> None:  # pragma: no cover - simple stub
+            marker_match = re.search(r"__UID_MARK__\d+__", command)
+            marker_value = marker_match.group(0) if marker_match else "__UID_MARK__missing__"
+            next_output = self.outputs.pop(0)
+            if next_output == "marker":
+                self._current = f"{marker_value}\n0\n{marker_value}\n"
+            else:
+                self._current = next_output
+
+        def expect(self, pattern, timeout: int | None = None) -> int:
+            if pattern == SHELL_PROMPT:
+                self.before = ""
+                return 0
+            if isinstance(pattern, re.Pattern):
+                self.match = pattern.search(self._current)
+                self.before = self._current
+                if self.match:
+                    return 0
+                raise pexpect.TIMEOUT("uid marker not found")
+            raise AssertionError(f"Unexpected pattern: {pattern!r}")
 
     vm._log_step = stub_log_step.__get__(vm, BootImageVM)
     vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)
-    vm._raise_with_transcript = stub_raise_with_transcript.__get__(vm, BootImageVM)
-    vm.run = stub_run.__get__(vm, BootImageVM)  # type: ignore[assignment]
+    vm._synchronise_prompt = (  # type: ignore[assignment]
+        lambda *args, **kwargs: None
+    )
+    vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
+    vm.child = StubChild()  # type: ignore[assignment]
 
     uid = vm._read_uid()
 
     assert uid == "0"
-    assert contexts == ["uid validation resync"]
+    assert "uid validation resync" in contexts
 
 
