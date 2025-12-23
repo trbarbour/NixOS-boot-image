@@ -115,6 +115,34 @@ def record_boot_image_diagnostic(
     )
 
 
+def _read_diagnostics(metadata_path: Path) -> List[Dict[str, str]]:
+    """Return diagnostic artifact entries from ``metadata.json`` when present."""
+
+    try:
+        raw_metadata = metadata_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return []
+    if not raw_metadata.strip():
+        return []
+    try:
+        metadata = json.loads(raw_metadata)
+    except json.JSONDecodeError:
+        return []
+    diagnostics_section = metadata.get("diagnostics")
+    if not isinstance(diagnostics_section, dict):
+        return []
+    artifacts = diagnostics_section.get("artifacts")
+    if not isinstance(artifacts, list):
+        return []
+    entries: List[Dict[str, str]] = []
+    for artifact in artifacts:
+        label = artifact.get("label") if isinstance(artifact, dict) else None
+        path = artifact.get("path") if isinstance(artifact, dict) else None
+        if isinstance(label, str) and isinstance(path, str):
+            entries.append({"label": label, "path": path})
+    return entries
+
+
 def record_run_timings(
     metadata_path: Path, *, run_timings: "RunTimings"
 ) -> None:
@@ -190,6 +218,9 @@ def append_run_ledger_entry(
         total_seconds = timings.get("total_seconds")
         if isinstance(total_seconds, (int, float)):
             entry["session_ceiling_exceeded"] = total_seconds >= 3600
+    diagnostics = _read_diagnostics(metadata_path)
+    if diagnostics:
+        entry["diagnostics"] = diagnostics
 
     ledger_path = ledger_path.resolve()
     if not ledger_path.is_absolute():  # pragma: no cover - defensive fallback
