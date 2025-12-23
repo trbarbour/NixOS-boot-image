@@ -479,13 +479,24 @@ class BootImageVM:
         """Return the numeric UID reported by ``id -u`` using a marker guard."""
 
         marker = f"__UID_MARK__{int(time.time() * 1000)}__"
-        output = self.run(
-            f"printf '{marker}%s{marker}\\n' \"$(id -u)\"",
-            timeout=120,
-        )
+        uid_command = f"printf '{marker}%s{marker}\\n' \"$(id -u)\""
+        output = self.run(uid_command, timeout=120)
         match = re.search(rf"{re.escape(marker)}(\d+){re.escape(marker)}", output)
         if match:
             return match.group(1)
+
+        self._log_step(
+            "Failed to parse id -u output; resynchronising prompt before retry",
+            body=output,
+        )
+        self._configure_prompt(context="uid validation resync")
+
+        retry_output = self.run(uid_command, timeout=120)
+        retry_match = re.search(
+            rf"{re.escape(marker)}(\d+){re.escape(marker)}", retry_output
+        )
+        if retry_match:
+            return retry_match.group(1)
         self._raise_with_transcript(
             "Failed to parse id -u output while validating shell privileges"
         )
