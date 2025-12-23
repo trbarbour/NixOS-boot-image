@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -1061,10 +1062,62 @@ def test_read_uid_raises_when_marker_missing() -> None:
     """UID parsing should fail loudly if the marker is absent."""
 
     vm = object.__new__(BootImageVM)
-    vm.run = lambda command, timeout=120: "unexpected\noutput"  # type: ignore[assignment]
+    call_count = {"value": 0}
+
+    def stub_log_step(self, message: str, body: str | None = None) -> None:
+        return None
+
+    def stub_configure_prompt(self, *, context: str = "shell") -> None:
+        return None
+
+    def stub_run(self, command: str, *, timeout: int = 120) -> str:
+        call_count["value"] += 1
+        return "unexpected\noutput"
+
+    vm._log_step = stub_log_step.__get__(vm, BootImageVM)
+    vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)
+    vm.run = stub_run.__get__(vm, BootImageVM)  # type: ignore[assignment]
     vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
 
     with pytest.raises(AssertionError):
         vm._read_uid()
+
+    assert call_count["value"] == 2
+
+
+def test_read_uid_resynchronises_after_parse_failure() -> None:
+    """UID parsing retries after prompt resynchronisation when markers are missing."""
+
+    vm = object.__new__(BootImageVM)
+    contexts: List[str] = []
+    call_count = {"value": 0}
+
+    def stub_log_step(self, message: str, body: str | None = None) -> None:
+        return None
+
+    def stub_configure_prompt(self, *, context: str = "shell") -> None:
+        contexts.append(context)
+
+    def stub_raise_with_transcript(self, message: str) -> None:
+        raise AssertionError(message)
+
+    def stub_run(self, command: str, *, timeout: int = 180) -> str:
+        call_index = call_count["value"]
+        call_count["value"] += 1
+        marker_match = re.search(r"__UID_MARK__\d+__", command)
+        marker = marker_match.group(0) if marker_match else "__UID_MARK__missing__"
+        if call_index == 0:
+            return "noise without marker"
+        return f"{marker}0{marker}"
+
+    vm._log_step = stub_log_step.__get__(vm, BootImageVM)
+    vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)
+    vm._raise_with_transcript = stub_raise_with_transcript.__get__(vm, BootImageVM)
+    vm.run = stub_run.__get__(vm, BootImageVM)  # type: ignore[assignment]
+
+    uid = vm._read_uid()
+
+    assert uid == "0"
+    assert contexts == ["uid validation resync"]
 
 
