@@ -463,31 +463,22 @@ class BootImageVM:
         self._log_step("Shell prompt configured for interaction")
 
     def _read_uid(self) -> str:
-        """Return the numeric UID reported by ``id -u``."""
+        """Return the numeric UID reported by ``id -u`` using a marker guard."""
 
-        self.child.sendline("id -u")
-        try:
-            self.child.expect(r"(\d+)\r*(?:\n|$)", timeout=60)
-        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
-            self._raise_with_transcript(
-                f"Timed out waiting for id -u output: {exc}"
-            )
-        except pexpect.EOF as exc:  # pragma: no cover - integration timing
-            self._log_step("pexpect reported EOF while waiting for id -u output")
-            self._raise_with_transcript(
-                f"Unexpected EOF while waiting for id -u output: {exc}"
-            )
-        except pexpect.ExceptionPexpect as exc:  # pragma: no cover - defensive
-            self._log_step(
-                "pexpect raised unexpected error while waiting for id -u output",
-                body=repr(exc),
-            )
-            self._raise_with_transcript(
-                f"pexpect error while waiting for id -u output: {exc}"
-            )
-        uid = self.child.match.group(1)
-        self._expect_normalised([SHELL_PROMPT], timeout=60)
-        return uid
+        marker = "__UID_MARK__"
+        output = self.run(
+            f"printf '{marker}%s{marker}\\n' \"$(id -u)\"",
+            timeout=120,
+        )
+        for line in output.splitlines():
+            line = line.strip()
+            if line.startswith(marker) and line.endswith(marker):
+                uid = line[len(marker) : -len(marker)]
+                if uid.isdigit():
+                    return uid
+        self._raise_with_transcript(
+            "Failed to parse id -u output while validating shell privileges"
+        )
 
     def _escalate_with_sudo(self) -> bool:
         """Attempt to escalate privileges with ``sudo -i``."""
