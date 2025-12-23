@@ -24,8 +24,8 @@ migration is in progress.
 
 ## Running the VM tests
 - All VM scenarios should be marked with `@pytest.mark.vm` and `@pytest.mark.slow`.
-- Do not skip VM tests silently; missing tools or timeouts should surface as
-  failures so they can be addressed.
+- Do not skip VM tests silently; missing tools or timeouts surface as failures
+  so they can be addressed.
 - Useful environment variables:
   - `BOOT_IMAGE_VM_SPAWN_TIMEOUT` (default: 900 seconds) — maximum time to wait
     for QEMU to boot and expose its console.
@@ -47,6 +47,9 @@ migration is in progress.
 - Include the commands and any environment overrides used so runs remain
   reproducible. If a run exceeds roughly one hour, the metadata will note that
   the session ceiling may have been hit.
+- On failures, the fixture collects baseline diagnostics (dmesg,
+  `pre-nixos.service` journal, `/tmp/pre-nixos*.log`) and records their paths
+  in both `metadata.json` and the run ledger so they remain discoverable.
 - A JSONL run ledger is written to `notes/vm-run-ledger.jsonl` by default
   with the above timings, pytest arguments, QEMU command/version, SSH host and
   port, and the measured session ceiling flag. Override the location with

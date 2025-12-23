@@ -171,6 +171,54 @@ class BootImageVM:
         )
         return (label, path)
 
+    def collect_base_diagnostics(self) -> List[Tuple[str, Path]]:
+        """Capture baseline diagnostics to persist alongside failed runs."""
+
+        collected: List[Tuple[str, Path]] = []
+
+        try:
+            collected.append(self._capture_dmesg("post-test teardown"))
+        except Exception as exc:  # pragma: no cover - best effort cleanup
+            self._log_step(
+                "Failed to capture dmesg during teardown", body=repr(exc)
+            )
+
+        try:
+            journal = self.collect_journal("pre-nixos.service")
+            journal_path = self._write_diagnostic_artifact(
+                "pre-nixos-journal", journal, metadata_label="pre-nixos journal"
+            )
+            collected.append(("journalctl -u pre-nixos.service -b", journal_path))
+        except Exception as exc:  # pragma: no cover - best effort cleanup
+            self._log_step(
+                "Failed to collect pre-nixos journal during teardown", body=repr(exc)
+            )
+
+        try:
+            log_listing = self.run_as_root(
+                "ls -1 /tmp/pre-nixos*.log 2>/dev/null || true", timeout=120
+            )
+            for raw_path in log_listing.splitlines():
+                vm_path = raw_path.strip()
+                if not vm_path:
+                    continue
+                content = self.run_as_root(
+                    f"cat {vm_path} 2>/dev/null || true", timeout=180
+                )
+                label = f"pre-nixos log {Path(vm_path).name}"
+                artifact_path = self._write_diagnostic_artifact(
+                    Path(vm_path).name,
+                    content,
+                    metadata_label=label,
+                )
+                collected.append((label, artifact_path))
+        except Exception as exc:  # pragma: no cover - best effort cleanup
+            self._log_step(
+                "Failed to collect pre-nixos logs during teardown", body=repr(exc)
+            )
+
+        return collected
+
     def _snapshot_transcript(self) -> int:
         """Return the index of the next transcript entry for later slicing."""
 

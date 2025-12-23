@@ -118,11 +118,14 @@ def _resolve_ledger_path() -> Optional[Path]:
 
 
 def _require_executable(executable: str) -> str:
-    """Ensure an executable exists in ``PATH`` or skip the invoking test."""
+    """Ensure an executable exists in ``PATH`` and fail fast when missing."""
 
     path: Optional[str] = shutil.which(executable)
     if path is None:
-        pytest.skip(f"required executable '{executable}' is not available in PATH")
+        pytest.fail(
+            f"required executable '{executable}' is not available in PATH; "
+            "VM tests must report missing tools as failures"
+        )
     return path
 
 
@@ -466,6 +469,13 @@ def boot_image_vm(
         run_timings.total_seconds = time.perf_counter() - total_started_at
         run_timings.completed_at = datetime.datetime.now(datetime.timezone.utc)
         record_run_timings(metadata_path, run_timings=run_timings)
+        if vm is not None and run_outcome != "passed":
+            try:
+                vm.collect_base_diagnostics()
+            except Exception:
+                _log_debug(
+                    "Failed to collect base diagnostics during teardown; continuing"
+                )
         if ledger_path is not None:
             try:
                 append_run_ledger_entry(
