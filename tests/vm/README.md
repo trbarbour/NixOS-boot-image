@@ -56,6 +56,11 @@ migration is in progress.
   `BOOT_IMAGE_VM_LEDGER_PATH` or disable ledger writes via
   `BOOT_IMAGE_VM_DISABLE_LEDGER=1` when running purely ad-hoc experiments that
   should not touch the working tree.
+- Logs are stored under `notes/<UTC>-vm-run/logs/` automatically so artifacts
+  persist across sessions without manual copying. Override the base directory
+  with `BOOT_IMAGE_VM_LOG_ROOT` if you need logs elsewhere (for example on a
+  scratch volume); the `<UTC>` component always uses a `YYYY-MM-DDTHHMMSSZ`
+  timestamp for consistency with the run notes.
 
 ## RAID/LVM residue recipe
 - The regression scenario seeds `/dev/md127` backed by `/dev/vdb` and `/dev/vdc`,
