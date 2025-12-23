@@ -1042,11 +1042,16 @@ def test_unit_inactive_timeout_records_failed_units(
         assert Path(entry["path"]).exists()
 
 
-def test_read_uid_uses_markers_to_filter_noise() -> None:
+def test_read_uid_uses_markers_to_filter_noise(monkeypatch: pytest.MonkeyPatch) -> None:
     """Marker-wrapped UID output should be returned even with extra lines."""
 
+    import tests.vm.controller as controller
+
     vm = object.__new__(BootImageVM)
-    vm.run = lambda command, timeout=120: "noise\n__UID_MARK__0__UID_MARK__\n"  # type: ignore[assignment]
+    monkeypatch.setattr(controller.time, "time", lambda: 1.0)
+
+    marker = "__UID_MARK__1000__"
+    vm.run = lambda command, timeout=120: f"noise\n{marker}0{marker}\n"  # type: ignore[assignment]
     vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
 
     assert vm._read_uid() == "0"
