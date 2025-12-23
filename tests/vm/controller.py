@@ -455,27 +455,37 @@ class BootImageVM:
                 self._log_step(f"Matched pattern: {patterns[idx]!r}")
                 return idx
 
-    def _set_shell_prompt(self) -> None:
-        """Configure the interactive shell prompt."""
+    def _configure_prompt(self, *, context: str = "shell") -> None:
+        """Configure the shell prompt with a sentinel to absorb stray output."""
 
-        self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
-        self._expect_normalised([SHELL_PROMPT], timeout=60)
-        self._log_step("Shell prompt configured for interaction")
+        marker = f"__PROMPT_READY__{int(time.time() * 1000)}__"
+        command = f"export PS1='{SHELL_PROMPT}'; printf '{marker}\\n'"
+        self.child.sendline(command)
+        try:
+            self._expect_normalised([marker], timeout=120)
+            self._expect_normalised([SHELL_PROMPT], timeout=120)
+        except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
+            self._raise_with_transcript(
+                f"Timed out while configuring shell prompt during {context}: {exc}"
+            )
+        self._log_step(
+            "Shell prompt configured for interaction", body=f"context={context}"
+        )
+
+    def _set_shell_prompt(self) -> None:
+        self._configure_prompt()
 
     def _read_uid(self) -> str:
         """Return the numeric UID reported by ``id -u`` using a marker guard."""
 
-        marker = "__UID_MARK__"
+        marker = f"__UID_MARK__{int(time.time() * 1000)}__"
         output = self.run(
             f"printf '{marker}%s{marker}\\n' \"$(id -u)\"",
             timeout=120,
         )
-        for line in output.splitlines():
-            line = line.strip()
-            if line.startswith(marker) and line.endswith(marker):
-                uid = line[len(marker) : -len(marker)]
-                if uid.isdigit():
-                    return uid
+        match = re.search(rf"{re.escape(marker)}(\d+){re.escape(marker)}", output)
+        if match:
+            return match.group(1)
         self._raise_with_transcript(
             "Failed to parse id -u output while validating shell privileges"
         )
@@ -514,7 +524,7 @@ class BootImageVM:
                     transcript_start=transcript_start,
                 )
                 return False
-        self._set_shell_prompt()
+        self._configure_prompt(context="sudo -i")
         uid_output = self._read_uid()
         self._has_root_privileges = uid_output == "0"
         self._log_step(f"id -u after sudo -i returned: {uid_output!r}")
@@ -565,7 +575,7 @@ class BootImageVM:
                     transcript_start=transcript_start,
                 )
                 return False
-        self._set_shell_prompt()
+        self._configure_prompt(context="su -")
         uid_output = self._read_uid()
         self._has_root_privileges = uid_output == "0"
         self._log_step(f"id -u after su - returned: {uid_output!r}")
@@ -624,7 +634,7 @@ class BootImageVM:
             else:
                 self._log_step("Automatic login banner observed")
 
-        self._set_shell_prompt()
+        self._configure_prompt(context="initial login")
 
         uid_output = self._read_uid()
         self._has_root_privileges = uid_output == "0"
