@@ -117,6 +117,24 @@ def _resolve_ledger_path() -> Optional[Path]:
     return DEFAULT_LEDGER_PATH
 
 
+def _build_run_log_directory(now: Optional[datetime.datetime] = None) -> Path:
+    """Create and return the log directory for the current VM run.
+
+    Logs are stored under ``notes/`` by default so artifacts persist across
+    sessions without manual copying. Set ``BOOT_IMAGE_VM_LOG_ROOT`` to override
+    the base directory (e.g., to keep logs on a scratch volume).
+    """
+
+    base = Path(os.environ.get("BOOT_IMAGE_VM_LOG_ROOT", REPO_ROOT / "notes"))
+    timestamp = (now or datetime.datetime.now(datetime.timezone.utc)).strftime(
+        "%Y-%m-%dT%H%M%SZ"
+    )
+    run_root = base / f"{timestamp}-vm-run"
+    log_dir = run_root / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
+
+
 def _require_executable(executable: str) -> str:
     """Ensure an executable exists in ``PATH`` and fail fast when missing."""
 
@@ -339,7 +357,7 @@ def boot_image_vm(
 ) -> "BootImageVM":
     from tests.vm.controller import BootImageVM
 
-    log_dir = tmp_path_factory.mktemp("boot-image-logs")
+    log_dir = _build_run_log_directory()
     log_path = log_dir / "serial.log"
     harness_log_path = log_dir / "harness.log"
     metadata_path = log_dir / "metadata.json"
