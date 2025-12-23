@@ -1,0 +1,21 @@
+Escalation method: su -
+Failure reason: su - completed without root privileges
+Captured at: 2025-12-23T00:46:03.806088+00:00
+
+[2025-12-23T00:46:02.420667+00:00] Attempting to escalate with su -
+[2025-12-23T00:46:02.471033+00:00] Awaiting patterns: Password:, root@.*# ?, # ? (timeout=120s)
+[2025-12-23T00:46:02.474531+00:00] Serial output: su -
+[2025-12-23T00:46:03.602841+00:00] Serial output: pre-nixos boot image version 0.7.9
+[2025-12-23T00:46:03.602970+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:03.607819+00:00] Serial output: [
+[2025-12-23T00:46:03.608229+00:00] Serial output: 0;
+[2025-12-23T00:46:03.608304+00:00] Matched pattern: 'root@.*# ?'
+[2025-12-23T00:46:03.658588+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:03.666986+00:00] Serial output: export PS1='
+[2025-12-23T00:46:03.667115+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:03.667152+00:00] Shell prompt configured for interaction
+[2025-12-23T00:46:03.720582+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:03.804865+00:00] Serial output: 4l0
+[2025-12-23T00:46:03.805876+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:03.806024+00:00] id -u after su - returned: '200'
+[2025-12-23T00:46:03.806059+00:00] su - completed without root privileges

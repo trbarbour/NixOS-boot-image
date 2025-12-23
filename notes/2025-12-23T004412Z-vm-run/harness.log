@@ -1,0 +1,885 @@
+[2025-12-23T00:44:12.557600+00:00] Boot image artifact metadata
+[2025-12-23T00:44:12.557600+00:00]   ISO: /nix/store/dd9whmc3ryr4r4g6zjh0bsh6gl76ci0s-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso
+[2025-12-23T00:44:12.557600+00:00]   Store path: /nix/store/dd9whmc3ryr4r4g6zjh0bsh6gl76ci0s-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso
+[2025-12-23T00:44:12.557600+00:00]   Deriver: /nix/store/867bm4b86ly0v1nj937az98zcyi4fsa2-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso.drv
+[2025-12-23T00:44:12.557600+00:00]   NAR hash: sha256-B825JnyCAQ65EfXBkCiR+TZlx925AP61CCVf6+jOjls=
+[2025-12-23T00:44:12.557600+00:00]   Embedded root key fingerprint: 256 SHA256:8zemQlCcQx/mIxICo4HcBg6uhkHDdL0rQ5nWsUBFJUw boot-image-vm-test (ED25519)
+[2025-12-23T00:44:12.557600+00:00]   QEMU version: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.11)
+[2025-12-23T00:44:12.557600+00:00]   Disk image: /tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img
+[2025-12-23T00:44:12.557600+00:00]   QEMU command: /usr/bin/qemu-system-x86_64 -m 2048 -smp 2 -display none -no-reboot -boot d -serial stdio -cdrom /nix/store/dd9whmc3ryr4r4g6zjh0bsh6gl76ci0s-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso -drive file=/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img,if=virtio,format=raw -device virtio-rng-pci -netdev user,id=net0,hostfwd=tcp:127.0.0.1:43613-:22 -device virtio-net-pci,netdev=net0
+[2025-12-23T00:44:12.558272+00:00] Harness metadata written to /tmp/pytest-of-root/pytest-0/boot-image-logs0/metadata.json
+[2025-12-23T00:44:12.558487+00:00] Starting login sequence
+[2025-12-23T00:44:12.561457+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, # ? (timeout=300s)
+[2025-12-23T00:44:13.087978+00:00] Serial output: ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+[2025-12-23T00:44:13.088117+00:00] Serial output: e%@)0(B
+[2025-12-23T00:44:13.093467+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2025-12-23T00:44:13.093844+00:00] Serial output: x
+[2025-12-23T00:44:13.093944+00:00] Serial output: NixOS
+[2025-12-23T00:44:13.094183+00:00] Serial output: x
+[2025-12-23T00:44:13.096819+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2025-12-23T00:44:13.096876+00:00] Serial output: x
+[2025-12-23T00:44:13.099070+00:00] Serial output: NixOS 25.05.20251022.c8aa8cc Installer
+[2025-12-23T00:44:13.099365+00:00] Serial output: x
+[2025-12-23T00:44:13.099450+00:00] Serial output: x
+[2025-12-23T00:44:13.104584+00:00] Serial output: Options                                                                                      >
+[2025-12-23T00:44:13.104687+00:00] Serial output: x
+[2025-12-23T00:44:13.104779+00:00] Serial output: x
+[2025-12-23T00:44:13.104837+00:00] Serial output: Memtest86+
+[2025-12-23T00:44:13.104863+00:00] Serial output: x
+[2025-12-23T00:44:13.104891+00:00] Serial output: x
+[2025-12-23T00:44:13.104950+00:00] Serial output: x
+[2025-12-23T00:44:13.104980+00:00] Serial output: x
+[2025-12-23T00:44:13.105816+00:00] Serial output: x
+[2025-12-23T00:44:13.105866+00:00] Serial output: x
+[2025-12-23T00:44:13.107081+00:00] Serial output: x
+[2025-12-23T00:44:13.109800+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2025-12-23T00:44:13.109892+00:00] Serial output: Press [Tab] to edit options
+[2025-12-23T00:44:13.112808+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:13.112918+00:00] Serial output: 10
+[2025-12-23T00:44:14.139382+00:00] Serial output: seconds...
+[2025-12-23T00:44:14.139755+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:14.139810+00:00] Serial output: 9
+[2025-12-23T00:44:15.182336+00:00] Serial output: seconds...
+[2025-12-23T00:44:15.182697+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:15.182796+00:00] Serial output: 8
+[2025-12-23T00:44:16.227830+00:00] Serial output: seconds...
+[2025-12-23T00:44:16.228006+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:16.228039+00:00] Serial output: 7
+[2025-12-23T00:44:17.269958+00:00] Serial output: seconds...
+[2025-12-23T00:44:17.270085+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:17.270116+00:00] Serial output: 6
+[2025-12-23T00:44:18.313409+00:00] Serial output: seconds...
+[2025-12-23T00:44:18.313558+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:18.313657+00:00] Serial output: 5
+[2025-12-23T00:44:19.357051+00:00] Serial output: seconds...
+[2025-12-23T00:44:19.357214+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:19.357259+00:00] Serial output: 4
+[2025-12-23T00:44:20.400594+00:00] Serial output: seconds...
+[2025-12-23T00:44:20.400734+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:20.400767+00:00] Serial output: 3
+[2025-12-23T00:44:21.443996+00:00] Serial output: seconds...
+[2025-12-23T00:44:21.444440+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:21.444510+00:00] Serial output: 2
+[2025-12-23T00:44:22.487604+00:00] Serial output: seconds...
+[2025-12-23T00:44:22.487941+00:00] Serial output: Automatic boot in
+[2025-12-23T00:44:22.487983+00:00] Serial output: 1
+[2025-12-23T00:44:23.531032+00:00] Serial output: second...
+[2025-12-23T00:44:23.535481+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2025-12-23T00:44:23.536595+00:00] Serial output: x
+[2025-12-23T00:44:23.536651+00:00] Serial output: NixOS
+[2025-12-23T00:44:23.536679+00:00] Serial output: x
+[2025-12-23T00:44:23.538707+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2025-12-23T00:44:23.538791+00:00] Serial output: x
+[2025-12-23T00:44:23.541578+00:00] Serial output: NixOS 25.05.20251022.c8aa8cc Installer
+[2025-12-23T00:44:23.541924+00:00] Serial output: x
+[2025-12-23T00:44:23.542083+00:00] Serial output: x
+[2025-12-23T00:44:23.544370+00:00] Serial output: Options                                                                                      >
+[2025-12-23T00:44:23.544648+00:00] Serial output: x
+[2025-12-23T00:44:23.544692+00:00] Serial output: x
+[2025-12-23T00:44:23.547624+00:00] Serial output: Memtest86+
+[2025-12-23T00:44:23.547886+00:00] Serial output: x
+[2025-12-23T00:44:23.547929+00:00] Serial output: x
+[2025-12-23T00:44:23.548966+00:00] Serial output: x
+[2025-12-23T00:44:23.549227+00:00] Serial output: x
+[2025-12-23T00:44:23.550237+00:00] Serial output: x
+[2025-12-23T00:44:23.550284+00:00] Serial output: x
+[2025-12-23T00:44:23.551595+00:00] Serial output: x
+[2025-12-23T00:44:23.555535+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2025-12-23T00:44:23.555592+00:00] Serial output: Press [Tab] to edit options
+[2025-12-23T00:44:23.587271+00:00] Serial output: e%@)0(B
+[2025-12-23T00:44:31.644589+00:00] Serial output: Loading /boot//nix/store/cjrhr0f61a0c68r4vq0qxws3jadn48yj-linux-6.12.54/bzImage... ok
+[2025-12-23T00:44:31.644718+00:00] Serial output: Loading /boot//nix/store/y4jkdvcm47cc5kr7mijnbs4969x71frv-initrd-linux-6.12.54/initrd...ok
+[2025-12-23T00:44:31.644765+00:00] Serial output: <<< NixOS Stage 1 >>>
+[2025-12-23T00:44:44.654452+00:00] Serial output: loading module loop...
+[2025-12-23T00:44:44.654553+00:00] Serial output: loading module overlay...
+[2025-12-23T00:44:44.654579+00:00] Serial output: loading module vfat...
+[2025-12-23T00:44:44.654604+00:00] Serial output: loading module nls_cp437...
+[2025-12-23T00:44:44.654617+00:00] Serial output: loading module nls_iso8859-1...
+[2025-12-23T00:44:44.654636+00:00] Serial output: loading module dm_mod...
+[2025-12-23T00:44:44.654663+00:00] Serial output: running udev...
+[2025-12-23T00:44:44.654725+00:00] Serial output: Starting systemd-udevd version 257.9
+[2025-12-23T00:44:44.654743+00:00] Serial output: kbd_mode: KDSKBMODE: Inappropriate ioctl for device
+[2025-12-23T00:44:44.654772+00:00] Serial output: %Gstarting device mapper and LVM...
+[2025-12-23T00:44:44.654842+00:00] Serial output: mounting tmpfs on /...
+[2025-12-23T00:44:44.654860+00:00] Serial output: mounting /dev/root on /iso...
+[2025-12-23T00:44:44.654874+00:00] Serial output: [   10.654175] /dev/root: Can't open blockdev
+[2025-12-23T00:44:44.654887+00:00] Serial output: mounting /mnt-root/iso/nix-store.squashfs on /nix/.ro-store...
+[2025-12-23T00:44:44.654900+00:00] Serial output: mounting tmpfs on /nix/.rw-store...
+[2025-12-23T00:44:44.654941+00:00] Serial output: mounting overlay on /nix/store...
+[2025-12-23T00:44:44.655215+00:00] Serial output: <<< NixOS Stage 2 >>>
+[2025-12-23T00:45:01.186460+00:00] Serial output: running activation script...
+[2025-12-23T00:45:01.186567+00:00] Serial output: setting up /etc...
+[2025-12-23T00:45:01.186588+00:00] Serial output: unpacking the NixOS/Nixpkgs sources...
+[2025-12-23T00:45:01.186605+00:00] Serial output: ln: failed to create symbolic link '/root/.nix-defexpr/channels/channels': Read-only file system
+[2025-12-23T00:45:01.186664+00:00] Serial output: starting systemd...
+[2025-12-23T00:45:01.216688+00:00] Serial output: Welcome to
+[2025-12-23T00:45:01.216797+00:00] Serial output: NixOS 25.05 (Warbler)
+[2025-12-23T00:45:01.216833+00:00] Serial output: !
+[2025-12-23T00:45:08.593461+00:00] Serial output: [
+[2025-12-23T00:45:08.593604+00:00] Serial output: OK
+[2025-12-23T00:45:08.593844+00:00] Serial output: ] Created slice
+[2025-12-23T00:45:08.593972+00:00] Serial output: Slice /system/getty
+[2025-12-23T00:45:08.605181+00:00] Serial output: .
+[2025-12-23T00:45:08.605262+00:00] Serial output: [
+[2025-12-23T00:45:08.605554+00:00] Serial output: OK
+[2025-12-23T00:45:08.605602+00:00] Serial output: ] Created slice
+[2025-12-23T00:45:08.605628+00:00] Serial output: Slice /system/modprobe
+[2025-12-23T00:45:08.615138+00:00] Serial output: .
+[2025-12-23T00:45:08.615338+00:00] Serial output: [
+[2025-12-23T00:45:08.615582+00:00] Serial output: OK
+[2025-12-23T00:45:08.615626+00:00] Serial output: ] Created slice
+[2025-12-23T00:45:08.615651+00:00] Serial output: Slice /system/serial-getty
+[2025-12-23T00:45:08.624618+00:00] Serial output: .
+[2025-12-23T00:45:08.624676+00:00] Serial output: [
+[2025-12-23T00:45:08.624924+00:00] Serial output: OK
+[2025-12-23T00:45:08.624967+00:00] Serial output: ] Created slice
+[2025-12-23T00:45:08.624993+00:00] Serial output: User and Session Slice
+[2025-12-23T00:45:08.628875+00:00] Serial output: .
+[2025-12-23T00:45:08.628923+00:00] Serial output: [
+[2025-12-23T00:45:08.629162+00:00] Serial output: OK
+[2025-12-23T00:45:08.629203+00:00] Serial output: ] Started
+[2025-12-23T00:45:08.629228+00:00] Serial output: Dispatch Password Requests to Console Directory Watch
+[2025-12-23T00:45:08.630732+00:00] Serial output: .
+[2025-12-23T00:45:08.630771+00:00] Serial output: [
+[2025-12-23T00:45:08.631027+00:00] Serial output: OK
+[2025-12-23T00:45:08.631073+00:00] Serial output: ] Started
+[2025-12-23T00:45:08.631145+00:00] Serial output: Forward Password Requests to Wall Directory Watch
+[2025-12-23T00:45:08.633612+00:00] Serial output: .
+[2025-12-23T00:45:08.633650+00:00] Serial output: Expecting device
+[2025-12-23T00:45:08.633679+00:00] Serial output: /dev/ttyS0
+[2025-12-23T00:45:08.634561+00:00] Serial output: ...
+[2025-12-23T00:45:08.634596+00:00] Serial output: [
+[2025-12-23T00:45:08.634836+00:00] Serial output: OK
+[2025-12-23T00:45:08.634874+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:08.634936+00:00] Serial output: Local Encrypted Volumes
+[2025-12-23T00:45:08.635925+00:00] Serial output: .
+[2025-12-23T00:45:08.635961+00:00] Serial output: [
+[2025-12-23T00:45:08.636029+00:00] Serial output: OK
+[2025-12-23T00:45:08.636084+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:08.636108+00:00] Serial output: Containers
+[2025-12-23T00:45:08.637242+00:00] Serial output: .
+[2025-12-23T00:45:08.637280+00:00] Serial output: [
+[2025-12-23T00:45:08.637361+00:00] Serial output: OK
+[2025-12-23T00:45:08.637444+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:08.637472+00:00] Serial output: Path Units
+[2025-12-23T00:45:08.638238+00:00] Serial output: .
+[2025-12-23T00:45:08.638272+00:00] Serial output: [
+[2025-12-23T00:45:08.638297+00:00] Serial output: OK
+[2025-12-23T00:45:08.638360+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:08.638427+00:00] Serial output: Remote File Systems
+[2025-12-23T00:45:08.639166+00:00] Serial output: .
+[2025-12-23T00:45:08.639199+00:00] Serial output: [
+[2025-12-23T00:45:08.639225+00:00] Serial output: OK
+[2025-12-23T00:45:08.639248+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:08.639269+00:00] Serial output: Slice Units
+[2025-12-23T00:45:08.640180+00:00] Serial output: .
+[2025-12-23T00:45:08.640218+00:00] Serial output: [
+[2025-12-23T00:45:08.640244+00:00] Serial output: OK
+[2025-12-23T00:45:08.640267+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:08.640289+00:00] Serial output: Swaps
+[2025-12-23T00:45:08.641079+00:00] Serial output: .
+[2025-12-23T00:45:08.641113+00:00] Serial output: [
+[2025-12-23T00:45:08.641140+00:00] Serial output: OK
+[2025-12-23T00:45:08.641163+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:08.641222+00:00] Serial output: ZFS pool import target
+[2025-12-23T00:45:08.676123+00:00] Serial output: .
+[2025-12-23T00:45:08.676238+00:00] Serial output: [
+[2025-12-23T00:45:08.676482+00:00] Serial output: OK
+[2025-12-23T00:45:08.676570+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.676599+00:00] Serial output: Process Core Dump Socket
+[2025-12-23T00:45:08.703105+00:00] Serial output: .
+[2025-12-23T00:45:08.703189+00:00] Serial output: [
+[2025-12-23T00:45:08.703429+00:00] Serial output: OK
+[2025-12-23T00:45:08.703489+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.703515+00:00] Serial output: Credential Encryption/Decryption
+[2025-12-23T00:45:08.709957+00:00] Serial output: .
+[2025-12-23T00:45:08.710047+00:00] Serial output: [
+[2025-12-23T00:45:08.710314+00:00] Serial output: OK
+[2025-12-23T00:45:08.710375+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.710404+00:00] Serial output: Journal Audit Socket
+[2025-12-23T00:45:08.713607+00:00] Serial output: .
+[2025-12-23T00:45:08.713649+00:00] Serial output: [
+[2025-12-23T00:45:08.713857+00:00] Serial output: OK
+[2025-12-23T00:45:08.713898+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.713922+00:00] Serial output: Journal Socket (/dev/log)
+[2025-12-23T00:45:08.716095+00:00] Serial output: .
+[2025-12-23T00:45:08.716133+00:00] Serial output: [
+[2025-12-23T00:45:08.716190+00:00] Serial output: OK
+[2025-12-23T00:45:08.716238+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.716261+00:00] Serial output: Journal Sockets
+[2025-12-23T00:45:08.718243+00:00] Serial output: .
+[2025-12-23T00:45:08.718280+00:00] Serial output: [
+[2025-12-23T00:45:08.718503+00:00] Serial output: OK
+[2025-12-23T00:45:08.718541+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.718566+00:00] Serial output: Network Service Netlink Socket
+[2025-12-23T00:45:08.721460+00:00] Serial output: .
+[2025-12-23T00:45:08.721500+00:00] Serial output: [
+[2025-12-23T00:45:08.721525+00:00] Serial output: OK
+[2025-12-23T00:45:08.721548+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.721569+00:00] Serial output: Userspace Out-Of-Memory (OOM) Killer Socket
+[2025-12-23T00:45:08.724938+00:00] Serial output: .
+[2025-12-23T00:45:08.725015+00:00] Serial output: [
+[2025-12-23T00:45:08.725044+00:00] Serial output: OK
+[2025-12-23T00:45:08.725066+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.725088+00:00] Serial output: udev Control Socket
+[2025-12-23T00:45:08.726532+00:00] Serial output: .
+[2025-12-23T00:45:08.726568+00:00] Serial output: [
+[2025-12-23T00:45:08.726798+00:00] Serial output: OK
+[2025-12-23T00:45:08.726830+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:08.726853+00:00] Serial output: udev Kernel Socket
+[2025-12-23T00:45:08.782063+00:00] Serial output: .
+[2025-12-23T00:45:08.782159+00:00] Serial output: Mounting
+[2025-12-23T00:45:08.782194+00:00] Serial output: Huge Pages File System
+[2025-12-23T00:45:08.799804+00:00] Serial output: ...
+[2025-12-23T00:45:08.799895+00:00] Serial output: Mounting
+[2025-12-23T00:45:08.799931+00:00] Serial output: POSIX Message Queue File System
+[2025-12-23T00:45:08.835403+00:00] Serial output: ...
+[2025-12-23T00:45:08.835515+00:00] Serial output: Mounting
+[2025-12-23T00:45:08.835557+00:00] Serial output: Kernel Debug File System
+[2025-12-23T00:45:08.878382+00:00] Serial output: ...
+[2025-12-23T00:45:08.878498+00:00] Serial output: Mounting
+[2025-12-23T00:45:08.878539+00:00] Serial output: Kernel Trace File System
+[2025-12-23T00:45:08.970212+00:00] Serial output: ...
+[2025-12-23T00:45:08.970305+00:00] Serial output: Starting
+[2025-12-23T00:45:08.970544+00:00] Serial output: Create List of Static Device Nodes
+[2025-12-23T00:45:09.033102+00:00] Serial output: ...
+[2025-12-23T00:45:09.033202+00:00] Serial output: Starting
+[2025-12-23T00:45:09.033241+00:00] Serial output: Load Kernel Module configfs
+[2025-12-23T00:45:09.106240+00:00] Serial output: ...
+[2025-12-23T00:45:09.106369+00:00] Serial output: Starting
+[2025-12-23T00:45:09.106429+00:00] Serial output: Load Kernel Module drm
+[2025-12-23T00:45:09.188036+00:00] Serial output: ...
+[2025-12-23T00:45:09.188131+00:00] Serial output: Starting
+[2025-12-23T00:45:09.188207+00:00] Serial output: Load Kernel Module efi_pstore
+[2025-12-23T00:45:09.285579+00:00] Serial output: ...
+[2025-12-23T00:45:09.285691+00:00] Serial output: Starting
+[2025-12-23T00:45:09.285733+00:00] Serial output: Load Kernel Module fuse
+[2025-12-23T00:45:09.352079+00:00] Serial output: ...
+[2025-12-23T00:45:09.352204+00:00] Serial output: Starting
+[2025-12-23T00:45:09.352248+00:00] Serial output: mount-pstore.service
+[2025-12-23T00:45:09.512655+00:00] Serial output: ...
+[2025-12-23T00:45:09.512821+00:00] Serial output: Starting
+[2025-12-23T00:45:09.512901+00:00] Serial output: Journal Service
+[2025-12-23T00:45:09.587917+00:00] Serial output: ...
+[2025-12-23T00:45:09.588051+00:00] Serial output: Starting
+[2025-12-23T00:45:09.588398+00:00] Serial output: Load Kernel Modules
+[2025-12-23T00:45:09.654328+00:00] Serial output: ...
+[2025-12-23T00:45:09.654453+00:00] Serial output: Starting
+[2025-12-23T00:45:09.654500+00:00] Serial output: Userspace Out-Of-Memory (OOM) Killer
+[2025-12-23T00:45:09.674141+00:00] Serial output: ...
+[2025-12-23T00:45:09.674238+00:00] Serial output: Starting
+[2025-12-23T00:45:09.674276+00:00] Serial output: Remount Root and Kernel File Systems
+[2025-12-23T00:45:09.708803+00:00] Serial output: ...
+[2025-12-23T00:45:09.708902+00:00] Serial output: Starting
+[2025-12-23T00:45:09.708942+00:00] Serial output: Coldplug All udev Devices
+[2025-12-23T00:45:09.778002+00:00] Serial output: ...
+[2025-12-23T00:45:09.778103+00:00] Serial output: [
+[2025-12-23T00:45:09.778354+00:00] Serial output: OK
+[2025-12-23T00:45:09.778459+00:00] Serial output: ] Mounted
+[2025-12-23T00:45:09.778487+00:00] Serial output: Huge Pages File System
+[2025-12-23T00:45:09.782739+00:00] Serial output: .
+[2025-12-23T00:45:09.782814+00:00] Serial output: [
+[2025-12-23T00:45:09.783042+00:00] Serial output: OK
+[2025-12-23T00:45:09.783082+00:00] Serial output: ] Mounted
+[2025-12-23T00:45:09.783106+00:00] Serial output: POSIX Message Queue File System
+[2025-12-23T00:45:09.785941+00:00] Serial output: .
+[2025-12-23T00:45:09.785984+00:00] Serial output: [
+[2025-12-23T00:45:09.787646+00:00] Serial output: OK
+[2025-12-23T00:45:09.787909+00:00] Serial output: ] Mounted
+[2025-12-23T00:45:09.787952+00:00] Serial output: Kernel Debug File System
+[2025-12-23T00:45:09.794213+00:00] Serial output: .
+[2025-12-23T00:45:09.794264+00:00] Serial output: [
+[2025-12-23T00:45:09.794498+00:00] Serial output: OK
+[2025-12-23T00:45:09.794532+00:00] Serial output: ] Mounted
+[2025-12-23T00:45:09.794556+00:00] Serial output: Kernel Trace File System
+[2025-12-23T00:45:10.310030+00:00] Serial output: .
+[2025-12-23T00:45:10.310140+00:00] Serial output: [
+[2025-12-23T00:45:10.310184+00:00] Serial output: OK
+[2025-12-23T00:45:10.310434+00:00] Serial output: ] Finished
+[2025-12-23T00:45:10.310481+00:00] Serial output: Create List of Static Device Nodes
+[2025-12-23T00:45:10.359738+00:00] Serial output: .
+[2025-12-23T00:45:10.359876+00:00] Serial output: Starting
+[2025-12-23T00:45:10.359918+00:00] Serial output: Create Static Device Nodes in /dev gracefully
+[2025-12-23T00:45:11.080655+00:00] Serial output: ...
+[2025-12-23T00:45:11.080864+00:00] Serial output: [
+[2025-12-23T00:45:11.081008+00:00] Serial output: OK
+[2025-12-23T00:45:11.081049+00:00] Serial output: ] Finished
+[2025-12-23T00:45:11.081077+00:00] Serial output: Remount Root and Kernel File Systems
+[2025-12-23T00:45:11.140333+00:00] Serial output: .
+[2025-12-23T00:45:11.140444+00:00] Serial output: Starting
+[2025-12-23T00:45:11.140485+00:00] Serial output: Load/Save OS Random Seed
+[2025-12-23T00:45:11.179863+00:00] Serial output: ...
+[2025-12-23T00:45:11.180001+00:00] Serial output: Starting
+[2025-12-23T00:45:11.180044+00:00] Serial output: Network Time Synchronization
+[2025-12-23T00:45:12.718872+00:00] Serial output: ...
+[2025-12-23T00:45:12.719008+00:00] Serial output: [
+[2025-12-23T00:45:12.719324+00:00] Serial output: OK
+[2025-12-23T00:45:12.719386+00:00] Serial output: ] Finished
+[2025-12-23T00:45:12.719432+00:00] Serial output: Load/Save OS Random Seed
+[2025-12-23T00:45:12.726969+00:00] Serial output: .
+[2025-12-23T00:45:12.727028+00:00] Serial output: [
+[2025-12-23T00:45:12.727058+00:00] Serial output: OK
+[2025-12-23T00:45:12.727082+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:12.727104+00:00] Serial output: First Boot Complete
+[2025-12-23T00:45:13.372642+00:00] Serial output: .
+[2025-12-23T00:45:13.372753+00:00] Serial output: [
+[2025-12-23T00:45:13.373095+00:00] Serial output: OK
+[2025-12-23T00:45:13.373152+00:00] Serial output: ] Finished
+[2025-12-23T00:45:13.373178+00:00] Serial output: Create Static Device Nodes in /dev gracefully
+[2025-12-23T00:45:13.400014+00:00] Serial output: .
+[2025-12-23T00:45:13.400122+00:00] Serial output: [
+[2025-12-23T00:45:13.400413+00:00] Serial output: OK
+[2025-12-23T00:45:13.400456+00:00] Serial output: ] Started
+[2025-12-23T00:45:13.400481+00:00] Serial output: Journal Service
+[2025-12-23T00:45:13.425612+00:00] Serial output: .
+[2025-12-23T00:45:13.425705+00:00] Serial output: [
+[2025-12-23T00:45:13.425745+00:00] Serial output: OK
+[2025-12-23T00:45:13.425770+00:00] Serial output: ] Finished
+[2025-12-23T00:45:13.426022+00:00] Serial output: Load Kernel Module drm
+[2025-12-23T00:45:13.498878+00:00] Serial output: .
+[2025-12-23T00:45:13.499005+00:00] Serial output: Starting
+[2025-12-23T00:45:13.499046+00:00] Serial output: Flush Journal to Persistent Storage
+[2025-12-23T00:45:13.529868+00:00] Serial output: ...
+[2025-12-23T00:45:13.530001+00:00] Serial output: Starting
+[2025-12-23T00:45:13.530051+00:00] Serial output: Create Static Device Nodes in /dev
+[2025-12-23T00:45:14.316878+00:00] Serial output: ...
+[2025-12-23T00:45:14.317034+00:00] Serial output: [
+[2025-12-23T00:45:14.317529+00:00] Serial output: OK
+[2025-12-23T00:45:14.317586+00:00] Serial output: ] Finished
+[2025-12-23T00:45:14.317611+00:00] Serial output: Load Kernel Module configfs
+[2025-12-23T00:45:14.350812+00:00] Serial output: .
+[2025-12-23T00:45:14.350918+00:00] Serial output: Mounting
+[2025-12-23T00:45:14.350960+00:00] Serial output: Kernel Configuration File System
+[2025-12-23T00:45:14.415898+00:00] Serial output: ...
+[2025-12-23T00:45:14.416019+00:00] Serial output: [
+[2025-12-23T00:45:14.416075+00:00] Serial output: OK
+[2025-12-23T00:45:14.416104+00:00] Serial output: ] Finished
+[2025-12-23T00:45:14.416126+00:00] Serial output: Load Kernel Module efi_pstore
+[2025-12-23T00:45:14.631104+00:00] Serial output: .
+[2025-12-23T00:45:14.631214+00:00] Serial output: [
+[2025-12-23T00:45:14.631509+00:00] Serial output: OK
+[2025-12-23T00:45:14.631561+00:00] Serial output: ] Started
+[2025-12-23T00:45:14.631596+00:00] Serial output: Userspace Out-Of-Memory (OOM) Killer
+[2025-12-23T00:45:14.711055+00:00] Serial output: .
+[2025-12-23T00:45:14.711156+00:00] Serial output: [
+[2025-12-23T00:45:14.711469+00:00] Serial output: OK
+[2025-12-23T00:45:14.711530+00:00] Serial output: ] Mounted
+[2025-12-23T00:45:14.711585+00:00] Serial output: Kernel Configuration File System
+[2025-12-23T00:45:14.928180+00:00] Serial output: .
+[2025-12-23T00:45:14.928292+00:00] Serial output: [
+[2025-12-23T00:45:14.928339+00:00] Serial output: OK
+[2025-12-23T00:45:14.928365+00:00] Serial output: ] Finished
+[2025-12-23T00:45:14.928388+00:00] Serial output: Load Kernel Module fuse
+[2025-12-23T00:45:14.961331+00:00] Serial output: .
+[2025-12-23T00:45:14.961445+00:00] Serial output: Mounting
+[2025-12-23T00:45:14.961509+00:00] Serial output: FUSE Control File System
+[2025-12-23T00:45:15.246971+00:00] Serial output: ...
+[2025-12-23T00:45:15.247075+00:00] Serial output: [
+[2025-12-23T00:45:15.247340+00:00] Serial output: OK
+[2025-12-23T00:45:15.247380+00:00] Serial output: ] Mounted
+[2025-12-23T00:45:15.247404+00:00] Serial output: FUSE Control File System
+[2025-12-23T00:45:15.616770+00:00] Serial output: .
+[2025-12-23T00:45:15.616910+00:00] Serial output: [
+[2025-12-23T00:45:15.617177+00:00] Serial output: OK
+[2025-12-23T00:45:15.617234+00:00] Serial output: ] Finished
+[2025-12-23T00:45:15.617267+00:00] Serial output: Create Static Device Nodes in /dev
+[2025-12-23T00:45:15.643546+00:00] Serial output: .
+[2025-12-23T00:45:15.643657+00:00] Serial output: [
+[2025-12-23T00:45:15.643701+00:00] Serial output: OK
+[2025-12-23T00:45:15.643741+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:15.643764+00:00] Serial output: Preparation for Local File Systems
+[2025-12-23T00:45:15.664863+00:00] Serial output: .
+[2025-12-23T00:45:15.665012+00:00] Serial output: Mounting
+[2025-12-23T00:45:15.665058+00:00] Serial output: /run/wrappers
+[2025-12-23T00:45:15.687300+00:00] Serial output: ...
+[2025-12-23T00:45:15.687473+00:00] Serial output: Starting
+[2025-12-23T00:45:15.687518+00:00] Serial output: Rule-based Manager for Device Events and Files
+[2025-12-23T00:45:16.004667+00:00] Serial output: ...
+[2025-12-23T00:45:16.004771+00:00] Serial output: [
+[2025-12-23T00:45:16.005051+00:00] Serial output: OK
+[2025-12-23T00:45:16.005097+00:00] Serial output: ] Finished
+[2025-12-23T00:45:16.005122+00:00] Serial output: Flush Journal to Persistent Storage
+[2025-12-23T00:45:17.962265+00:00] Serial output: .
+[2025-12-23T00:45:17.962381+00:00] Serial output: [
+[2025-12-23T00:45:17.962645+00:00] Serial output: OK
+[2025-12-23T00:45:17.962686+00:00] Serial output: ] Finished
+[2025-12-23T00:45:17.962717+00:00] Serial output: Coldplug All udev Devices
+[2025-12-23T00:45:18.144852+00:00] Serial output: .
+[2025-12-23T00:45:18.144960+00:00] Serial output: [
+[2025-12-23T00:45:18.145007+00:00] Serial output: OK
+[2025-12-23T00:45:18.145168+00:00] Serial output: ] Mounted
+[2025-12-23T00:45:18.145469+00:00] Serial output: /run/wrappers
+[2025-12-23T00:45:19.027438+00:00] Serial output: .
+[2025-12-23T00:45:19.027540+00:00] Serial output: Starting
+[2025-12-23T00:45:19.027581+00:00] Serial output: Create SUID/SGID Wrappers
+[2025-12-23T00:45:19.773408+00:00] Serial output: ...
+[2025-12-23T00:45:19.773534+00:00] Serial output: [
+[2025-12-23T00:45:19.773630+00:00] Serial output: OK
+[2025-12-23T00:45:19.773666+00:00] Serial output: ] Finished
+[2025-12-23T00:45:19.773690+00:00] Serial output: Load Kernel Modules
+[2025-12-23T00:45:19.816085+00:00] Serial output: .
+[2025-12-23T00:45:19.816204+00:00] Serial output: Starting
+[2025-12-23T00:45:19.816263+00:00] Serial output: Firewall
+[2025-12-23T00:45:19.847820+00:00] Serial output: ...
+[2025-12-23T00:45:19.847915+00:00] Serial output: Starting
+[2025-12-23T00:45:19.847951+00:00] Serial output: Apply Kernel Variables
+[2025-12-23T00:45:19.910710+00:00] Serial output: ...
+[2025-12-23T00:45:19.910826+00:00] Serial output: Starting
+[2025-12-23T00:45:19.910867+00:00] Serial output: Mount ZFS filesystems
+[2025-12-23T00:45:20.090959+00:00] Serial output: ...
+[2025-12-23T00:45:20.091067+00:00] Serial output: [
+[2025-12-23T00:45:20.091329+00:00] Serial output: OK
+[2025-12-23T00:45:20.091384+00:00] Serial output: ] Finished
+[2025-12-23T00:45:20.091410+00:00] Serial output: mount-pstore.service
+[2025-12-23T00:45:21.303079+00:00] Serial output: .
+[2025-12-23T00:45:21.303236+00:00] Serial output: [
+[2025-12-23T00:45:21.303309+00:00] Serial output: OK
+[2025-12-23T00:45:21.303551+00:00] Serial output: ] Finished
+[2025-12-23T00:45:21.303601+00:00] Serial output: Mount ZFS filesystems
+[2025-12-23T00:45:21.307100+00:00] Serial output: .
+[2025-12-23T00:45:21.307162+00:00] Serial output: [
+[2025-12-23T00:45:21.307399+00:00] Serial output: OK
+[2025-12-23T00:45:21.307438+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:21.307461+00:00] Serial output: Local File Systems
+[2025-12-23T00:45:21.344358+00:00] Serial output: .
+[2025-12-23T00:45:21.344472+00:00] Serial output: [
+[2025-12-23T00:45:21.344518+00:00] Serial output: OK
+[2025-12-23T00:45:21.344551+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:21.344821+00:00] Serial output: Boot Entries Service Socket
+[2025-12-23T00:45:21.379188+00:00] Serial output: .
+[2025-12-23T00:45:21.379300+00:00] Serial output: Starting
+[2025-12-23T00:45:21.379342+00:00] Serial output: Save Transient machine-id to Disk
+[2025-12-23T00:45:21.420281+00:00] Serial output: ...
+[2025-12-23T00:45:21.420408+00:00] Serial output: Starting
+[2025-12-23T00:45:21.420651+00:00] Serial output: Create System Files and Directories
+[2025-12-23T00:45:21.548168+00:00] Serial output: ...
+[2025-12-23T00:45:21.548301+00:00] Serial output: [
+[2025-12-23T00:45:21.548354+00:00] Serial output: OK
+[2025-12-23T00:45:21.548386+00:00] Serial output: ] Finished
+[2025-12-23T00:45:21.548637+00:00] Serial output: Apply Kernel Variables
+[2025-12-23T00:45:21.632345+00:00] Serial output: .
+[2025-12-23T00:45:21.632519+00:00] Serial output: Starting
+[2025-12-23T00:45:21.632568+00:00] Serial output: Network Name Resolution
+[2025-12-23T00:45:22.730308+00:00] Serial output: ...
+[2025-12-23T00:45:22.730433+00:00] Serial output: [
+[2025-12-23T00:45:22.730475+00:00] Serial output: OK
+[2025-12-23T00:45:22.730562+00:00] Serial output: ] Started
+[2025-12-23T00:45:22.730609+00:00] Serial output: Rule-based Manager for Device Events and Files
+[2025-12-23T00:45:22.811421+00:00] Serial output: .
+[2025-12-23T00:45:22.811562+00:00] Serial output: [
+[2025-12-23T00:45:22.811608+00:00] Serial output: OK
+[2025-12-23T00:45:22.811634+00:00] Serial output: ] Started
+[2025-12-23T00:45:22.811842+00:00] Serial output: Network Time Synchronization
+[2025-12-23T00:45:23.228324+00:00] Serial output: .
+[2025-12-23T00:45:23.228959+00:00] Serial output: [
+[2025-12-23T00:45:23.229031+00:00] Serial output: OK
+[2025-12-23T00:45:23.229274+00:00] Serial output: ] Finished
+[2025-12-23T00:45:23.229345+00:00] Serial output: Save Transient machine-id to Disk
+[2025-12-23T00:45:23.945952+00:00] Serial output: .
+[2025-12-23T00:45:23.946062+00:00] Serial output: [
+[2025-12-23T00:45:23.946321+00:00] Serial output: OK
+[2025-12-23T00:45:23.946364+00:00] Serial output: ] Finished
+[2025-12-23T00:45:23.946389+00:00] Serial output: Create System Files and Directories
+[2025-12-23T00:45:24.082066+00:00] Serial output: .
+[2025-12-23T00:45:24.082169+00:00] Serial output: Starting
+[2025-12-23T00:45:24.082426+00:00] Serial output: Rebuild Journal Catalog
+[2025-12-23T00:45:24.105256+00:00] Serial output: ...
+[2025-12-23T00:45:24.105381+00:00] Serial output: Starting
+[2025-12-23T00:45:24.105424+00:00] Serial output: Record System Boot/Shutdown in UTMP
+[2025-12-23T00:45:24.821408+00:00] Serial output: ...
+[2025-12-23T00:45:24.821538+00:00] Serial output: [
+[2025-12-23T00:45:24.821866+00:00] Serial output: OK
+[2025-12-23T00:45:24.821966+00:00] Serial output: ] Finished
+[2025-12-23T00:45:24.822007+00:00] Serial output: Record System Boot/Shutdown in UTMP
+[2025-12-23T00:45:25.772126+00:00] Serial output: .
+[2025-12-23T00:45:25.772262+00:00] Serial output: [
+[2025-12-23T00:45:25.772515+00:00] Serial output: OK
+[2025-12-23T00:45:25.772554+00:00] Serial output: ] Finished
+[2025-12-23T00:45:25.772578+00:00] Serial output: Rebuild Journal Catalog
+[2025-12-23T00:45:25.812444+00:00] Serial output: .
+[2025-12-23T00:45:25.812578+00:00] Serial output: Starting
+[2025-12-23T00:45:25.812626+00:00] Serial output: Update is Completed
+[2025-12-23T00:45:26.597403+00:00] Serial output: ...
+[2025-12-23T00:45:26.597507+00:00] Serial output: [
+[2025-12-23T00:45:26.597549+00:00] Serial output: OK
+[2025-12-23T00:45:26.597576+00:00] Serial output: ] Finished
+[2025-12-23T00:45:26.597894+00:00] Serial output: Update is Completed
+[2025-12-23T00:45:27.310967+00:00] Serial output: .
+[2025-12-23T00:45:27.311126+00:00] Serial output: [
+[2025-12-23T00:45:27.311392+00:00] Serial output: OK
+[2025-12-23T00:45:27.311437+00:00] Serial output: ] Started
+[2025-12-23T00:45:27.311461+00:00] Serial output: Network Name Resolution
+[2025-12-23T00:45:28.128126+00:00] Serial output: .
+[2025-12-23T00:45:28.128267+00:00] Serial output: [
+[2025-12-23T00:45:28.128318+00:00] Serial output: OK
+[2025-12-23T00:45:28.128570+00:00] Serial output: ] Found device
+[2025-12-23T00:45:28.128617+00:00] Serial output: /dev/ttyS0
+[2025-12-23T00:45:30.228952+00:00] Serial output: .
+[2025-12-23T00:45:30.229115+00:00] Serial output: [
+[2025-12-23T00:45:30.229185+00:00] Serial output: *
+[2025-12-23T00:45:30.603640+00:00] Serial output: ] (1 of 2) A start job is running for Firewall (21s / no limit)
+[2025-12-23T00:45:30.604019+00:00] Serial output: [
+[2025-12-23T00:45:30.604074+00:00] Serial output: *
+[2025-12-23T00:45:30.604105+00:00] Serial output: *
+[2025-12-23T00:45:31.104641+00:00] Serial output: ] (1 of 2) A start job is running for Firewall (22s / no limit)
+[2025-12-23T00:45:31.104854+00:00] Serial output: [
+[2025-12-23T00:45:31.105209+00:00] Serial output: *
+[2025-12-23T00:45:31.105310+00:00] Serial output: *
+[2025-12-23T00:45:31.105367+00:00] Serial output: *
+[2025-12-23T00:45:31.607750+00:00] Serial output: ] (1 of 2) A start job is running for Firewall (22s / no limit)
+[2025-12-23T00:45:31.608218+00:00] Serial output: [
+[2025-12-23T00:45:31.608284+00:00] Serial output: *
+[2025-12-23T00:45:31.608318+00:00] Serial output: *
+[2025-12-23T00:45:31.608364+00:00] Serial output: *
+[2025-12-23T00:45:32.077335+00:00] Serial output: ] (2 of 2) A start job is running for…UID/SGID Wrappers (23s / no limit)
+[2025-12-23T00:45:32.077474+00:00] Serial output: [
+[2025-12-23T00:45:32.077506+00:00] Serial output: OK
+[2025-12-23T00:45:32.077763+00:00] Serial output: ] Finished
+[2025-12-23T00:45:32.077824+00:00] Serial output: Create SUID/SGID Wrappers
+[2025-12-23T00:45:32.077851+00:00] Serial output: .
+[2025-12-23T00:45:32.100610+00:00] Serial output: [
+[2025-12-23T00:45:32.100934+00:00] Serial output: OK
+[2025-12-23T00:45:32.100992+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:32.101020+00:00] Serial output: System Initialization
+[2025-12-23T00:45:32.116023+00:00] Serial output: .
+[2025-12-23T00:45:32.116124+00:00] Serial output: [
+[2025-12-23T00:45:32.116543+00:00] Serial output: OK
+[2025-12-23T00:45:32.116637+00:00] Serial output: ] Started
+[2025-12-23T00:45:32.116668+00:00] Serial output: Discard unused filesystem blocks once a week
+[2025-12-23T00:45:32.118318+00:00] Serial output: .
+[2025-12-23T00:45:32.118371+00:00] Serial output: [
+[2025-12-23T00:45:32.118621+00:00] Serial output: OK
+[2025-12-23T00:45:32.118670+00:00] Serial output: ] Started
+[2025-12-23T00:45:32.118697+00:00] Serial output: Daily Cleanup of Temporary Directories
+[2025-12-23T00:45:32.124470+00:00] Serial output: .
+[2025-12-23T00:45:32.124529+00:00] Serial output: [
+[2025-12-23T00:45:32.124807+00:00] Serial output: OK
+[2025-12-23T00:45:32.124844+00:00] Serial output: ] Started
+[2025-12-23T00:45:32.124869+00:00] Serial output: zpool-trim.timer
+[2025-12-23T00:45:32.126194+00:00] Serial output: .
+[2025-12-23T00:45:32.126268+00:00] Serial output: [
+[2025-12-23T00:45:32.126305+00:00] Serial output: OK
+[2025-12-23T00:45:32.126542+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:32.126596+00:00] Serial output: Timer Units
+[2025-12-23T00:45:32.134821+00:00] Serial output: .
+[2025-12-23T00:45:32.134906+00:00] Serial output: [
+[2025-12-23T00:45:32.135190+00:00] Serial output: OK
+[2025-12-23T00:45:32.135239+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:32.135266+00:00] Serial output: D-Bus System Message Bus Socket
+[2025-12-23T00:45:32.137641+00:00] Serial output: .
+[2025-12-23T00:45:32.137705+00:00] Serial output: [
+[2025-12-23T00:45:32.137741+00:00] Serial output: OK
+[2025-12-23T00:45:32.137766+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:32.137816+00:00] Serial output: Nix Daemon Socket
+[2025-12-23T00:45:32.222067+00:00] Serial output: .
+[2025-12-23T00:45:32.222169+00:00] Serial output: [
+[2025-12-23T00:45:32.222420+00:00] Serial output: OK
+[2025-12-23T00:45:32.222460+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:32.222486+00:00] Serial output: OpenSSH Server Socket…temd-ssh-generator, AF_UNIX Local)
+[2025-12-23T00:45:32.237387+00:00] Serial output: .
+[2025-12-23T00:45:32.237506+00:00] Serial output: [
+[2025-12-23T00:45:32.237547+00:00] Serial output: OK
+[2025-12-23T00:45:32.237601+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:32.237629+00:00] Serial output: OpenSSH Server Socket (systemd-ssh-generator, AF_VSOCK)
+[2025-12-23T00:45:32.241266+00:00] Serial output: .
+[2025-12-23T00:45:32.241381+00:00] Serial output: [
+[2025-12-23T00:45:32.241415+00:00] Serial output: OK
+[2025-12-23T00:45:32.241639+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:32.241680+00:00] Serial output: Hostname Service Socket
+[2025-12-23T00:45:32.243508+00:00] Serial output: .
+[2025-12-23T00:45:32.243554+00:00] Serial output: [
+[2025-12-23T00:45:32.243793+00:00] Serial output: OK
+[2025-12-23T00:45:32.243834+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:32.243870+00:00] Serial output: Socket Units
+[2025-12-23T00:45:32.247003+00:00] Serial output: .
+[2025-12-23T00:45:32.247050+00:00] Serial output: [
+[2025-12-23T00:45:32.247090+00:00] Serial output: OK
+[2025-12-23T00:45:32.247389+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:32.247498+00:00] Serial output: Basic System
+[2025-12-23T00:45:32.299441+00:00] Serial output: .
+[2025-12-23T00:45:32.299533+00:00] Serial output: Starting
+[2025-12-23T00:45:32.299570+00:00] Serial output: Kernel Auditing
+[2025-12-23T00:45:32.331620+00:00] Serial output: ...
+[2025-12-23T00:45:32.331713+00:00] Serial output: Starting
+[2025-12-23T00:45:32.331750+00:00] Serial output: Name Service Cache Daemon (nsncd)
+[2025-12-23T00:45:32.372014+00:00] Serial output: ...
+[2025-12-23T00:45:32.372116+00:00] Serial output: Starting
+[2025-12-23T00:45:32.372258+00:00] Serial output: Pre-NixOS setup
+[2025-12-23T00:45:32.404597+00:00] Serial output: ...
+[2025-12-23T00:45:32.404711+00:00] Serial output: [
+[2025-12-23T00:45:32.404754+00:00] Serial output: OK
+[2025-12-23T00:45:32.404837+00:00] Serial output: ] Started
+[2025-12-23T00:45:32.404868+00:00] Serial output: Reset console on configuration changes
+[2025-12-23T00:45:32.439572+00:00] Serial output: .
+[2025-12-23T00:45:32.439666+00:00] Serial output: Starting
+[2025-12-23T00:45:32.439706+00:00] Serial output: ZFS file system shares
+[2025-12-23T00:45:32.475698+00:00] Serial output: ...
+[2025-12-23T00:45:32.475844+00:00] Serial output: [
+[2025-12-23T00:45:32.475905+00:00] Serial output: OK
+[2025-12-23T00:45:32.476211+00:00] Serial output: ] Started
+[2025-12-23T00:45:32.476277+00:00] Serial output: ZFS Event Daemon (zed)
+[2025-12-23T00:45:32.533254+00:00] Serial output: .
+[2025-12-23T00:45:32.533406+00:00] Serial output: Starting
+[2025-12-23T00:45:32.533658+00:00] Serial output: D-Bus System Message Bus
+[2025-12-23T00:45:33.954580+00:00] Serial output: ...
+[2025-12-23T00:45:33.954716+00:00] Serial output: [
+[2025-12-23T00:45:33.954767+00:00] Serial output: OK
+[2025-12-23T00:45:33.954793+00:00] Serial output: ] Finished
+[2025-12-23T00:45:33.954815+00:00] Serial output: ZFS file system shares
+[2025-12-23T00:45:33.959310+00:00] Serial output: .
+[2025-12-23T00:45:33.959394+00:00] Serial output: [
+[2025-12-23T00:45:33.959431+00:00] Serial output: OK
+[2025-12-23T00:45:33.959456+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:33.959479+00:00] Serial output: ZFS startup target
+[2025-12-23T00:45:34.111682+00:00] Serial output: .
+[2025-12-23T00:45:34.111804+00:00] Serial output: [
+[2025-12-23T00:45:34.112070+00:00] Serial output: OK
+[2025-12-23T00:45:34.112176+00:00] Serial output: ] Finished
+[2025-12-23T00:45:34.112224+00:00] Serial output: Kernel Auditing
+[2025-12-23T00:45:34.293956+00:00] Serial output: .
+[2025-12-23T00:45:34.294138+00:00] Serial output: [
+[2025-12-23T00:45:34.294197+00:00] Serial output: OK
+[2025-12-23T00:45:34.294474+00:00] Serial output: ] Started
+[2025-12-23T00:45:34.294537+00:00] Serial output: Name Service Cache Daemon (nsncd)
+[2025-12-23T00:45:34.298713+00:00] Serial output: .
+[2025-12-23T00:45:34.298805+00:00] Serial output: [
+[2025-12-23T00:45:34.299060+00:00] Serial output: OK
+[2025-12-23T00:45:34.299108+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:34.299133+00:00] Serial output: Host and Network Name Lookups
+[2025-12-23T00:45:34.302151+00:00] Serial output: .
+[2025-12-23T00:45:34.302213+00:00] Serial output: [
+[2025-12-23T00:45:34.302244+00:00] Serial output: OK
+[2025-12-23T00:45:34.302267+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:34.302289+00:00] Serial output: User and Group Name Lookups
+[2025-12-23T00:45:34.371661+00:00] Serial output: .
+[2025-12-23T00:45:34.371763+00:00] Serial output: Starting
+[2025-12-23T00:45:34.371833+00:00] Serial output: User Login Management
+[2025-12-23T00:45:35.101991+00:00] Serial output: ...
+[2025-12-23T00:45:35.102112+00:00] Serial output: [
+[2025-12-23T00:45:35.102260+00:00] Serial output: OK
+[2025-12-23T00:45:35.103178+00:00] Serial output: ] Started
+[2025-12-23T00:45:35.103244+00:00] Serial output: D-Bus System Message Bus
+[2025-12-23T00:45:37.060254+00:00] Serial output: .
+[2025-12-23T00:45:37.060365+00:00] Serial output: [
+[2025-12-23T00:45:37.060406+00:00] Serial output: OK
+[2025-12-23T00:45:37.060431+00:00] Serial output: ] Started
+[2025-12-23T00:45:37.060453+00:00] Serial output: User Login Management
+[2025-12-23T00:45:37.713121+00:00] Serial output: .
+[2025-12-23T00:45:37.713218+00:00] Serial output: [
+[2025-12-23T00:45:37.713258+00:00] Serial output: OK
+[2025-12-23T00:45:37.713534+00:00] Serial output: ] Finished
+[2025-12-23T00:45:37.713580+00:00] Serial output: Firewall
+[2025-12-23T00:45:37.733724+00:00] Serial output: .
+[2025-12-23T00:45:37.733856+00:00] Serial output: [
+[2025-12-23T00:45:37.733914+00:00] Serial output: OK
+[2025-12-23T00:45:37.734213+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:37.734268+00:00] Serial output: Preparation for Network
+[2025-12-23T00:45:37.770873+00:00] Serial output: .
+[2025-12-23T00:45:37.770978+00:00] Serial output: Starting
+[2025-12-23T00:45:37.771019+00:00] Serial output: Network Configuration
+[2025-12-23T00:45:39.854918+00:00] Serial output: ...
+[2025-12-23T00:45:39.855025+00:00] Serial output: [
+[2025-12-23T00:45:39.855317+00:00] Serial output: *
+[2025-12-23T00:45:39.855367+00:00] Serial output: *
+[2025-12-23T00:45:39.855404+00:00] Serial output: *
+[2025-12-23T00:45:40.246092+00:00] Serial output: ] (2 of 2) A start job is running for Pre-NixOS setup (31s / no limit)
+[2025-12-23T00:45:40.246610+00:00] Serial output: [
+[2025-12-23T00:45:40.246672+00:00] Serial output: *
+[2025-12-23T00:45:40.246700+00:00] Serial output: *
+[2025-12-23T00:45:40.246730+00:00] Serial output: *
+[2025-12-23T00:45:40.506045+00:00] Serial output: ] (2 of 2) A start job is running for Pre-NixOS setup (31s / no limit)
+[2025-12-23T00:45:40.506400+00:00] Serial output: Starting
+[2025-12-23T00:45:40.506469+00:00] Serial output: Virtual Console Setup
+[2025-12-23T00:45:40.507871+00:00] Serial output: ...
+[2025-12-23T00:45:41.819627+00:00] Serial output: [
+[2025-12-23T00:45:41.820038+00:00] Serial output: OK
+[2025-12-23T00:45:41.820101+00:00] Serial output: ] Listening on
+[2025-12-23T00:45:41.820127+00:00] Serial output: Load/Save RF Kill Switch Status /dev/rfkill Watch
+[2025-12-23T00:45:41.868872+00:00] Serial output: .
+[2025-12-23T00:45:41.869018+00:00] Serial output: [
+[2025-12-23T00:45:41.869297+00:00] Serial output: OK
+[2025-12-23T00:45:41.869342+00:00] Serial output: ] Stopped
+[2025-12-23T00:45:41.869367+00:00] Serial output: Virtual Console Setup
+[2025-12-23T00:45:41.925852+00:00] Serial output: .
+[2025-12-23T00:45:41.925982+00:00] Serial output: Starting
+[2025-12-23T00:45:41.926032+00:00] Serial output: Virtual Console Setup
+[2025-12-23T00:45:42.665166+00:00] Serial output: ...
+[2025-12-23T00:45:42.665348+00:00] Serial output: [
+[2025-12-23T00:45:42.665608+00:00] Serial output: OK
+[2025-12-23T00:45:42.665660+00:00] Serial output: ] Stopped
+[2025-12-23T00:45:42.665700+00:00] Serial output: Virtual Console Setup
+[2025-12-23T00:45:42.754887+00:00] Serial output: .
+[2025-12-23T00:45:42.755037+00:00] Serial output: Starting
+[2025-12-23T00:45:42.755099+00:00] Serial output: Virtual Console Setup
+[2025-12-23T00:45:42.809041+00:00] Serial output: ...
+[2025-12-23T00:45:42.809160+00:00] Serial output: [
+[2025-12-23T00:45:42.809430+00:00] Serial output: OK
+[2025-12-23T00:45:42.809491+00:00] Serial output: ] Started
+[2025-12-23T00:45:42.809518+00:00] Serial output: Network Configuration
+[2025-12-23T00:45:42.826131+00:00] Serial output: .
+[2025-12-23T00:45:42.826235+00:00] Serial output: [
+[2025-12-23T00:45:42.826501+00:00] Serial output: OK
+[2025-12-23T00:45:42.826552+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:42.826576+00:00] Serial output: Network
+[2025-12-23T00:45:42.862744+00:00] Serial output: .
+[2025-12-23T00:45:42.862866+00:00] Serial output: Starting
+[2025-12-23T00:45:42.862906+00:00] Serial output: Enable Persistent Storage in systemd-networkd
+[2025-12-23T00:45:42.894164+00:00] Serial output: ...
+[2025-12-23T00:45:42.894269+00:00] Serial output: Starting
+[2025-12-23T00:45:42.894307+00:00] Serial output: Permit User Sessions
+[2025-12-23T00:45:44.227184+00:00] Serial output: ...
+[2025-12-23T00:45:44.227289+00:00] Serial output: [
+[2025-12-23T00:45:44.227574+00:00] Serial output: OK
+[2025-12-23T00:45:44.227637+00:00] Serial output: ] Finished
+[2025-12-23T00:45:44.227664+00:00] Serial output: Permit User Sessions
+[2025-12-23T00:45:44.466997+00:00] Serial output: .
+[2025-12-23T00:45:44.467127+00:00] Serial output: [
+[2025-12-23T00:45:44.467419+00:00] Serial output: OK
+[2025-12-23T00:45:44.467526+00:00] Serial output: ] Started
+[2025-12-23T00:45:44.467573+00:00] Serial output: Getty on tty1
+[2025-12-23T00:45:44.527879+00:00] Serial output: .
+[2025-12-23T00:45:44.528024+00:00] Serial output: [
+[2025-12-23T00:45:44.528097+00:00] Serial output: OK
+[2025-12-23T00:45:44.528518+00:00] Serial output: ] Started
+[2025-12-23T00:45:44.528624+00:00] Serial output: Serial Getty on ttyS0
+[2025-12-23T00:45:44.542824+00:00] Serial output: .
+[2025-12-23T00:45:44.542925+00:00] Serial output: [
+[2025-12-23T00:45:44.543330+00:00] Serial output: OK
+[2025-12-23T00:45:44.543436+00:00] Serial output: ] Reached target
+[2025-12-23T00:45:44.543478+00:00] Serial output: Login Prompts
+[2025-12-23T00:45:44.577343+00:00] Serial output: .
+[2025-12-23T00:45:44.577456+00:00] Serial output: [
+[2025-12-23T00:45:44.577499+00:00] Serial output: OK
+[2025-12-23T00:45:44.577563+00:00] Serial output: ] Finished
+[2025-12-23T00:45:44.577587+00:00] Serial output: Enable Persistent Storage in systemd-networkd
+[2025-12-23T00:45:45.566812+00:00] Serial output: .
+[2025-12-23T00:45:45.566954+00:00] Serial output: pre-nixos boot image version 0.7.9
+[2025-12-23T00:45:45.566992+00:00] Serial output: pre-nixos boot image version 0.7.9
+[2025-12-23T00:45:45.567013+00:00] Serial output: [
+[2025-12-23T00:45:45.567351+00:00] Serial output: OK
+[2025-12-23T00:45:45.567442+00:00] Serial output: ] Finished
+[2025-12-23T00:45:45.567488+00:00] Serial output: Virtual Console Setup
+[2025-12-23T00:45:49.855371+00:00] Serial output: .
+[2025-12-23T00:45:51.101823+00:00] Serial output: <<< Welcome to the pre-nixos auto-install boot image (25.05.20251022.c8aa8cc, x86_64) - ttyS0 >>>
+[2025-12-23T00:45:51.101939+00:00] Serial output: Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+[2025-12-23T00:45:51.101960+00:00] Serial output: (PRE_NIXOS_AUTO_INSTALL=)
+[2025-12-23T00:45:51.101990+00:00] Serial output: The "nixos" and "root" accounts have empty passwords for console logins.
+[2025-12-23T00:45:51.102005+00:00] Serial output: SSH access:
+[2025-12-23T00:45:51.102019+00:00] Serial output: - Use the matching private key for the embedded root SSH key to log in as root.
+[2025-12-23T00:45:51.102054+00:00] Serial output: - Add additional public keys to /root/.ssh/authorized_keys if needed.
+[2025-12-23T00:45:51.102072+00:00] Serial output: Networking starts automatically; verify connectivity with ip addr or networkctl.
+[2025-12-23T00:45:51.102085+00:00] Serial output: Run "nixos-help" for the NixOS manual.
+[2025-12-23T00:45:51.102098+00:00] Serial output: nixos
+[2025-12-23T00:45:51.102115+00:00] Matched pattern: 'login: '
+[2025-12-23T00:45:51.102388+00:00] Awaiting patterns: \(automatic login\) (timeout=1s)
+[2025-12-23T00:45:51.102673+00:00] Serial output: nixos
+[2025-12-23T00:45:51.102715+00:00] Matched pattern: '\\(automatic login\\)'
+[2025-12-23T00:45:51.102765+00:00] Automatic login banner observed
+[2025-12-23T00:45:51.153420+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:45:51.157600+00:00] Serial output: export PS1='
+[2025-12-23T00:45:51.157705+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:45:51.157794+00:00] Shell prompt configured for interaction
+[2025-12-23T00:45:57.455416+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:00.438310+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:00.438443+00:00] Serial output: pre-nixos boot image version 0.7.9
+[2025-12-23T00:46:00.438465+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:00.448722+00:00] Serial output: [
+[2025-12-23T00:46:00.448887+00:00] Serial output: nixos@nixos:~]$
+[2025-12-23T00:46:00.461187+00:00] Serial output: export PS1='
+[2025-12-23T00:46:00.461342+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:00.461379+00:00] Initial shell lacks root privileges
+[2025-12-23T00:46:00.461484+00:00] Attempting to escalate with sudo -i
+[2025-12-23T00:46:00.511928+00:00] Awaiting patterns: \[sudo\] password for nixos:, root@.*# ?, # ? (timeout=120s)
+[2025-12-23T00:46:00.512278+00:00] Serial output: '
+[2025-12-23T00:46:00.512422+00:00] Serial output: PRE-NIXOS> id -u
+[2025-12-23T00:46:00.679464+00:00] Serial output: sudo -i
+[2025-12-23T00:46:00.679558+00:00] Serial output: 1000
+[2025-12-23T00:46:00.680539+00:00] Serial output: PRE-NIXOS> sudo -i
+[2025-12-23T00:46:02.188925+00:00] Serial output: pre-nixos boot image version 0.7.9
+[2025-12-23T00:46:02.189022+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:02.190894+00:00] Serial output: [
+[2025-12-23T00:46:02.191143+00:00] Serial output: 0;
+[2025-12-23T00:46:02.191172+00:00] Matched pattern: 'root@.*# ?'
+[2025-12-23T00:46:02.241412+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:02.249445+00:00] Serial output: export PS1='
+[2025-12-23T00:46:02.249532+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:02.249550+00:00] Shell prompt configured for interaction
+[2025-12-23T00:46:02.303606+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:02.416745+00:00] Serial output: 04l0
+[2025-12-23T00:46:02.417140+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:02.417190+00:00] id -u after sudo -i returned: '20'
+[2025-12-23T00:46:02.417206+00:00] sudo -i completed without root privileges
+[2025-12-23T00:46:02.417876+00:00] Diagnostic artifact written to /tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/sudo-escalation-failure-01.txt
+[2025-12-23T00:46:02.420234+00:00] Diagnostic artifact written to /tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/sudo-serial-log-tail-02.txt
+[2025-12-23T00:46:02.420667+00:00] Attempting to escalate with su -
+[2025-12-23T00:46:02.471033+00:00] Awaiting patterns: Password:, root@.*# ?, # ? (timeout=120s)
+[2025-12-23T00:46:02.474531+00:00] Serial output: su -
+[2025-12-23T00:46:03.602841+00:00] Serial output: pre-nixos boot image version 0.7.9
+[2025-12-23T00:46:03.602970+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:03.607819+00:00] Serial output: [
+[2025-12-23T00:46:03.608229+00:00] Serial output: 0;
+[2025-12-23T00:46:03.608304+00:00] Matched pattern: 'root@.*# ?'
+[2025-12-23T00:46:03.658588+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:03.666986+00:00] Serial output: export PS1='
+[2025-12-23T00:46:03.667115+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:03.667152+00:00] Shell prompt configured for interaction
+[2025-12-23T00:46:03.720582+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:03.804865+00:00] Serial output: 4l0
+[2025-12-23T00:46:03.805876+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:03.806024+00:00] id -u after su - returned: '200'
+[2025-12-23T00:46:03.806059+00:00] su - completed without root privileges
+[2025-12-23T00:46:03.806327+00:00] Diagnostic artifact written to /tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/su-escalation-failure-03.txt
+[2025-12-23T00:46:03.807355+00:00] Diagnostic artifact written to /tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/su-serial-log-tail-04.txt
+[2025-12-23T00:46:03.809139+00:00] Serial log tail (last 50 lines)
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   [?2004hPRE-NIXOS> id -u
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   sudo -i
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   1000
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004hPRE-NIXOS> sudo -i
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   pre-nixos boot image version 0.7.9
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004h
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> '
+[2025-12-23T00:46:03.809139+00:00]   export PS1='PRE-NIXOS> 'id -u
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   [?2004hPRE-NIXOS> id -u
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   0
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004hPRE-NIXOS> su -
+[2025-12-23T00:46:03.809139+00:00]   su -
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   pre-nixos boot image version 0.7.9
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004h
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> '
+[2025-12-23T00:46:03.809139+00:00]   export PS1='PRE-NIXOS> '
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   id -u
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   [?2004hPRE-NIXOS> id -u
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004l
+[2025-12-23T00:46:03.809139+00:00]   0
+[2025-12-23T00:46:03.809139+00:00]   
+[2025-12-23T00:46:03.809139+00:00]   [?2004hPRE-NIXOS> 
+[2025-12-23T00:46:03.809388+00:00] Diagnostic artifact written to /tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/serial-log-tail-05.log
+[2025-12-23T00:46:03.811315+00:00] Diagnostic artifact written to /tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/login-transcript-06.txt

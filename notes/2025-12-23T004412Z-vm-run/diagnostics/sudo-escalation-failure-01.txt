@@ -1,0 +1,25 @@
+Escalation method: sudo -i
+Failure reason: sudo -i completed without root privileges
+Captured at: 2025-12-23T00:46:02.417302+00:00
+
+[2025-12-23T00:46:00.461484+00:00] Attempting to escalate with sudo -i
+[2025-12-23T00:46:00.511928+00:00] Awaiting patterns: \[sudo\] password for nixos:, root@.*# ?, # ? (timeout=120s)
+[2025-12-23T00:46:00.512278+00:00] Serial output: '
+[2025-12-23T00:46:00.512422+00:00] Serial output: PRE-NIXOS> id -u
+[2025-12-23T00:46:00.679464+00:00] Serial output: sudo -i
+[2025-12-23T00:46:00.679558+00:00] Serial output: 1000
+[2025-12-23T00:46:00.680539+00:00] Serial output: PRE-NIXOS> sudo -i
+[2025-12-23T00:46:02.188925+00:00] Serial output: pre-nixos boot image version 0.7.9
+[2025-12-23T00:46:02.189022+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2025-12-23T00:46:02.190894+00:00] Serial output: [
+[2025-12-23T00:46:02.191143+00:00] Serial output: 0;
+[2025-12-23T00:46:02.191172+00:00] Matched pattern: 'root@.*# ?'
+[2025-12-23T00:46:02.241412+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:02.249445+00:00] Serial output: export PS1='
+[2025-12-23T00:46:02.249532+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:02.249550+00:00] Shell prompt configured for interaction
+[2025-12-23T00:46:02.303606+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=60s)
+[2025-12-23T00:46:02.416745+00:00] Serial output: 04l0
+[2025-12-23T00:46:02.417140+00:00] Matched pattern: 'PRE-NIXOS> '
+[2025-12-23T00:46:02.417190+00:00] id -u after sudo -i returned: '20'
+[2025-12-23T00:46:02.417206+00:00] sudo -i completed without root privileges

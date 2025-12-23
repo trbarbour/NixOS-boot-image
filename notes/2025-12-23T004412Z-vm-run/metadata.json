@@ -1,0 +1,82 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/867bm4b86ly0v1nj937az98zcyi4fsa2-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/dd9whmc3ryr4r4g6zjh0bsh6gl76ci0s-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+    "nar_hash": "sha256-B825JnyCAQ65EfXBkCiR+TZlx925AP61CCVf6+jOjls=",
+    "root_key_fingerprint": "256 SHA256:8zemQlCcQx/mIxICo4HcBg6uhkHDdL0rQ5nWsUBFJUw boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/dd9whmc3ryr4r4g6zjh0bsh6gl76ci0s-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [
+      {
+        "label": "sudo -i escalation transcript",
+        "path": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/sudo-escalation-failure-01.txt"
+      },
+      {
+        "label": "sudo -i serial log tail",
+        "path": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/sudo-serial-log-tail-02.txt"
+      },
+      {
+        "label": "su - escalation transcript",
+        "path": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/su-escalation-failure-03.txt"
+      },
+      {
+        "label": "su - serial log tail",
+        "path": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/su-serial-log-tail-04.txt"
+      },
+      {
+        "label": "Serial log tail",
+        "path": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/serial-log-tail-05.log"
+      },
+      {
+        "label": "Login transcript",
+        "path": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics/login-transcript-06.txt"
+      }
+    ],
+    "directory": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/diagnostics"
+  },
+  "generated_at": "2025-12-23T00:44:12.531189+00:00",
+  "logs": {
+    "harness": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/harness.log",
+    "serial": "/tmp/pytest-of-root/pytest-0/boot-image-logs0/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-boot",
+      "d",
+      "-serial",
+      "stdio",
+      "-cdrom",
+      "/nix/store/dd9whmc3ryr4r4g6zjh0bsh6gl76ci0s-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img,if=virtio,format=raw",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:43613-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img",
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.11)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 43613
+  },
+  "timings": {
+    "build_seconds": 507.102,
+    "end": "2025-12-23T00:46:03.811924+00:00",
+    "start": "2025-12-23T00:44:12.490339+00:00",
+    "total_seconds": 111.26
+  }
+}
