@@ -26,7 +26,11 @@ def test_pre_nixos_cleans_raid_lvm_residue(boot_image_vm: BootImageVM) -> None:
     assert "/dev/vdc" in device_listing
 
     sentinel_content = boot_image_vm.run_as_root_checked(
-        f"cat {plan.sentinel_path} 2>/dev/null || true", timeout=120
+        (
+            f"dd if={plan.sentinel_path} bs=1 count=64 status=none 2>/dev/null "
+            "| hexdump -C"
+        ),
+        timeout=180,
     )
     assert "residue-marker" in sentinel_content
 
@@ -44,7 +48,11 @@ def test_pre_nixos_cleans_raid_lvm_residue(boot_image_vm: BootImageVM) -> None:
     assert "lv_residue" not in combined_output
 
     sentinel_after_cleanup = boot_image_vm.run_as_root(
-        f"if [ -e {plan.sentinel_path} ]; then cat {plan.sentinel_path}; fi",
-        timeout=120,
+        (
+            f"if [ -e {plan.sentinel_path} ]; then "
+            f"dd if={plan.sentinel_path} bs=1 count=64 status=none 2>/dev/null "
+            "| hexdump -C; fi"
+        ),
+        timeout=180,
     )
     assert "residue-marker" not in sentinel_after_cleanup

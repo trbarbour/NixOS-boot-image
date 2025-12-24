@@ -36,8 +36,12 @@ def build_raid_residue_plan() -> RaidResiduePlan:
         "vgcreate vg_residue /dev/md127",
         "lvcreate -n lv_residue -l 100%FREE vg_residue",
         (
-            "bash -c 'echo residue-marker >/dev/vg_residue/lv_residue && "
-            "sync'"
+            "printf 'residue-marker' | "
+            "dd of=/dev/vg_residue/lv_residue bs=1 conv=fsync status=none"
+        ),
+        (
+            "dd if=/dev/vg_residue/lv_residue bs=1 count=64 status=none | "
+            "hexdump -C"
         ),
         # Intentionally avoid wiping to mimic real-world leftovers left behind
         # by failed installer runs.
@@ -48,6 +52,10 @@ def build_raid_residue_plan() -> RaidResiduePlan:
         "mdadm --detail --scan || true",
         "ls /dev/vg_residue /dev/vg_residue/lv_residue || true",
         "blkid || true",
+        (
+            "dd if=/dev/vg_residue/lv_residue bs=1 count=64 status=none "
+            "2>/dev/null | hexdump -C || true"
+        ),
     ]
 
     teardown_expectations = [
