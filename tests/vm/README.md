@@ -10,6 +10,9 @@ separately.
 - `fixtures.py` also exposes the `boot_image_vm` session fixture and captures
   per-run timings for boot-image build, boot-to-login, boot-to-SSH, and total
   test wall-clock duration in `metadata.json`
+- The VM harness provisions a primary virtio disk for install coverage plus
+  two additional 2 GiB virtio disks (`/dev/vdb` and `/dev/vdc`) so RAID/LVM
+  residue scenarios have dedicated scratch devices.
 - `metadata.py` – utilities for collecting logs and diagnostics from VM runs
 - `controller.py` – `BootImageVM` controller and interaction helpers
 - `cleanup_plan.py` – reusable RAID/LVM seeding and teardown checks

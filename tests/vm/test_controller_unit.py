@@ -1213,3 +1213,38 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
     assert "uid validation resync" in contexts
 
 
+def test_run_as_root_checked_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Checked commands should return output without the exit marker."""
+
+    vm = object.__new__(BootImageVM)
+    vm.run_as_root = lambda command, timeout=180: "hello\n__EXIT__=0"
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(
+        AssertionError("unexpected raise")
+    )
+
+    output = vm.run_as_root_checked("echo hello")
+
+    assert output.strip() == "hello"
+
+
+def test_run_as_root_checked_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Non-zero exits should surface via transcript exceptions."""
+
+    vm = object.__new__(BootImageVM)
+    vm.run_as_root = lambda command, timeout=180: "boom\n__EXIT__=2"
+
+    captured: dict = {}
+
+    def fake_raise(message: str, body: str | None = None, diagnostics=None) -> None:
+        captured["message"] = message
+        captured["body"] = body
+        raise RuntimeError("expected failure")
+
+    vm._raise_with_transcript = fake_raise
+
+    with pytest.raises(RuntimeError):
+        vm.run_as_root_checked("false")
+
+    assert captured["message"] == "Command exited with status 2"
+
+

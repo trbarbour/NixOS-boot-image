@@ -25,6 +25,7 @@ def write_boot_image_metadata(
     qemu_command: List[str],
     qemu_version: Optional[str] = None,
     disk_image: Path,
+    extra_disks: Optional[List[Path]] = None,
     ssh_host: str,
     ssh_port: int,
     ssh_executable: str,
@@ -64,6 +65,8 @@ def write_boot_image_metadata(
             "artifacts": [],
         },
     }
+    if extra_disks:
+        metadata["qemu"]["extra_disks"] = [str(path) for path in extra_disks]
     if qemu_version:
         metadata["qemu"]["version"] = qemu_version
     if started_at:
