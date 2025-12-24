@@ -1,0 +1,76 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/hyprl1gy65cip8zxljbzcf8s0qnq3xda-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/gymcmhqzw6f5xcbhljqijc5wdsnfpgw3-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+    "nar_hash": "sha256-mOS9TVvlwo53/EoIApKD3HFhkVZmsCL+8kIEJrucMxU=",
+    "root_key_fingerprint": "256 SHA256:KaaYS4e7KWd5cxrxZKaSdisU7DhfZB3dUR4wiYzOSs8 boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/gymcmhqzw6f5xcbhljqijc5wdsnfpgw3-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [
+      {
+        "label": "dmesg (post-test teardown)",
+        "path": "/workspace/NixOS-boot-image/notes/2025-12-24T134912Z-vm-run/logs/diagnostics/dmesg-post-test-teardown-01.log"
+      },
+      {
+        "label": "pre-nixos journal",
+        "path": "/workspace/NixOS-boot-image/notes/2025-12-24T134912Z-vm-run/logs/diagnostics/pre-nixos-journal-02.log"
+      }
+    ],
+    "directory": "/workspace/NixOS-boot-image/notes/2025-12-24T134912Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2025-12-24T13:49:12.557854+00:00",
+  "logs": {
+    "harness": "/workspace/NixOS-boot-image/notes/2025-12-24T134912Z-vm-run/logs/harness.log",
+    "serial": "/workspace/NixOS-boot-image/notes/2025-12-24T134912Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-boot",
+      "d",
+      "-serial",
+      "stdio",
+      "-cdrom",
+      "/nix/store/gymcmhqzw6f5xcbhljqijc5wdsnfpgw3-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img,if=virtio,format=raw",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-0/boot-image-disk10/disk.img,if=virtio,format=raw",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-0/boot-image-disk20/disk.img,if=virtio,format=raw",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:44763-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/pytest-of-root/pytest-0/boot-image-disk0/disk.img",
+    "extra_disks": [
+      "/tmp/pytest-of-root/pytest-0/boot-image-disk10/disk.img",
+      "/tmp/pytest-of-root/pytest-0/boot-image-disk20/disk.img"
+    ],
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.11)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 44763
+  },
+  "timings": {
+    "boot_to_login_seconds": 125.105,
+    "boot_to_ssh_seconds": 234.858,
+    "build_seconds": 532.435,
+    "end": "2025-12-24T13:53:14.076006+00:00",
+    "start": "2025-12-24T13:49:12.516234+00:00",
+    "total_seconds": 241.497
+  }
+}

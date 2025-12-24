@@ -371,10 +371,16 @@ class BootImageVM:
         message: str,
         *,
         diagnostics: Optional[List[Tuple[str, Path]]] = None,
+        body: Optional[str] = None,
     ) -> None:
         self._record_child_output()
         serial_tail = self._read_serial_tail()
         transcript = "\n".join(self._transcript)
+
+        if body is not None:
+            self._log_step(message, body=body)
+        else:
+            self._log_step(message)
 
         collected_diagnostics: List[Tuple[str, Path]] = []
         if diagnostics:
@@ -412,9 +418,20 @@ class BootImageVM:
             )
             collected_diagnostics.append(("login transcript", transcript_path))
 
+        if body:
+            context_path = self._write_diagnostic_artifact(
+                "failure-context",
+                body,
+                metadata_label="Failure context",
+            )
+            collected_diagnostics.append(("failure context", context_path))
+
         details = [message]
         details.append("Boot image artifact metadata:")
         details.extend(self._format_artifact_metadata())
+        if body:
+            details.append("Failure context:")
+            details.append(body)
         if transcript:
             details.append("Login transcript:")
             details.append(transcript)
