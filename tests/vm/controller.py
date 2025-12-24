@@ -838,6 +838,29 @@ class BootImageVM:
         self._ensure_root_privileges()
         return self.run(command, timeout=timeout)
 
+    def run_as_root_checked(self, command: str, *, timeout: int = 180) -> str:
+        """Execute a root command and assert a zero exit status."""
+
+        wrapped = (
+            "{ "
+            f"{command}; "
+            "printf '\n__EXIT__=%s\n' $?; "
+            "}"
+        )
+        output = self.run_as_root(wrapped, timeout=timeout)
+        lines = [line for line in output.splitlines() if line.strip()]
+        exit_lines = [line for line in lines if line.startswith("__EXIT__=")]
+        if not exit_lines:
+            self._raise_with_transcript(
+                "Missing exit marker while running checked command", body=output
+            )
+        exit_status = exit_lines[-1].split("=", 1)[-1].strip()
+        if exit_status != "0":
+            self._raise_with_transcript(
+                f"Command exited with status {exit_status}", body=output
+            )
+        return "\n".join(line for line in lines if not line.startswith("__EXIT__="))
+
     def collect_journal(self, unit: str, *, since_boot: bool = True) -> str:
         """Return the journal for a systemd unit."""
 

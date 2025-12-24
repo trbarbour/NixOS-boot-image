@@ -17,9 +17,15 @@ def test_pre_nixos_cleans_raid_lvm_residue(boot_image_vm: BootImageVM) -> None:
     )
 
     for command in plan.preseed_commands:
-        boot_image_vm.run_as_root(command, timeout=300)
+        boot_image_vm.run_as_root_checked(command, timeout=300)
 
-    sentinel_content = boot_image_vm.run_as_root(
+    device_listing = boot_image_vm.run_as_root_checked(
+        "ls -l /dev/vd[abc] /dev/md127 /dev/vg_residue || true", timeout=180
+    )
+    assert "/dev/vdb" in device_listing
+    assert "/dev/vdc" in device_listing
+
+    sentinel_content = boot_image_vm.run_as_root_checked(
         f"cat {plan.sentinel_path} 2>/dev/null || true", timeout=120
     )
     assert "residue-marker" in sentinel_content
