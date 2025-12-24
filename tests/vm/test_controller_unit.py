@@ -1068,6 +1068,8 @@ def test_read_uid_uses_markers_to_filter_noise(monkeypatch: pytest.MonkeyPatch) 
     import tests.vm.controller as controller
 
     vm = object.__new__(BootImageVM)
+    vm._log_step = lambda *args, **kwargs: None  # type: ignore[assignment]
+    vm._transcript = []  # type: ignore[assignment]
     monkeypatch.setattr(controller.time, "time", lambda: 1.0)
 
     marker = "__UID_MARK__1000__"
@@ -1090,7 +1092,7 @@ def test_read_uid_uses_markers_to_filter_noise(monkeypatch: pytest.MonkeyPatch) 
 
         def expect(self, pattern, timeout: int | None = None) -> int:
             if pattern == SHELL_PROMPT:
-                self.before = ""
+                self.before = self._output
                 return 0
             if isinstance(pattern, re.Pattern):
                 self.match = pattern.search(self._output)
@@ -1164,6 +1166,9 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
     def stub_log_step(self, message: str, body: str | None = None) -> None:
         contexts.append(message)
 
+    vm._transcript = []  # type: ignore[assignment]
+    vm._log_step = stub_log_step.__get__(vm, BootImageVM)
+
     def stub_configure_prompt(self, *, context: str = "shell") -> None:
         contexts.append(context)
 
@@ -1184,7 +1189,7 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
 
         def expect(self, pattern, timeout: int | None = None) -> int:
             if pattern == SHELL_PROMPT:
-                self.before = ""
+                self.before = self._current
                 return 0
             if isinstance(pattern, re.Pattern):
                 self.match = pattern.search(self._current)

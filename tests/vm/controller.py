@@ -500,43 +500,48 @@ class BootImageVM:
         """Parse a UID surrounded by markers even when extra lines are present."""
 
         cleaned = block.replace("\r", "")
-        match = re.search(
-            rf"{re.escape(marker)}\s*(\d+)\s*{re.escape(marker)}",
-            cleaned,
-            re.DOTALL,
-        )
-        if match:
-            return match.group(1)
+        positions: List[int] = []
+        start = cleaned.find(marker)
+        while start != -1:
+            positions.append(start)
+            start = cleaned.find(marker, start + len(marker))
+
+        for idx in range(len(positions) - 1):
+            between = cleaned[
+                positions[idx] + len(marker) : positions[idx + 1]
+            ]
+            digit_match = re.search(r"\d+", between)
+            if digit_match:
+                return digit_match.group(0)
         return None
 
     def _read_uid(self) -> str:
         """Return the numeric UID reported by ``id -u`` using marker guards."""
 
         marker = f"__UID_MARK__{int(time.time() * 1000)}__"
-        uid_command = (
-            f"printf '%s\n' '{marker}' && id -u && printf '%s\n' '{marker}'"
-        )
+        uid_command = f"printf '{marker}%s{marker}\\n' \"$(id -u)\""
 
         for attempt in range(2):
             self._synchronise_prompt(
                 context=f"uid validation attempt {attempt + 1}", timeout=120
             )
-            self.child.sendline(uid_command)
             try:
-                self.child.expect(
-                    re.compile(
-                        rf"{re.escape(marker)}\s*(\d+)\s*{re.escape(marker)}",
-                        re.DOTALL,
-                    ),
-                    timeout=120,
-                )
-                block = self.child.match.group(0) if self.child.match else ""
+                block = self.run(uid_command, timeout=180)
                 uid_value = self._extract_uid_from_block(block, marker)
-                if uid_value is None:
-                    raise ValueError("UID marker not found in output block")
-                self.child.expect(SHELL_PROMPT, timeout=120)
-                return uid_value
+                if uid_value is not None:
+                    return uid_value
+                raise ValueError(
+                    f"UID marker not found in output block: {block!r}"
+                )
             except (pexpect.TIMEOUT, pexpect.EOF, pexpect.ExceptionPexpect) as exc:
+                self._log_step(
+                    "Failed to parse id -u output; resynchronising prompt before retry",
+                    body=(
+                        f"attempt={attempt + 1}, error={exc}, buffer="
+                        f"{getattr(self.child, 'before', '')}"
+                    ),
+                )
+            except AssertionError as exc:
                 self._log_step(
                     "Failed to parse id -u output; resynchronising prompt before retry",
                     body=(
@@ -547,7 +552,9 @@ class BootImageVM:
             except ValueError as exc:
                 self._log_step(
                     "Failed to parse id -u output; resynchronising prompt before retry",
-                    body=f"attempt={attempt + 1}, error={exc}",
+                    body=(
+                        f"attempt={attempt + 1}, error={exc}, block={exc.args[0]}"
+                    ),
                 )
             self._configure_prompt(context="uid validation resync")
 
