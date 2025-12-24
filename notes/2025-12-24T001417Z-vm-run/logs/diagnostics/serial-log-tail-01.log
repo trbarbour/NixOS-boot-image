@@ -1,0 +1,50 @@
+LAN IPv4 address: 10.0.2.15
+
+
+LAN IPv4 address: 10.0.2.15
+
+
+pre-nixos boot image version 0.7.10
+
+LAN IPv4 address: 10.0.2.15
+
+[?2004h
+
+
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535365220__\n'
+
+
+[?2004l
+__PROMPT_READY__1766535365220__
+
+[?2004hPRE-NIXOS> printf '__UID_MARK__1766535374136__%s__UID_MARK__1766535374136__\n' "$(id -u)"
+
+
+[?2004l
+[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535374238__\n'
+printf '__UID_MARK__1766535374136__%s__UID_MARK__1766535374136__\n' "$(id -u)"
+
+[?2004l
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535374238__\n'
+
+__UID_MARK__1766535374136__1000__UID_MARK__1766535374136__
+
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535374238__\n'
+
+[?2004l
+__PROMPT_READY__1766535374238__
+
+[?2004hPRE-NIXOS> printf '__UID_MARK__1766535374136__%s__UID_MARK__1766535374136__\n' "$(id -u)"
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535374570__\n'
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1766535374136__%s__UID_MARK__1766535374136__\n' "$(id -u)"
+
+[?2004l
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535374570__\n'
+
+__UID_MARK__1766535374136__1000__UID_MARK__1766535374136__
+
+[?2004hPRE-NIXOS> 

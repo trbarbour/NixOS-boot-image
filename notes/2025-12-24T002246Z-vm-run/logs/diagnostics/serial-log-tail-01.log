@@ -1,0 +1,50 @@
+nixos login: nixos (automatic login)
+
+
+
+
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535872200__\n'
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535872200__\n'
+
+pre-nixos boot image version 0.7.10
+
+[?2004h
+
+
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535872200__\n'
+
+
+[?2004l
+__PROMPT_READY__1766535872200__
+
+[?2004hPRE-NIXOS> printf '__UID_MARK__1766535879160__%s__UID_MARK__1766535879160__\n' "$(id -u)"
+
+
+[?2004l
+[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535879263__\n'
+printf '__UID_MARK__1766535879160__%s__UID_MARK__1766535879160__\n' "$(id -u)"
+
+[?2004l
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535879263__\n'
+
+__UID_MARK__1766535879160__1000__UID_MARK__1766535879160__
+
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535879263__\n'
+
+[?2004l
+__PROMPT_READY__1766535879263__
+
+[?2004hPRE-NIXOS> printf '__UID_MARK__1766535879160__%s__UID_MARK__1766535879160__\n' "$(id -u)"
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535879541__\n'
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1766535879160__%s__UID_MARK__1766535879160__\n' "$(id -u)"
+
+[?2004l
+export PS1='PRE-NIXOS> '; printf '__PROMPT_READY__1766535879541__\n'
+
+__UID_MARK__1766535879160__1000__UID_MARK__1766535879160__
+
+[?2004hPRE-NIXOS> 
