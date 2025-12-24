@@ -541,6 +541,14 @@ class BootImageVM:
                         f"{getattr(self.child, 'before', '')}"
                     ),
                 )
+            except AssertionError as exc:
+                self._log_step(
+                    "Failed to parse id -u output; resynchronising prompt before retry",
+                    body=(
+                        f"attempt={attempt + 1}, error={exc}, buffer="
+                        f"{getattr(self.child, 'before', '')}"
+                    ),
+                )
             except ValueError as exc:
                 self._log_step(
                     "Failed to parse id -u output; resynchronising prompt before retry",
