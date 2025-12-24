@@ -29,9 +29,10 @@ def build_raid_residue_plan() -> RaidResiduePlan:
 
     preseed_commands = [
         (
-            "mdadm --create /dev/md127 --force --raid1 --level=1 --metadata=1.2 "
+            "mdadm --create /dev/md127 --force --level=1 --metadata=1.2 "
             "--raid-devices=2 /dev/vdb /dev/vdc"
         ),
+        "mdadm --detail /dev/md127",
         "pvcreate /dev/md127",
         "vgcreate vg_residue /dev/md127",
         "lvcreate -n lv_residue -l 100%FREE vg_residue",
@@ -76,8 +77,9 @@ RAID_LVM_RESIDUE_SCRIPT = dedent(
     """
     set -euo pipefail
 
-    mdadm --create /dev/md127 --force --raid1 --level=1 --metadata=1.2 \
+    mdadm --create /dev/md127 --force --level=1 --metadata=1.2 \
       --raid-devices=2 /dev/vdb /dev/vdc
+    mdadm --detail /dev/md127
 
     pvcreate /dev/md127
     vgcreate vg_residue /dev/md127
