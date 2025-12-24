@@ -528,6 +528,36 @@ class BootImageVM:
             try:
                 block = self.run(uid_command, timeout=180)
                 uid_value = self._extract_uid_from_block(block, marker)
+                if uid_value is None:
+                    fallback_sources = []
+                    fallback_block = getattr(self.child, "before", "")
+                    if fallback_block:
+                        fallback_sources.append(
+                            ("child buffer", fallback_block)
+                        )
+                    log_path = getattr(self, "log_path", None)
+                    if log_path is not None:
+                        try:
+                            serial_tail = "\n".join(self._read_serial_tail(200))
+                        except Exception:
+                            serial_tail = ""
+                        if serial_tail:
+                            fallback_sources.append(
+                                ("serial log tail", serial_tail)
+                            )
+                    for source, candidate in fallback_sources:
+                        uid_value = self._extract_uid_from_block(
+                            candidate, marker
+                        )
+                        if uid_value is not None:
+                            self._log_step(
+                                "Recovered UID marker after parse failure",
+                                body=(
+                                    f"attempt={attempt + 1}, source={source}, "
+                                    f"uid={uid_value}"
+                                ),
+                            )
+                            return uid_value
                 if uid_value is not None:
                     return uid_value
                 raise ValueError(
