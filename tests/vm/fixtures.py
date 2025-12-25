@@ -33,8 +33,14 @@ DEFAULT_SPAWN_TIMEOUT = 900
 DEFAULT_LOGIN_TIMEOUT = 300
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LEDGER_PATH = REPO_ROOT / "notes" / "vm-run-ledger.jsonl"
-ADDITIONAL_DISK_COUNT = 2
-ADDITIONAL_DISK_SIZE_BYTES = 2 * 1024 * 1024 * 1024
+ADDITIONAL_DISK_SIZES_BYTES = (
+    # Pre-nixos groups disks of approximately the same size into arrays (see
+    # automated-pre-nixos-reqs.md). Keep the auxiliary disks the same size so
+    # the residue scenario can build a balanced array, but size them smaller
+    # than the 4 GiB primary disk so pre-nixos does not merge all three.
+    3 * 1024 * 1024 * 1024,
+    3 * 1024 * 1024 * 1024,
+)
 
 
 @dataclass(frozen=True)
@@ -349,30 +355,30 @@ def vm_disk_image(tmp_path_factory: pytest.TempPathFactory) -> Path:
 @pytest.fixture(scope="session")
 def vm_additional_disks(tmp_path_factory: pytest.TempPathFactory) -> List[Path]:
     disks: List[Path] = []
-    for index in range(ADDITIONAL_DISK_COUNT):
+    for index, size_bytes in enumerate(ADDITIONAL_DISK_SIZES_BYTES):
         disk_dir = tmp_path_factory.mktemp(f"boot-image-disk{index + 1}")
         disk_path = disk_dir / "disk.img"
         with disk_path.open("wb") as handle:
-            handle.truncate(ADDITIONAL_DISK_SIZE_BYTES)
+            handle.truncate(size_bytes)
         disks.append(disk_path)
     return disks
 
 
-@pytest.fixture(scope="session")
-def boot_image_vm(
+def _launch_boot_image_vm(
+    *,
     _pexpect: "pexpect",
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     vm_disk_image: Path,
-    vm_additional_disks: List[Path],
-    tmp_path_factory: pytest.TempPathFactory,
+    extra_disks: List[Path],
     ssh_executable: str,
     ssh_forward_port: int,
     request: pytest.FixtureRequest,
+    log_dir: Optional[Path] = None,
 ) -> "BootImageVM":
     from tests.vm.controller import BootImageVM
 
-    log_dir = _build_run_log_directory()
+    log_dir = log_dir or _build_run_log_directory()
     log_path = log_dir / "serial.log"
     harness_log_path = log_dir / "harness.log"
     metadata_path = log_dir / "metadata.json"
@@ -409,7 +415,7 @@ def boot_image_vm(
         "-drive",
         f"file={vm_disk_image},if=virtio,format=raw",
     ]
-    for disk_path in vm_additional_disks:
+    for disk_path in extra_disks:
         cmd.extend(["-drive", f"file={disk_path},if=virtio,format=raw"])
     cmd.extend(
         [
@@ -430,7 +436,7 @@ def boot_image_vm(
         qemu_command=cmd,
         qemu_version=qemu_version,
         disk_image=vm_disk_image,
-        extra_disks=vm_additional_disks,
+        extra_disks=extra_disks,
         ssh_host="127.0.0.1",
         ssh_port=ssh_forward_port,
         ssh_executable=ssh_executable,
@@ -548,6 +554,51 @@ def boot_image_vm(
         log_handle.close()
 
 
+@pytest.fixture(scope="session")
+def boot_image_vm(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    vm_disk_image: Path,
+    ssh_executable: str,
+    ssh_forward_port: int,
+    request: pytest.FixtureRequest,
+) -> "BootImageVM":
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        qemu_executable=qemu_executable,
+        boot_image_build=boot_image_build,
+        vm_disk_image=vm_disk_image,
+        extra_disks=[],
+        ssh_executable=ssh_executable,
+        ssh_forward_port=ssh_forward_port,
+        request=request,
+    )
+
+
+@pytest.fixture(scope="session")
+def boot_image_vm_with_additional_disks(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    vm_disk_image: Path,
+    vm_additional_disks: List[Path],
+    ssh_executable: str,
+    ssh_forward_port: int,
+    request: pytest.FixtureRequest,
+) -> "BootImageVM":
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        qemu_executable=qemu_executable,
+        boot_image_build=boot_image_build,
+        vm_disk_image=vm_disk_image,
+        extra_disks=vm_additional_disks,
+        ssh_executable=ssh_executable,
+        ssh_forward_port=ssh_forward_port,
+        request=request,
+    )
+
+
 __all__ = [
     "BootImageBuild",
     "RunTimings",
@@ -562,10 +613,12 @@ __all__ = [
     "_read_timeout_env",
     "_resolve_ledger_path",
     "_require_executable",
+    "_launch_boot_image_vm",
     "boot_image_build",
     "boot_image_iso",
     "boot_ssh_key_pair",
     "boot_image_vm",
+    "boot_image_vm_with_additional_disks",
     "nix_executable",
     "probe_qemu_version",
     "qemu_executable",

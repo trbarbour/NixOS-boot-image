@@ -1077,7 +1077,9 @@ def test_read_uid_uses_markers_to_filter_noise(monkeypatch: pytest.MonkeyPatch) 
     vm._synchronise_prompt = (  # type: ignore[assignment]
         lambda *args, **kwargs: None
     )
-    vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[assignment]
+        AssertionError(args[0] if args else "")
+    )
 
     class StubChild:
         def __init__(self) -> None:
@@ -1119,7 +1121,7 @@ def test_read_uid_raises_when_marker_missing() -> None:
     def stub_configure_prompt(self, *, context: str = "shell") -> None:
         attempts.append(context)
 
-    def stub_raise_with_transcript(self, message: str) -> None:
+    def stub_raise_with_transcript(self, message: str, **_: object) -> None:
         raise AssertionError(message)
 
     class StubChild:
@@ -1204,7 +1206,9 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
     vm._synchronise_prompt = (  # type: ignore[assignment]
         lambda *args, **kwargs: None
     )
-    vm._raise_with_transcript = lambda message: (_ for _ in ()).throw(AssertionError(message))  # type: ignore[assignment]
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[assignment]
+        AssertionError(args[0] if args else "")
+    )
     vm.child = StubChild()  # type: ignore[assignment]
 
     uid = vm._read_uid()

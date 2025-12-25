@@ -7,17 +7,20 @@ separately.
 
 ## Modules
 - `fixtures.py` – host/tool checks, ISO build helpers, disk/SSH fixtures, timeout defaults
-- `fixtures.py` also exposes the `boot_image_vm` session fixture and captures
-  per-run timings for boot-image build, boot-to-login, boot-to-SSH, and total
-  test wall-clock duration in `metadata.json`
-- The VM harness provisions a primary virtio disk for install coverage plus
-  two additional 2 GiB virtio disks (`/dev/vdb` and `/dev/vdc`) so RAID/LVM
-  residue scenarios have dedicated scratch devices.
+- `fixtures.py` exposes session fixtures for running a single-disk VM
+  (`boot_image_vm`) or an extended configuration with two additional, same-sized
+  virtio disks that differ from the primary disk size so pre-nixos will group
+  them together for the residue RAID while leaving the boot disk independent
+  (`boot_image_vm_with_additional_disks`). Each fixture captures per-run timings
+  for boot-image build, boot-to-login, boot-to-SSH, and total test wall-clock
+  duration in `metadata.json`.
 - `metadata.py` – utilities for collecting logs and diagnostics from VM runs
 - `controller.py` – `BootImageVM` controller and interaction helpers
 - `cleanup_plan.py` – reusable RAID/LVM seeding and teardown checks
-- `test_pre_nixos_vm.py` – main pre-nixos integration scenarios
-- `test_pre_nixos_cleanup.py` – RAID/LVM residue regression scenario
+- `test_pre_nixos_vm.py` – main pre-nixos integration scenarios (single-disk VM)
+- `test_pre_nixos_cleanup.py` – RAID/LVM residue regression scenario (uses the
+  additional-disk fixture so `/dev/vdb` and `/dev/vdc` stay free until the
+  residue is seeded)
 
 ### Fixture shim
 Fixtures live in `tests/vm/fixtures.py` and are loaded via `pytest_plugins`
