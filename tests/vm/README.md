@@ -8,10 +8,11 @@ separately.
 ## Modules
 - `fixtures.py` – host/tool checks, ISO build helpers, disk/SSH fixtures, timeout defaults
 - `fixtures.py` exposes session fixtures for running a single-disk VM
-  (`boot_image_vm`) or an extended configuration with two additional, same-sized
-  virtio disks that differ from the primary disk size so pre-nixos will group
-  them together for the residue RAID while leaving the boot disk independent
-  (`boot_image_vm_with_additional_disks`). Each fixture captures per-run timings
+  (`boot_image_vm`) or an extended configuration with two additional, equal-
+  sized virtio disks that are smaller than the primary disk so pre-nixos will
+  group them together for the residue RAID while leaving the boot disk
+  independent (`boot_image_vm_with_additional_disks`). Each fixture captures
+  per-run timings
   for boot-image build, boot-to-login, boot-to-SSH, and total test wall-clock
   duration in `metadata.json`.
 - `metadata.py` – utilities for collecting logs and diagnostics from VM runs

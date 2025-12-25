@@ -38,8 +38,10 @@ ADDITIONAL_DISK_SIZES_BYTES = (
     # automated-pre-nixos-reqs.md). Keep the auxiliary disks the same size so
     # the residue scenario can build a balanced array, but size them smaller
     # than the 4 GiB primary disk so pre-nixos does not merge all three.
-    3 * 1024 * 1024 * 1024,
-    3 * 1024 * 1024 * 1024,
+    # The auxiliary bucket must stay below the size of the boot disk so the
+    # latter remains the primary installation target.
+    1536 * 1024 * 1024,
+    1536 * 1024 * 1024,
 )
 
 
