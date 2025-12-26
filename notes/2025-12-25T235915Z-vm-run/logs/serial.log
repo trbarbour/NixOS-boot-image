@@ -1,0 +1,2 @@
+qemu-system-x86_64: -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw: Failed to get "write" lock
+Is another process using the image [/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img]?

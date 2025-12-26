@@ -16,7 +16,7 @@ import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 import pytest
 
@@ -233,8 +233,14 @@ def boot_ssh_key_pair(
     return SSHKeyPair(private_key=private_key, public_key=public_key)
 
 
-@pytest.fixture(scope="session")
-def ssh_forward_port() -> int:
+def allocate_ssh_forward_port() -> int:
+    """Return an available TCP port for SSH port-forwarding.
+
+    The port is selected by binding to port 0 on ``127.0.0.1`` and releasing the
+    socket immediately. Each VM launch should call this helper so concurrent
+    session-scoped fixtures do not contend for a shared port.
+    """
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
@@ -345,13 +351,33 @@ def boot_image_iso(boot_image_build: BootImageBuild) -> Path:
     return boot_image_build.iso_path
 
 
-@pytest.fixture(scope="session")
-def vm_disk_image(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    disk_dir = tmp_path_factory.mktemp("boot-image-disk")
+def _create_disk_image(
+    tmp_path_factory: pytest.TempPathFactory,
+    *,
+    prefix: str,
+    size_bytes: int,
+) -> Path:
+    disk_dir = tmp_path_factory.mktemp(prefix)
     disk_path = disk_dir / "disk.img"
     with disk_path.open("wb") as handle:
-        handle.truncate(4 * 1024 * 1024 * 1024)
+        handle.truncate(size_bytes)
     return disk_path
+
+
+@pytest.fixture(scope="session")
+def vm_disk_image_factory(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Callable[..., Path]:
+    def _factory(
+        *,
+        size_bytes: int = 4 * 1024 * 1024 * 1024,
+        prefix: str = "boot-image-disk",
+    ) -> Path:
+        return _create_disk_image(
+            tmp_path_factory, prefix=prefix, size_bytes=size_bytes
+        )
+
+    return _factory
 
 
 @pytest.fixture(scope="session")
@@ -374,13 +400,13 @@ def _launch_boot_image_vm(
     vm_disk_image: Path,
     extra_disks: List[Path],
     ssh_executable: str,
-    ssh_forward_port: int,
     request: pytest.FixtureRequest,
     log_dir: Optional[Path] = None,
 ) -> "BootImageVM":
     from tests.vm.controller import BootImageVM
 
     log_dir = log_dir or _build_run_log_directory()
+    ssh_forward_port = allocate_ssh_forward_port()
     log_path = log_dir / "serial.log"
     harness_log_path = log_dir / "harness.log"
     metadata_path = log_dir / "metadata.json"
@@ -561,11 +587,11 @@ def boot_image_vm(
     _pexpect: "pexpect",
     qemu_executable: str,
     boot_image_build: BootImageBuild,
-    vm_disk_image: Path,
+    vm_disk_image_factory: Callable[..., Path],
     ssh_executable: str,
-    ssh_forward_port: int,
     request: pytest.FixtureRequest,
 ) -> "BootImageVM":
+    vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary")
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
         qemu_executable=qemu_executable,
@@ -573,7 +599,6 @@ def boot_image_vm(
         vm_disk_image=vm_disk_image,
         extra_disks=[],
         ssh_executable=ssh_executable,
-        ssh_forward_port=ssh_forward_port,
         request=request,
     )
 
@@ -583,12 +608,12 @@ def boot_image_vm_with_additional_disks(
     _pexpect: "pexpect",
     qemu_executable: str,
     boot_image_build: BootImageBuild,
-    vm_disk_image: Path,
+    vm_disk_image_factory: Callable[..., Path],
     vm_additional_disks: List[Path],
     ssh_executable: str,
-    ssh_forward_port: int,
     request: pytest.FixtureRequest,
 ) -> "BootImageVM":
+    vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary-extra")
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
         qemu_executable=qemu_executable,
@@ -596,7 +621,6 @@ def boot_image_vm_with_additional_disks(
         vm_disk_image=vm_disk_image,
         extra_disks=vm_additional_disks,
         ssh_executable=ssh_executable,
-        ssh_forward_port=ssh_forward_port,
         request=request,
     )
 
@@ -616,6 +640,7 @@ __all__ = [
     "_resolve_ledger_path",
     "_require_executable",
     "_launch_boot_image_vm",
+    "allocate_ssh_forward_port",
     "boot_image_build",
     "boot_image_iso",
     "boot_ssh_key_pair",
@@ -625,7 +650,6 @@ __all__ = [
     "probe_qemu_version",
     "qemu_executable",
     "ssh_executable",
-    "ssh_forward_port",
     "ssh_keygen_executable",
-    "vm_disk_image",
+    "vm_disk_image_factory",
 ]

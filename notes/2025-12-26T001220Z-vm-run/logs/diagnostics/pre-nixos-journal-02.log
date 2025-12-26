@@ -1,0 +1,13 @@
+Dec 26 00:14:21 nixos systemd[1]: Starting Pre-NixOS setup...
+Dec 26 00:14:24 nixos pre-nixos-start[667]: pre-nixos boot image version 0.7.11
+Dec 26 00:15:24 nixos systemd[1]: pre-nixos.service: Main process exited, code=killed, status=15/TERM
+Dec 26 00:15:24 nixos systemd[1]: pre-nixos.service: Failed with result 'signal'.
+Dec 26 00:15:24 nixos systemd[1]: Stopped Pre-NixOS setup.
+Dec 26 00:15:24 nixos systemd[1]: pre-nixos.service: Consumed 28.358s CPU time, 61.9M memory peak, 67.5M read from disk.
+Dec 26 00:15:24 nixos systemd[1]: Starting Pre-NixOS setup...
+Dec 26 00:15:25 nixos pre-nixos-start[987]: pre-nixos boot image version 0.7.11
+Dec 26 00:15:39 nixos pre-nixos-start[1006]: LAN IPv4 address: 10.0.2.15
+Dec 26 00:15:40 nixos pre-nixos-start[1024]: LAN IPv4 address: 10.0.2.15
+Dec 26 00:15:43 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Dec 26 00:15:43 nixos systemd[1]: Finished Pre-NixOS setup.
+Dec 26 00:15:43 nixos systemd[1]: pre-nixos.service: Consumed 15.972s CPU time, 14.2M memory peak, 2.4M read from disk.

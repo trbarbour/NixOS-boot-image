@@ -1,0 +1,5 @@
+QEMU process is no longer running.
+PID: 15925
+Exit status: 1
+Signal status: unknown
+pexpect closed flag: False
