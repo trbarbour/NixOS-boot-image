@@ -1,0 +1,60 @@
+[2025-12-25T23:59:15.847378+00:00] Boot image artifact metadata
+[2025-12-25T23:59:15.847378+00:00]   ISO: /nix/store/bw90nidfallb0l03gpnqm86sjpgr5lch-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso
+[2025-12-25T23:59:15.847378+00:00]   Store path: /nix/store/bw90nidfallb0l03gpnqm86sjpgr5lch-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso
+[2025-12-25T23:59:15.847378+00:00]   Deriver: /nix/store/ylavfj3k23v0qdxaymc6pjc9msg7107p-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso.drv
+[2025-12-25T23:59:15.847378+00:00]   NAR hash: sha256-vrkUZJzty34ubWVUfUzMJ+OsEP93XNp2GWWMHAWeL1g=
+[2025-12-25T23:59:15.847378+00:00]   Embedded root key fingerprint: 256 SHA256:KYtjzqgGVahZfucnS3Ptz9Vx+YkmiTnsoG7nAjCxurc boot-image-vm-test (ED25519)
+[2025-12-25T23:59:15.847378+00:00]   QEMU version: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.11)
+[2025-12-25T23:59:15.847378+00:00]   Disk image: /tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img
+[2025-12-25T23:59:15.847378+00:00]   QEMU command: /usr/bin/qemu-system-x86_64 -m 2048 -smp 2 -display none -no-reboot -boot d -serial stdio -cdrom /nix/store/bw90nidfallb0l03gpnqm86sjpgr5lch-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk10/disk.img,if=virtio,format=raw -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk20/disk.img,if=virtio,format=raw -device virtio-rng-pci -netdev user,id=net0,hostfwd=tcp:127.0.0.1:35143-:22 -device virtio-net-pci,netdev=net0
+[2025-12-25T23:59:15.849955+00:00] Harness metadata written to /workspace/NixOS-boot-image/notes/2025-12-25T235915Z-vm-run/logs/metadata.json
+[2025-12-25T23:59:15.850210+00:00] Starting login sequence
+[2025-12-25T23:59:15.852192+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, # ? (timeout=300s)
+[2025-12-25T23:59:16.000072+00:00] Serial output: qemu-system-x86_64: -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw: Failed to get "write" lock
+[2025-12-25T23:59:16.000283+00:00] Serial output: Is another process using the image [/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img]?
+[2025-12-25T23:59:16.000382+00:00] pexpect reported EOF while awaiting patterns
+[2025-12-25T23:59:16.000432+00:00] Serial output: qemu-system-x86_64: -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw: Failed to get "write" lock
+[2025-12-25T23:59:16.000566+00:00] Serial output: Is another process using the image [/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img]?
+[2025-12-25T23:59:16.001068+00:00] Unexpected EOF while awaiting patterns login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, # ?: End Of File (EOF). Exception style platform.
+<pexpect.pty_spawn.spawn object at 0x7ff42ff11f90>
+command: /usr/bin/qemu-system-x86_64
+args: [b'/usr/bin/qemu-system-x86_64', b'-m', b'2048', b'-smp', b'2', b'-display', b'none', b'-no-reboot', b'-boot', b'd', b'-serial', b'stdio', b'-cdrom', b'/nix/store/bw90nidfallb0l03gpnqm86sjpgr5lch-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso', b'-drive', b'file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw', b'-drive', b'file=/tmp/pytest-of-root/pytest-1/boot-image-disk10/disk.img,if=virtio,format=raw', b'-drive', b'file=/tmp/pytest-of-root/pytest-1/boot-image-disk20/disk.img,if=virtio,format=raw', b'-device', b'virtio-rng-pci', b'-netdev', b'user,id=net0,hostfwd=tcp:127.0.0.1:35143-:22', b'-device', b'virtio-net-pci,netdev=net0']
+buffer (last 100 chars): ''
+before (last 100 chars): 'lock\r\nIs another process using the image [/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img]?\r\n'
+after: <class 'pexpect.exceptions.EOF'>
+match: None
+match_index: None
+exitstatus: None
+flag_eof: True
+pid: 18748
+child_fd: 16
+closed: False
+timeout: 900
+delimiter: <class 'pexpect.exceptions.EOF'>
+logfile: <_io.TextIOWrapper name='/workspace/NixOS-boot-image/notes/2025-12-25T235915Z-vm-run/logs/serial.log' mode='w' encoding='utf-8'>
+logfile_read: None
+logfile_send: None
+maxread: 2000
+ignorecase: False
+searchwindowsize: None
+delaybeforesend: 0.05
+delayafterclose: 0.1
+delayafterterminate: 0.1
+searcher: searcher_re:
+    0: re.compile('login: ')
+    1: re.compile('\\[nixos@[^]]+\\]\\$ ?')
+    2: re.compile('root@.*# ?')
+    3: re.compile('# ?')
+    4: re.compile('\n    \\x1B(\n        \\[[0-?]*[ -/]*[@-~]      # CSI sequences, including bracketed paste toggles\n        |\\][^\\x07]*(?:\\x07|\\x1b\\\\)  # OSC sequences for terminal title updates\n        |P[^\\x07\\x1b]*(?:\\x07|\\x1b\\\\)  # DCS sequences\n        |[@-Z\\\\-_]                 # 2-character sequences (e.g. ESCc)\n        |_[^\\x07]*(?:\\x07|\\x1b\\\\)    # APC sequences\n        |\\^[^\\x07]*(?:\\x07|\\x1b\\\\)   # PM sequences\n    )\n    ')
+[2025-12-25T23:59:16.001383+00:00] Captured QEMU exit status after failure
+[2025-12-25T23:59:16.001383+00:00]   QEMU process is no longer running.
+[2025-12-25T23:59:16.001383+00:00]   PID: 18748
+[2025-12-25T23:59:16.001383+00:00]   Exit status: 1
+[2025-12-25T23:59:16.001383+00:00]   Signal status: unknown
+[2025-12-25T23:59:16.001383+00:00]   pexpect closed flag: False
+[2025-12-25T23:59:16.003645+00:00] Diagnostic artifact written to /workspace/NixOS-boot-image/notes/2025-12-25T235915Z-vm-run/logs/diagnostics/qemu-exit-status-01.log
+[2025-12-25T23:59:16.005638+00:00] Serial log tail (last 2 lines)
+[2025-12-25T23:59:16.005638+00:00]   qemu-system-x86_64: -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw: Failed to get "write" lock
+[2025-12-25T23:59:16.005638+00:00]   Is another process using the image [/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img]?
+[2025-12-25T23:59:16.005861+00:00] Diagnostic artifact written to /workspace/NixOS-boot-image/notes/2025-12-25T235915Z-vm-run/logs/diagnostics/serial-log-tail-02.log
+[2025-12-25T23:59:16.006818+00:00] Diagnostic artifact written to /workspace/NixOS-boot-image/notes/2025-12-25T235915Z-vm-run/logs/diagnostics/login-transcript-03.txt

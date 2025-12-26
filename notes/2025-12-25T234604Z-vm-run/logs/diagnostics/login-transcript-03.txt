@@ -1,0 +1,7 @@
+[2025-12-25T23:46:05.042520+00:00] Boot image artifact metadata
+[2025-12-25T23:46:05.043473+00:00] Harness metadata written to /workspace/NixOS-boot-image/notes/2025-12-25T234604Z-vm-run/logs/metadata.json
+[2025-12-25T23:46:05.043698+00:00] Starting login sequence
+[2025-12-25T23:46:05.045085+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, # ? (timeout=300s)
+[2025-12-25T23:46:05.113204+00:00] Serial output: qemu-system-x86_64: -netdev user,id=net0,hostfwd=tcp:127.0.0.1:51997-:22: Could not set up host forwarding rule 'tcp:127.0.0.1:51997-:22'
+[2025-12-25T23:46:05.113361+00:00] pexpect reported EOF while awaiting patterns
+[2025-12-25T23:46:05.113489+00:00] Serial output: qemu-system-x86_64: -netdev user,id=net0,hostfwd=tcp:127.0.0.1:51997-:22: Could not set up host forwarding rule 'tcp:127.0.0.1:51997-:22'

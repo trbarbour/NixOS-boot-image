@@ -14,7 +14,9 @@ separately.
   independent (`boot_image_vm_with_additional_disks`). Each fixture captures
   per-run timings
   for boot-image build, boot-to-login, boot-to-SSH, and total test wall-clock
-  duration in `metadata.json`.
+  duration in `metadata.json`. Each VM fixture allocates its own SSH port and
+  primary disk image so the two session-scoped VMs can coexist without
+  fighting over forwarded ports or file locks.
 - `metadata.py` – utilities for collecting logs and diagnostics from VM runs
 - `controller.py` – `BootImageVM` controller and interaction helpers
 - `cleanup_plan.py` – reusable RAID/LVM seeding and teardown checks

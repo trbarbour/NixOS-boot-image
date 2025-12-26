@@ -1,0 +1,9 @@
+[2025-12-25T23:59:15.847378+00:00] Boot image artifact metadata
+[2025-12-25T23:59:15.849955+00:00] Harness metadata written to /workspace/NixOS-boot-image/notes/2025-12-25T235915Z-vm-run/logs/metadata.json
+[2025-12-25T23:59:15.850210+00:00] Starting login sequence
+[2025-12-25T23:59:15.852192+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, # ? (timeout=300s)
+[2025-12-25T23:59:16.000072+00:00] Serial output: qemu-system-x86_64: -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw: Failed to get "write" lock
+[2025-12-25T23:59:16.000283+00:00] Serial output: Is another process using the image [/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img]?
+[2025-12-25T23:59:16.000382+00:00] pexpect reported EOF while awaiting patterns
+[2025-12-25T23:59:16.000432+00:00] Serial output: qemu-system-x86_64: -drive file=/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img,if=virtio,format=raw: Failed to get "write" lock
+[2025-12-25T23:59:16.000566+00:00] Serial output: Is another process using the image [/tmp/pytest-of-root/pytest-1/boot-image-disk0/disk.img]?
