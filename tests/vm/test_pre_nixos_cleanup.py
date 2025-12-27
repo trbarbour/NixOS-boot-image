@@ -18,6 +18,13 @@ def test_pre_nixos_cleans_raid_lvm_residue(
         "mdadm", "pvcreate", "vgcreate", "lvcreate", "blkid"
     )
 
+    boot_image_vm_with_additional_disks.run_as_root(
+        "mdadm --stop --scan || true", timeout=180
+    )
+    boot_image_vm_with_additional_disks.run_as_root_checked(
+        "wipefs -af /dev/vdb /dev/vdc", timeout=180
+    )
+
     for command in plan.preseed_commands:
         boot_image_vm_with_additional_disks.run_as_root_checked(
             command, timeout=300
@@ -38,6 +45,9 @@ def test_pre_nixos_cleans_raid_lvm_residue(
     )
     assert "residue-marker" in sentinel_content
 
+    boot_image_vm_with_additional_disks.run_as_root_checked(
+        "systemctl set-environment PRE_NIXOS_FORCE_CLEANUP=1", timeout=180
+    )
     boot_image_vm_with_additional_disks.run_as_root(
         "systemctl restart pre-nixos.service", timeout=240
     )

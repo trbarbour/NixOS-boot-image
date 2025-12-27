@@ -151,7 +151,25 @@ def _expand_devices_with_lsblk(devices: Set[str]) -> Set[str]:
     return expanded
 
 
-def _handle_existing_storage(plan: dict[str, object], execute: bool) -> bool:
+def _forced_cleanup_action() -> str | None:
+    value = os.environ.get("PRE_NIXOS_FORCE_CLEANUP", "").strip().lower()
+    enabled = value not in {"", "0", "false", "no"}
+    if not enabled:
+        return None
+
+    requested = os.environ.get("PRE_NIXOS_FORCE_CLEANUP_ACTION", "").strip().lower()
+    if requested:
+        for option in storage_cleanup.CLEANUP_OPTIONS:
+            if requested in {option.key, option.action.lower()}:
+                return option.action
+    return storage_cleanup.WIPE_SIGNATURES
+
+
+def _handle_existing_storage(
+    plan: dict[str, object],
+    execute: bool,
+    forced_action: str | None = None,
+) -> bool:
     try:
         devices = storage_detection.detect_existing_storage()
     except Exception as exc:
@@ -159,16 +177,25 @@ def _handle_existing_storage(plan: dict[str, object], execute: bool) -> bool:
         return False
     if not devices:
         return True
-    if not _is_interactive():
+    if forced_action is None:
+        forced_action = _forced_cleanup_action()
+    if not _is_interactive() and forced_action is None:
         print(
             "Existing storage was detected but no interactive terminal is "
             "available to choose a wipe method. Aborting."
         )
         return False
-    action = _prompt_storage_cleanup(devices)
-    if action is None:
-        print("Aborting without modifying storage.")
-        return False
+    if forced_action is not None:
+        action = forced_action
+        print(
+            "Existing storage detected; applying non-interactive cleanup "
+            f"action '{action}'."
+        )
+    else:
+        action = _prompt_storage_cleanup(devices)
+        if action is None:
+            print("Aborting without modifying storage.")
+            return False
     cleanup_targets = _collect_plan_devices(plan)
     cleanup_targets.update(entry.device for entry in devices)
     cleanup_targets = _expand_devices_with_lsblk(cleanup_targets)
@@ -359,13 +386,16 @@ def main(argv: list[str] | None = None) -> None:
                 console.write(console_output)
                 console.flush()
 
+        forced_cleanup_action = _forced_cleanup_action()
         will_modify_storage = (
-            not args.plan_only
-            and not args.dry_run
+            not args.dry_run
             and os.environ.get("PRE_NIXOS_EXEC") == "1"
+            and (forced_cleanup_action is not None or not args.plan_only)
         )
         if will_modify_storage:
-            if not _handle_existing_storage(plan, execute=will_modify_storage):
+            if not _handle_existing_storage(
+                plan, execute=will_modify_storage, forced_action=forced_cleanup_action
+            ):
                 return
             if _is_interactive() and not _confirm_storage_reset():
                 print("Aborting without modifying storage.")
