@@ -51,7 +51,7 @@ def build_raid_residue_plan() -> RaidResiduePlan:
     verification_commands = [
         "lsblk --output NAME,TYPE,SIZE,MOUNTPOINT --paths",
         "mdadm --detail --scan || true",
-        "ls /dev/vg_residue /dev/vg_residue/lv_residue || true",
+        "ls /dev/vg_residue /dev/vg_residue/lv_residue 2>/dev/null || true",
         "blkid || true",
         (
             "dd if=/dev/vg_residue/lv_residue bs=1 count=64 status=none "

@@ -18,6 +18,10 @@ in ''
     export PRE_NIXOS_PLAN_STDOUT=0
   fi
 
+  if [ -r /proc/cmdline ] && grep -qw "pre-nixos-force-cleanup=1" /proc/cmdline; then
+    export PRE_NIXOS_FORCE_CLEANUP=1
+  fi
+
   status_dir="''${PRE_NIXOS_STATE_DIR:-/run/pre-nixos}"
   status_file=$status_dir/storage-status
   auto_status_file=$status_dir/auto-install-status
@@ -68,9 +72,15 @@ in ''
   status_detail="auto-applied"
 
   if ${detectStorageCmd}; then
-    plan_flag="--plan-only"
-    status_state="plan-only"
-    status_detail="existing-storage"
+    if [ "''${PRE_NIXOS_FORCE_CLEANUP:-0}" = "1" ]; then
+      plan_flag="--plan-only"
+      status_state="plan-only"
+      status_detail="existing-storage-force-cleanup"
+    else
+      plan_flag="--plan-only"
+      status_state="plan-only"
+      status_detail="existing-storage"
+    fi
   else
     status=$?
     if [ "$status" -ne 1 ]; then
