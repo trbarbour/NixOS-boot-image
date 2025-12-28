@@ -113,6 +113,17 @@ def _command_output_fields(result: subprocess.CompletedProcess) -> dict[str, str
     return fields
 
 
+def _emit_progress(
+    progress_callback: Callable[[str], None] | None, message: str
+) -> None:
+    """Send *message* to the provided callback or stdout."""
+
+    if progress_callback is None:
+        print(message, flush=True)
+    else:
+        progress_callback(message)
+
+
 def _collect_wipefs_diagnostics(device: str) -> dict[str, object]:
     mounts_result = subprocess.run(
         ["findmnt", "-rn", "-o", "TARGET,SOURCE", "-T", device],
@@ -887,7 +898,9 @@ def _wipe_root_device(
     execute: bool,
     runner: CommandRunner,
     scheduled: List[str],
+    progress_callback: Callable[[str], None] | None = None,
 ) -> None:
+    _emit_progress(progress_callback, f"Zapping partition table on {device}")
     _execute_command(
         ("sgdisk", "--zap-all", device),
         action=action,
@@ -907,6 +920,7 @@ def _wipe_root_device(
         return
 
     if action == DISCARD_BLOCKS:
+        _emit_progress(progress_callback, f"Discarding blocks on {device}")
         _execute_command(
             ("blkdiscard", "--force", device),
             action=action,
@@ -916,6 +930,7 @@ def _wipe_root_device(
             scheduled=scheduled,
         )
     elif action == OVERWRITE_RANDOM:
+        _emit_progress(progress_callback, f"Overwriting {device} with random data")
         _execute_command(
             ("shred", "-n", "1", "-vz", device),
             action=action,
@@ -925,6 +940,7 @@ def _wipe_root_device(
             scheduled=scheduled,
         )
 
+    _emit_progress(progress_callback, f"Wiping filesystem signatures on {device}")
     _execute_command(
         ("wipefs", "-a", device),
         action=action,
@@ -941,6 +957,7 @@ def perform_storage_cleanup(
     *,
     execute: bool,
     runner: CommandRunner | None = None,
+    progress_callback: Callable[[str], None] | None = None,
 ) -> List[str]:
     """Apply the requested storage cleanup action to *devices*.
 
@@ -979,6 +996,8 @@ def perform_storage_cleanup(
     reachable = _reachable_nodes(graph, devices)
     ordered_nodes = _ordered_nodes_leaf_to_root(graph, reachable)
 
+    device_label = ", ".join(devices)
+    _emit_progress(progress_callback, f"Tearing down existing storage on {device_label}")
     _teardown_graph(
         action,
         ",".join(devices),
@@ -989,6 +1008,7 @@ def perform_storage_cleanup(
         scheduled=scheduled,
     )
 
+    _emit_progress(progress_callback, f"Removing metadata from dependent volumes on {device_label}")
     _wipe_descendant_metadata_graph(
         action,
         ",".join(devices),
@@ -1013,8 +1033,10 @@ def perform_storage_cleanup(
             execute=execute,
             runner=runner,
             scheduled=scheduled,
+            progress_callback=progress_callback,
         )
 
+    _emit_progress(progress_callback, f"Storage cleanup finished on {device_label}")
     log_event(
         "pre_nixos.cleanup.finished",
         action=action,

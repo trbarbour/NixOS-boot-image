@@ -1082,13 +1082,31 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
             return False
         if action != storage_cleanup.SKIP_CLEANUP:
             targets = [entry.device for entry in devices]
+
+            progress_lines: list[str] = []
+
+            def _render_progress() -> None:
+                stdscr.clear()
+                height, width = stdscr.getmaxyx()
+                stdscr.addstr(0, 0, _trim("Wiping storage...", width - 1))
+                stdscr.addstr(1, 0, _trim("Progress:", width - 1))
+                visible = progress_lines[-(height - 3) :]
+                for idx, line in enumerate(visible, start=2):
+                    stdscr.addstr(idx, 0, _trim(line, width - 1))
+                stdscr.refresh()
+
+            def progress_callback(message: str) -> None:
+                progress_lines.append(message)
+                _render_progress()
+
+            _render_progress()
             try:
-                with _suspend_curses(stdscr):
-                    storage_cleanup.perform_storage_cleanup(
-                        action,
-                        targets,
-                        execute=execute,
-                    )
+                storage_cleanup.perform_storage_cleanup(
+                    action,
+                    targets,
+                    execute=execute,
+                    progress_callback=progress_callback,
+                )
             except Exception as exc:  # pragma: no cover - subprocess failure is rare
                 _show_modal(stdscr, [f"Failed to wipe storage: {exc}"])
                 return False

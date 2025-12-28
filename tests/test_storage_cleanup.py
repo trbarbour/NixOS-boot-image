@@ -1,6 +1,5 @@
 from typing import List, Sequence
 import subprocess
-from typing import List, Sequence
 
 import pytest
 
@@ -388,6 +387,30 @@ def test_skip_cleanup_records_no_commands() -> None:
     )
     assert runner.commands == []
     assert scheduled == []
+
+
+def test_progress_callback_reports_steps(monkeypatch) -> None:
+    runner = RecordingRunner()
+    progress: list[str] = []
+
+    monkeypatch.setattr(storage_cleanup.time, "sleep", lambda *_args, **_kwargs: None)
+
+    storage_cleanup.perform_storage_cleanup(
+        storage_cleanup.DISCARD_BLOCKS,
+        ["/dev/test"],
+        execute=True,
+        runner=runner,
+        progress_callback=progress.append,
+    )
+
+    assert progress == [
+        "Tearing down existing storage on /dev/test",
+        "Removing metadata from dependent volumes on /dev/test",
+        "Zapping partition table on /dev/test",
+        "Discarding blocks on /dev/test",
+        "Wiping filesystem signatures on /dev/test",
+        "Storage cleanup finished on /dev/test",
+    ]
 
 
 def test_unknown_action_raises_value_error() -> None:
