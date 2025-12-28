@@ -753,8 +753,8 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         "[L]oad",
         "[C]onfigure net",
         "[A]pply",
-        "[N]Install",
-        "[I]nstall toggle",
+        "[N] Install now",
+        "[I] Auto-install toggle",
         "[Q]uit",
     ]
     footer = "  ".join(footer_parts)

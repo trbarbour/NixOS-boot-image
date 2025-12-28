@@ -228,7 +228,7 @@ def test_draw_plan_footer_mentions_manual_install(monkeypatch, sample_plan, samp
     monkeypatch.setattr(tui.network, "get_lan_status", lambda: "ready")
     tui._draw_plan(win, state)
     footer = win.lines[win.height - 1]
-    assert "[N]Install" in footer
+    assert "[N] Install now" in footer
 
 
 def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan, sample_disks):
