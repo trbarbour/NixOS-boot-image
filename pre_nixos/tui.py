@@ -1147,11 +1147,20 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
         return False
 
     summary_parts = ["Done."]
+    follow_up_required = auto_result.status != "success"
     if auto_result.status == "success":
         summary_parts.append("Auto-install completed.")
     elif auto_result.status == "skipped" and auto_result.reason:
         summary_parts.append(f"Auto-install skipped ({auto_result.reason}).")
-    stdscr.addstr(auto_message_row, 0, " ".join(summary_parts) + " Press any key to exit.")
+    else:
+        summary_parts.append("Auto-install did not complete.")
+
+    if follow_up_required:
+        summary_parts.append("Press any key to continue and run manual install with 'n'.")
+    else:
+        summary_parts.append("Press any key to exit.")
+
+    stdscr.addstr(auto_message_row, 0, " ".join(summary_parts))
     stdscr.refresh()
     while True:
         try:
@@ -1159,7 +1168,7 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
             break
         except curses.error:
             continue
-    return True
+    return not follow_up_required
 
 
 def _handle_manual_install(stdscr: curses.window, state: TUIState) -> bool:
