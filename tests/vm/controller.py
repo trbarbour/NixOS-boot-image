@@ -872,11 +872,18 @@ class BootImageVM:
                 "Missing exit marker while running checked command", body=output
             )
         exit_status = exit_lines[-1].split("=", 1)[-1].strip()
+        stdout_lines = [line for line in lines if not line.startswith("__EXIT__=")]
+        stdout = "\n".join(stdout_lines)
+        log_body = stdout if stdout else "<no output>"
+        self._log_step(
+            f"Checked command exited with status {exit_status}: {command}",
+            body=log_body,
+        )
         if exit_status != "0":
             self._raise_with_transcript(
                 f"Command exited with status {exit_status}", body=output
             )
-        return "\n".join(line for line in lines if not line.startswith("__EXIT__="))
+        return stdout
 
     def collect_journal(self, unit: str, *, since_boot: bool = True) -> str:
         """Return the journal for a systemd unit."""
