@@ -1,3 +1,4 @@
+import copy
 import json
 import pytest
 
@@ -40,6 +41,17 @@ class FakeWindow:
         if self.key_queue:
             return self.key_queue.pop(0)
         return "q"
+
+
+class PromptWindow(FakeWindow):
+    def __init__(self, inputs):
+        super().__init__()
+        self._inputs = list(inputs)
+
+    def getstr(self):
+        if self._inputs:
+            return self._inputs.pop(0)
+        return b""
 
 
 @pytest.fixture
@@ -298,14 +310,6 @@ def test_handle_manual_install_runs_auto_install(monkeypatch, tmp_path, sample_p
 
 
 def test_save_and_load_plan(tmp_path, monkeypatch):
-    class PromptWindow(FakeWindow):
-        def __init__(self, inputs):
-            super().__init__()
-            self._inputs = inputs
-
-        def getstr(self):
-            return self._inputs.pop(0)
-
     monkeypatch.setattr(tui.curses, "echo", lambda: None)
     monkeypatch.setattr(tui.curses, "noecho", lambda: None)
 
@@ -319,3 +323,51 @@ def test_save_and_load_plan(tmp_path, monkeypatch):
     win = PromptWindow([str(path).encode()])
     loaded = tui._load_plan(win, {"old": 0})
     assert loaded == plan
+
+
+def test_edit_plan_updates_array(monkeypatch, sample_plan):
+    monkeypatch.setattr(tui.curses, "echo", lambda: None)
+    monkeypatch.setattr(tui.curses, "noecho", lambda: None)
+    plan = copy.deepcopy(sample_plan)
+    win = PromptWindow([b"array", b"0", b"raid0", b"nvme0n1p2 sda1"])
+    tui._edit_plan(win, plan)
+    assert plan["arrays"][0]["level"] == "raid0"
+    assert plan["arrays"][0]["devices"] == ["nvme0n1p2", "sda1"]
+
+
+def test_edit_plan_updates_lv(monkeypatch, sample_plan):
+    monkeypatch.setattr(tui.curses, "echo", lambda: None)
+    monkeypatch.setattr(tui.curses, "noecho", lambda: None)
+    plan = copy.deepcopy(sample_plan)
+    win = PromptWindow([b"lv", b"1", b"projects", b"250G"])
+    tui._edit_plan(win, plan)
+    assert plan["lvs"][1]["name"] == "projects"
+    assert plan["lvs"][1]["size"] == "250G"
+
+
+def test_edit_plan_adds_lv(monkeypatch, sample_plan):
+    monkeypatch.setattr(tui.curses, "echo", lambda: None)
+    monkeypatch.setattr(tui.curses, "noecho", lambda: None)
+    plan = copy.deepcopy(sample_plan)
+    win = PromptWindow([b"add", b"logs", b"main", b"20G"])
+    tui._edit_plan(win, plan)
+    assert plan["lvs"][-1] == {"name": "logs", "vg": "main", "size": "20G"}
+    assert len(plan["lvs"]) == len(sample_plan["lvs"]) + 1
+
+
+@pytest.mark.parametrize(
+    "inputs",
+    [
+        [b"array", b"99"],
+        [b"lv", b"invalid"],
+        [b""],
+    ],
+)
+def test_edit_plan_ignores_invalid_input(monkeypatch, sample_plan, inputs):
+    monkeypatch.setattr(tui.curses, "echo", lambda: None)
+    monkeypatch.setattr(tui.curses, "noecho", lambda: None)
+    plan = copy.deepcopy(sample_plan)
+    snapshot = copy.deepcopy(plan)
+    win = PromptWindow(inputs)
+    tui._edit_plan(win, plan)
+    assert plan == snapshot

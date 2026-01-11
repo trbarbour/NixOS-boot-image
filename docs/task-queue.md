@@ -39,6 +39,9 @@ _Last updated: 2025-10-29T20-45-20Z_
 4. **Ensure the full test suite runs without skips.**
     - Audit pytest skips and prerequisites so the VM suite remains active, and maintain CI coverage for the entire suite.
 
+5. **Add unit coverage for the TUI plan editor.**
+   - Drive `pre_nixos.tui._edit_plan` via a fake window with scripted inputs for arrays and LVs, including invalid input handling.
+
 
 ## Recently Completed
 - 2025-10-19T11-58-00Z - Probed the storage-detection path inside the debug VM and captured `pre-nixos-detect-storage`/`pre-nixos --plan-only` output; see `docs/work-notes/2025-10-19T11-49-37Z-storage-detection-probe/`. 【F:docs/work-notes/2025-10-19T11-49-37Z-storage-detection-probe/storage-detection-probe.md†L1-L205】
