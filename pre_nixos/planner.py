@@ -592,3 +592,15 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
         devices["lvm_vg"][vg] = {"type": "lvm_vg", "lvs": lvs}
 
     return devices
+
+
+def refresh_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
+    """Regenerate ``plan['disko']`` from the mutable plan fields.
+
+    The TUI allows operators to edit arrays/LVs after the initial plan is
+    generated. Keep the derived ``disko.devices`` structure in sync so applying
+    the edited plan provisions the requested sizes and names.
+    """
+
+    plan["disko"] = _plan_to_disko_devices(plan)
+    return plan
