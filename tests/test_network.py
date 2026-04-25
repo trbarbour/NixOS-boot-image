@@ -346,6 +346,92 @@ def test_configure_lan_announces_ip_to_console(tmp_path, monkeypatch):
     assert status_path.read_text() == "LAN_IPV4=198.51.100.7\n"
 
 
+def test_configure_lan_prefers_networkctl_reconfigure(tmp_path, monkeypatch):
+    netdir = tmp_path / "sys/class/net"
+    netdir.mkdir(parents=True)
+    iface = netdir / "eth0"
+    iface.mkdir()
+    (iface / "device").mkdir()
+    (iface / "carrier").write_text("1")
+
+    network_dir = tmp_path / "etc/systemd/network"
+    ssh_dir = tmp_path / "etc/ssh"
+    root_home = tmp_path / "root"
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    run_calls: list[list[str]] = []
+    systemctl_calls: list[list[str]] = []
+
+    def fake_run(command: list[str]) -> None:
+        run_calls.append(command)
+
+    def fake_systemctl(args, *, ignore_missing=False):
+        systemctl_calls.append(list(args))
+
+    monkeypatch.setattr("pre_nixos.network._run", fake_run)
+    monkeypatch.setattr("pre_nixos.network._systemctl", fake_systemctl)
+    monkeypatch.setattr("pre_nixos.network.wait_for_ipv4", lambda *a, **k: None)
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+    configure_lan(
+        netdir,
+        network_dir,
+        ssh_dir,
+        authorized_key=key,
+        root_home=root_home,
+        status_dir=tmp_path / "run/pre-nixos",
+    )
+
+    assert ["networkctl", "reload"] in run_calls
+    assert ["networkctl", "reconfigure", "lan"] in run_calls
+    assert ["restart", "systemd-networkd"] not in systemctl_calls
+
+
+def test_configure_lan_falls_back_to_networkd_restart_when_reconfigure_fails(
+    tmp_path, monkeypatch
+):
+    netdir = tmp_path / "sys/class/net"
+    netdir.mkdir(parents=True)
+    iface = netdir / "eth0"
+    iface.mkdir()
+    (iface / "device").mkdir()
+    (iface / "carrier").write_text("1")
+
+    network_dir = tmp_path / "etc/systemd/network"
+    ssh_dir = tmp_path / "etc/ssh"
+    root_home = tmp_path / "root"
+
+    key = tmp_path / "id_ed25519.pub"
+    key.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
+
+    systemctl_calls: list[list[str]] = []
+
+    def fake_run(command: list[str]) -> None:
+        if command[:2] == ["networkctl", "reload"]:
+            raise subprocess.CalledProcessError(1, command)
+
+    def fake_systemctl(args, *, ignore_missing=False):
+        systemctl_calls.append(list(args))
+
+    monkeypatch.setattr("pre_nixos.network._run", fake_run)
+    monkeypatch.setattr("pre_nixos.network._systemctl", fake_systemctl)
+    monkeypatch.setattr("pre_nixos.network.wait_for_ipv4", lambda *a, **k: None)
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+    configure_lan(
+        netdir,
+        network_dir,
+        ssh_dir,
+        authorized_key=key,
+        root_home=root_home,
+        status_dir=tmp_path / "run/pre-nixos",
+    )
+
+    assert ["restart", "systemd-networkd"] in systemctl_calls
+
+
 def test_secure_ssh_replaces_symlink_and_filters_insecure_directives(tmp_path):
     ssh_dir = tmp_path / "etc/ssh"
     ssh_dir.mkdir(parents=True)
