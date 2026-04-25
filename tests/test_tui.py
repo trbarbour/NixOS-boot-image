@@ -339,10 +339,19 @@ def test_edit_plan_updates_lv(monkeypatch, sample_plan):
     monkeypatch.setattr(tui.curses, "echo", lambda: None)
     monkeypatch.setattr(tui.curses, "noecho", lambda: None)
     plan = copy.deepcopy(sample_plan)
+    plan["disko"] = {
+        "lvm_vg": {
+            "main": {
+                "type": "lvm_vg",
+                "lvs": {"slash": {"size": "50G", "content": {"type": "filesystem"}}},
+            }
+        }
+    }
     win = PromptWindow([b"lv", b"1", b"projects", b"250G"])
     tui._edit_plan(win, plan)
     assert plan["lvs"][1]["name"] == "projects"
     assert plan["lvs"][1]["size"] == "250G"
+    assert plan["disko"]["lvm_vg"]["main"]["lvs"]["projects"]["size"] == "250G"
 
 
 def test_edit_plan_adds_lv(monkeypatch, sample_plan):

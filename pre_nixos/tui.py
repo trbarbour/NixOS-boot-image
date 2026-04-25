@@ -818,6 +818,7 @@ def _edit_plan(stdscr: curses.window, plan: dict[str, Any]) -> None:
     stdscr.clear()
     stdscr.addstr("Edit (array/lv/add): ")
     choice = stdscr.getstr().decode().strip()
+    changed = False
     if choice == "array" and plan.get("arrays"):
         for idx, arr in enumerate(plan["arrays"]):
             line = f"{idx}: {arr['name']} level={arr['level']} devices={' '.join(arr['devices'])}"
@@ -833,6 +834,7 @@ def _edit_plan(stdscr: curses.window, plan: dict[str, Any]) -> None:
             if devices_str:
                 arr["devices"] = devices_str.split()
             arr["level"] = level
+            changed = True
         except Exception:
             pass
     elif choice == "lv" and plan.get("lvs"):
@@ -848,6 +850,7 @@ def _edit_plan(stdscr: curses.window, plan: dict[str, Any]) -> None:
             stdscr.addstr("New size (blank to keep): ")
             size = stdscr.getstr().decode().strip() or lv["size"]
             lv.update({"name": name, "size": size})
+            changed = True
         except Exception:
             pass
     elif choice == "add":
@@ -859,6 +862,9 @@ def _edit_plan(stdscr: curses.window, plan: dict[str, Any]) -> None:
         size = stdscr.getstr().decode().strip()
         if name and vg and size:
             plan.setdefault("lvs", []).append({"name": name, "vg": vg, "size": size})
+            changed = True
+    if changed:
+        planner.refresh_disko_devices(plan)
     curses.noecho()
 
 
@@ -1311,4 +1317,3 @@ def run() -> None:
                 continue
 
     curses.wrapper(_main)
-
