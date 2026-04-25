@@ -622,6 +622,33 @@ def _write_network_status(
     return status_path
 
 
+def _refresh_networkd_configuration(interface: str = "lan") -> None:
+    """Apply networkd changes with a fast-path before falling back to restart."""
+
+    log_event(
+        "pre_nixos.network.refresh_networkd.start",
+        interface=interface,
+    )
+    try:
+        _run(["networkctl", "reload"])
+        _run(["networkctl", "reconfigure", interface])
+    except subprocess.CalledProcessError as error:
+        log_event(
+            "pre_nixos.network.refresh_networkd.fallback_restart",
+            interface=interface,
+            failed_command=error.cmd,
+            returncode=error.returncode,
+        )
+        _systemctl(["restart", "systemd-networkd"], ignore_missing=True)
+        return
+
+    log_event(
+        "pre_nixos.network.refresh_networkd.finished",
+        interface=interface,
+        method="networkctl",
+    )
+
+
 def configure_lan(
     net_path: Path = Path("/sys/class/net"),
     network_dir: Path = Path("/etc/systemd/network"),
@@ -710,7 +737,7 @@ def configure_lan(
     _run(["ip", "link", "set", iface, "down"])
     _run(["ip", "link", "set", iface, "name", "lan"])
     _run(["ip", "link", "set", "lan", "up"])
-    _systemctl(["restart", "systemd-networkd"], ignore_missing=True)
+    _refresh_networkd_configuration("lan")
     secure_ssh(ssh_dir, ssh_service, authorized_key, root_home)
 
     log_event(
