@@ -12,7 +12,7 @@ from importlib import resources
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
 from . import network, state
 from .console import broadcast_to_consoles
@@ -23,6 +23,8 @@ _AUTO_STATUS_FILENAME = "auto-install-status"
 _BLOCK_START = "# pre-nixos auto-install start"
 _BLOCK_END = "# pre-nixos auto-install end"
 _AUTO_INSTALL_MODULE = "./pre-nixos-auto-install-ip.nix"
+_SERIAL_CONSOLE_PARAM = "console=ttyS0,115200n8"
+_VGA_CONSOLE_PARAM = "console=tty0"
 
 
 @dataclass(frozen=True)
@@ -284,6 +286,47 @@ def _extract_label(extra_args: Iterable[str]) -> Optional[str]:
     return None
 
 
+def _read_kernel_cmdline_tokens() -> tuple[str, ...]:
+    """Return kernel command-line tokens from ``/proc/cmdline``."""
+
+    try:
+        with open("/proc/cmdline", "r", encoding="utf-8") as fp:
+            return tuple(fp.read().split())
+    except OSError:
+        return ()
+
+
+def _select_console_kernel_params(
+    cmdline_tokens: Optional[Sequence[str]] = None,
+) -> list[str]:
+    """Return installed-system console kernel params.
+
+    Always include both serial and VGA consoles.  If the booted system's final
+    ``console=`` token targets a serial TTY, place serial last so the installed
+    system keeps serial as the primary console; otherwise keep VGA primary.
+    """
+
+    tokens = (
+        list(cmdline_tokens)
+        if cmdline_tokens is not None
+        else list(_read_kernel_cmdline_tokens())
+    )
+    console_values = [
+        token.split("=", 1)[1]
+        for token in tokens
+        if token.startswith("console=") and "=" in token
+    ]
+    serial_values = [value for value in console_values if value.startswith("ttyS")]
+    serial_param = (
+        f"console={serial_values[-1]}" if serial_values else _SERIAL_CONSOLE_PARAM
+    )
+
+    serial_selected = bool(console_values) and console_values[-1].startswith("ttyS")
+    if serial_selected:
+        return [_VGA_CONSOLE_PARAM, serial_param]
+    return [serial_param, _VGA_CONSOLE_PARAM]
+
+
 def _collect_storage_definitions(
     storage_plan: Optional[Dict[str, Any]],
 ) -> Tuple[list[Dict[str, Any]], list[Dict[str, str]]]:
@@ -527,6 +570,7 @@ def _inject_configuration(
     lan: LanConfiguration,
     storage_plan: Optional[Dict[str, Any]],
     install_network: Optional[InstallNetworkConfig] = None,
+    console_kernel_params: Optional[Sequence[str]] = None,
 ) -> None:
     """Rewrite ``configuration.nix`` with the managed auto-install block."""
 
@@ -558,6 +602,11 @@ def _inject_configuration(
     filtered = _ensure_auto_install_import(filtered)
 
     filesystems, swaps = _collect_storage_definitions(storage_plan)
+    effective_console_kernel_params = list(
+        console_kernel_params
+        if console_kernel_params is not None
+        else _select_console_kernel_params()
+    )
 
     original_name = _extract_original_name(lan.rename_rule)
     use_dhcp = install_network is None
@@ -734,7 +783,7 @@ def _inject_configuration(
         [
             "  boot.swraid.enable = true;",
             "  boot.initrd.services.lvm.enable = true;",
-            '  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];',
+            f"  boot.kernelParams = {_format_nix_list(effective_console_kernel_params)};",
             "  boot.loader.grub.extraConfig = ''",
             "    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
             "    terminal_input serial console",
@@ -1019,8 +1068,21 @@ def auto_install(
         returncode=result.returncode,
     )
 
+    console_kernel_params = _select_console_kernel_params()
+    log_event(
+        "pre_nixos.install.console_policy",
+        kernel_params=console_kernel_params,
+    )
+
     try:
-        _inject_configuration(root_path, key_text, lan, storage_plan, install_network)
+        _inject_configuration(
+            root_path,
+            key_text,
+            lan,
+            storage_plan,
+            install_network,
+            console_kernel_params,
+        )
         _rewrite_hardware_configuration(root_path)
     except Exception as exc:  # pragma: no cover - unexpected filesystem errors
         log_event("pre_nixos.install.configuration_write_failed", error=str(exc))
