@@ -210,7 +210,12 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'matchConfig.OriginalName' not in content
     assert 'matchConfig.Name = "lan";' not in content
     assert "./pre-nixos-auto-install-ip.nix" in content
-    assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content
+    assert 'boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];' in content
+    serial_index = content.find('"console=ttyS0,115200n8"')
+    vga_index = content.find('"console=tty0"')
+    assert serial_index != -1
+    assert vga_index != -1
+    assert serial_index < vga_index
     assert "boot.loader.grub.extraConfig = ''" in content
     assert "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1" in content
     assert "experimental-features = [ \"nix-command\" \"flakes\" ]" in content
