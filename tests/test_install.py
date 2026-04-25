@@ -175,6 +175,11 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     monkeypatch.setattr(install.subprocess, "run", fake_run)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     monkeypatch.setattr(install, "datetime", FakeDateTime)
+    monkeypatch.setattr(
+        install,
+        "_read_kernel_cmdline_tokens",
+        lambda: ("console=ttyS0,115200n8", "console=tty0"),
+    )
 
     reboot_called: list[bool] = []
 
@@ -324,6 +329,11 @@ def test_auto_install_static_network_skips_dhcp_unit(
     monkeypatch.setattr(install.subprocess, "run", fake_run)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     monkeypatch.setattr(install, "datetime", FakeDateTime)
+    monkeypatch.setattr(
+        install,
+        "_read_kernel_cmdline_tokens",
+        lambda: ("console=ttyS0,115200n8", "console=tty0"),
+    )
 
     reboot_called: list[bool] = []
 
@@ -482,6 +492,11 @@ def test_auto_install_failure_returns_failed(tmp_path, monkeypatch, broadcast_me
     monkeypatch.setattr(install.subprocess, "run", fake_run)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     monkeypatch.setattr(install, "datetime", FakeDateTime)
+    monkeypatch.setattr(
+        install,
+        "_read_kernel_cmdline_tokens",
+        lambda: ("console=ttyS0,115200n8", "console=tty0"),
+    )
 
     result = install.auto_install(
         lan,
@@ -524,3 +539,29 @@ def test_auto_install_dry_run_skips(monkeypatch, tmp_path, broadcast_messages):
     status_text = (tmp_path / "status" / "auto-install-status").read_text()
     assert status_text.startswith("STATE=skipped\nREASON=dry-run")
     assert broadcast_messages == []
+
+
+def test_select_console_kernel_params_defaults_to_display_primary() -> None:
+    params = install._select_console_kernel_params(())
+    assert params == ["console=ttyS0,115200n8", "console=tty0"]
+
+
+def test_select_console_kernel_params_uses_serial_primary_when_selected() -> None:
+    params = install._select_console_kernel_params(
+        ("foo=bar", "console=ttyS0,115200n8", "console=tty0", "console=ttyS0,115200n8")
+    )
+    assert params == ["console=tty0", "console=ttyS0,115200n8"]
+
+
+def test_inject_configuration_uses_serial_last_when_serial_is_primary(tmp_path) -> None:
+    root = tmp_path / "mnt"
+    lan = _make_lan(tmp_path, original_name="lan")
+    install._inject_configuration(
+        root,
+        lan.authorized_key.read_text(),
+        lan,
+        _sample_storage_plan(),
+        console_kernel_params=("console=tty0", "console=ttyS0,115200n8"),
+    )
+    content = (root / "etc/nixos/configuration.nix").read_text()
+    assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content

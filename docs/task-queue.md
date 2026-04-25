@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-04-25T19-35-35Z_
+_Last updated: 2026-04-25T20-37-02Z_
 
 ## Active Tasks
 
@@ -46,6 +46,7 @@ _Last updated: 2026-04-25T19-35-35Z_
 
 
 ## Recently Completed
+- 2026-04-25T20-37-02Z - Kept GRUB serial support enabled, taught installed-system configuration generation to mirror the booted console ordering (`/proc/cmdline`) so explicit serial-menu boots keep serial primary while default boots remain display-primary, added regression coverage in `tests/test_install.py`, and bumped patch version to `0.8.8`; details in `docs/work-notes/2026-04-25T20-37-02Z-console-policy-alignment.md`.
 - 2026-04-25T19-35-35Z - Reverted the global early-DHCP module change, switched `configure_lan` from unconditional `systemctl restart systemd-networkd` to `networkctl reload`/`reconfigure` with restart fallback, added unit coverage for both paths in `tests/test_network.py`, and bumped patch version to `0.8.7`; details in `docs/work-notes/2026-04-25T19-35-35Z-network-init-delay-root-cause.md`.
 
 - 2026-04-25T19-15-23Z - Added early Ethernet DHCP startup in `modules/pre-nixos.nix` via `systemd.network.networks."10-early-dhcp"`, extended module wiring assertions in `tests/test_pre_nixos_module.py`, and bumped the patch version to `0.8.6`; details in `docs/work-notes/2026-04-25T19-15-23Z-boot-image-early-dhcp.md`.

@@ -108,7 +108,11 @@ class BootImageVM:
     def _log_step(self, message: str, body: Optional[str] = None) -> None:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         entry = f"[{timestamp}] {message}"
+        if not hasattr(self, "_transcript") or self._transcript is None:
+            self._transcript = []
         self._transcript.append(entry)
+        if not hasattr(self, "harness_log_path"):
+            return
         with self.harness_log_path.open("a", encoding="utf-8") as handle:
             handle.write(entry + "\n")
             if body is not None:
