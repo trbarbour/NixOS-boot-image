@@ -43,3 +43,27 @@ def test_update_flake_nix_requires_existing_entry(tmp_path, update_script):
 
     with pytest.raises(SystemExit):
         update_script.update_flake_nix(flake_nix, "nixos-25.05")
+
+
+def test_update_flake_nix_replaces_with_release_tag(tmp_path, update_script):
+    flake_nix = tmp_path / "flake.nix"
+    flake_nix.write_text(
+        """
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+  };
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    update_script.update_flake_nix(flake_nix, "25.05")
+
+    updated = flake_nix.read_text(encoding="utf-8")
+    assert 'nixpkgs.url = "github:NixOS/nixpkgs/25.05";' in updated
+
+
+def test_newest_stable_release_tag_selects_highest(update_script):
+    tags = ["release-16.03-start", "24.11", "23.11", "25.05", "v208"]
+    assert update_script.newest_stable_release_tag(tags) == "25.05"

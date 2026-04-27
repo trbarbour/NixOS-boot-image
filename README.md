@@ -163,7 +163,9 @@ nix build
 > **Tip:** To ensure the boot image targets the newest stable NixOS release,
 > run `scripts/update_nixos_stable.py` before building. The helper retargets
 > `flake.nix` and refreshes the `nixpkgs` lock entry to the latest
-> `nixos-YY.MM` channel available on GitHub.
+> `nixos-YY.MM` channel available on GitHub. To pin to the latest stable
+> release tag instead (for a less frequently moving baseline), run
+> `scripts/update_nixos_stable.py --latest-release`.
 
 ### Running flake checks locally
 
