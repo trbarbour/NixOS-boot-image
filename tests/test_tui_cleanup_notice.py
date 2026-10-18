@@ -38,3 +38,15 @@ def test_format_cleanup_notice_truncates_device_list() -> None:
 
     assert "5 device(s)" in lines[0]
     assert "…" in lines[0]
+
+
+def test_initial_cleanup_notice_reports_scan_failure(existing_storage) -> None:
+    """A failed scan is reported in the header, using the error's first line."""
+
+    existing_storage.error = RuntimeError(
+        "command wipefs -n /dev/vda exited with status 1\nsecond line"
+    )
+    assert tui._initial_cleanup_notice() == [
+        "Existing storage scan failed; wipe options will appear when applying.",
+        "Error: command wipefs -n /dev/vda exited with status 1",
+    ]

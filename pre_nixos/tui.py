@@ -692,7 +692,7 @@ def _initial_cleanup_notice() -> list[str]:
 
     try:
         devices = storage_detection.detect_existing_storage()
-    except Exception as exc:  # pragma: no cover - rare command failures
+    except Exception as exc:
         message = str(exc).splitlines()[0]
         return [
             "Existing storage scan failed; wipe options will appear when applying.",
@@ -1077,7 +1077,7 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
     try:
         devices = storage_detection.detect_existing_storage()
-    except Exception as exc:  # pragma: no cover - rare detection errors
+    except Exception as exc:
         _show_modal(stdscr, [f"Failed to inspect existing storage: {exc}"])
         return False
 

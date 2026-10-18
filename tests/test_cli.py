@@ -185,7 +185,8 @@ def test_cli_auto_install_disabled_without_env(monkeypatch, tmp_path):
     assert auto_flags == [False]
 
 
-def test_cli_interactive_confirms_before_apply(monkeypatch):
+def test_cli_interactive_confirms_before_apply(monkeypatch, existing_storage):
+    existing_storage.devices = []
     monkeypatch.setattr(
         pre_nixos.inventory,
         "enumerate_disks",
@@ -216,7 +217,8 @@ def test_cli_interactive_confirms_before_apply(monkeypatch):
     assert confirmations == [True]
 
 
-def test_cli_abort_when_confirmation_declined(monkeypatch, capsys):
+def test_cli_abort_when_confirmation_declined(monkeypatch, capsys, existing_storage):
+    existing_storage.devices = []
     monkeypatch.setattr(
         pre_nixos.inventory,
         "enumerate_disks",
@@ -243,6 +245,20 @@ def test_cli_abort_when_confirmation_declined(monkeypatch, capsys):
     assert called == []
     out = capsys.readouterr().out
     assert "Aborting without modifying storage." in out
+
+
+def test_handle_existing_storage_refuses_to_proceed_when_scan_fails(
+    capsys, existing_storage
+):
+    """A failed scan must stop provisioning rather than assume empty disks."""
+
+    existing_storage.error = RuntimeError(
+        "command wipefs -n /dev/vda exited with status 1"
+    )
+    assert pre_nixos._handle_existing_storage({}, execute=True) is False
+    assert existing_storage.calls == 1
+    out = capsys.readouterr().out
+    assert "Failed to inspect existing storage: command wipefs -n /dev/vda" in out
 
 
 def test_cli_writes_console(monkeypatch, tmp_path, capsys):

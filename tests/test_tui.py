@@ -8,6 +8,18 @@ from pre_nixos.install import AutoInstallResult
 from pre_nixos.network import LanConfiguration
 
 
+@pytest.fixture(autouse=True)
+def clean_machine(existing_storage):
+    """Unless a test says otherwise, the TUI sees no existing storage.
+
+    Tests needing another scenario reassign ``existing_storage.devices`` or
+    ``existing_storage.error`` (see ``tests/storage_stub.py``).
+    """
+
+    existing_storage.devices = []
+    return existing_storage
+
+
 class FakeWindow:
     """Minimal stand-in for a curses window used in tests."""
 
@@ -280,6 +292,23 @@ def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan,
     assert state.last_auto_install is not None
     assert state.last_auto_install.status == "success"
     assert "Auto-install completed." in win.lines[1]
+
+
+def test_handle_apply_plan_aborts_when_storage_scan_fails(
+    monkeypatch, sample_plan, sample_disks, existing_storage
+):
+    """A failed scan must not lead to applying the plan."""
+
+    state = tui._initial_state(sample_plan, sample_disks, None)
+    existing_storage.devices = None
+    existing_storage.error = RuntimeError("command wipefs -n /dev/vda exited with status 1")
+    apply_calls = []
+    monkeypatch.setattr(tui.apply, "apply_plan", lambda plan: apply_calls.append(plan))
+
+    win = FakeWindow(height=5, width=120)
+    assert tui._handle_apply_plan(win, state) is False
+    assert apply_calls == []
+    assert win.lines[0].startswith("Failed to inspect existing storage: command wipefs")
 
 
 def test_handle_manual_install_runs_auto_install(monkeypatch, tmp_path, sample_plan, sample_disks):
