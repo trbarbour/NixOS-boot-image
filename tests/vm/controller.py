@@ -18,6 +18,9 @@ from tests.vm.metadata import DMESG_CAPTURE_COMMAND, record_boot_image_diagnosti
 from tests.vm.qmp import QmpClient, hotplug_virtio_disk
 
 SHELL_PROMPT = "PRE-NIXOS> "
+# A bare "#" prompt must start a line (optionally as "sh-5.2#"); unanchored, it
+# matched "CPU#1" in a kernel soft-lockup warning during boot (2026-10-18).
+ROOT_PROMPT_PATTERNS = (r"root@.*# ?", r"(?:^|[\r\n])(?:sh-[0-9.]+)?# ?")
 # virtio-blk serials are at most 20 bytes; longer ones are silently truncated.
 VIRTIO_SERIAL_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,20}")
 
@@ -630,7 +633,7 @@ class BootImageVM:
         transcript_start = self._snapshot_transcript()
         self._log_step("Attempting to escalate with sudo -i")
         self.child.sendline("sudo -i")
-        sudo_patterns = [r"\[sudo\] password for nixos:", r"root@.*# ?", r"# ?"]
+        sudo_patterns = [r"\[sudo\] password for nixos:", *ROOT_PROMPT_PATTERNS]
         try:
             idx = self._expect_normalised(sudo_patterns, timeout=120)
         except pexpect.TIMEOUT:
@@ -647,7 +650,7 @@ class BootImageVM:
             self._log_step("Submitting empty sudo password")
             self.child.sendline("")
             try:
-                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=120)
+                self._expect_normalised([*ROOT_PROMPT_PATTERNS], timeout=120)
             except pexpect.TIMEOUT:
                 reason = "sudo -i password prompt did not yield a root shell"
                 self._log_step(reason)
@@ -681,7 +684,7 @@ class BootImageVM:
         transcript_start = self._snapshot_transcript()
         self._log_step("Attempting to escalate with su -")
         self.child.sendline("su -")
-        su_patterns = [r"Password:", r"root@.*# ?", r"# ?"]
+        su_patterns = [r"Password:", *ROOT_PROMPT_PATTERNS]
         try:
             idx = self._expect_normalised(su_patterns, timeout=120)
         except pexpect.TIMEOUT:
@@ -698,7 +701,7 @@ class BootImageVM:
             self._log_step("Submitting empty root password for su -")
             self.child.sendline("")
             try:
-                self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=120)
+                self._expect_normalised([*ROOT_PROMPT_PATTERNS], timeout=120)
             except pexpect.TIMEOUT:
                 reason = "su - password prompt did not yield a root shell"
                 self._log_step(reason)
@@ -731,8 +734,7 @@ class BootImageVM:
         login_patterns = [
             r"login: ",
             r"\[nixos@[^]]+\]\$ ?",
-            r"root@.*# ?",
-            r"# ?",
+            *ROOT_PROMPT_PATTERNS,
         ]
         try:
             idx = self._expect_normalised(login_patterns, timeout=VM_LOGIN_TIMEOUT)
@@ -752,7 +754,7 @@ class BootImageVM:
             if not automatic_login:
                 self._log_step("Sending username 'root'")
                 self.child.sendline("root")
-                prompt_patterns = [r"Password:", r"root@.*# ?", r"# ?"]
+                prompt_patterns = [r"Password:", *ROOT_PROMPT_PATTERNS]
                 try:
                     idx = self._expect_normalised(prompt_patterns, timeout=180)
                 except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
@@ -762,7 +764,7 @@ class BootImageVM:
                 if idx == 0:
                     self._log_step("Submitting empty root password")
                     self.child.sendline("")
-                    self._expect_normalised([r"root@.*# ?", r"# ?"], timeout=180)
+                    self._expect_normalised([*ROOT_PROMPT_PATTERNS], timeout=180)
                 else:
                     self._log_step("Root prompt detected without password entry")
             else:

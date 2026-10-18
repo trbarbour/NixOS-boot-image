@@ -18,7 +18,7 @@ if pexpect_spec is None:  # pragma: no cover - environment specific
 else:  # pragma: no cover - exercised in integration environments
     import pexpect  # type: ignore
 
-from tests.vm.controller import BootImageVM, SHELL_PROMPT
+from tests.vm.controller import ROOT_PROMPT_PATTERNS, BootImageVM, SHELL_PROMPT
 from tests.vm.fixtures import BootImageBuild, probe_qemu_version
 from tests.vm.metadata import write_boot_image_metadata
 
@@ -1282,3 +1282,30 @@ def test_configure_prompt_disables_pagers() -> None:
     assert "SYSTEMD_PAGER=cat" in exports.split()
     assert "PAGER=cat" in exports.split()
     assert f"PS1='{SHELL_PROMPT}'" in exports
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "[  109.939034] watchdog: BUG: soft lockup - CPU#",  # the chunk that matched
+        "[  109.939034] watchdog: BUG: soft lockup - CPU#1 stuck for 22s!",
+        "x86: Booting SMP configuration:\r\n.... node  #0, CPUs:      #1",
+    ],
+)
+def test_root_prompt_patterns_ignore_hash_inside_boot_messages(text: str) -> None:
+    """A '#' in kernel output is not a root prompt.
+
+    Regression (2026-10-18, notes/2026-10-18T142621Z-vm-run): the bare '# ?'
+    pattern matched 'CPU#1' in a soft-lockup warning, so the harness typed its
+    shell setup into the console mid-boot and the command was lost.
+    """
+
+    assert not any(re.search(p, text) for p in ROOT_PROMPT_PATTERNS)
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["[root@nixos:~]# ", "root@nixos:~]# ", "\r\nsh-5.2# ", "# ", "\r\n# "],
+)
+def test_root_prompt_patterns_match_real_root_prompts(text: str) -> None:
+    assert any(re.search(p, text) for p in ROOT_PROMPT_PATTERNS)
