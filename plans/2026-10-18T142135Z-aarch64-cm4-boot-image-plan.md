@@ -1,7 +1,8 @@
 # Plan: AArch64 boot image for Raspberry Pi CM4 (microSD)
 
 - Written 2026-10-18 14:21Z, on a branch at version 0.10.0.
-- Status: **proposal for review.** Nothing below has been implemented.
+- Status: **approved; implementation not started** (except §3.1, done for both platforms by #306, #308 and #309).
+- 2026-10-18 22:03Z: the user's answers to §7 were received (verbatim copy: `plans/2026-10-18T220351Z-aarch64-user-answers.txt`) and are recorded in §8.
 - Method: top-down. The plan starts from requirements, then design decisions argued per choice, then unknowns, each with an experiment. Every work item cites the requirement it serves (`R-…`).
 
 ## 1. Goal
@@ -17,6 +18,10 @@ Build an AArch64 boot image that can be written to a microSD card, boots a Raspb
 | U3 | The planner's "at least one SSD" assumption is to be **removed**. |
 | U4 | The stock image's serial setup is correct and should be used as it is. The NIC rename is expected to work unchanged. |
 | U5 | The early boot chain (firmware → U-Boot → extlinux) need not be tested, **provided our changes do not alter it**. |
+| U6 | §2's requirements text is **approved** (2026-10-18 22:03Z). |
+| U7 | The §2.3 anomaly is resolved by **changing the requirement**. Done in #308: auto-provision only when every candidate disk is empty. |
+| U8 | **Install target: NVMe.** eMMC is nice to have; only one of the user's CM4s has eMMC, and all the others are Lite. |
+| U9 | Verifying `BOOT_ORDER` now and automating changes later is accepted. **The installer may refuse to install when the boot order is wrong.** |
 
 ## 2. Requirements changes (proposed text; traceability anchors)
 
@@ -31,9 +36,9 @@ These amend `automated-pre-nixos-reqs.md`. That document has no IDs, so new IDs 
 | **R-S2** | Disk classification covers eMMC and SD (`mmcblk*`) and NVMe as solid-state devices. Machines **may have no SSD**; a single solid-state device is a valid system disk. | §2.1, §5 "at least one SSD" | U3 |
 | **R-C1** | The installed system keeps every serial console the boot image was booted with (`ttyS*`, `ttyAMA*`, …) and keeps the same primary console. | §3 serial console | §3.6 below |
 | **R-T1** | Every platform's image builds from this repository on an x86_64 build host, including a Claude Code cloud session. | new | §3.3 below |
-| **R-B2** | On AArch64 Pi, the board's boot order must make the **installed system boot after installation**, without the installer running again, while still letting the installer boot on a machine with no installed system. pre-nixos must **verify** the effective boot order before it installs, and must refuse to install, or warn, if the installed system would not be booted. | new | user, 2026-10-18; §3.9 below |
+| **R-B2** | On AArch64 Pi, the board's boot order must make the **installed system boot after installation**, without the installer running again, while still letting the installer boot on a machine with no installed system. pre-nixos must **verify** the effective boot order before it installs, and must **refuse to install** if the installed system would not be booted. | new | user, 2026-10-18; U9; §3.9 below |
 
-**Anomaly for the user, independent of AArch64** (corrected 2026-10-18 after the user's note).
+**Anomaly for the user, independent of AArch64.** Corrected 2026-10-18 after the user's note. **Resolved (U7)** by the §2.3 amendment in #308.
 - §2.3 says *"Disk layout changes must **never** be applied automatically at boot."*
 - At boot, pre-nixos **provisions only when the existing-storage scan finds nothing**; otherwise it aborts. This is the safeguard in `_handle_existing_storage`.
 - So the remaining gap is narrow: auto-apply onto empty disks. §2.3's wording should probably say "never modify disks that contain data".
@@ -186,15 +191,16 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
 | E4 | Full SD image build time under emulation | build `bootImageSd` once and keep the store path for reuse | to do; not run alongside the VM suite (CPU contention) |
 | E5 | Can `qemu-system-aarch64 -M virt` (TCG) boot the image's system directly, and how fast is boot→login? | spike, then timeout calibration | to do |
 | E6 | What does `nixos-generate-config` emit on a non-EFI AArch64 system? (The installer builds on its output.) | run it inside the E5 VM | to do |
-| E7 | CM4 facts: block devices and flags (`lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL`), `/proc/cmdline`, which UART is live | **user runs these** on a CM4 booted from the stock image | needs the user |
-| E8 | NIC name on a CM4 (`ip -br link`) | as E7 | needs the user |
+| E7 | CM4 facts: block devices and flags (`lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL`), `/proc/cmdline`, which UART is live | **user runs these** on a CM4 booted from the stock image | **Done** (§8.1) |
+| E8 | NIC name on a CM4 (`ip -br link`) | as E7 | **Done**: `end0`, plus `wlan0` (§8.1) |
 | E9 | Can the installer fill a firmware partition reproducibly from `populateFirmwareCommands`? | build a firmware-partition derivation and compare its files with the stock image's FIRMWARE partition | to do |
-| E10 | The user's current EEPROM configuration and version | **user runs** `rpi-eeprom-config` and `vcgencmd bootloader_version` on the CM4 (nixpkgs `raspberrypi-eeprom`) | needs the user |
-| E11 | `BOOT_ORDER` digit meanings for the user's bootloader version (1 = SD/eMMC, 4 = USB, 6 = NVMe, f = restart?) | check the Raspberry Pi bootloader documentation for that version; confirm on hardware | to do |
-| E12 | Is the EEPROM configuration readable from the booted SD image without a reboot? | run `rpi-eeprom-config` and `vcgencmd bootloader_config` in the stock image | needs the user |
+| E10 | The user's current EEPROM configuration and version | **user runs** `rpi-eeprom-config` and `vcgencmd bootloader_version` on the CM4 (nixpkgs `raspberrypi-eeprom`) | **Configuration: done.** Version: unknown, because `vcgencmd` fails (no `/dev/vcio`) (§8.2) |
+| E11 | `BOOT_ORDER` digit meanings for the user's bootloader version (1 = SD/eMMC, 4 = USB, 6 = NVMe, f = restart?) | check the Raspberry Pi bootloader documentation for that version; confirm on hardware | **Partly done**: the board's own `boot.conf` comments say 1 = SD, 2 = network, 4 = USB over PCIe, 5 = BCM-USB-MSD (SoC XHCI), 6 = NVMe (§8.2). Still to check against the documentation. |
+| E12 | Is the EEPROM configuration readable from the booted SD image without a reboot? | run `rpi-eeprom-config` and `vcgencmd bootloader_config` in the stock image | **Yes**, through `rpi-eeprom-config`, which reads the `blconfig` nvmem device. `vcgencmd` does not work (§8.2). |
 | E13 | Can only `BOOT_ORDER` be changed, keeping the current EEPROM firmware version? (Which image does `rpi-eeprom-config --apply` use?) | read the tool's source in nixpkgs `raspberrypi-eeprom`, then try it on the user's CM4 | to do / user |
-| E14 | Is the CM4's EEPROM write-protected (WP pin, `eeprom_write_protect`)? | user checks the carrier board and `config.txt` | needs the user |
+| E14 | Is the CM4's EEPROM write-protected (WP pin, `eeprom_write_protect`)? | user checks the carrier board and `config.txt` | not answered; needed only for the deferred option (c) |
 | E15 | CM4 variant constraints: with eMMC fitted, can the carrier board's microSD slot boot at all (both share the SD interface)? If not, an eMMC CM4 cannot boot this image from a microSD card, and its install target is NVMe or USB. | Raspberry Pi CM4 documentation; the user's board | to do / user |
+| E16 | The user's stock image is **NixOS 26.05**, while this flake pins **25.05**. Does our module, and does the x86 ISO, work on 26.05? | evaluate and build on 26.05 (this affects x86 too, so it is a separate task) | to do; queued |
 
 ## 6. Work breakdown (in order; each item cites its requirements)
 
@@ -213,9 +219,76 @@ Version policy: each feature is a minor bump and each fix a patch bump (AGENTS.m
 
 ## 7. Inputs needed from the user
 
+**Answered 2026-10-18 22:03Z** (see §8). Items 1 to 4 are complete. Item 5 is partly complete: the bootloader version and write protection are still unknown, and neither blocks the work.
+
+
 1. Approve or amend the requirements text in §2.
 2. Decide the §2.3 auto-apply anomaly: change the requirement or the behaviour.
 3. Answer §3.7 (install target, CM4 variant) and §3.9: accept or amend the recommendation to verify `BOOT_ORDER` now and automate the change later. Is it acceptable for the installer to refuse to install when the boot order is wrong?
 4. Run E7 and E8 on a CM4 booted from the stock image, and paste the output:
    `lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL; cat /proc/cmdline; ip -br link; ls /dev/ttyAMA* /dev/ttyS*`
 5. Run E10, E12 and E14 on the CM4: `rpi-eeprom-config; vcgencmd bootloader_version; vcgencmd bootloader_config`. In the stock image these may need `nix-shell -p raspberrypi-eeprom libraspberrypi`.
+
+## 8. User answers and findings (2026-10-18 22:03Z)
+
+Verbatim answers: `plans/2026-10-18T220351Z-aarch64-user-answers.txt`. The board was booted from the stock NixOS **26.05** SD image (`nixos-sd-card-26.05.11985.26f4107e47e3`).
+
+### 8.1 Hardware facts (E7, E8) and what they change
+
+| Observation | Consequence |
+|---|---|
+| `mmcblk0` (238.8G SD card): **RM=0**, `p1` 30M (firmware), `p2` (root) | Confirms §3.1's premise: the RM flag cannot protect the card. The card is protected by the mount-table rule (root is on `mmcblk0p2`), already covered by `tests/test_protected_disks.py::test_sd_card_root_is_protected`. |
+| `nvme0n1` (Samsung 512G) already has 4 partitions: 260M, 16M, 475.9G, 774M | The layout looks like a Windows install (ESP, MSR, data, recovery), but that is an inference, not checked. Either way it is existing storage, so at boot pre-nixos **only plans** (§2.3). Installing on this board needs `pre-nixos-force-cleanup=1` or the TUI. That is intended behaviour, but the hardware checklist (§4) must include it. |
+| Kernel command line: `console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0`, but **no `/dev/ttyAMA*` exists**; `ttyS0` to `ttyS3` exist | The live UART is `ttyS*`, not `ttyAMA0`. R-C1's decision stands: copy every booted `console=` verbatim and in order, so the installed system matches the stock image. A console that names a missing device is harmless as long as it is not the last one (the last is primary; here that is `tty0`). Add the real command line as a unit-test fixture. |
+| NICs: `end0` (UP), `wlan0` (DOWN, NO-CARRIER) | `end0` is as predicted (§3.8). New unit test: with `wlan0` present but without carrier, `end0` is the NIC renamed to `lan`. |
+| CM4 Lite (SD card is `mmcblk0`, no eMMC device) | U8: the install target is NVMe. eMMC is deferred. E15 still matters for the user's one eMMC board. |
+
+### 8.2 EEPROM (E10, E11, E12)
+
+**The printed configuration:**
+```
+BOOT_UART=1  WAKE_ON_GPIO=1  POWER_OFF_ON_HALT=0  ENABLE_SELF_UPDATE=1
+## Try SD first (1), followed by, USB PCIe, NVMe PCIe, USB SoC XHCI then network
+#BOOT_ORDER=0xf25641
+# Try NVMe PCIe first (6), followed by, SD, BCM-USB-MSD (SoC XHCI) then network
+BOOT_ORDER=0xf2516
+```
+`vcgencmd` failed in both cases: `Can't open device file: /dev/vcio`.
+
+**Where the configuration came from.** I checked the source of `rpi-eeprom-config` in nixpkgs `raspberrypi-eeprom` 2025.03.10. That is the version our pinned 25.05 has; the user ran the 26.05 one, which is not checked.
+- With no arguments, `read_current_config()` first reads the **`blconfig` nvmem device**. That is the configuration the running bootloader used, which it exposes through the device tree (`/sys/firmware/devicetree/base/aliases/blconfig`).
+- It falls back to `vcgencmd bootloader_config` only when that device is missing.
+- Since `vcgencmd` failed but a configuration was still printed, the printed text most likely came from `blconfig`, so it is the board's effective configuration.
+- **Consequence for §3.9:** the verification can read the configuration without `vcgencmd` or `/dev/vcio`.
+
+**`0xf2516` versus the user's `0xf25146`.**
+- Nibbles are read from the least significant end:
+  - `0xf2516` = NVMe → SD → BCM-USB-MSD → network → restart;
+  - `0xf25146` = NVMe → USB-over-PCIe → SD → BCM-USB-MSD → network → restart.
+- **Both boot NVMe before SD**, so both satisfy R-B2, and the verification accepts both.
+- The user suspects the NixOS installation changed the value. The evidence points elsewhere:
+  - the text is a hand-edited configuration: the default line is commented out, and a new line with a comment explaining it was added;
+  - nothing in a NixOS install writes the EEPROM unless asked to;
+  - the bundled Pi 4 default `boot.conf` (extracted from `pieeprom-2025-02-11.bin`) has no `BOOT_ORDER` line and has `BOOT_UART=0`, so the board's text is not that default.
+
+  Who edited it, and when, cannot be determined from here. It does not affect the design.
+- The digit meanings in the board's comments match the user's reading that 4 is "USB PCIe". That digit is useless on boards whose PCIe lane drives the NVMe.
+
+**Still unknown, and not blocking:**
+- The bootloader version (`vcgencmd` cannot run).
+- Whether `/dev/vcio` can be created (`mknod /dev/vcio c 100 0`, as the tool suggests) on the NixOS kernel. That needs the `bcm2835` vcio driver, which is not checked.
+- E14 (write protection), which matters only for the deferred option (c).
+
+### 8.3 Effects on the work breakdown (§6)
+
+- **Item 1 (requirements):** approved, and applied to `automated-pre-nixos-reqs.md` on 2026-10-18.
+- **Item 2 (boot-medium protection):** done (#306, #308, #309).
+- **Item 8 (installed bootloader):** design for an **NVMe** target first. eMMC is a later extension and needs E15.
+- **Item 9 (boot order):**
+  - read the configuration through `rpi-eeprom-config`, i.e. `blconfig`;
+  - **refuse** to install unless the target class (6 for NVMe) comes before 1 (SD) in `BOOT_ORDER`;
+  - unit-test fixtures: the board's configuration above, plus a `0xf25146` variant;
+  - unit test: `0xf25641` (SD first) is refused for an NVMe target.
+- **Item 10 (hardware acceptance):** includes forced cleanup of an NVMe that already holds data.
+- **New, E16:** a nixpkgs 25.05 → 26.05 bump. The AGENTS.md policy prefers the newer version, and the user's stock image is 26.05. It affects x86 too, so it is queued as its own task.
+

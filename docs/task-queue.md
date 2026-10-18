@@ -73,12 +73,20 @@ _Last updated: 2026-10-18T17-33-41Z_
    - 2026-10-18T14-21-35Z - Plan written: `plans/2026-10-18T142135Z-aarch64-cm4-boot-image-plan.md`.
      - E1 (module evaluates on the stock SD image), E2 (this host builds AArch64 via binfmt) and E3 (only 44 derivations built locally) are done.
      - Found a safety gap: the SD boot card is not excluded from storage plans (§3.1).
-     - **Awaiting user input (§7)** before implementation. Its §3.1 (boot-medium protection) is now done via #306.
+     - Its §3.1 (boot-medium protection) is now done via #306, #308 and #309.
+   - 2026-10-18T22-03-51Z - User answers received and recorded (plan §8; verbatim copy `plans/2026-10-18T220351Z-aarch64-user-answers.txt`).
+     - Requirements §2 approved and applied to `automated-pre-nixos-reqs.md` (R-IDs).
+     - Install target: NVMe. Refusing to install on a wrong `BOOT_ORDER` is acceptable.
+     - **Next:** implement work items 3 to 9 of the plan in order (not started).
 
 10. **Fix trbarbour/NixOS-boot-image#309: the USB boot stick blocks auto-provisioning.** *(found by the #306 USB-stick spike, 2026-10-18T19-09-18Z)*
     - Root cause proven in the guest: the boot disk resolved to `/dev/dev/sda`, and the boot-time gate `pre-nixos-detect-storage` ignored the protected set. See `notes/2026-10-18T190817Z-usb-stick-spike.md`.
     - Fix (0.10.8): unit regressions plus the permanent VM test `tests/vm/test_usb_stick_boot.py`.
     - 2026-10-18T19-39-35Z - VM-verified on 0.10.9: `tests/vm/test_usb_stick_boot.py` passes, and the CD-ROM VM tests pass on 0.10.8. Also fixed a harness fault: echo leaking into `run_as_root_checked`. Remaining: a PR (if the user asks).
+
+11. **Evaluate a nixpkgs bump from 25.05 to 26.05 (plan E16).** *(found 2026-10-18T22-03-51Z)*
+    - The user's working stock AArch64 image is 26.05, and the AGENTS.md newness policy prefers the newer version.
+    - It affects the x86 ISO too, so it needs its own build and VM regression run. Decide before AArch64 work item 6 (the flake refactor).
 
 ## Recently Completed
 - 2026-10-18T17-32-54Z - Merged trbarbour/NixOS-boot-image#308 (0.10.7):
