@@ -17,6 +17,12 @@ def test_pre_nixos_cleans_raid_lvm_residue(
     boot_image_vm_with_additional_disks.assert_commands_available(
         "mdadm", "pvcreate", "vgcreate", "lvcreate", "blkid"
     )
+    # The boot-time pre-nixos run provisions (and first tears down) these
+    # disks; seeding residue before it finishes lets it destroy the residue
+    # (seen 2026-10-18; that run took 3m53s under TCG).
+    boot_image_vm_with_additional_disks.wait_for_unit_inactive(
+        "pre-nixos", timeout=600
+    )
 
     boot_image_vm_with_additional_disks.run_as_root(
         "mdadm --stop --scan || true", timeout=180
