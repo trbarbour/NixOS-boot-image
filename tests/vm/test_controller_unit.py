@@ -1252,3 +1252,33 @@ def test_run_as_root_checked_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     assert captured["message"] == "Command exited with status 2"
 
 
+
+
+def test_configure_prompt_disables_pagers() -> None:
+    """Every shell the harness drives must never page output.
+
+    Commands run over the serial console see a terminal, so systemd tools pipe
+    long output through ``less`` and wait for a key press; ``vm.run`` then
+    times out waiting for the prompt.  Regression: ``networkctl status lan``
+    in ``scripts/manual_vm_debug.py`` hung at ``lines 1-23`` (2026-10-18).
+    """
+
+    sent: List[str] = []
+
+    class RecordingChild:
+        def sendline(self, line: str) -> None:
+            sent.append(line)
+
+    vm = object.__new__(BootImageVM)
+    vm.child = RecordingChild()  # type: ignore[assignment]
+    vm._expect_normalised = lambda patterns, *, timeout: 0  # type: ignore[assignment]
+    vm._log_step = lambda *args, **kwargs: None  # type: ignore[assignment]
+
+    vm._configure_prompt(context="unit test")
+
+    assert len(sent) == 1
+    exports = sent[0].split(";", 1)[0]
+    assert exports.startswith("export ")
+    assert "SYSTEMD_PAGER=cat" in exports.split()
+    assert "PAGER=cat" in exports.split()
+    assert f"PS1='{SHELL_PROMPT}'" in exports

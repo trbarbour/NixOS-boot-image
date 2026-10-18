@@ -7,7 +7,7 @@ import argparse
 import datetime
 from pathlib import Path
 import sys
-from typing import Iterable, Tuple
+from typing import Iterable, TextIO, Tuple
 
 import pexpect
 
@@ -16,13 +16,12 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts import manual_vm_debug as manual  # type: ignore  # noqa: E402
-from tests.test_boot_image_vm import (  # type: ignore  # noqa: E402
-    BootImageBuild,
+from tests.vm.controller import (  # noqa: E402
     BootImageVM as BaseBootImageVM,
     SHELL_PROMPT,
-    probe_qemu_version,
-    write_boot_image_metadata,
 )
+from tests.vm.fixtures import BootImageBuild, probe_qemu_version  # noqa: E402
+from tests.vm.metadata import write_boot_image_metadata  # noqa: E402
 
 DEFAULT_PREFIX = REPO_ROOT / "docs" / "work-notes"
 DEFAULT_SUFFIX = "sshd-dependency-audit"
@@ -70,7 +69,7 @@ def launch_vm(
     harness_log: Path,
     serial_log: Path,
     metadata_path: Path,
-) -> Tuple[PatchedBootImageVM, pexpect.spawn, object]:
+) -> Tuple[PatchedBootImageVM, pexpect.spawn, TextIO]:
     ssh = manual.require_executable("ssh")
     qemu = manual.require_executable("qemu-system-x86_64")
 

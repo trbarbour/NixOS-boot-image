@@ -497,10 +497,18 @@ class BootImageVM:
                 return idx
 
     def _configure_prompt(self, *, context: str = "shell") -> None:
-        """Configure the shell prompt with a sentinel to absorb stray output."""
+        """Configure the shell prompt with a sentinel to absorb stray output.
+
+        Pagers are disabled too: the serial console is a terminal, so systemd
+        tools (``networkctl``, ``systemctl``, ``journalctl``) would otherwise
+        page long output and block until a key press.
+        """
 
         marker = f"__PROMPT_READY__{int(time.time() * 1000)}__"
-        command = f"export PS1='{SHELL_PROMPT}'; printf '{marker}\\n'"
+        command = (
+            f"export PS1='{SHELL_PROMPT}' SYSTEMD_PAGER=cat PAGER=cat; "
+            f"printf '{marker}\\n'"
+        )
         self.child.sendline(command)
         try:
             self._expect_normalised([marker], timeout=120)

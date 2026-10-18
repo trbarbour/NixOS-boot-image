@@ -247,7 +247,7 @@ def allocate_ssh_forward_port() -> int:
         return sock.getsockname()[1]
 
 
-def _resolve_iso_path(store_path: Path) -> Path:
+def resolve_iso_path(store_path: Path) -> Path:
     if store_path.is_file() and store_path.suffix == ".iso":
         return store_path
     iso_candidates = sorted(store_path.rglob("*.iso"))
@@ -288,7 +288,7 @@ def boot_image_build(
     if not paths:
         raise AssertionError("nix build did not return a store path")
     store_path = Path(paths[-1])
-    iso_path = _resolve_iso_path(store_path)
+    iso_path = resolve_iso_path(store_path)
 
     info_proc = subprocess.run(
         [

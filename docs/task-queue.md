@@ -45,13 +45,29 @@ _Last updated: 2026-04-25T20-37-02Z_
    - Drive `pre_nixos.tui._edit_plan` via a fake window with scripted inputs for arrays and LVs, including invalid input handling.
    - 2026-04-25T17-43-55Z - Added a regression that verifies LV edits in `_edit_plan` also refresh the derived `plan["disko"]` structure used by `apply`, preventing stale LV sizes from being provisioned.
 
-6. **Repair VM debug scripts' imports.**
-   - 2026-10-18T03-05-00Z - `scripts/manual_vm_debug.py`, `scripts/collect_pre_nixos_journal.py` and `scripts/collect_sshd_pre_nixos_debug.py` (and `collect_sshd_dependency_audit.py`, via `manual_vm_debug`) fail at import time with `ImportError: cannot import name '_resolve_iso_path' from 'tests.test_boot_image_vm'`. Verified on the unmodified tree; the helper moved to `tests/vm/fixtures.py` in `11aa4b6`. Add an import smoke test for every script so this can't regress silently.
-
-7. **Narrow the flake's package source (`src = ./.`).**
+6. **Narrow the flake's package source (`src = ./.`).**
    - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
 
+7. **Make the VM harness (`tests/vm/`) type-check cleanly.**
+   - 2026-10-18T03-25-00Z - `mypy --check-untyped-defs` reports 18 errors in `tests/vm/{controller,fixtures,metadata}.py`. Reviewed: none is a known runtime bug.
+     - 4× "Missing return": the functions end in `_raise_with_transcript`, which always raises but is annotated `-> None`; annotate it `NoReturn`.
+     - 3× undefined `Dict`: annotations only, under `from __future__ import annotations`.
+     - 4× undefined `pexpect`: a `TYPE_CHECKING` import alias.
+     - The rest are generator-fixture return types and `object`-typed metadata dicts.
+   - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
+
+8. **Fix the race in `test_pre_nixos_cleans_raid_lvm_residue`.**
+   - 2026-10-18T04-04-07Z - The test seeds RAID/LVM residue while the boot-time `pre-nixos` run may still be active, and that run tears the residue down, as its journal shows. Fix: `wait_for_unit_inactive("pre-nixos", timeout=600)` before seeding; the boot-time run took 3m53s under TCG. See `notes/2026-10-18T040407Z-vm-run.md`.
+
+9. **Let `collect_pre_nixos_journal.py` capture the whole run.**
+   - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
+
 ## Recently Completed
+- 2026-10-18T04-04-07Z - Repaired the VM debug scripts (version `0.9.3`).
+  - Five scripts failed at import, because the legacy shim's star-import omits `_resolve_iso_path`; they now import from `tests/vm/` directly.
+  - mypy then exposed stale call sites, which are fixed; `collect_pre_nixos_journal.py` is rebuilt on `manual_vm_debug` helpers via `describe_boot_image()`.
+  - The harness now disables pagers, after `networkctl` hung `manual_vm_debug`.
+  - Added `tests/test_script_imports.py`. The journal script and `manual_vm_debug` pass end to end. See `notes/2026-10-18T040407Z-vm-run.md`.
 - 2026-10-18T02-53-00Z - Migrated the dev environment from Codex to Claude Code cloud. Added `scripts/nix_git_inputs.py` (verified git overrides for `github:` inputs), the SessionStart hook `.claude/hooks/session-start.sh`, and shared `scripts/lib/dev_packages.sh`/`python_venv.sh` (now including `openssh-client`). The full suite passes under TCG. Details: `docs/work-notes/2026-10-18T02-01-07Z-claude-code-environment-migration.md`, `notes/2026-10-18T025300Z-vm-run.md`.
 - 2026-10-18T03-30-00Z - Made the unit tests independent of host storage: an autouse `existing_storage` stub (`tests/storage_stub.py`) fails any test that reaches `detect_existing_storage()` without declaring a scenario, using a `BaseException` so production `except Exception` handlers can't hide it. This exposed 9 dependent tests (4 failing, 5 passing by accident). Added failure-path tests for the scan, the CLI, the TUI header and TUI apply; removed two stale `# pragma: no cover`; bumped version to `0.9.1`. See `docs/work-notes/2026-10-18T02-01-07Z-claude-code-environment-migration.md` (F1).
 - 2026-04-25T20-37-02Z - Kept GRUB serial support enabled, taught installed-system configuration generation to mirror the booted console ordering (`/proc/cmdline`) so explicit serial-menu boots keep serial primary while default boots remain display-primary, added regression coverage in `tests/test_install.py`, and bumped patch version to `0.8.8`; details in `docs/work-notes/2026-04-25T20-37-02Z-console-policy-alignment.md`.

@@ -22,14 +22,13 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.nix_git_inputs import nix_command  # noqa: E402
-from tests.test_boot_image_vm import (  # type: ignore  # noqa: E402
+from tests.vm.controller import BootImageVM, SHELL_PROMPT  # noqa: E402
+from tests.vm.fixtures import (  # noqa: E402
     BootImageBuild,
-    BootImageVM,
-    SHELL_PROMPT,
-    _resolve_iso_path,
     probe_qemu_version,
-    write_boot_image_metadata,
+    resolve_iso_path,
 )
+from tests.vm.metadata import write_boot_image_metadata  # noqa: E402
 
 
 def _run(cmd: List[str], *, env: Dict[str, str] | None = None, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -58,7 +57,7 @@ def build_boot_image(public_key: Path) -> BootImageBuild:
     if not store_paths:
         raise RuntimeError("nix build did not return a store path")
     store_path = Path(store_paths[-1])
-    iso_path = _resolve_iso_path(store_path)
+    iso_path = resolve_iso_path(store_path)
 
     info_result = _run(["nix", "path-info", "--json", str(store_path)])
     info_json = info_result.stdout.strip()
@@ -215,7 +214,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
             "virtio-net-pci,netdev=net0",
         ]
 
-        qemu_version = probe_qemu_version(qemu)
+        qemu_version = probe_qemu_version(cmd[0])
 
         outputs: Dict[str, str] = {}
         failure: Optional[Dict[str, str]] = None
