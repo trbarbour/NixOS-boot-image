@@ -106,7 +106,7 @@ def test_detects_wipefs_signature_without_partitions() -> None:
 def test_only_boot_disk_is_ignored() -> None:
     commands = {
         ("lsblk", "-npo", "PKNAME", "/dev/sda1"): CommandOutput(
-            stdout="sda\n", returncode=0
+            stdout="/dev/sda\n", returncode=0
         ),
         ("findmnt", "-n", "-o", "SOURCE", "/iso"): CommandOutput(stdout="", returncode=1),
         ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
@@ -204,7 +204,7 @@ def test_detect_existing_storage_excludes_boot_disk() -> None:
             stdout="/dev/sda disk 0\n/dev/sdb disk 0\n", returncode=0
         ),
         ("lsblk", "-npo", "PKNAME", "/dev/sda1"): CommandOutput(
-            stdout="sda\n", returncode=0
+            stdout="/dev/sda\n", returncode=0
         ),
         ("lsblk", "-rno", "TYPE", "/dev/sdb"): CommandOutput(
             stdout="disk\npart\n", returncode=0
@@ -324,7 +324,7 @@ def test_logs_boot_resolution_and_device_filtering(monkeypatch) -> None:
             stdout="/dev/sda1 part\n/dev/sda disk\n"
         ),
         ("lsblk", "-npo", "PKNAME", "/dev/sda1"): CommandOutput(
-            stdout="sda\n", returncode=0
+            stdout="/dev/sda\n", returncode=0
         ),
         ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
             stdout="/dev/sda disk 0\n/dev/nvme0n1 disk 0\n", returncode=0

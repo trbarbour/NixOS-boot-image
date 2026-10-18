@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 import pytest
 
 from scripts.nix_git_inputs import nix_command
+from tests.vm.boot_medium import UsbStick, boot_medium_args, make_usb_stick
 from tests.vm.qmp import allocate_qmp_socket_path
 from tests.vm.metadata import (
     append_run_ledger_entry,
@@ -400,6 +401,7 @@ def _launch_boot_image_vm(
     ssh_executable: str,
     request: pytest.FixtureRequest,
     log_dir: Optional[Path] = None,
+    usb_stick: Optional[UsbStick] = None,
 ) -> "BootImageVM":
     from tests.vm.controller import BootImageVM
 
@@ -433,12 +435,9 @@ def _launch_boot_image_vm(
         "-display",
         "none",
         "-no-reboot",
-        "-boot",
-        "d",
         "-serial",
         "stdio",
-        "-cdrom",
-        str(boot_image_build.iso_path),
+        *boot_medium_args(boot_image_build.iso_path, usb_stick),
         "-drive",
         f"file={vm_disk_image},if=virtio,format=raw",
     ]
@@ -634,6 +633,40 @@ def boot_image_vm_for_hotplug(
     )
 
 
+@pytest.fixture(scope="session")
+def usb_boot_stick(
+    boot_image_build: BootImageBuild,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> UsbStick:
+    stick_dir = tmp_path_factory.mktemp("boot-image-usb-stick")
+    return make_usb_stick(boot_image_build.iso_path, stick_dir / "stick.img")
+
+
+@pytest.fixture(scope="session")
+def boot_image_vm_from_usb_stick(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    usb_boot_stick: UsbStick,
+    vm_disk_image_factory: Callable[..., Path],
+    ssh_executable: str,
+    request: pytest.FixtureRequest,
+) -> "BootImageVM":
+    """A VM booted from a writable, non-removable USB stick plus one empty disk."""
+
+    vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-usb-target")
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        qemu_executable=qemu_executable,
+        boot_image_build=boot_image_build,
+        vm_disk_image=vm_disk_image,
+        extra_disks=[],
+        ssh_executable=ssh_executable,
+        request=request,
+        usb_stick=usb_boot_stick,
+    )
+
+
 __all__ = [
     "BootImageBuild",
     "RunTimings",
@@ -655,10 +688,12 @@ __all__ = [
     "boot_ssh_key_pair",
     "boot_image_vm",
     "boot_image_vm_for_hotplug",
+    "boot_image_vm_from_usb_stick",
     "nix_executable",
     "probe_qemu_version",
     "qemu_executable",
     "ssh_executable",
     "ssh_keygen_executable",
+    "usb_boot_stick",
     "vm_disk_image_factory",
 ]

@@ -53,7 +53,8 @@ def make_env(
         if key[:3] == ("lsblk", "-npo", "PKNAME"):
             rows = stacks.get(key[3], [])
             parents = [r.split()[0] for r in rows[1:] if r.split()[1] == "disk"]
-            return CommandOutput(stdout=(parents[0].removeprefix("/dev/") + "\n") if parents else "\n")
+            # -p prints full paths, as observed in the guest (spike run2, #306).
+            return CommandOutput(stdout=(parents[0] + "\n") if parents else "\n")
         if key[:3] == ("lsblk", "-nrspo", "NAME,TYPE"):
             rows = stacks.get(key[3])
             if rows is None:
@@ -242,3 +243,47 @@ def test_scan_does_not_count_protected_disks_as_existing_storage() -> None:
     )
     found = storage_detection.scan_existing_storage(env, protected_disks=frozenset({"/dev/mmcblk0"}))
     assert found == []
+
+
+def test_boot_disk_is_not_doubly_prefixed() -> None:
+    """``lsblk -p`` prints ``/dev/sda``; the probe used to yield ``/dev/dev/sda``."""
+
+    env = make_env(
+        mounts={"/": "tmpfs", "/iso": "/dev/sda1"},
+        stacks={"/dev/sda1": ["/dev/sda1 part", "/dev/sda disk"]},
+    )
+    assert storage_detection.resolve_boot_disk(env) == "/dev/sda"
+
+
+def test_boot_time_gate_ignores_the_boot_stick() -> None:
+    """The #306 spike: ISO on an RM=0 USB stick, empty target disk.
+
+    ``pre-nixos-detect-storage`` gates boot-time auto-provisioning; it must
+    report no existing storage (exit 1) so the empty target is provisioned
+    (reqs §2.3: the boot medium does not count as existing storage).
+    """
+
+    base = make_env(
+        mounts={"/": "tmpfs", "/iso": "/dev/sda1", "/nix/.ro-store": "/dev/loop0"},
+        stacks={
+            "/dev/sda1": ["/dev/sda1 part", "/dev/sda disk"],
+            "/dev/loop0": ["/dev/loop0 loop"],
+        },
+    )
+    scan = {
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
+            stdout="/dev/fd0 disk 1\n/dev/sda disk 0\n/dev/vda disk 0\n"
+        ),
+        ("lsblk", "-rno", "TYPE", "/dev/sda"): CommandOutput(stdout="disk\npart\npart\n"),
+        ("wipefs", "-n", "/dev/sda"): CommandOutput(stdout="0x8001 iso9660\n"),
+        ("lsblk", "-rno", "TYPE", "/dev/vda"): CommandOutput(stdout="disk\n"),
+        ("wipefs", "-n", "/dev/vda"): CommandOutput(stdout=""),
+    }
+    env = DetectionEnvironment(
+        run=lambda cmd: scan.get(tuple(cmd)) or base.run(cmd),
+        path_exists=base.path_exists,
+        realpath=base.realpath,
+        read_cmdline=base.read_cmdline,
+        is_block_device=base.is_block_device,
+    )
+    assert storage_detection.detection_exit_status(env) == 1

@@ -1,0 +1,32 @@
+qemu: -device qemu-xhci,id=xhci -drive file=/tmp/claude-0/-home-user-NixOS-boot-image/93d2ffc0-3987-539d-bac2-eb76314fff24/scratchpad/spike-usb/run1/stick.img,if=none,id=stick,format=raw -device usb-storage,bus=xhci.0,drive=stick,removable=off,bootindex=0 -drive file=/tmp/claude-0/-home-user-NixOS-boot-image/93d2ffc0-3987-539d-bac2-eb76314fff24/scratchpad/spike-usb/run1/target.img,if=virtio,format=raw
+logged in after 191s
+$ lsblk -o NAME,RM,TRAN,TYPE,SIZE,MOUNTPOINTS
+NAME   RM TRAN   TYPE  SIZE MOUNTPOINTS
+fd0     1        disk    4K
+loop0   0        loop  1.3G /nix/.ro-store
+sda     0 usb    disk  1.3G
+├─sda1  0        part  1.3G /iso
+└─sda2  0        part    3M
+sr0     1 ata    rom  1024M
+vda     0 virtio disk    4G
+$ findmnt -n -o SOURCE /iso
+/dev/sda1
+$ cat /sys/block/sda/removable 2>/dev/null
+0
+pre-nixos finished
+$ cat /run/pre-nixos/storage-status 2>/dev/null
+STATE=plan-only
+DETAIL=existing-storage
+AUTO_INSTALL=skipped
+$ lsblk -o NAME,TYPE,SIZE,MOUNTPOINTS
+NAME   TYPE  SIZE MOUNTPOINTS
+fd0    disk    4K
+loop0  loop  1.3G /nix/.ro-store
+sda    disk  1.3G
+├─sda1 part  1.3G /iso
+└─sda2 part    3M
+sr0    rom  1024M
+vda    disk    4G
+$ journalctl -u pre-nixos -b --no-pager | grep -iE 'tearing|protect|refus|disko version|existing storage' | head
+
+STICK UNCHANGED

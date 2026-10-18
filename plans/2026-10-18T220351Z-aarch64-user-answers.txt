@@ -1,0 +1,56 @@
+3.7
+* Questions for the user:
+** Install target: CM4 eMMC, NVMe on the carrier board, or both? -> NVMe; eMMC is nice-to-have, but currently I only have one CM4 with eMMC
+** CM4 variant: Lite (no eMMC) or eMMC? -> All Lite, except for one.
+** EEPROM BOOT_ORDER -> I have set BOOT_ORDER=0xf25146 on all my CM4s that have NVMe (but see below).
+
+7. Inputs needed from the user 
+Approve or amend the requirements text in §2. -> Approved
+Decide the §2.3 auto-apply anomaly: change the requirement or the behaviour. -> change the requirement
+Answer §3.7 (install target, CM4 variant) and §3.9: accept or amend the recommendation to verify BOOT_ORDER now and automate the
+change later. Is it acceptable for the installer to refuse to install when the boot order is wrong? -> yes
+Run E7 and E8 on a CM4 booted from the stock image, and paste the output: lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL; cat 
+proc/cmdline; ip -br link; ls /dev/ttyAMA* /dev/ttyS*
+Run E10, E12 and E14 on the CM4: rpi-eeprom-config; vcgencmd bootloader_version; vcgencmd bootloader_config. In the
+stock image these may need nix-shell -p raspberrypi-eeprom libraspberrypi.
+
+[root@nixos:~]# lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL; cat /proc/cmdline; ip -br link; ls /dev/ttyAMA* /dev/ttyS*
+NAME        RM ROTA TYPE   SIZE MODEL
+mmcblk0      0    0 disk 238.8G
+├─mmcblk0p1  0    0 part    30M
+└─mmcblk0p2  0    0 part 238.7G
+nvme0n1      0    0 disk 476.9G SAMSUNG MZVLQ512HBLU-00BH1
+├─nvme0n1p1  0    0 part   260M
+├─nvme0n1p2  0    0 part    16M
+├─nvme0n1p3  0    0 part 475.9G
+└─nvme0n1p4  0    0 part   774M
+init=/nix/store/cqpbgpl9rf4s4bsp9p51af97d5zrkrx9-nixos-system-nixos-sd-card-26.05.11985.26f4107e47e3/init console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+end0             UP             e4:5f:01:be:04:85 <BROADCAST,MULTICAST,UP,LOWER_UP>
+wlan0            DOWN           de:82:9d:20:b6:64 <NO-CARRIER,BROADCAST,MULTICAST,UP>
+ls: cannot access '/dev/ttyAMA*': No such file or directory
+ /dev/ttyS0   /dev/ttyS1   /dev/ttyS2   /dev/ttyS3
+
+
+[nix-shell:~]# rpi-eeprom-config; vcgencmd bootloader_version; vcgencmd bootloader_config
+[all]
+BOOT_UART=1
+WAKE_ON_GPIO=1
+POWER_OFF_ON_HALT=0
+
+# Boot Order Codes, from https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#BOOT_ORDER
+## Try SD first (1), followed by, USB PCIe, NVMe PCIe, USB SoC XHCI then network
+#BOOT_ORDER=0xf25641
+# Try NVMe PCIe first (6), followed by, SD, BCM-USB-MSD (SoC XHCI) then network
+BOOT_ORDER=0xf2516
+
+# Set to 0 to prevent bootloader updates from USB/Network boot
+# For remote units EEPROM hardware write protection should be used.
+ENABLE_SELF_UPDATE=1
+
+Can't open device file: /dev/vcio
+Try creating a device file with: sudo mknod /dev/vcio c 100 0
+Can't open device file: /dev/vcio
+Try creating a device file with: sudo mknod /dev/vcio c 100 0
+
+The BOOT_ORDER differs from what I had set: 0xf2516 vs 0xf25146 . This suggests that the installation of NixOS modified it. The difference is the removal of '4', which I think is USB PCIe. Most of my CM4s (including this one) do not have USB PCIe (the PCIe lane is instead being used for NVMe).

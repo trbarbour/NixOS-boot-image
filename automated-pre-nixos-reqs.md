@@ -10,7 +10,7 @@
 
 ## 1. 📘 Overview
 
-The system must automate the hardware setup process on new servers prior to NixOS installation. The process begins after booting from removable media and proceeds non-interactively until the user can access the machine remotely via SSH, and over a serial console. The result must be a fully initialized storage and networking environment ready for NixOS installation.
+The system must automate the hardware setup process on new servers prior to NixOS installation. It supports two target platforms (see §2.9). The process begins after booting from removable media and proceeds non-interactively until the user can access the machine remotely via SSH, and over a serial console. The result must be a fully initialized storage and networking environment ready for NixOS installation.
 
 ---
 
@@ -20,7 +20,9 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 - Detect all block devices present on the machine.
 - Classify them by type, size and function:
-  - SSD(s): designated for the system `slash` volume.
+  - SSD(s): designated for the system `slash` volume. NVMe, eMMC and SD
+    (`mmcblk*`) devices count as solid-state. A machine **may have no SSD**,
+    and a single solid-state device is a valid system disk. [R-S2]
   - For each group of (approximately) same-sized rotating disks:
     - If exactly two → use for swap on RAID-1.
     - If three or more → use for bulk storage on RAID-5 or RAID-6, depending on count.
@@ -45,13 +47,15 @@ The system must automate the hardware setup process on new servers prior to NixO
   explicitly request cleanup (e.g., the `pre-nixos-force-cleanup=1` kernel
   parameter).
 - The medium holding the boot image, and any other disk backing the running
-  system, must **never** be planned, wiped or provisioned. It also does not
-  count as existing storage when deciding whether automatic provisioning is
-  allowed.
+  system (holding a filesystem it has mounted or swap it uses), must **never**
+  be planned, wiped or provisioned. It also does not count as existing storage
+  when deciding whether automatic provisioning is allowed. [R-S1]
 - All disks must use a **GPT partition table**.
-- On system (boot) disk or SSD array:
-  - Create partitions for UEFI booting (EFI System Partition), and LVM usage.
-  - UEFI booting is mandatory.
+- On system (boot) disk or SSD array, create partitions for booting and for
+  LVM usage. Boot requirements are per platform [R-B1]:
+  - **x86_64:** UEFI booting with an EFI System Partition is mandatory.
+  - **AArch64 Raspberry Pi:** the installed system boots through the Raspberry
+    Pi firmware, U-Boot and extlinux, as the stock NixOS SD image does.
 
 ### 2.4 LVM Configuration
 
@@ -98,12 +102,32 @@ The system must automate the hardware setup process on new servers prior to NixO
   secured due to a missing public key or the interface has no address, the
   TUI must indicate that state instead.
 
+### 2.9 Target Platforms
+
+- **x86_64 UEFI** machines boot an ISO; **AArch64 Raspberry Pi 4-family**
+  machines (CM4, Pi 4) boot a microSD image. [R-P1]
+- The AArch64 image is the stock NixOS AArch64 SD image plus pre-nixos.
+  pre-nixos must **not change the stock image's boot chain or kernel console
+  parameters**. [R-P2]
+- Every platform's image builds from this repository on an x86_64 build host,
+  including a Claude Code cloud session. [R-T1]
+
+### 2.10 Boot Order (AArch64 Raspberry Pi)
+
+- The board's EEPROM boot order (`BOOT_ORDER`) must make the **installed
+  system boot after installation** without the installer running again,
+  while still letting the installer boot on a machine with no installed
+  system.
+- pre-nixos must **verify** the effective boot order before it installs, and
+  must **refuse to install** if the installed system would not be booted.
+  [R-B2]
+
 ---
 
 ## 3. ⚙️ Non-Functional Requirements
 
 - The setup process must be **fully non-interactive** until remote access is available.
-- Setup must proceed from **bootable removable media** (e.g., USB stick) with **serial console output**. This includes providing serial access to the **bootloader** and a login prompt on the serial console. The system must still work if a serial console is absent or disconnected.
+- Setup must proceed from **bootable removable media** (e.g., USB stick) with **serial console output**. This includes providing serial access to the **bootloader** and a login prompt on the serial console. The system must still work if a serial console is absent or disconnected. The installed system keeps every serial console the boot image was booted with (`ttyS*`, `ttyAMA*`, …) and the same primary console. [R-C1]
 - Setup must be **repeatable**, **deterministic**, and suitable for a **team-managed fleet**, though all installations will be performed by a single operator.
 
 ---
@@ -111,7 +135,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 ## 4. ⛓ Constraints
 
 - **GPT partitioning** only. No DOS/MBR.
-- **UEFI boot** is required. BIOS/Legacy mode is not supported.
+- On x86_64, **UEFI boot** is required; BIOS/Legacy mode is not supported. AArch64 Raspberry Pi boots as in §2.3. [R-B1]
 - **ext4** must be used on all filesystems; other filesystems are out of scope.
 - RAID levels are constrained to: **0, 1, 5, 6**.
 - LVM must be used to abstract storage volumes except for boot partitions.
@@ -121,7 +145,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 ## 5. 📌 Assumptions
 
-- Each machine has **at least one SSD**, either standalone or as a pair.
+- A machine may have no SSD (see §2.1). [R-S2]
 - Rotating disks may or may not be present.
 - Boot media will be inserted manually at each machine.
 - Machines may differ in disk count and NIC count, but these variations are detectable and predictable at runtime.
