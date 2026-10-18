@@ -170,9 +170,6 @@ def launch_vm(
     ssh = require_executable("ssh")
     qemu = require_executable("qemu-system-x86_64")
 
-    harness_log.write_text("", encoding="utf-8")
-    serial_handle = serial_log.open("w", encoding="utf-8")
-
     cmd = [
         qemu,
         "-m",
@@ -200,41 +197,53 @@ def launch_vm(
 
     qemu_version = probe_qemu_version(qemu)
 
-    write_boot_image_metadata(
-        metadata_path,
-        artifact=artifact,
-        harness_log=harness_log,
-        serial_log=serial_log,
-        qemu_command=cmd,
-        qemu_version=qemu_version,
-        disk_image=disk_image,
-        ssh_host="127.0.0.1",
-        ssh_port=ssh_port,
-        ssh_executable=ssh,
-    )
+    harness_log.write_text("", encoding="utf-8")
+    serial_handle = serial_log.open("w", encoding="utf-8")
+    child: Optional["pexpect.spawn"] = None
+    # Until the caller holds the returned handles, cleaning up is our job:
+    # BootImageVM logs in from its constructor, which is exactly the step
+    # these debugging scripts are used to investigate when it fails.
+    try:
+        write_boot_image_metadata(
+            metadata_path,
+            artifact=artifact,
+            harness_log=harness_log,
+            serial_log=serial_log,
+            qemu_command=cmd,
+            qemu_version=qemu_version,
+            disk_image=disk_image,
+            ssh_host="127.0.0.1",
+            ssh_port=ssh_port,
+            ssh_executable=ssh,
+        )
 
-    child = pexpect.spawn(
-        cmd[0],
-        cmd[1:],
-        encoding="utf-8",
-        codec_errors="ignore",
-        timeout=600,
-    )
-    child.logfile = serial_handle
+        child = pexpect.spawn(
+            cmd[0],
+            cmd[1:],
+            encoding="utf-8",
+            codec_errors="ignore",
+            timeout=600,
+        )
+        child.logfile = serial_handle
 
-    vm = BootImageVM(
-        child=child,
-        log_path=serial_log,
-        harness_log_path=harness_log,
-        metadata_path=metadata_path,
-        ssh_port=ssh_port,
-        ssh_host="127.0.0.1",
-        ssh_executable=ssh,
-        artifact=artifact,
-        qemu_version=qemu_version,
-        qemu_command=tuple(cmd),
-        disk_image=disk_image,
-    )
+        vm = BootImageVM(
+            child=child,
+            log_path=serial_log,
+            harness_log_path=harness_log,
+            metadata_path=metadata_path,
+            ssh_port=ssh_port,
+            ssh_host="127.0.0.1",
+            ssh_executable=ssh,
+            artifact=artifact,
+            qemu_version=qemu_version,
+            qemu_command=tuple(cmd),
+            disk_image=disk_image,
+        )
+    except BaseException:
+        if child is not None:
+            child.close(force=True)
+        serial_handle.close()
+        raise
     return vm, child, serial_handle
 
 
