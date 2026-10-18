@@ -72,6 +72,9 @@ _Last updated: 2026-04-25T20-37-02Z_
    - 2026-10-18T15-00-00Z - The boot disk is excluded only from the cleanup scan (`resolve_boot_disk`). The plan path (`enumerate_disks` → `plan_storage` → disko) skips only `RM=1` devices, so a USB boot stick reporting `RM=0` is planned (reproduced). Fix: one protected-disk set (parents of all mounted filesystems plus `resolve_boot_disk`), applied on both paths, with unit and VM tests. The AArch64 plan's §3.1 depends on this.
    - 2026-10-18T15-30-00Z - The user noted the boot-time "only if empty" safeguard. Verified: it aborts on existing storage, **but it skips the boot disk**, so a correctly identified boot stick passes the check while the plan still includes it (`RM=0`). The safeguard does not mitigate #306. Correction recorded: the VM runs' "Tearing down existing storage" lines come from `apply_plan`'s pre-disko wipe on empty disks; data-bearing disks were not wiped at boot.
 
+12. **Fix forced storage teardown when filesystems are still mounted.** trbarbour/NixOS-boot-image#307
+   - 2026-10-18T15-50-00Z - Root causes shown by the action log: deactivation before unmount; parent mount before child (`/mnt` before `/mnt/boot`); `umount '[SWAP]'`. The VM residue scenario (`tests/vm/test_pre_nixos_cleanup.py`, now hot-plug based) reproduces it deterministically and is the regression test. The user recalls this teardown being unreliable in complex cases. After #306.
+
 10. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
    - Goal: build an AArch64 boot image that can be written to a microSD card to boot e.g. a CM4. Use the stock NixOS AArch64 SD image as the base; it works, including on the serial console.
    - Deliverable: a top-down plan from requirements, with a design debate for each choice and a list of unknowns, each with an experiment to resolve it. Start after the race-fix PR.
