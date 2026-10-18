@@ -167,6 +167,40 @@ nix build
 > release tag instead (for a less frequently moving baseline), run
 > `scripts/update_nixos_stable.py --latest-release`.
 
+### Claude Code cloud sessions
+
+`.claude/hooks/session-start.sh` (registered in `.claude/settings.json`) runs
+at the start of every cloud session and does nothing elsewhere. It installs any
+missing APT packages from the shared list in `scripts/lib/dev_packages.sh`. It
+creates or refreshes `.venv`, skipping that when `pyproject.toml`,
+`requirements-dev.txt` and the Python version are unchanged. It also sets
+`PRE_NIXOS_NIX_GIT_INPUTS=1` (see below). Run the tests with
+`.venv/bin/pytest`.
+
+The environment's own *Setup script* box is optional. It runs before the
+repository is relied upon and its result is cached, so if you use it, put only
+repository-independent package installs there, e.g.
+`apt-get update && apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils openssh-client`.
+The hook fills any gaps.
+
+### Hosts that block GitHub archive downloads
+
+Nix fetches `github:` flake inputs as GitHub archive tarballs. Some hosts
+(for example Claude Code cloud sessions) sit behind a proxy that allows
+anonymous `git` reads but refuses those tarballs with HTTP 403. On such hosts,
+`scripts/nix_git_inputs.py` fetches every locked `github` input over
+`git+https` at its locked revision instead. It checks each fetched input's
+`narHash` against `flake.lock` and refuses to continue on any mismatch:
+
+```bash
+scripts/nix_git_inputs.py build .#bootImage --impure   # runs nix with overrides
+scripts/nix_git_inputs.py --print                       # just print the overrides
+```
+
+The VM test fixtures and the VM debug scripts apply the same overrides when
+`PRE_NIXOS_NIX_GIT_INPUTS=1` is set. Any value other than unset, `0` or `1` is
+rejected.
+
 ### Running flake checks locally
 
 The flake defines a regression check that ensures `pre-nixos` continues to

@@ -1,0 +1,59 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/inn79dhwl9pzv2723wmiz47i2n2s57qc-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/f0s68fk7bqh0dy6jyapbd2855saqh3jk-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+    "nar_hash": "sha256-VCZCkdsWE9FRCrhPBPQQ3SoYr5p/wRJ05NzLLFbJnHI=",
+    "root_key_fingerprint": "256 SHA256:X6OLlGd9VLGQFse0Ehyu3at3Rla/A3VN4cyzEw5rlUg boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/f0s68fk7bqh0dy6jyapbd2855saqh3jk-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-10-18T024728Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-10-18T02:47:28.041465+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-10-18T024728Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-10-18T024728Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-boot",
+      "d",
+      "-serial",
+      "stdio",
+      "-cdrom",
+      "/nix/store/f0s68fk7bqh0dy6jyapbd2855saqh3jk-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-12/boot-image-disk-primary0/disk.img,if=virtio,format=raw",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:48613-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/pytest-of-root/pytest-12/boot-image-disk-primary0/disk.img",
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 48613
+  },
+  "timings": {
+    "boot_to_login_seconds": 181.165,
+    "boot_to_ssh_seconds": 303.224,
+    "build_seconds": 417.896,
+    "end": "2026-10-18T02:52:41.396457+00:00",
+    "start": "2026-10-18T02:47:28.022462+00:00",
+    "total_seconds": 313.349
+  }
+}

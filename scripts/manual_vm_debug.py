@@ -16,6 +16,7 @@ from typing import Iterable, Tuple
 
 import pexpect
 
+from scripts.nix_git_inputs import nix_command
 from tests.test_boot_image_vm import (
     BootImageBuild,
     BootImageVM,
@@ -44,14 +45,10 @@ def build_boot_image(public_key: Path) -> BootImageBuild:
     env["PRE_NIXOS_ROOT_KEY"] = str(public_key)
 
     build = subprocess.run(
-        [
+        nix_command(
             nix,
-            "build",
-            ".#bootImage",
-            "--impure",
-            "--no-link",
-            "--print-out-paths",
-        ],
+            ["build", ".#bootImage", "--impure", "--no-link", "--print-out-paths"],
+        ),
         cwd=REPO_ROOT,
         check=True,
         capture_output=True,

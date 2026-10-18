@@ -7,6 +7,10 @@ LOG_PREFIX="[${SCRIPT_NAME}]"
 
 # shellcheck source=./lib/nix_environment.sh
 source "${REPO_ROOT}/scripts/lib/nix_environment.sh"
+# shellcheck source=./lib/dev_packages.sh
+source "${REPO_ROOT}/scripts/lib/dev_packages.sh"
+# shellcheck source=./lib/python_venv.sh
+source "${REPO_ROOT}/scripts/lib/python_venv.sh"
 
 usage() {
   cat <<USAGE
@@ -24,33 +28,6 @@ USAGE
 
 log() {
   printf '%s %s\n' "${LOG_PREFIX}" "$*"
-}
-
-install_apt_packages() {
-  if ! command -v apt-get >/dev/null 2>&1; then
-    log "apt-get not available; skipping APT package installation."
-    return 0
-  fi
-
-  local -r packages=(
-    ca-certificates
-    curl
-    gnupg
-    xz-utils
-    python3
-    python3-venv
-    python3-pip
-    python3-dev
-    build-essential
-    qemu-system-x86
-    qemu-utils
-  )
-
-  log "Updating APT package index..."
-  apt-get update
-
-  log "Installing required APT packages: ${packages[*]}"
-  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${packages[@]}"
 }
 
 install_nix() {
@@ -100,27 +77,6 @@ install_nix() {
   rm -f "${installer}"
 
   log "Nix installation completed. Ensure future shells source \"$HOME/.nix-profile/etc/profile.d/nix.sh\"."
-}
-
-create_python_venv() {
-  local -r venv_path="${REPO_ROOT}/.venv"
-
-  if [[ ! -d "${venv_path}" ]]; then
-    log "Creating Python virtual environment at ${venv_path}"
-    python3 -m venv "${venv_path}"
-  else
-    log "Virtual environment already exists at ${venv_path}"
-  fi
-
-  log "Upgrading pip inside the virtual environment"
-  "${venv_path}/bin/python" -m pip install --upgrade pip
-
-  if [[ -f "${REPO_ROOT}/requirements-dev.txt" ]]; then
-    log "Installing Python developer requirements"
-    "${venv_path}/bin/pip" install --upgrade -r "${REPO_ROOT}/requirements-dev.txt"
-  else
-    log "requirements-dev.txt not found; skipping Python dependency installation."
-  fi
 }
 
 configure_nix_features() {
@@ -175,7 +131,7 @@ main() {
     esac
   done
 
-  install_apt_packages
+  install_missing_dev_apt_packages
   SKIP_NIX="${SKIP_NIX}" install_nix
   create_python_venv
   configure_nix_features

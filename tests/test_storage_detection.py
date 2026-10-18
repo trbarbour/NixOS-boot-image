@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Callable, Dict, Sequence, Tuple
 
+import pytest
+
 from pre_nixos.storage_detection import (
     CommandOutput,
     DetectionEnvironment,
@@ -140,6 +142,19 @@ def test_missing_device_during_inspection_is_ignored() -> None:
     env = make_env(commands)
     assert scan_existing_storage(env, boot_disk=None) == []
     assert not has_existing_storage(env, boot_disk=None)
+
+
+def test_wipefs_failure_on_present_device_raises() -> None:
+    """A probe the host refuses (e.g. EPERM in a sandbox) must not read as 'empty'."""
+
+    commands = {
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(stdout="/dev/vda disk 0\n"),
+        ("lsblk", "-rno", "TYPE", "/dev/vda"): CommandOutput(stdout="disk\n"),
+        ("wipefs", "-n", "/dev/vda"): CommandOutput(stdout="", returncode=1),
+    }
+    env = make_env(commands, path_exists=lambda _path: True)
+    with pytest.raises(RuntimeError, match=r"command wipefs -n /dev/vda exited with status 1"):
+        scan_existing_storage(env, boot_disk=None)
 
 
 def test_floppy_device_is_ignored_during_detection() -> None:
