@@ -78,3 +78,23 @@ unchanged.
   it used the system `python3`. The spike must run with `.venv/bin/python`.
 - The filename timestamp of this note comes from `date -u`. An earlier draft
   reference used an invented one, which was corrected before commit.
+
+## VM verification runs
+
+- **run3**, 2026-10-18 19:08:28Z to 19:26:11Z. ISO built from `cd9799a`
+  (0.10.8). Tests: `tests/vm/test_usb_stick_boot.py` and
+  `tests/vm/test_pre_nixos_vm.py`.
+  - The 3 CD-ROM tests passed (no regression).
+  - The USB test failed at its first precondition. The guest output was
+    correct (`sda usb 0`), but `run_as_root_checked` returned the echoed
+    wrapper command as well.
+  - **Cause:** a harness fault from before this work. The wrapper's
+    `printf '\n…'` was a literal newline in the Python string, so the
+    terminal echoed the command over several `> ` lines. `run()` strips the
+    echo only when it is one line equal to the command. Earlier callers only
+    did substring checks, so this went unnoticed.
+  - **Fix (0.10.9):** the command stays on one line (`\\n` escapes), and a
+    `__BEGIN__` marker line separates stdout from the echo.
+  - Regression test:
+    `tests/vm/test_controller_unit.py::test_run_as_root_checked_drops_the_echoed_command`.
+    It fails on the old code.

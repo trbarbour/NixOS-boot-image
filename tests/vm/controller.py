@@ -20,6 +20,7 @@ from tests.vm.qmp import QmpClient, hotplug_virtio_disk
 SHELL_PROMPT = "PRE-NIXOS> "
 # A bare "#" prompt must start a line (optionally as "sh-5.2#"); unanchored, it
 # matched "CPU#1" in a kernel soft-lockup warning during boot (2026-10-18).
+CHECKED_BEGIN_MARKER = "__BEGIN__"
 ROOT_PROMPT_PATTERNS = (r"root@.*# ?", r"(?:^|[\r\n])(?:sh-[0-9.]+)?# ?")
 # Where pre-nixos writes its structured action log inside the guest.
 PRE_NIXOS_ACTIONS_LOG = (
@@ -882,21 +883,29 @@ class BootImageVM:
     def run_as_root_checked(self, command: str, *, timeout: int = 180) -> str:
         """Execute a root command and assert a zero exit status."""
 
+        # The markers are emitted by printf escapes, so the echoed command
+        # line never equals them; a literal newline in the command made the
+        # terminal echo it over several "> " lines that leaked into stdout
+        # (VM run 2026-10-18T19:26Z, #309).
         wrapped = (
             "{ "
+            f"printf '\\n{CHECKED_BEGIN_MARKER}\\n'; "
             f"{command}; "
-            "printf '\n__EXIT__=%s\n' $?; "
+            "printf '\\n__EXIT__=%s\\n' $?; "
             "}"
         )
         output = self.run_as_root(wrapped, timeout=timeout)
         lines = [line for line in output.splitlines() if line.strip()]
+        begin = [i for i, line in enumerate(lines) if line == CHECKED_BEGIN_MARKER]
         exit_lines = [line for line in lines if line.startswith("__EXIT__=")]
-        if not exit_lines:
+        if not begin or not exit_lines:
             self._raise_with_transcript(
-                "Missing exit marker while running checked command", body=output
+                "Missing begin/exit marker while running checked command", body=output
             )
         exit_status = exit_lines[-1].split("=", 1)[-1].strip()
-        stdout_lines = [line for line in lines if not line.startswith("__EXIT__=")]
+        stdout_lines = [
+            line for line in lines[begin[-1] + 1 :] if not line.startswith("__EXIT__=")
+        ]
         stdout = "\n".join(stdout_lines)
         log_body = stdout if stdout else "<no output>"
         self._log_step(

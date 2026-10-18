@@ -1228,7 +1228,7 @@ def test_run_as_root_checked_success(monkeypatch: pytest.MonkeyPatch) -> None:
     """Checked commands should return output without the exit marker."""
 
     vm = object.__new__(BootImageVM)
-    vm.run_as_root = lambda command, timeout=180: "hello\n__EXIT__=0"
+    vm.run_as_root = lambda command, timeout=180: "__BEGIN__\nhello\n__EXIT__=0"
     vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(
         AssertionError("unexpected raise")
     )
@@ -1238,11 +1238,39 @@ def test_run_as_root_checked_success(monkeypatch: pytest.MonkeyPatch) -> None:
     assert output.strip() == "hello"
 
 
+def _terminal_echo(command: str) -> str:
+    """What the serial terminal shows for *command*: continuation lines get "> "."""
+
+    first, *rest = command.split("\n")
+    return "\n".join([first, *(f"> {line}" for line in rest)])
+
+
+def _fake_shell(command: str) -> str:
+    """Echo *command*, then run it, for commands built by run_as_root_checked."""
+
+    assert "\n" not in command, "checked command must be a single line"
+    assert "printf '\\n__BEGIN__\\n'" in command
+    return f"{_terminal_echo(command)}\n\n__BEGIN__\nsda usb 0\n\n__EXIT__=0"
+
+
+def test_run_as_root_checked_drops_the_echoed_command() -> None:
+    """Regression: the echo of a multi-line wrapper leaked into stdout (#309)."""
+
+    vm = object.__new__(BootImageVM)
+    vm.run_as_root = lambda command, timeout=180: _fake_shell(command)
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(
+        AssertionError("unexpected raise")
+    )
+    vm._log_step = lambda *args, **kwargs: None
+
+    assert vm.run_as_root_checked("lsblk -dnro NAME,TRAN,RM /dev/sda") == "sda usb 0"
+
+
 def test_run_as_root_checked_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     """Non-zero exits should surface via transcript exceptions."""
 
     vm = object.__new__(BootImageVM)
-    vm.run_as_root = lambda command, timeout=180: "boom\n__EXIT__=2"
+    vm.run_as_root = lambda command, timeout=180: "__BEGIN__\nboom\n__EXIT__=2"
 
     captured: dict = {}
 
