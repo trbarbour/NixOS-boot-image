@@ -75,6 +75,7 @@ _Last updated: 2026-04-25T20-37-02Z_
 
 12. **Fix forced storage teardown when filesystems are still mounted.** trbarbour/NixOS-boot-image#307
    - 2026-10-18T15-50-00Z - Root causes shown by the action log: deactivation before unmount; parent mount before child (`/mnt` before `/mnt/boot`); `umount '[SWAP]'`. The VM residue scenario (`tests/vm/test_pre_nixos_cleanup.py`, now hot-plug based) reproduces it deterministically and is the regression test. The user recalls this teardown being unreliable in complex cases. After #306.
+   - 2026-10-18T17-07-29Z - Fixed in `bd69184` (release mounts and swap before deactivating). Kernel-model unit tests pass, and the VM residue scenario passes. The full suite is green on #308's head (290 passed, `notes/2026-10-18T170729Z-vm-run.md`). Closes when #308 merges.
 
 10. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
    - Goal: build an AArch64 boot image that can be written to a microSD card to boot e.g. a CM4. Use the stock NixOS AArch64 SD image as the base; it works, including on the serial console.
