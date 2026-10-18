@@ -83,7 +83,8 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Plan: do it after PR #310 merges, as its own PR. Update the inputs and `flake.lock`, then rebuild the ISO. Run the full unit suite and the VM regression. Re-run E1 (module evaluation on the 26.05 SD image).
     - The user's working stock AArch64 image is 26.05, and the AGENTS.md newness policy prefers the newer version.
     - It affects the x86 ISO too, so it needs its own build and VM regression run. Decide before AArch64 work item 6 (the flake refactor).
-    - 2026-10-18 - Done on the branch (0.11.0), awaiting the VM regression:
+    - 2026-10-18T23-29-20Z - **VM-verified**: all 6 VM tests pass on 26.05. On the way, fixed #311 (disko could not build its script offline: `makeBinaryWrapper` missing from the image) and the residue test's `mdadm` 4.4 prompt. Remaining: a PR (if the user asks).
+    - 2026-10-18 - Done on the branch (0.11.0):
       - The pin is `nixos-26.05` (`26f4107e47e3`, the same revision as the user's working CM4 image).
       - `scripts/update_nixos_stable.py` now uses git. The GitHub API answered 403 here, and tarballs are blocked.
       - New `nix_git_inputs.py --update INPUT --ref REF`.
