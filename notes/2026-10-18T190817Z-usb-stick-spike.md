@@ -98,3 +98,11 @@ unchanged.
   - Regression test:
     `tests/vm/test_controller_unit.py::test_run_as_root_checked_drops_the_echoed_command`.
     It fails on the old code.
+- **run4**, 2026-10-18 19:27:22Z to 19:39:35Z. ISO from the working tree at
+  0.10.9. `tests/vm/test_usb_stick_boot.py` **passed** (732 s). Logs:
+  `notes/2026-10-18T193331Z-vm-run/`.
+  - Confirmed: the stick is `sda` (TRAN=usb, RM=0) behind `/iso`; the status
+    is `applied`/`auto-applied`; physical volumes exist and none is on
+    `/dev/sda`; after shutdown the stick's SHA-256 is unchanged.
+  - The same setup on 0.10.6 (run1, run2) gave `plan-only`/`existing-storage`,
+    which is the failure this test checks for.
