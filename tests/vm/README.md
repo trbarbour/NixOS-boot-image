@@ -11,7 +11,7 @@ separately.
   (`boot_image_vm`) or an extended configuration with two additional, equal-
   sized virtio disks that are smaller than the primary disk so pre-nixos will
   group them together for the residue RAID while leaving the boot disk
-  independent (`boot_image_vm_with_additional_disks`). Each fixture captures
+  independent (`boot_image_vm_for_hotplug`, which boots with only its primary disk and hot-plugs more via QMP). Each fixture captures
   per-run timings
   for boot-image build, boot-to-login, boot-to-SSH, and total test wall-clock
   duration in `metadata.json`. Each VM fixture allocates its own SSH port and

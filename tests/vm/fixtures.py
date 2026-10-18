@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 import pytest
 
 from scripts.nix_git_inputs import nix_command
+from tests.vm.qmp import allocate_qmp_socket_path
 from tests.vm.metadata import (
     append_run_ledger_entry,
     record_run_timings,
@@ -417,6 +418,7 @@ def _launch_boot_image_vm(
         else []
     )
 
+    qmp_socket = allocate_qmp_socket_path()
     run_timings = RunTimings(
         build_seconds=boot_image_build.build_duration_seconds,
         started_at=datetime.datetime.now(datetime.timezone.utc),
@@ -444,6 +446,8 @@ def _launch_boot_image_vm(
         cmd.extend(["-drive", f"file={disk_path},if=virtio,format=raw"])
     cmd.extend(
         [
+            "-qmp",
+            f"unix:{qmp_socket},server=on,wait=off",
             "-device",
             "virtio-rng-pci",
             "-netdev",
@@ -505,6 +509,7 @@ def _launch_boot_image_vm(
             disk_image=vm_disk_image,
             run_timings=run_timings,
             boot_started_at=boot_started_at,
+            qmp_socket=qmp_socket,
         )
         record_run_timings(metadata_path, run_timings=run_timings)
         try:
@@ -577,6 +582,7 @@ def _launch_boot_image_vm(
             except Exception:
                 pass
         log_handle.close()
+        shutil.rmtree(qmp_socket.parent, ignore_errors=True)
 
 
 @pytest.fixture(scope="session")
@@ -601,22 +607,28 @@ def boot_image_vm(
 
 
 @pytest.fixture(scope="session")
-def boot_image_vm_with_additional_disks(
+def boot_image_vm_for_hotplug(
     _pexpect: "pexpect",
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     vm_disk_image_factory: Callable[..., Path],
-    vm_additional_disks: List[Path],
     ssh_executable: str,
     request: pytest.FixtureRequest,
 ) -> "BootImageVM":
-    vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary-extra")
+    """A VM booted with only its primary disk; attach more via ``hotplug_disk``.
+
+    The boot-time ``pre-nixos`` run provisions every disk it can see, so disks
+    a scenario must control (e.g. ``vm_additional_disks``) are hot-plugged
+    only after that run has finished.
+    """
+
+    vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary-hotplug")
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
         qemu_executable=qemu_executable,
         boot_image_build=boot_image_build,
         vm_disk_image=vm_disk_image,
-        extra_disks=vm_additional_disks,
+        extra_disks=[],
         ssh_executable=ssh_executable,
         request=request,
     )
@@ -642,7 +654,7 @@ __all__ = [
     "boot_image_iso",
     "boot_ssh_key_pair",
     "boot_image_vm",
-    "boot_image_vm_with_additional_disks",
+    "boot_image_vm_for_hotplug",
     "nix_executable",
     "probe_qemu_version",
     "qemu_executable",

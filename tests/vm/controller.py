@@ -15,8 +15,11 @@ import pexpect
 
 from tests.vm.fixtures import BootImageBuild, RunTimings, VM_LOGIN_TIMEOUT
 from tests.vm.metadata import DMESG_CAPTURE_COMMAND, record_boot_image_diagnostic
+from tests.vm.qmp import QmpClient, hotplug_virtio_disk
 
 SHELL_PROMPT = "PRE-NIXOS> "
+# virtio-blk serials are at most 20 bytes; longer ones are silently truncated.
+VIRTIO_SERIAL_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,20}")
 
 ANSI_ESCAPE_PATTERN = re.compile(
     r"""
@@ -50,6 +53,7 @@ class BootImageVM:
     qemu_command: Optional[Tuple[str, ...]] = None
     disk_image: Optional[Path] = None
     boot_started_at: Optional[float] = None
+    qmp_socket: Optional[Path] = None
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
     _log_dir: Path = field(init=False, repr=False)
@@ -1206,6 +1210,41 @@ class BootImageVM:
             f"systemctl status pre-nixos:\n{unit_status}",
             diagnostics=diagnostics,
         )
+
+    def hotplug_disk(self, image: Path, *, serial: str, timeout: int = 120) -> str:
+        """Attach ``image`` as a virtio disk via QMP; return its guest device path.
+
+        The path is resolved through ``/dev/disk/by-id/virtio-<serial>`` rather
+        than assumed, because hot-plugged disks are named in arrival order.
+        """
+
+        if self.qmp_socket is None:
+            raise AssertionError("hotplug_disk requires a VM launched with a QMP socket")
+        if not VIRTIO_SERIAL_PATTERN.fullmatch(serial):
+            raise ValueError(f"invalid virtio serial {serial!r} (1-20 of [A-Za-z0-9_-])")
+        with QmpClient(self.qmp_socket) as client:
+            hotplug_virtio_disk(client, image=image, node_name=f"hp-{serial}", serial=serial)
+        self._log_step(f"Hot-plugged {image} as virtio disk with serial {serial}")
+
+        link = f"/dev/disk/by-id/virtio-{serial}"
+        command = f"udevadm settle; readlink -f {link} 2>/dev/null || true"
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            output = self.run_as_root(command, timeout=60)
+            paths = [
+                line.strip()
+                for line in output.splitlines()
+                if re.fullmatch(r"/dev/[A-Za-z0-9]+", line.strip())
+            ]
+            if paths:
+                self._log_step(f"Hot-plugged disk {serial} appeared as {paths[-1]}")
+                return paths[-1]
+            time.sleep(2)
+        self._raise_with_transcript(
+            f"Hot-plugged disk with serial {serial} did not appear as {link} "
+            f"within {timeout}s"
+        )
+        raise AssertionError("unreachable")  # _raise_with_transcript always raises
 
     def wait_for_unit_inactive(self, unit: str, *, timeout: int = 240) -> str:
         """Wait until a systemd unit reports ``inactive`` via ``systemctl``."""
