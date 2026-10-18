@@ -1,0 +1,49 @@
+
+[  112.825948] rcu: INFO: rcu_preempt detected expedited stalls on CPUs/tasks: { 1-.... } 21159 jiffies s: 137 root: 0x2/.
+
+[  112.828745] rcu: blocking rcu_node structures (internal RCU debug):
+
+pre-nixos boot image version 0.10.0
+
+
+[!p]104[?7h[6n[32766;32766H[6n[!p]104[?7h[6n[32766;32766H[6n
+
+
+<<< Welcome to the pre-nixos auto-install boot image (25.05.20251022.c8aa8cc, x86_64) - ttyS0 >>>
+
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+
+(PRE_NIXOS_AUTO_INSTALL=)
+
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+
+
+SSH access:
+
+  - Use the matching private key for the embedded root SSH key to log in as root.
+
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+
+
+Run "nixos-help" for the NixOS manual.
+
+nixos login: nixos (automatic login)
+
+
+
+
+pre-nixos boot image version 0.10.0
+
+[?2004h
+
+
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m LAN IPv4 address: 10.0.2.15
+
