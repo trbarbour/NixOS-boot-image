@@ -509,33 +509,8 @@ def _teardown_node(
     scheduled: List[str],
     graph: Mapping[str, StorageNode] | None = None,
 ) -> bool:
+    # Mounts and swap were released by _release_mounts_and_swap beforehand.
     success = True
-    for mountpoint in list(dict.fromkeys(node.mountpoints)):
-        result = _execute_command(
-            ["umount", mountpoint],
-            action=action,
-            device=device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-            tolerate_failure=True,
-        )
-        if result.returncode != 0:
-            success = False
-
-    if _is_swap_node(node):
-        result = _execute_command(
-            ["swapoff", node.name],
-            action=action,
-            device=device,
-            execute=execute,
-            runner=runner,
-            scheduled=scheduled,
-            tolerate_failure=True,
-        )
-        if result.returncode != 0:
-            success = False
-
     if node.node_type in {"lvm", "lvm_lv"}:
         result = _execute_command(
             ["lvchange", "-an", node.name],
@@ -626,6 +601,78 @@ def _teardown_node(
     return success
 
 
+def _is_real_mountpoint(mountpoint: str) -> bool:
+    """``lsblk`` reports pseudo mountpoints such as ``[SWAP]``; skip those."""
+
+    return mountpoint.startswith("/")
+
+
+def _mount_depth(mountpoint: str) -> int:
+    return len([part for part in mountpoint.split("/") if part])
+
+
+def _release_mounts_and_swap(
+    action: str,
+    device: str,
+    nodes: list[str],
+    graph: dict[str, StorageNode],
+    *,
+    execute: bool,
+    runner: CommandRunner,
+    scheduled: List[str],
+) -> bool:
+    """Unmount and swapoff everything on *nodes* before any deactivation.
+
+    LVM, md and dm devices cannot be deactivated while a filesystem on them is
+    mounted or a swap area is active.  Each LV also appears under two names
+    (``/dev/VG/LV`` from ``lvs``, ``/dev/mapper/VG-LV`` from ``lsblk``) and
+    only one carries the mountpoint, so releasing per node in graph order is
+    not enough (trbarbour/NixOS-boot-image#307).  Mounts are released deepest
+    first so a parent (``/mnt``) is never unmounted before its children
+    (``/mnt/boot``); ``-R`` also releases nested mounts of other devices.
+    """
+
+    success = True
+    mountpoints = sorted(
+        {
+            mountpoint
+            for name in nodes
+            if (node := graph.get(name))
+            for mountpoint in node.mountpoints
+            if _is_real_mountpoint(mountpoint)
+        },
+        key=lambda mountpoint: (-_mount_depth(mountpoint), mountpoint),
+    )
+    for mountpoint in mountpoints:
+        result = _execute_command(
+            ["umount", "-R", mountpoint],
+            action=action,
+            device=device,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+            tolerate_failure=True,
+        )
+        if result.returncode != 0:
+            success = False
+
+    for name in nodes:
+        node = graph.get(name)
+        if node and _is_swap_node(node):
+            result = _execute_command(
+                ["swapoff", node.name],
+                action=action,
+                device=device,
+                execute=execute,
+                runner=runner,
+                scheduled=scheduled,
+                tolerate_failure=True,
+            )
+            if result.returncode != 0:
+                success = False
+    return success
+
+
 def _teardown_graph(
     action: str,
     device: str,
@@ -636,7 +683,15 @@ def _teardown_graph(
     runner: CommandRunner,
     scheduled: List[str],
 ) -> bool:
-    success = True
+    success = _release_mounts_and_swap(
+        action,
+        device,
+        nodes,
+        graph,
+        execute=execute,
+        runner=runner,
+        scheduled=scheduled,
+    )
     for name in nodes:
         node = graph.get(name)
         if not node:

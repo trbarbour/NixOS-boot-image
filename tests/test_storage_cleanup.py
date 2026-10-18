@@ -128,7 +128,7 @@ def test_global_teardown_and_wipe_leaf_to_root(monkeypatch) -> None:
     )
 
     expected = [
-        ("umount", "/target"),
+        ("umount", "-R", "/target"),
         ("lvchange", "-an", "/dev/main/slash"),
         ("vgchange", "-an", "main"),
         ("mdadm", "--stop", "--force", "/dev/md0"),
