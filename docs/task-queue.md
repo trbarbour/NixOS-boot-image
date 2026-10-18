@@ -79,17 +79,19 @@ _Last updated: 2026-10-18T17-33-41Z_
      - Install target: NVMe. Refusing to install on a wrong `BOOT_ORDER` is acceptable.
      - **Next:** implement work items 3 to 9 of the plan in order (not started).
 
-10. **Fix trbarbour/NixOS-boot-image#309: the USB boot stick blocks auto-provisioning.** *(found by the #306 USB-stick spike, 2026-10-18T19-09-18Z)*
-    - Root cause proven in the guest: the boot disk resolved to `/dev/dev/sda`, and the boot-time gate `pre-nixos-detect-storage` ignored the protected set. See `notes/2026-10-18T190817Z-usb-stick-spike.md`.
-    - Fix (0.10.8): unit regressions plus the permanent VM test `tests/vm/test_usb_stick_boot.py`.
-    - 2026-10-18T19-39-35Z - VM-verified on 0.10.9: `tests/vm/test_usb_stick_boot.py` passes, and the CD-ROM VM tests pass on 0.10.8. Also fixed a harness fault: echo leaking into `run_as_root_checked`. Remaining: a PR (if the user asks).
-
-11. **Update the nixpkgs pin from 25.05 to 26.05 (plan E16).** *(found 2026-10-18T22-03-51Z; **decided by the user 2026-10-18T22-16-29Z**: 26.05 is stable, so update)*
+10. **Update the nixpkgs pin from 25.05 to 26.05 (plan E16).** *(found 2026-10-18T22-03-51Z; **decided by the user 2026-10-18T22-16-29Z**: 26.05 is stable, so update)*
     - Plan: do it after PR #310 merges, as its own PR. Update the inputs and `flake.lock`, then rebuild the ISO. Run the full unit suite and the VM regression. Re-run E1 (module evaluation on the 26.05 SD image).
     - The user's working stock AArch64 image is 26.05, and the AGENTS.md newness policy prefers the newer version.
     - It affects the x86 ISO too, so it needs its own build and VM regression run. Decide before AArch64 work item 6 (the flake refactor).
+    - 2026-10-18 - Done on the branch (0.11.0), awaiting the VM regression:
+      - The pin is `nixos-26.05` (`26f4107e47e3`, the same revision as the user's working CM4 image).
+      - `scripts/update_nixos_stable.py` now uses git. The GitHub API answered 403 here, and tarballs are blocked.
+      - New `nix_git_inputs.py --update INPUT --ref REF`.
+      - Fixed two 26.05 evaluation warnings.
+      - E1 re-run on 26.05: passes. See `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
 
 ## Recently Completed
+- 2026-10-18T22-18-16Z - Merged trbarbour/NixOS-boot-image#310 (0.10.9): fixed #309 (the USB boot stick was counted as existing storage; the boot disk resolved to `/dev/dev/sda`). Added the USB-stick VM test, the `run_as_root_checked` echo fix, the AArch64 user answers and the requirements. VM-verified.
 - 2026-10-18T17-32-54Z - Merged trbarbour/NixOS-boot-image#308 (0.10.7):
   - **#306:** disks backing the running system, including the boot medium, are never planned, wiped or counted as existing storage. Requirements §2.3 is amended.
   - **#307:** forced teardown releases mounts and swap before deactivating.

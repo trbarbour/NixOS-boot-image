@@ -67,3 +67,24 @@ def test_update_flake_nix_replaces_with_release_tag(tmp_path, update_script):
 def test_newest_stable_release_tag_selects_highest(update_script):
     tags = ["release-16.03-start", "24.11", "23.11", "25.05", "v208"]
     assert update_script.newest_stable_release_tag(tags) == "25.05"
+
+
+def test_remote_ref_names_strips_prefixes_and_peeled_suffixes(update_script, monkeypatch):
+    """Discovery uses git ls-remote (the GitHub API answered 403 on 2026-10-18)."""
+
+    listing = {
+        "refs/tags/26.05": "a" * 40,
+        "refs/tags/26.05^{}": "b" * 40,
+        "refs/tags/25.05": "c" * 40,
+        "refs/heads/master": "d" * 40,
+    }
+    calls = []
+
+    def fake_ls_remote(url, *patterns):
+        calls.append((url, patterns))
+        return listing
+
+    monkeypatch.setattr(update_script.nix_git_inputs, "ls_remote", fake_ls_remote)
+    assert update_script.remote_ref_names("tags") == ["25.05", "26.05"]
+    assert update_script.remote_ref_names("heads") == ["master"]
+    assert calls[0] == (update_script.NIXPKGS_URL, ("refs/tags/*",))

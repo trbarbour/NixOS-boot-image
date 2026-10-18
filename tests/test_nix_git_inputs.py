@@ -200,3 +200,126 @@ def test_repository_flake_lock_is_supported() -> None:
 
     paths = [i.override_path for i in ngi.load_inputs(REPO_ROOT)]
     assert "nixpkgs" in paths
+
+
+# --- updating an input without tarball fetches (--update/--ref) ---
+
+REV_D = "d" * 40
+NEW_REVISION = ngi.GithubRevision(
+    owner="NixOS",
+    repo="nixpkgs",
+    ref="nixos-26.05",
+    rev=REV_D,
+    nar_hash="sha256-D",
+    last_modified=1792030654,
+)
+
+
+def test_updated_lock_rewrites_only_the_named_input() -> None:
+    before = copy.deepcopy(SAMPLE_LOCK)
+    new = ngi.updated_lock(SAMPLE_LOCK, "nixpkgs", NEW_REVISION)
+
+    assert SAMPLE_LOCK == before, "input lock must not be mutated"
+    assert new["nodes"]["nixpkgs"]["locked"] == {
+        "lastModified": 1792030654,
+        "narHash": "sha256-D",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": REV_D,
+        "type": "github",
+    }
+    assert new["nodes"]["nixpkgs"]["original"] == {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github",
+    }
+    for other in ("utils", "systems", "local"):
+        assert new["nodes"][other] == SAMPLE_LOCK["nodes"][other]
+
+
+def test_updated_lock_refuses_another_repository() -> None:
+    other = ngi.GithubRevision(**{**NEW_REVISION.__dict__, "repo": "not-nixpkgs"})
+    with pytest.raises(ngi.NixGitInputsError, match="is not github:NixOS/not-nixpkgs"):
+        ngi.updated_lock(SAMPLE_LOCK, "nixpkgs", other)
+
+
+def test_updated_lock_refuses_unknown_and_non_github_inputs() -> None:
+    with pytest.raises(ngi.NixGitInputsError, match="missing 'absent'"):
+        ngi.updated_lock(SAMPLE_LOCK, "absent", NEW_REVISION)
+    with pytest.raises(ngi.NixGitInputsError, match="is not github"):
+        ngi.updated_lock(SAMPLE_LOCK, "local", NEW_REVISION)
+
+
+def test_format_lock_matches_the_repository_lock_byte_for_byte() -> None:
+    text = (REPO_ROOT / "flake.lock").read_text()
+    assert ngi.format_lock(json.loads(text)) == text
+
+
+class _Completed:
+    def __init__(self, stdout: str, returncode: int = 0, stderr: str = "") -> None:
+        self.stdout, self.returncode, self.stderr = stdout, returncode, stderr
+
+
+def _fake_run(ls_remote: str, metadata: dict[str, Any]):  # type: ignore[no-untyped-def]
+    calls: list[list[str]] = []
+
+    def run(cmd, **kwargs):  # type: ignore[no-untyped-def]
+        calls.append(list(cmd))
+        if cmd[:2] == ["git", "ls-remote"]:
+            return _Completed(ls_remote)
+        if cmd[1:4] == ["flake", "metadata", "--json"]:
+            return _Completed(json.dumps(metadata))
+        raise AssertionError(f"unexpected command {cmd}")
+
+    return run, calls
+
+
+def test_fetch_github_revision_pins_the_branch_head(monkeypatch: pytest.MonkeyPatch) -> None:
+    run, calls = _fake_run(
+        f"{REV_D}\trefs/heads/nixos-26.05\n",
+        {"locked": {"rev": REV_D, "narHash": "sha256-D", "lastModified": 1792030654}},
+    )
+    monkeypatch.setattr(ngi.subprocess, "run", run)
+
+    assert ngi.fetch_github_revision("nix", "NixOS", "nixpkgs", "nixos-26.05") == NEW_REVISION
+    assert calls[1][-1] == f"git+https://github.com/NixOS/nixpkgs?rev={REV_D}&shallow=1"
+
+
+def test_fetch_github_revision_refuses_a_different_fetched_rev(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run, _ = _fake_run(
+        f"{REV_D}\trefs/heads/nixos-26.05\n",
+        {"locked": {"rev": REV_A, "narHash": "sha256-A", "lastModified": 1}},
+    )
+    monkeypatch.setattr(ngi.subprocess, "run", run)
+    with pytest.raises(ngi.NixGitInputsError, match="not " + REV_D):
+        ngi.fetch_github_revision("nix", "NixOS", "nixpkgs", "nixos-26.05")
+
+
+def test_fetch_github_revision_refuses_a_missing_branch(monkeypatch: pytest.MonkeyPatch) -> None:
+    run, _ = _fake_run("", {})
+    monkeypatch.setattr(ngi.subprocess, "run", run)
+    with pytest.raises(ngi.NixGitInputsError, match="no branch or tag named 'nixos-99.99'"):
+        ngi.fetch_github_revision("nix", "NixOS", "nixpkgs", "nixos-99.99")
+
+
+def test_commit_for_ref_peels_annotated_release_tags() -> None:
+    """Listing shape observed 2026-10-18 for nixpkgs ``refs/tags/26.05``."""
+
+    refs = {"refs/tags/26.05": REV_A, "refs/tags/26.05^{}": REV_D}
+    assert ngi.commit_for_ref(refs, "26.05") == REV_D
+    assert ngi.commit_for_ref({"refs/tags/v1": REV_B}, "v1") == REV_B
+    assert ngi.commit_for_ref({"refs/heads/nixos-26.05": REV_D}, "nixos-26.05") == REV_D
+
+
+def test_commit_for_ref_refuses_a_name_that_is_branch_and_tag() -> None:
+    refs = {"refs/heads/x": REV_A, "refs/tags/x": REV_B}
+    with pytest.raises(ngi.NixGitInputsError, match="both a branch and a tag"):
+        ngi.commit_for_ref(refs, "x")
+
+
+def test_update_and_ref_must_be_given_together() -> None:
+    with pytest.raises(SystemExit):
+        ngi.main(["--update", "nixpkgs"])
