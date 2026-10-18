@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import Collection, List
 import math
 
 
@@ -66,6 +66,16 @@ def enumerate_disks(sys_block: Path = Path("/sys/block")) -> List[Disk]:
             )
         )
     return disks
+
+
+def exclude_disks(disks: List[Disk], protected: Collection[str]) -> List[Disk]:
+    """Return *disks* without those whose ``/dev`` path is in *protected*.
+
+    Used to keep the disks backing the running system (the boot medium) out
+    of the storage plan; see ``storage_detection.resolve_protected_disks``.
+    """
+
+    return [disk for disk in disks if f"/dev/{disk.name}" not in protected]
 
 
 def detect_ram_gb(meminfo: Path = Path("/proc/meminfo")) -> int:

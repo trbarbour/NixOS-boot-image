@@ -36,9 +36,18 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 ### 2.3 Partitioning
 
-- Disk layout changes must **never** be applied automatically at boot. The boot
-  process only **generates a storage plan**; an operator must review and apply
-  it manually (e.g., via a TUI script).
+- Disks that contain data must **never** be modified automatically. Disk layout
+  changes may be applied automatically at boot **only when every candidate disk
+  is empty** (no partition table, filesystem, RAID or LVM metadata). This lets a
+  quantity of new machines be installed efficiently.
+- If any candidate disk contains data, the boot process only **generates a
+  storage plan**. An operator must review and apply it (e.g., via the TUI), or
+  explicitly request cleanup (e.g., the `pre-nixos-force-cleanup=1` kernel
+  parameter).
+- The medium holding the boot image, and any other disk backing the running
+  system, must **never** be planned, wiped or provisioned. It also does not
+  count as existing storage when deciding whether automatic provisioning is
+  allowed.
 - All disks must use a **GPT partition table**.
 - On system (boot) disk or SSD array:
   - Create partitions for UEFI booting (EFI System Partition), and LVM usage.

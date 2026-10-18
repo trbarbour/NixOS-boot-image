@@ -268,7 +268,9 @@ def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan,
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
 
     apply_calls = []
-    monkeypatch.setattr(tui.apply, "apply_plan", lambda plan: apply_calls.append(plan))
+    monkeypatch.setattr(
+        tui.apply, "apply_plan", lambda plan, protected_disks=frozenset(): apply_calls.append(plan)
+    )
     auto_calls: list[tuple] = []
 
     def fake_auto(lan_config, plan, *, enabled, dry_run, install_network=None):
@@ -303,7 +305,9 @@ def test_handle_apply_plan_aborts_when_storage_scan_fails(
     existing_storage.devices = None
     existing_storage.error = RuntimeError("command wipefs -n /dev/vda exited with status 1")
     apply_calls = []
-    monkeypatch.setattr(tui.apply, "apply_plan", lambda plan: apply_calls.append(plan))
+    monkeypatch.setattr(
+        tui.apply, "apply_plan", lambda plan, protected_disks=frozenset(): apply_calls.append(plan)
+    )
 
     win = FakeWindow(height=5, width=120)
     assert tui._handle_apply_plan(win, state) is False

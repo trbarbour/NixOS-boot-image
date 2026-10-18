@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Collection, Dict, List, Tuple
 
 from . import state, storage_cleanup
 from .logging_utils import log_event
@@ -79,8 +79,30 @@ def _run(cmd: str, execute: bool) -> None:
         raise subprocess.CalledProcessError(result.returncode, cmd)
 
 
-def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
-    """Apply a storage plan."""
+def apply_plan(
+    plan: Dict[str, Any],
+    dry_run: bool = False,
+    *,
+    protected_disks: Collection[str] = (),
+) -> List[str]:
+    """Apply a storage plan.
+
+    Precondition: the plan references none of *protected_disks* (the disks
+    backing the running system).  Plans are built without them, so a hit means
+    a caller bug; refuse before anything is written (reqs §2.3).
+    """
+
+    overlap = (
+        sorted(set(_collect_root_devices(plan)) & set(protected_disks))
+        if protected_disks
+        else []
+    )
+    if overlap:
+        log_event("pre_nixos.apply.apply_plan.protected_disk_refused", devices=overlap)
+        raise RuntimeError(
+            "refusing to apply a storage plan that targets protected disk(s) "
+            "backing the running system: " + ", ".join(overlap)
+        )
 
     commands: List[str] = []
     execute = not dry_run and os.environ.get("PRE_NIXOS_EXEC") == "1"

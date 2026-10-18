@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import os
 import subprocess
 import sys
-from typing import Callable, Iterable, Optional, Sequence
+from typing import Callable, Collection, Iterable, Optional, Sequence
 
 from .logging_utils import log_event
 
@@ -18,6 +18,7 @@ __all__ = [
     "format_existing_storage_reasons",
     "collect_boot_probe_data",
     "resolve_boot_disk",
+    "resolve_protected_disks",
     "scan_existing_storage",
     "has_existing_storage",
     "main",
@@ -165,6 +166,19 @@ _BOOT_MOUNT_TARGETS = (
 
 _BOOT_FILESYSTEM_TYPES = ("squashfs", "iso9660")
 
+# Mount points that belong to the *running system* (never the install target,
+# which disko mounts under /mnt).  The disks behind them must never be planned,
+# wiped or counted as existing storage (reqs §2.3; trbarbour/NixOS-boot-image#306).
+_SYSTEM_MOUNT_TARGETS = (
+    "/",
+    "/nix/store",
+    "/nix/.ro-store",
+    "/iso",
+    "/run/archiso/bootmnt",
+    "/boot",
+    "/boot/firmware",
+)
+
 
 def _resolve_boot_disk_with_probes(
     env: DetectionEnvironment,
@@ -252,6 +266,72 @@ def collect_boot_probe_data(env: DetectionEnvironment | None = None) -> dict[str
     return {"boot_disk": boot_disk, "probes": probes}
 
 
+def _backing_disks(env: DetectionEnvironment, device: str) -> set[str]:
+    """Return the physical disks beneath *device* (through partitions, md, LVM)."""
+
+    result = env.run(["lsblk", "-nrspo", "NAME,TYPE", device])
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"cannot determine the disks backing system device {device}: "
+            f"lsblk exited with status {result.returncode}"
+        )
+    disks: set[str] = set()
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == "disk":
+            disks.add(env.realpath(parts[0]))
+    return disks
+
+
+def _resolve_protected_disks(env: DetectionEnvironment) -> frozenset[str]:
+    """Return the disks backing the running system, including the boot medium.
+
+    Combines :func:`resolve_boot_disk` with the disks beneath each mounted
+    system mount point (``_SYSTEM_MOUNT_TARGETS``).  Fails rather than
+    returning a smaller set when a mounted system device cannot be traced to
+    its disks, because an incomplete set could let the boot medium be wiped.
+    """
+
+    protected: set[str] = set()
+    boot_disk = resolve_boot_disk(env)
+    if boot_disk:
+        protected.add(boot_disk)
+    sources: dict[str, str] = {}
+    for target in _SYSTEM_MOUNT_TARGETS:
+        source = _run_command(
+            env, ["findmnt", "-n", "-o", "SOURCE", target], ignore_errors=True
+        ).strip()
+        if not source:
+            continue
+        sources[target] = source
+        # Pseudo filesystems report bare words (tmpfs, overlay, none); only
+        # absolute paths and LABEL=/UUID=-style tags can name block devices.
+        if not (source.startswith("/") or source.startswith(tuple(_MOUNT_SOURCE_PREFIXES))):
+            continue
+        for candidate in _candidate_paths_from_source(source):
+            if env.path_exists(candidate):
+                protected |= _backing_disks(env, env.realpath(candidate))
+                break
+    result = frozenset(protected)
+    log_event(
+        "pre_nixos.storage.resolve_protected_disks",
+        protected=sorted(result),
+        boot_disk=boot_disk,
+        sources=sources,
+    )
+    return result
+
+
+def resolve_protected_disks(env: DetectionEnvironment | None = None) -> frozenset[str]:
+    """Return the disks backing the running system, including the boot medium.
+
+    Public entry point for callers that plan or modify storage; internal
+    callers use ``_resolve_protected_disks`` directly.
+    """
+
+    return _resolve_protected_disks(env or DetectionEnvironment())
+
+
 def resolve_boot_disk(env: DetectionEnvironment | None = None) -> Optional[str]:
     """Determine the disk that hosts the boot media, if possible."""
 
@@ -276,8 +356,13 @@ def scan_existing_storage(
     env: DetectionEnvironment | None = None,
     *,
     boot_disk: Optional[str] = None,
+    protected_disks: Collection[str] = (),
 ) -> list[ExistingStorageDevice]:
-    """Return a list of non-boot disks that contain storage metadata."""
+    """Return non-boot, non-protected disks that contain storage metadata.
+
+    Protected disks (see :func:`resolve_protected_disks`) hold the running
+    system, so their data never counts as existing storage (reqs §2.3).
+    """
 
     env = env or DetectionEnvironment()
     listing = _run_command(env, ["lsblk", "-dnpo", "NAME,TYPE,RM"])
@@ -294,6 +379,8 @@ def scan_existing_storage(
             skip_reasons.append("removable_media")
         if boot_disk and resolved == boot_disk:
             skip_reasons.append("boot_disk")
+        if resolved in protected_disks:
+            skip_reasons.append("protected_disk")
         if skip_reasons:
             log_event(
                 "pre_nixos.storage.device_filtered",
@@ -367,8 +454,7 @@ def detect_existing_storage(
     """Inspect the system and return devices that contain existing storage."""
 
     env = env or DetectionEnvironment()
-    boot_disk = resolve_boot_disk(env)
-    return scan_existing_storage(env, boot_disk=boot_disk)
+    return scan_existing_storage(env, protected_disks=_resolve_protected_disks(env))
 
 
 def format_existing_storage_reasons(reasons: Sequence[str]) -> str:

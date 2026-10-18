@@ -47,6 +47,7 @@ class ExistingStorageStub:
 
     devices: Sequence[ExistingStorageDevice] | None = None
     error: Exception | None = None
+    protected_disks: frozenset[str] = frozenset()
     calls: int = field(default=0, init=False)
 
     def scan(self) -> list[ExistingStorageDevice]:
@@ -68,5 +69,12 @@ def existing_storage(monkeypatch: pytest.MonkeyPatch) -> ExistingStorageStub:
     stub = ExistingStorageStub()
     monkeypatch.setattr(
         storage_detection, "detect_existing_storage", lambda *args, **kwargs: stub.scan()
+    )
+    # resolve_protected_disks also inspects the host (findmnt/lsblk); tests get
+    # the declared set instead (empty unless a test assigns one).
+    monkeypatch.setattr(
+        storage_detection,
+        "resolve_protected_disks",
+        lambda *args, **kwargs: frozenset(stub.protected_disks),
     )
     return stub

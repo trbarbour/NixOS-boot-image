@@ -45,6 +45,12 @@ def make_env(
         ("findmnt", "-nr", "-t", "squashfs", "-o", "SOURCE"): CommandOutput(
             stdout="", returncode=1
         ),
+        # System mount points consulted by resolve_protected_disks (#306);
+        # not mountpoints unless a test says otherwise.
+        **{
+            ("findmnt", "-n", "-o", "SOURCE", target): CommandOutput(stdout="", returncode=1)
+            for target in ("/", "/nix/store", "/boot", "/boot/firmware")
+        },
         ("findmnt", "-nr", "-t", "iso9660", "-o", "SOURCE"): CommandOutput(
             stdout="", returncode=1
         ),
@@ -240,6 +246,7 @@ def test_detect_existing_storage_ignores_iso_label_source() -> None:
             stdout="LABEL=NIXOS\\040MINIMAL\n", returncode=0
         ),
         ("lsblk", "-npo", "PKNAME", "/dev/sdc"): CommandOutput(stdout="\n", returncode=0),
+        ("lsblk", "-nrspo", "NAME,TYPE", "/dev/sdc"): CommandOutput(stdout="/dev/sdc disk\n"),
         ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(
             stdout="/dev/sdc disk 1\n/dev/nvme0n1 disk 0\n", returncode=0
         ),
@@ -315,6 +322,9 @@ def test_logs_boot_resolution_and_device_filtering(monkeypatch) -> None:
         ("findmnt", "-n", "-o", "SOURCE", "/run/archiso/bootmnt"): CommandOutput(
             stdout="/dev/sda1\n", returncode=0
         ),
+        ("lsblk", "-nrspo", "NAME,TYPE", "/dev/sda1"): CommandOutput(
+            stdout="/dev/sda1 part\n/dev/sda disk\n"
+        ),
         ("lsblk", "-npo", "PKNAME", "/dev/sda1"): CommandOutput(
             stdout="sda\n", returncode=0
         ),
@@ -344,8 +354,19 @@ def test_logs_boot_resolution_and_device_filtering(monkeypatch) -> None:
     boot_fields = boot_events[-1][1]
     assert boot_fields["boot_disk"] == "/dev/sda"
 
+    # The boot disk is filtered as part of the protected set (#306); the
+    # protected-set event records that it is protected *because* it boots.
+    protected_events = [
+        event for event in events if event[0] == "pre_nixos.storage.resolve_protected_disks"
+    ]
+    assert protected_events[-1][1]["boot_disk"] == "/dev/sda"
+    assert "/dev/sda" in protected_events[-1][1]["protected"]
     device_events = [event for event in events if event[0] == "pre_nixos.storage.device_filtered"]
-    assert any("boot_disk" in record[1].get("reasons", []) for record in device_events)
+    assert any(
+        record[1].get("device") == "/dev/sda"
+        and "protected_disk" in record[1].get("reasons", [])
+        for record in device_events
+    )
 
     detection_events = [
         event for event in events if event[0] == "pre_nixos.storage.device_detected"
