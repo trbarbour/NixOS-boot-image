@@ -21,6 +21,12 @@ SHELL_PROMPT = "PRE-NIXOS> "
 # A bare "#" prompt must start a line (optionally as "sh-5.2#"); unanchored, it
 # matched "CPU#1" in a kernel soft-lockup warning during boot (2026-10-18).
 ROOT_PROMPT_PATTERNS = (r"root@.*# ?", r"(?:^|[\r\n])(?:sh-[0-9.]+)?# ?")
+# Where pre-nixos writes its structured action log inside the guest.
+PRE_NIXOS_ACTIONS_LOG = (
+    (Path(__file__).resolve().parents[2] / "pre_nixos" / "default_log_file_path.txt")
+    .read_text(encoding="utf-8")
+    .strip()
+)
 # virtio-blk serials are at most 20 bytes; longer ones are silently truncated.
 VIRTIO_SERIAL_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,20}")
 
@@ -1249,12 +1255,18 @@ class BootImageVM:
         raise AssertionError("unreachable")  # _raise_with_transcript always raises
 
     def wait_for_unit_inactive(self, unit: str, *, timeout: int = 240) -> str:
-        """Wait until a systemd unit reports ``inactive`` via ``systemctl``."""
+        """Wait until a systemd unit reports ``inactive`` via ``systemctl``.
+
+        A unit in the ``failed`` state will never become inactive, so that is
+        reported at once rather than after ``timeout``.
+        """
 
         # Flush any buffered output (e.g. from previous ip captures) before polling.
         self.run(":")
         deadline = time.time() + timeout
         status_command = f"systemctl is-active {unit} 2>/dev/null || true"
+        reason = f"Unit {unit} did not reach inactive state within {timeout}s"
+        context = "inactive timeout"
         while time.time() < deadline:
             output = self.run(status_command, timeout=60)
             lines = [line.strip() for line in output.splitlines() if line.strip()]
@@ -1264,6 +1276,10 @@ class BootImageVM:
                     self._log_step(f"{unit} reported inactive state")
                     self.run(":")
                     return status
+                if status == "failed":
+                    reason = f"Unit {unit} entered the failed state"
+                    context = "unit failed"
+                    break
             time.sleep(5)
 
         unit_status = self.run(
@@ -1273,28 +1289,28 @@ class BootImageVM:
         journal = self.collect_journal(journal_unit)
         diagnostics: List[Tuple[str, Path]] = []
         status_path = self._write_diagnostic_artifact(
-            f"{journal_unit}-status-timeout",
+            f"{journal_unit}-status-{context.replace(' ', '-')}",
             unit_status,
-            metadata_label=f"systemctl status {unit} (inactive timeout)",
+            metadata_label=f"systemctl status {unit} ({context})",
         )
         diagnostics.append((f"systemctl status {unit}", status_path))
         journal_path = self._write_diagnostic_artifact(
-            f"{journal_unit}-journal-timeout",
+            f"{journal_unit}-journal-{context.replace(' ', '-')}",
             journal,
-            metadata_label=f"journalctl -u {journal_unit} -b (inactive timeout)",
+            metadata_label=f"journalctl -u {journal_unit} -b ({context})",
         )
         diagnostics.append((f"journalctl -u {journal_unit} -b", journal_path))
         job_list = self.run(
             "systemctl list-jobs --no-legend 2>&1 || true", timeout=240
         )
         self._log_step(
-            "Captured systemctl list-jobs after unit inactivity timeout",
+            f"Captured systemctl list-jobs after {context} for {unit}",
             body=job_list,
         )
         jobs_path = self._write_diagnostic_artifact(
-            f"{journal_unit}-jobs-timeout",
+            f"{journal_unit}-jobs-{context.replace(' ', '-')}",
             job_list,
-            metadata_label="systemctl list-jobs (inactive timeout)",
+            metadata_label=f"systemctl list-jobs ({context})",
         )
         diagnostics.append(("systemctl list-jobs", jobs_path))
         failed_units_output = self.run(
@@ -1302,28 +1318,37 @@ class BootImageVM:
             timeout=240,
         )
         self._log_step(
-            "Captured systemctl list-units --failed after unit inactivity timeout",
+            f"Captured systemctl list-units --failed after {context} for {unit}",
             body=failed_units_output,
         )
         failed_units_path = self._write_diagnostic_artifact(
-            f"{journal_unit}-failed-units-timeout",
+            f"{journal_unit}-failed-units-{context.replace(' ', '-')}",
             failed_units_output,
-            metadata_label="systemctl list-units --failed (inactive timeout)",
+            metadata_label=f"systemctl list-units --failed ({context})",
         )
         diagnostics.append(("systemctl list-units --failed", failed_units_path))
         diagnostics.append(
-            self._capture_dmesg(f"inactive timeout for {unit}")
+            self._capture_dmesg(f"{context} for {unit}")
         )
-        self._raise_with_transcript(
-            "\n".join(
-                [
-                    f"Unit {unit} did not reach inactive state within {timeout}s",
-                    f"systemctl status {unit}:\n{unit_status}",
-                    f"journalctl -u {journal_unit} -b:\n{journal}",
-                ]
-            ),
-            diagnostics=diagnostics,
-        )
+        sections = [
+            reason,
+            f"systemctl status {unit}:\n{unit_status}",
+            f"journalctl -u {journal_unit} -b:\n{journal}",
+        ]
+        if unit.startswith("pre-nixos"):
+            # The structured log names what pre-nixos acted on (e.g. lingering
+            # md/LVM devices), which the journal does not.
+            actions = self.run(
+                f"tail -n 200 {PRE_NIXOS_ACTIONS_LOG} 2>&1 || true", timeout=240
+            )
+            actions_path = self._write_diagnostic_artifact(
+                f"pre-nixos-actions-{context.replace(' ', '-')}",
+                actions,
+                metadata_label=f"pre-nixos actions log ({context})",
+            )
+            diagnostics.append(("pre-nixos actions log", actions_path))
+            sections.append(f"{PRE_NIXOS_ACTIONS_LOG} (last 200 lines):\n{actions}")
+        self._raise_with_transcript("\n".join(sections), diagnostics=diagnostics)
 
     def shutdown(self) -> None:
         if not self.child.isalive():

@@ -8,7 +8,7 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import pytest
 
@@ -899,10 +899,8 @@ def test_ipv4_timeout_records_systemd_jobs(
     ]
 
 
-def test_unit_inactive_timeout_records_failed_units(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Unit inactivity timeouts should snapshot failed units alongside jobs."""
+def _make_unit_wait_vm(tmp_path: Path) -> Tuple[BootImageVM, Path]:
+    """A BootImageVM with real metadata/diagnostic paths and no QEMU behind it."""
 
     iso_path = tmp_path / "sample.iso"
     store_path = tmp_path / "store"
@@ -959,6 +957,15 @@ def test_unit_inactive_timeout_records_failed_units(
     vm._diagnostic_dir.mkdir(exist_ok=True)
     vm._diagnostic_counter = 0
     vm._escalation_diagnostics = []
+    return vm, metadata_path
+
+
+def test_unit_inactive_timeout_records_failed_units(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Unit inactivity timeouts should snapshot failed units alongside jobs."""
+
+    vm, metadata_path = _make_unit_wait_vm(tmp_path)
 
     commands: List[str] = []
     journal_calls: List[Tuple[str, bool]] = []
@@ -1309,3 +1316,45 @@ def test_root_prompt_patterns_ignore_hash_inside_boot_messages(text: str) -> Non
 )
 def test_root_prompt_patterns_match_real_root_prompts(text: str) -> None:
     assert any(re.search(p, text) for p in ROOT_PROMPT_PATTERNS)
+
+
+def test_unit_wait_stops_at_once_when_the_unit_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A failed unit will never become inactive: report it immediately.
+
+    Regression (2026-10-18, notes/2026-10-18T144719Z-vm-run): pre-nixos failed
+    at 14:55:54 and the harness polled until its 600 s timeout expired.
+    """
+
+    vm, metadata_path = _make_unit_wait_vm(tmp_path)
+    polls: List[str] = []
+
+    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+        if command.startswith("systemctl is-active"):
+            polls.append(command)
+            return "failed\n"
+        if command.startswith("tail -n 200 /var/log/pre-nixos/actions.log"):
+            return '{"event": "pre_nixos.cleanup.verification_failed"}'
+        return ""
+
+    vm.run = fake_run  # type: ignore[assignment]
+    vm.collect_journal = lambda unit, *, since_boot=True: "journal output"  # type: ignore[assignment]
+    clock = iter(range(0, 10_000, 5))  # each call advances 5 s
+    monkeypatch.setattr("tests.vm.controller.time.time", lambda: float(next(clock)))
+    monkeypatch.setattr("tests.vm.controller.time.sleep", lambda _: None)
+
+    with pytest.raises(AssertionError) as excinfo:
+        vm.wait_for_unit_inactive("pre-nixos", timeout=600)
+
+    assert len(polls) == 1
+    message = str(excinfo.value)
+    assert "Unit pre-nixos entered the failed state" in message
+    assert "verification_failed" in message
+
+    labels = {
+        entry["label"]
+        for entry in json.loads(metadata_path.read_text(encoding="utf-8"))["diagnostics"]["artifacts"]
+    }
+    assert "pre-nixos actions log (unit failed)" in labels
+    assert "systemctl status pre-nixos (unit failed)" in labels
