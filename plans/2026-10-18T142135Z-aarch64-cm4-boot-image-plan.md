@@ -33,10 +33,11 @@ These amend `automated-pre-nixos-reqs.md`. That document has no IDs, so new IDs 
 | **R-T1** | Every platform's image builds from this repository on an x86_64 build host, including a Claude Code cloud session. | new | §3.3 below |
 | **R-B2** | On AArch64 Pi, the board's boot order must make the **installed system boot after installation**, without the installer running again, while still letting the installer boot on a machine with no installed system. pre-nixos must **verify** the effective boot order before it installs, and must refuse to install, or warn, if the installed system would not be booted. | new | user, 2026-10-18; §3.9 below |
 
-**Anomaly for the user, independent of AArch64.**
+**Anomaly for the user, independent of AArch64** (corrected 2026-10-18 after the user's note).
 - §2.3 says *"Disk layout changes must **never** be applied automatically at boot."*
-- Every VM run on 2026-10-18 shows the boot-time run tearing down and provisioning all visible disks unattended (`notes/2026-10-18T044623Z-vm-run.md`). The queue history (`DETAIL=auto-applied`) suggests this behaviour was added deliberately.
-- Either §2.3 or the behaviour needs updating. On a CM4 it also increases the risk addressed by R-S1.
+- At boot, pre-nixos **provisions only when the existing-storage scan finds nothing**; otherwise it aborts. This is the safeguard in `_handle_existing_storage`.
+- So the remaining gap is narrow: auto-apply onto empty disks. §2.3's wording should probably say "never modify disks that contain data".
+- An earlier version of this plan said the image "tears down and provisions all visible disks unattended". That was wrong. Those log lines come from `apply_plan`'s pre-disko signature wipe, which prints "Tearing down existing storage" even for empty disks.
 
 ## 3. Design decisions
 
@@ -47,7 +48,10 @@ These amend `automated-pre-nixos-reqs.md`. That document has no IDs, so new IDs 
 - **Today:**
   - `storage_detection` excludes the disk that holds the boot media using ISO-specific probes (`/iso`, `/nix/.ro-store`, squashfs, iso9660 mounts) plus the `RM` (removable) flag.
   - On the SD image, root is a plain ext4 partition on the card, so none of the ISO probes match. SD and eMMC devices usually report `RM=0`, so the removable rule doesn't match either.
-  - **Unless changed, the boot card is a candidate for wiping.**
+  - Consequences, after the user's note on the "only if empty" safeguard:
+    - **At boot:** the card's partitions count as existing storage, so the run **aborts**. That is safe, but it blocks auto-provisioning on every CM4.
+    - **In the TUI or forced-cleanup paths:** the card **is planned**, so it can be wiped.
+  - **x86, at boot, is worse** (trbarbour/NixOS-boot-image#306): the scan *excludes* a correctly identified boot stick, so the safeguard passes, while the plan *includes* a stick reporting `RM=0`, which is then wiped.
 - **Options:**
   - **(a)** Add an SD-specific probe for the `FIRMWARE`/`NIXOS_SD` labels. This is narrow, breaks if labels change, and only covers this one image.
   - **(b) Recommended:** exclude every disk that is the parent of any mounted filesystem of the running system (`findmnt -rno SOURCE`, then `lsblk -no PKNAME`). This is general: it covers the SD card, the ISO's medium, and anything else mounted. The ISO probes stay as a second check.
@@ -128,8 +132,8 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
 
 **Why it matters, with the failure modes to design out:**
 
-1. If the order prefers the SD card and the card is still inserted after installation, the board boots the installer again rather than the installed system.
-2. With boot-time auto-apply (see the §2.3 anomaly), booting the installer again **re-provisions the disks**, destroying the fresh install. A boot loop would destroy it on every boot.
+1. If the order prefers the SD card and the card is still inserted after installation, the board boots the installer again rather than the installed system. The "only if empty" safeguard then finds the new installation and stops. That is not destructive, but the board never runs its installed system unattended. (Corrected: an earlier version said this would re-provision the fresh install.)
+2. Destruction remains possible only on paths that bypass the safeguard: forced cleanup (`PRE_NIXOS_FORCE_CLEANUP`) or an operator applying from the TUI.
 3. If the order lacks the target device class (for example NVMe), the installed system never boots.
 
 **Candidate order:** installed-system device first, then SD, then retry. For an NVMe target that would be `BOOT_ORDER=0xf16`; the digits are read from the least significant end, with 6 = NVMe, 1 = SD/eMMC and f = restart. An empty NVMe falls through to the SD installer; after installation the NVMe boots first. **One setting serves both phases.** The digit meanings must be confirmed against the Raspberry Pi bootloader documentation for the user's EEPROM version (E11).
@@ -151,7 +155,7 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
 - **Recommended: (a)+(verify) now, (c) later if E12–E14 come out well.**
   - Always **read and check** the effective `BOOT_ORDER` before installing. If the target device class would not boot before the SD card, stop with a clear message naming the needed value, in the TUI and on the serial console. This meets R-B2 safely.
   - Automating the change (c) is a later, separately approved step.
-  - Independent of both: after a successful install, remove the conditions that would let the installer re-provision, for example by marking the SD card's state so a second boot does not auto-apply. That needs a design of its own, and ties into the §2.3 anomaly.
+  - Independent of both: after a successful install, make a second installer boot report clearly, on serial and in the TUI, that an installed system exists and the boot order is the likely cause. The safeguard already prevents re-provisioning.
 
 **Tests:**
 
