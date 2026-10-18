@@ -1,0 +1,50 @@
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792364770746__%s__UID_MARK__1792364770746__\n' "$(id -u)"
+printf '__UID_MARK__1792364770746__%s__UID_MARK__1792364770746__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1792364770746__0__UID_MARK__1792364770746__
+
+[?2004hPRE-NIXOS> udevadm settle; readlink -f /dev/disk/by-id/virtio-residue-a 2>/dev/null || true
+udevadm settle; readlink -f /dev/disk/by-id/virtio-residue-a 2>/dev/null || true
+
+[?2004l
+/dev/vdb
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792364771927__%s__UID_MARK__1792364771927__\n' "$(id -u)"
+printf '__UID_MARK__1792364771927__%s__UID_MARK__1792364771927__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1792364771927__0__UID_MARK__1792364771927__
+
+[?2004hPRE-NIXOS> udevadm settle; readlink -f /dev/disk/by-id/virtio-residue-b 2>/dev/null || true
+udevadm settle; readlink -f /dev/disk/by-id/virtio-residue-b 2>/dev/null || true
+
+[?2004l
+/dev/vdc
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792364772564__%s__UID_MARK__1792364772564__\n' "$(id -u)"
+printf '__UID_MARK__1792364772564__%s__UID_MARK__1792364772564__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1792364772564__0__UID_MARK__1792364772564__
+
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; mdadm --create /dev/md127 --force --level=1 --metadata=1.2 --raid-devices=2 /dev/vdb /dev/vdc; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; mdadm --create /dev/md127 --force --level=1 --metadata=1.2 --raid-devices=2 /dev/vdb /dev/vdc; printf '\n__EXIT__=%s\n' $?; }
+
+[?2004l
+
+
+__BEGIN__
+
+To optimalize recovery speed, it is recommended to enable write-indent bitmap, do you want to enable it now? [y/N]? 

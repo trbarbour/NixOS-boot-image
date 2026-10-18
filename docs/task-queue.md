@@ -95,6 +95,11 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Cause: 15 unrooted 25.05 ISOs at 1.4 GiB each were left in `/nix/store` by earlier builds. Deleting them freed 20.1 GiB.
     - Plan: a helper that deletes boot-image store paths other than the current one, called from the VM fixture's build step (or the session hook) when free space is low. Record the disk headroom in the run metadata so this shows up early.
 
+12. **VM test for disko creating RAID (reqs §2.2) under mdadm 4.4.** *(found 2026-10-18 during the 26.05 bump)*
+    - mdadm 4.4 asks about a write-intent bitmap when `--bitmap` is omitted. disko's `echo 'y' | mdadm --create` now answers that question, so arrays get an internal bitmap, and a later "Continue creating array?" would get end-of-file, i.e. "no".
+    - No VM test provisions a multi-disk (RAID) layout, so this path is unverified. Add one: boot with 2 equal disks and assert `/dev/md*` exists and the plan's VGs and LVs exist. Then decide whether the bitmap is wanted (it speeds up resync).
+    - Details: `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
+
 ## Recently Completed
 - 2026-10-18T22-18-16Z - Merged trbarbour/NixOS-boot-image#310 (0.10.9): fixed #309 (the USB boot stick was counted as existing storage; the boot disk resolved to `/dev/dev/sda`). Added the USB-stick VM test, the `run_as_root_checked` echo fix, the AArch64 user answers and the requirements. VM-verified.
 - 2026-10-18T17-32-54Z - Merged trbarbour/NixOS-boot-image#308 (0.10.7):

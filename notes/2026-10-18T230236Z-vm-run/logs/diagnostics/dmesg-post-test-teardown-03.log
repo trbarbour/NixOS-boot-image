@@ -1,0 +1,6 @@
+{ printf '\n__BEGIN__\n'; mdadm --create /dev/md127 --force --level=1 --metadata=1.2 --raid-devices=2 /dev/vdb /dev/vdc; printf '\n__EXIT__=%s\n' $?; }
+__BEGIN__
+To optimalize recovery speed, it is recommended to enable write-indent bitmap, do you want to enable it now? [y/N]? dmesg --color=never 2>&1 || dmesg 2>&1 || true
+mdadm: bad option.
+mdadm: array /dev/md127 started.
+__EXIT__=0
