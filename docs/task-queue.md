@@ -84,7 +84,8 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Fix (0.10.8): unit regressions plus the permanent VM test `tests/vm/test_usb_stick_boot.py`.
     - 2026-10-18T19-39-35Z - VM-verified on 0.10.9: `tests/vm/test_usb_stick_boot.py` passes, and the CD-ROM VM tests pass on 0.10.8. Also fixed a harness fault: echo leaking into `run_as_root_checked`. Remaining: a PR (if the user asks).
 
-11. **Evaluate a nixpkgs bump from 25.05 to 26.05 (plan E16).** *(found 2026-10-18T22-03-51Z)*
+11. **Update the nixpkgs pin from 25.05 to 26.05 (plan E16).** *(found 2026-10-18T22-03-51Z; **decided by the user 2026-10-18T22-16-29Z**: 26.05 is stable, so update)*
+    - Plan: do it after PR #310 merges, as its own PR. Update the inputs and `flake.lock`, then rebuild the ISO. Run the full unit suite and the VM regression. Re-run E1 (module evaluation on the 26.05 SD image).
     - The user's working stock AArch64 image is 26.05, and the AGENTS.md newness policy prefers the newer version.
     - It affects the x86 ISO too, so it needs its own build and VM regression run. Decide before AArch64 work item 6 (the flake refactor).
 

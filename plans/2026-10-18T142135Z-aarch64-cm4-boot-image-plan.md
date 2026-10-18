@@ -272,6 +272,10 @@ BOOT_ORDER=0xf2516
   - the bundled Pi 4 default `boot.conf` (extracted from `pieeprom-2025-02-11.bin`) has no `BOOT_ORDER` line and has `BOOT_UART=0`, so the board's text is not that default.
 
   Who edited it, and when, cannot be determined from here. It does not affect the design.
+- **Correction (user, 2026-10-18 22:16Z).**
+  - The user set `BOOT_ORDER` on all their CM4s, NVMe first, so the edit above is the user's own.
+  - The user's records give `0xf25146` for this board too. The only open point is why the `4` (USB over PCIe) is missing; most likely a later change that was not recorded.
+  - This does not affect the design: both values boot NVMe before SD.
 - The digit meanings in the board's comments match the user's reading that 4 is "USB PCIe". That digit is useless on boards whose PCIe lane drives the NVMe.
 
 **Still unknown, and not blocking:**
@@ -291,4 +295,5 @@ BOOT_ORDER=0xf2516
   - unit test: `0xf25641` (SD first) is refused for an NVMe target.
 - **Item 10 (hardware acceptance):** includes forced cleanup of an NVMe that already holds data.
 - **New, E16:** a nixpkgs 25.05 → 26.05 bump. The AGENTS.md policy prefers the newer version, and the user's stock image is 26.05. It affects x86 too, so it is queued as its own task.
+  - **Decided** by the user (2026-10-18 22:16Z): update the pin, since 26.05 is now stable and 25.05 is simply out of date.
 
