@@ -62,3 +62,58 @@
 1. Is the repo already cloned when the setup script runs? → Check the environment documentation, or test with a one-line setup script that logs `pwd` and `ls`.
 2. How long does a VM boot take under TCG, and does it fit the harness timeouts? → Build the ISO once (save the store path for reuse), then run `pytest tests/vm -vv` once and record the timings.
 3. Which fix for `github:` inputs is best: a helper script, `git+https` inputs in `flake.nix`, or attaching the repos to the environment? → Design debate before any change.
+
+---
+
+## Follow-up session (2026-10-18 02:10Z–02:47Z): the three agreed fixes
+
+The user approved three steps, done in this order: (1) a helper for the flake inputs, (2) hermetic tests, (3) setup and VM-test tools.
+
+### Step 1: `scripts/nix_git_inputs.py` (commit `5c13f59`, version 0.9.0)
+
+Design debate and decisions:
+
+- **Form.** A Python module with a CLI, rather than a shell wrapper. It is unit-testable, and the VM fixtures and debug scripts can import it.
+- **Where revisions come from.** Parsed from `flake.lock`, not hard-coded, so the lock stays the single source of truth.
+- **Activation.** An explicit opt-in, `PRE_NIXOS_NIX_GIT_INPUTS=1`, validated strictly: only unset, `0` or `1` are accepted. Two alternatives were rejected. Auto-detection would need a network probe that could be flaky. Always-on would make normal hosts slower.
+- **Integrity** (requirements §3: repeatable, deterministic builds). An override drops the locked `narHash`.
+  - Experiment: `narHash` cannot go in a `git+https` URL. Nix 2.34 passes it through to git as part of the remote URL, and git gets a 403 even when the hash is correct.
+  - Experiment: a git checkout hashes the same as the GitHub tarball for all four inputs (disko, flake-utils, systems, nixpkgs).
+  - So the helper runs `nix flake metadata --json` with the overrides and compares every `narHash` against `flake.lock`. Any mismatch is a hard error.
+- **Equivalence check.**
+  - Commit `4bb90dd`, evaluated with the helper's overrides, gives `rmhwpzbb…`, identical to the hand-written overrides used earlier.
+  - Later commits give other derivations because `src = ./.` takes in every tracked file. Queued as "narrow the flake's package source".
+
+### Step 2: hermetic tests (commit `3cd63ea`, version 0.9.1)
+
+- Design: (a) an autouse stub returning `[]`, or (b) an autouse stub that fails unless the test declares a scenario. Chose (b), because it exposes hidden dependencies on host storage.
+- Experiment: a `BaseException` subclass escapes `except Exception`, pytest reports it as an ordinary failure, and the following tests still run. The stub uses one so that the production code's broad exception handlers can't hide an undeclared scan.
+- Result: 9 tests reached the host scan, not 4. Five had been passing by accident.
+- Added failure-path tests for the scanner, CLI, TUI header and TUI apply.
+
+### Step 3: SessionStart hook (commit `e359f25`, version 0.9.2)
+
+Facts from the docs (code.claude.com/docs/en/cloud-environments, read 2026-10-18):
+
+- The setup script runs as root before Claude Code launches. Its result is cached as a filesystem snapshot for about 7 days.
+- A SessionStart hook in the repo runs on every start and resume, with `$CLAUDE_PROJECT_DIR` set.
+- Archive and codeload URLs get a 403 for repositories not attached to the session, public ones included.
+
+Decisions:
+
+- Project setup lives in the repo hook, not the environment's setup box.
+- One APT list and one set of venv logic live in `scripts/lib/` and are shared with `codex-setup.sh`. `openssh-client` was added to the list.
+- The hook installs only what is missing, and refreshes the venv only when its inputs' hash changes.
+- The hook sets the git-input variable through `CLAUDE_ENV_FILE`.
+
+Validation:
+
+- The first run took 15 s; it installed `openssh-client` and refreshed the venv. The second run took 0.17 s and did nothing.
+- `shellcheck -x -P SCRIPTDIR` is clean.
+- **Anomaly while testing:** my "outside the cloud" check wrongly ran the hook, because this shell has `CLAUDE_CODE_REMOTE=true`. Re-run with the variable unset or `false`, the hook exits silently, as intended. That behaviour is now pinned by `tests/test_session_start_hook.py`.
+
+### Observation: the ISO built without the variable set
+
+- Hypothesis H1: tarballs are no longer blocked. **Refuted.** `nix flake prefetch github:numtide/flake-utils/b1d9ab7…`, a revision that was not in the store, still got a 403; the same revision over `git+https` worked.
+- Hypothesis H2, consistent with the evidence: Nix reused sources already in the store with the same `narHash`, fetched by the earlier git-override runs.
+- Consequence: a run that succeeds on a warm store doesn't prove fetching works. A fresh session needs the hook's variable.
