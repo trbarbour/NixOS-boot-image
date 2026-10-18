@@ -1,0 +1,50 @@
+
+[   85.013007] Console: switching to colour dummy device 80x25
+
+[   85.041614] parport0: PC-style at 0x378, irq 7 [PCSPP(,...)]
+
+[   85.053903] [drm] Found bochs VGA, ID 0xb0c5.
+
+[   85.053989] [drm] Framebuffer size 16384 kB @ 0xfd000000, mmio @ 0xfeb90000.
+
+[   85.320871] bochs-drm 0000:00:02.0: [drm] Registered 1 planes with drm panic
+
+[   85.321032] [drm] Initialized bochs-drm 1.0.0 for 0000:00:02.0 on minor 0
+
+[   85.710689] piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+
+[   85.783969] i2c i2c-0: Memory type 0x07 not supported yet, not instantiating SPD
+
+[   86.098972] Console: switching to colour frame buffer device 160x50
+
+[   86.204596] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+
+[   86.243599] bochs-drm 0000:00:02.0: [drm] fb0: bochs-drmdrmfb frame buffer device
+
+[   90.451811] kvm_amd: Nested Virtualization enabled
+
+[   90.462503] kvm_amd: Nested Paging disabled
+
+[   90.463354] kvm_amd: PMU virtualization is disabled
+
+[   91.491953] powernow_k8: Power state transitions not supported
+
+[   91.793244] EDAC MC: Ver: 3.0.0
+
+[  101.583016] ppdev: user-space parallel port driver
+
+[  101.827869] mousedev: PS/2 mouse device common for all mice
+
+[  104.038466] hrtimer: interrupt took 6192520 ns
+
+[  107.128016] virtio_net virtio1 lan: renamed from ens4
+
+[  107.705608] NET: Registered PF_PACKET protocol family
+
+[?2004hPRE-NIXOS> if [ -e /var/log/pre-nixos/actions.log ]; then tail -n 200 /var/log/pre-nixos/actions.log; else echo '/var/log/pre-nixos/actions.log absent: pre-nixos writes it only when PRE_NIXOS_LOG_EVENTS is set'; fi
+if [ -e /var/log/pre-nixos/actions.log ]; then tail -n 200 /var/log/pre-nixos/actions.log; else echo '/var/log/pre-nixos/actions.log absent: pre-nixos writes it only when PRE_NIXOS_LOG_EVENTS is set'; fi
+
+[?2004l
+/var/log/pre-nixos/actions.log absent: pre-nixos writes it only when PRE_NIXOS_LOG_EVENTS is set
+
+[?2004hPRE-NIXOS> 

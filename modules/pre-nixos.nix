@@ -93,6 +93,12 @@ in {
     # The installer modules enable ZFS support; pools are out of scope (reqs
     # §7), so adopt the safer 26.11 default rather than forcing imports.
     boot.zfs.forceImportRoot = false;
+    # disko builds its generated script at run time, offline.  The script uses
+    # makeBinaryWrapper; until 25.05 the guest could build that hook with the
+    # image's pkgs.stdenv, but since 26.05 the installer modules keep only
+    # stdenvNoCC.  Ship the hook itself (its closure carries the C compiler it
+    # needs).  Guarded by tests/vm/test_disko_offline_closure.py.
+    system.extraDependencies = [ pkgs.makeBinaryWrapper ];
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
     boot.loader.grub.memtest86.enable = true;
     boot.loader.grub.extraConfig = ''

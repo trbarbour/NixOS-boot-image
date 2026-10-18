@@ -1,0 +1,21 @@
+× pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (; enabled; preset: ignored)
+Active: failed (Result: exit-code) since Sun 2026-10-18 22:45:59 UTC; 5s ago
+Invocation: c22d0af70a984157877312ae01a3e505
+Process: 634 ExecStart=/nix/store/4pbm0g3dz1i8691jj90vg7dh79ia880w-unit-script-pre-nixos-start/bin/pre-nixos-start (code=exited, status=1/FAILURE)
+Main PID: 634 (code=exited, status=1/FAILURE)
+IP: 71.3K in, 39.9K out
+IO: 209M read, 88K written
+Mem peak: 460.6M
+CPU: 1min 39.195s
+Oct 18 22:45:54 nixos pre-nixos-start[858]:     _run(cmd, execute)
+Oct 18 22:45:54 nixos pre-nixos-start[858]:     ~~~~^^^^^^^^^^^^^^
+Oct 18 22:45:54 nixos pre-nixos-start[858]:   File "/nix/store/w20frfr1p2hm5…run
+Oct 18 22:45:54 nixos pre-nixos-start[858]:     raise subprocess.CalledProce…md)
+Oct 18 22:45:54 nixos pre-nixos-start[858]: subprocess.CalledProcessError: C… 1.
+Oct 18 22:45:55 nixos pre-nixos-start[1146]: LAN IPv4 address: 10.0.2.15
+Oct 18 22:45:59 nixos systemd[1]: pre-nixos.service: Main process exited, c…LURE
+Oct 18 22:45:59 nixos systemd[1]: pre-nixos.service: Failed with result 'ex…de'.
+Oct 18 22:45:59 nixos systemd[1]: Failed to start Pre-NixOS setup.
+Oct 18 22:45:59 nixos systemd[1]: pre-nixos.service: Consumed 1min 39.195s …fic.
+Hint: Some lines were ellipsized, use -l to show in full.

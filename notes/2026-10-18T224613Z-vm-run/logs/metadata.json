@@ -1,0 +1,71 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/jwr9pw2k20r90mcg1l1bharqmv9c55if-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/azwqclp3xzb8zlwrzy4s4mq9j8d8pnc3-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso/iso/nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso",
+    "nar_hash": "sha256-x5TUW9uHa4kM7+Sh4hsn8yN1BJBKLGAvm+gzK2QznIo=",
+    "root_key_fingerprint": "256 SHA256:npsqRqeyjNaTngxlUDr+LUcUA61jQhgo98cNfbsgY2M boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/azwqclp3xzb8zlwrzy4s4mq9j8d8pnc3-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [
+      {
+        "label": "dmesg (post-test teardown)",
+        "path": "/home/user/NixOS-boot-image/notes/2026-10-18T224613Z-vm-run/logs/diagnostics/dmesg-post-test-teardown-01.log"
+      },
+      {
+        "label": "pre-nixos journal",
+        "path": "/home/user/NixOS-boot-image/notes/2026-10-18T224613Z-vm-run/logs/diagnostics/pre-nixos-journal-02.log"
+      }
+    ],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-10-18T224613Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-10-18T22:46:13.956417+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-10-18T224613Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-10-18T224613Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-serial",
+      "stdio",
+      "-device",
+      "qemu-xhci,id=xhci",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-88/boot-image-usb-stick0/stick.img,if=none,id=usbstick,format=raw",
+      "-device",
+      "usb-storage,bus=xhci.0,drive=usbstick,removable=off,bootindex=0",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-88/boot-image-disk-usb-target0/disk.img,if=virtio,format=raw",
+      "-qmp",
+      "unix:/tmp/qmp-tq6hxar0/qmp.sock,server=on,wait=off",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:53485-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/pytest-of-root/pytest-88/boot-image-disk-usb-target0/disk.img",
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 53485
+  },
+  "timings": {
+    "boot_to_login_seconds": 120.477,
+    "build_seconds": 157.614,
+    "end": "2026-10-18T22:50:10.742246+00:00",
+    "start": "2026-10-18T22:46:13.939369+00:00",
+    "total_seconds": 236.781
+  }
+}

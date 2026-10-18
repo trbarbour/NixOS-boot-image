@@ -1,0 +1,1 @@
+/var/log/pre-nixos/actions.log absent: pre-nixos writes it only when PRE_NIXOS_LOG_EVENTS is set
