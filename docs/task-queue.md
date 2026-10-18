@@ -71,6 +71,10 @@ _Last updated: 2026-04-25T20-37-02Z_
 10. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
    - Goal: build an AArch64 boot image that can be written to a microSD card to boot e.g. a CM4. Use the stock NixOS AArch64 SD image as the base; it works, including on the serial console.
    - Deliverable: a top-down plan from requirements, with a design debate for each choice and a list of unknowns, each with an experiment to resolve it. Start after the race-fix PR.
+   - 2026-10-18T14-21-35Z - Plan written: `plans/2026-10-18T142135Z-aarch64-cm4-boot-image-plan.md`.
+     - E1 (module evaluates on the stock SD image), E2 (this host builds AArch64 via binfmt) and E3 (only 44 derivations built locally) are done.
+     - Found a safety gap: the SD boot card is not excluded from storage plans (§3.1).
+     - **Awaiting user input (§7)** before implementation.
 
 ## Recently Completed
 - 2026-10-18T04-04-07Z - Repaired the VM debug scripts (version `0.9.3`).
