@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+import stat
 import subprocess
 import sys
 from typing import Callable, Collection, Iterable, Optional, Sequence
@@ -44,11 +45,20 @@ class DetectionEnvironment:
         path_exists: Callable[[str], bool] | None = None,
         realpath: Callable[[str], str] | None = None,
         read_cmdline: Callable[[], Sequence[str]] | None = None,
+        is_block_device: Callable[[str], bool] | None = None,
     ) -> None:
         self.run = run or self._default_run
         self.path_exists = path_exists or os.path.exists
         self.realpath = realpath or os.path.realpath
         self.read_cmdline = read_cmdline or self._default_read_cmdline
+        self.is_block_device = is_block_device or self._default_is_block_device
+
+    @staticmethod
+    def _default_is_block_device(path: str) -> bool:
+        try:
+            return stat.S_ISBLK(os.stat(path).st_mode)
+        except OSError:
+            return False
 
     @staticmethod
     def _default_run(cmd: Sequence[str]) -> CommandOutput:
@@ -169,7 +179,9 @@ _BOOT_FILESYSTEM_TYPES = ("squashfs", "iso9660")
 
 # Where the installer mounts the system it is installing (disko's
 # --root-mountpoint).  Mounts under it, and swap on the disks behind them,
-# belong to the install *target*, not the running system.
+# belong to the install *target*, not the running system.  This relies on the
+# boot image using /mnt for nothing else; anything else mounted there is
+# treated as part of the target and left unprotected.
 INSTALL_TARGET_ROOT = "/mnt"
 
 
@@ -295,10 +307,22 @@ def _device_from_source(source: str) -> Optional[str]:
 
 
 def _disks_behind(env: DetectionEnvironment, devices: Iterable[str]) -> set[str]:
+    """Return the physical disks beneath the block devices among *devices*.
+
+    A mount source can be a path that is not a block device (e.g. a tmpfs
+    mounted with a directory as its "device"); such sources back no disk and
+    are skipped.  A real block device that cannot be traced still raises.
+    """
+
     disks: set[str] = set()
     for device in devices:
-        if env.path_exists(device):
-            disks |= _backing_disks(env, env.realpath(device))
+        if not env.path_exists(device):
+            continue
+        resolved = env.realpath(device)
+        if not env.is_block_device(resolved):
+            log_event("pre_nixos.storage.non_block_mount_source", source=device)
+            continue
+        disks |= _backing_disks(env, resolved)
     return disks
 
 

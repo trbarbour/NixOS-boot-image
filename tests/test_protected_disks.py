@@ -9,7 +9,7 @@ Requirement: automated-pre-nixos-reqs.md §2.3 (boot medium).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Mapping, Sequence, Tuple
+from typing import Collection, Dict, Mapping, Optional, Sequence, Tuple
 
 import pytest
 
@@ -27,12 +27,17 @@ def make_env(
     mounts: Mapping[str, str],
     swaps: Sequence[str] = (),
     stacks: Mapping[str, Sequence[str]],
+    block_devices: Optional[Collection[str]] = None,
 ) -> DetectionEnvironment:
     """Fake host given its mount table, active swaps and block-device stacks.
 
     ``stacks`` maps a device to its ``lsblk -s`` rows (itself, then what it
     sits on), e.g. ``{"/dev/sda1": ["/dev/sda1 part", "/dev/sda disk"]}``.
+    ``block_devices`` defaults to the devices in ``stacks``; every absolute
+    path "exists", as it would for a directory used as a mount source.
     """
+
+    blocks = set(stacks) if block_devices is None else set(block_devices)
 
     def run(cmd):  # type: ignore[no-untyped-def]
         key = tuple(cmd)
@@ -58,9 +63,10 @@ def make_env(
 
     return DetectionEnvironment(
         run=run,
-        path_exists=lambda path: path.startswith("/dev/"),
+        path_exists=lambda path: path.startswith("/"),
         realpath=lambda path: path,
         read_cmdline=lambda: [],
+        is_block_device=lambda path: path in blocks,
     )
 
 
@@ -147,9 +153,33 @@ def test_install_target_and_its_swap_are_not_protected() -> None:
 def test_unresolvable_system_mount_is_an_error_not_unprotected() -> None:
     """Fail safe: if a system mount's disks cannot be determined, refuse."""
 
-    env = make_env(mounts={"/": "/dev/sda1"}, stacks={})
+    env = make_env(mounts={"/": "/dev/sda1"}, stacks={}, block_devices={"/dev/sda1"})
     with pytest.raises(RuntimeError, match="/dev/sda1"):
         resolve_protected_disks(env)
+
+
+def test_special_filesystems_do_not_confuse_protection() -> None:
+    """Review question on #308: pseudo/special mounts must be ignored.
+
+    Bare-word sources (tmpfs, proc, cgroup2, overlay, nsfs[...]) name no
+    device; a path-like source that is not a block device (here a tmpfs
+    mounted with a directory as its "device") must be skipped, not treated
+    as an untraceable system disk (which would refuse to run).
+    """
+
+    env = make_env(
+        mounts={
+            "/": "/dev/sda2",
+            "/proc": "proc",
+            "/dev": "devtmpfs",
+            "/sys/fs/cgroup": "cgroup2",
+            "/run/netns/x": "nsfs[net:[4026532]]",
+            "/nix/store": "overlay",
+            "/srv/scratch": "/run/scratch-dir",
+        },
+        stacks={"/dev/sda2": ["/dev/sda2 part", "/dev/sda disk"]},
+    )
+    assert resolve_protected_disks(env) == frozenset({"/dev/sda"})
 
 
 def _fake_sys_block(root: Path) -> Path:
