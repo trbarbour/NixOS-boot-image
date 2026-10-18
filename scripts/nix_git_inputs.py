@@ -350,6 +350,14 @@ def update_input(nix: str, input_name: str, ref: str, repo_root: Path = REPO_ROO
     current = {i.path: i for i in parse_lock(lock)}.get((input_name,))
     if current is None:
         raise NixGitInputsError(f"flake.lock: no root github input {input_name!r}")
+    # Nix re-locks an entry whose ref differs from the flake.nix declaration,
+    # which would silently undo this update (Codex review on #312).
+    declared = f"github:{current.owner}/{current.repo}/{ref}"
+    if f'"{declared}"' not in (repo_root / "flake.nix").read_text():
+        raise NixGitInputsError(
+            f"flake.nix does not declare {input_name}.url = \"{declared}\"; "
+            "change it first (scripts/update_nixos_stable.py does both)"
+        )
     revision = fetch_github_revision(nix, current.owner, current.repo, ref)
     lock_path.write_text(format_lock(updated_lock(lock, input_name, revision)))
     return revision

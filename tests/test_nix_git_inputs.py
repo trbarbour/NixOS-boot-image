@@ -323,3 +323,38 @@ def test_commit_for_ref_refuses_a_name_that_is_branch_and_tag() -> None:
 def test_update_and_ref_must_be_given_together() -> None:
     with pytest.raises(SystemExit):
         ngi.main(["--update", "nixpkgs"])
+
+
+def _repo(tmp_path: Path, declared_ref: str) -> Path:
+    (tmp_path / "flake.lock").write_text(ngi.format_lock(SAMPLE_LOCK))
+    (tmp_path / "flake.nix").write_text(
+        f'{{ inputs.nixpkgs.url = "github:NixOS/nixpkgs/{declared_ref}"; }}\n'
+    )
+    return tmp_path
+
+
+def test_update_input_refuses_a_ref_flake_nix_does_not_declare(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Otherwise Nix re-locks from flake.nix and undoes the update (Codex, #312)."""
+
+    repo = _repo(tmp_path, "nixos-25.05")
+
+    def must_not_fetch(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("fetched before checking flake.nix")
+
+    monkeypatch.setattr(ngi, "fetch_github_revision", must_not_fetch)
+    with pytest.raises(ngi.NixGitInputsError, match="does not declare"):
+        ngi.update_input("nix", "nixpkgs", "nixos-26.05", repo)
+    assert json.loads((repo / "flake.lock").read_text()) == SAMPLE_LOCK
+
+
+def test_update_input_writes_the_lock_when_flake_nix_matches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = _repo(tmp_path, "nixos-26.05")
+    monkeypatch.setattr(ngi, "fetch_github_revision", lambda *a: NEW_REVISION)
+
+    assert ngi.update_input("nix", "nixpkgs", "nixos-26.05", repo) == NEW_REVISION
+    lock = json.loads((repo / "flake.lock").read_text())
+    assert lock["nodes"]["nixpkgs"]["locked"]["rev"] == REV_D

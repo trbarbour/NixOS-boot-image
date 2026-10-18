@@ -168,7 +168,7 @@ nix build
 > `scripts/update_nixos_stable.py --latest-release`. It uses git only
 > (`git ls-remote` and a git fetch), not the GitHub API or archive tarballs,
 > so it also works in Claude Code cloud sessions. To move a single input to a
-> given branch or tag, run
+> given branch or tag, point its `url` in `flake.nix` at that ref and run
 > `scripts/nix_git_inputs.py --update nixpkgs --ref nixos-26.05`.
 
 ### Claude Code cloud sessions
