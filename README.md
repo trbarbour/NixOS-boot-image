@@ -167,6 +167,22 @@ nix build
 > release tag instead (for a less frequently moving baseline), run
 > `scripts/update_nixos_stable.py --latest-release`.
 
+### Claude Code cloud sessions
+
+`.claude/hooks/session-start.sh` (registered in `.claude/settings.json`) runs
+at the start of every cloud session and does nothing elsewhere. It installs any
+missing APT packages from the shared list in `scripts/lib/dev_packages.sh`. It
+creates or refreshes `.venv`, skipping that when `pyproject.toml`,
+`requirements-dev.txt` and the Python version are unchanged. It also sets
+`PRE_NIXOS_NIX_GIT_INPUTS=1` (see below). Run the tests with
+`.venv/bin/pytest`.
+
+The environment's own *Setup script* box is optional. It runs before the
+repository is relied upon and its result is cached, so if you use it, put only
+repository-independent package installs there, e.g.
+`apt-get update && apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils openssh-client`.
+The hook fills any gaps.
+
 ### Hosts that block GitHub archive downloads
 
 Nix fetches `github:` flake inputs as GitHub archive tarballs. Some hosts
