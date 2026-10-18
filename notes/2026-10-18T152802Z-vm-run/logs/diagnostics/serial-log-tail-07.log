@@ -1,0 +1,50 @@
+
+[  341.760780] virtio-pci 0000:00:06.0: enabling device (0000 -> 0003)
+
+[  342.387978] ACPI: \_SB_.LNKB: Enabled at IRQ 11
+
+[  342.409636] virtio_blk virtio3: 2/0/0 default/read/poll queues
+
+[  342.440881] virtio_blk virtio3: [vdb] 3145728 512-byte logical blocks (1.61 GB/1.50 GiB)
+
+[  345.938938] pci 0000:00:07.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+
+[  345.942918] pci 0000:00:07.0: BAR 0 [io  0x0000-0x007f]
+
+[  345.943621] pci 0000:00:07.0: BAR 1 [mem 0x00000000-0x00000fff]
+
+[  345.944064] pci 0000:00:07.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+
+[  346.005600] pci 0000:00:07.0: BAR 4 [mem 0x100004000-0x100007fff 64bit pref]: assigned
+
+[  346.008111] pci 0000:00:07.0: BAR 1 [mem 0x80001000-0x80001fff]: assigned
+
+[  346.008504] pci 0000:00:07.0: BAR 0 [io  0x1080-0x10ff]: assigned
+
+[  346.028638] virtio-pci 0000:00:07.0: enabling device (0000 -> 0003)
+
+[  346.754441] virtio_blk virtio4: 2/0/0 default/read/poll queues
+
+[  346.794562] virtio_blk virtio4: [vdc] 3145728 512-byte logical blocks (1.61 GB/1.50 GiB)
+
+[  349.000115] md/raid1:md127: not clean -- starting background reconstruction
+
+[  349.000593] md/raid1:md127: active with 2 out of 2 mirrors
+
+[  349.001841] md127: detected capacity change from 0 to 3141632
+
+[  349.012169] md: resync of RAID array md127
+
+[  374.465789] md: md127: resync done.
+
+[  394.703796] md127: detected capacity change from 3141632 to 0
+
+[  394.704029] md: md127 stopped.
+
+[?2004hPRE-NIXOS> tail -n 200 /var/log/pre-nixos/actions.log 2>&1 || true
+tail -n 200 /var/log/pre-nixos/actions.log 2>&1 || true
+
+[?2004l
+tail: cannot open '/var/log/pre-nixos/actions.log' for reading: No such file or directory
+
+[?2004hPRE-NIXOS> 

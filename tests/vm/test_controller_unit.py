@@ -1334,7 +1334,7 @@ def test_unit_wait_stops_at_once_when_the_unit_fails(
         if command.startswith("systemctl is-active"):
             polls.append(command)
             return "failed\n"
-        if command.startswith("tail -n 200 /var/log/pre-nixos/actions.log"):
+        if command.startswith("if [ -e /var/log/pre-nixos/actions.log ]"):
             return '{"event": "pre_nixos.cleanup.verification_failed"}'
         return ""
 

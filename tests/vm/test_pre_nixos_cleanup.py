@@ -53,8 +53,11 @@ def test_pre_nixos_cleans_raid_lvm_residue(
     )
     assert "residue-marker" in sentinel_content
 
+    # PRE_NIXOS_LOG_EVENTS makes pre-nixos write its structured action log,
+    # which the harness captures on failure (it names lingering devices).
     vm.run_as_root_checked(
-        "systemctl set-environment PRE_NIXOS_FORCE_CLEANUP=1", timeout=180
+        "systemctl set-environment PRE_NIXOS_FORCE_CLEANUP=1 PRE_NIXOS_LOG_EVENTS=1",
+        timeout=180,
     )
     vm.run_as_root("systemctl restart pre-nixos.service", timeout=240)
     vm.wait_for_unit_inactive("pre-nixos", timeout=600)

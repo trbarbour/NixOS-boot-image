@@ -1339,7 +1339,11 @@ class BootImageVM:
             # The structured log names what pre-nixos acted on (e.g. lingering
             # md/LVM devices), which the journal does not.
             actions = self.run(
-                f"tail -n 200 {PRE_NIXOS_ACTIONS_LOG} 2>&1 || true", timeout=240
+                f"if [ -e {PRE_NIXOS_ACTIONS_LOG} ]; then "
+                f"tail -n 200 {PRE_NIXOS_ACTIONS_LOG}; else "
+                f"echo '{PRE_NIXOS_ACTIONS_LOG} absent: pre-nixos writes it only "
+                "when PRE_NIXOS_LOG_EVENTS is set'; fi",
+                timeout=240,
             )
             actions_path = self._write_diagnostic_artifact(
                 f"pre-nixos-actions-{context.replace(' ', '-')}",
