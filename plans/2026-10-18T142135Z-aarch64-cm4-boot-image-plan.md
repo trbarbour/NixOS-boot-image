@@ -42,6 +42,8 @@ These amend `automated-pre-nixos-reqs.md`. That document has no IDs, so new IDs 
 
 ### 3.1 Protecting the boot medium (R-S1), the top priority
 
+> **Also an x86 fault today**, tracked in trbarbour/NixOS-boot-image#306. The user notes the x86 image is usually written to a writable USB stick, and there is a mechanism to protect it: `resolve_boot_disk`. That mechanism covers only the **cleanup scan**. The **storage plan** (`enumerate_disks` → `plan_storage` → disko) excludes only `RM=1` devices, so a boot stick reporting `RM=0` is planned. Reproduced on 2026-10-18: `disko devices=['nvme0n1', 'sda']`. The fix below must therefore apply to **both** paths and both platforms.
+
 - **Today:**
   - `storage_detection` excludes the disk that holds the boot media using ISO-specific probes (`/iso`, `/nix/.ro-store`, squashfs, iso9660 mounts) plus the `RM` (removable) flag.
   - On the SD image, root is a plain ext4 partition on the card, so none of the ISO probes match. SD and eMMC devices usually report `RM=0`, so the removable rule doesn't match either.

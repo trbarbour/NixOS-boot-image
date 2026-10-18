@@ -68,6 +68,9 @@ _Last updated: 2026-04-25T20-37-02Z_
 9. **Let `collect_pre_nixos_journal.py` capture the whole run.**
    - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
 
+11. **Exclude the boot medium from storage plans (safety; x86 and AArch64).** trbarbour/NixOS-boot-image#306
+   - 2026-10-18T15-00-00Z - The boot disk is excluded only from the cleanup scan (`resolve_boot_disk`). The plan path (`enumerate_disks` → `plan_storage` → disko) skips only `RM=1` devices, so a USB boot stick reporting `RM=0` is planned (reproduced). Fix: one protected-disk set (parents of all mounted filesystems plus `resolve_boot_disk`), applied on both paths, with unit and VM tests. The AArch64 plan's §3.1 depends on this.
+
 10. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
    - Goal: build an AArch64 boot image that can be written to a microSD card to boot e.g. a CM4. Use the stock NixOS AArch64 SD image as the base; it works, including on the serial console.
    - Deliverable: a top-down plan from requirements, with a design debate for each choice and a list of unknowns, each with an experiment to resolve it. Start after the race-fix PR.
