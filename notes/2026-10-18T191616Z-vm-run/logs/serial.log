@@ -1,0 +1,919 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 25.05.20251022.c8aa8cc Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 25.05.20251022.c8aa8cc Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot//nix/store/cjrhr0f61a0c68r4vq0qxws3jadn48yj-linux-6.12.54/bzImage... ok
+Loading /boot//nix/store/y4jkdvcm47cc5kr7mijnbs4969x71frv-initrd-linux-6.12.54/initrd...ok
+pre-nixos boot image version 0.10.8
+[!p]104[?7h[6n[32766;32766H[6n[!p]104[?7h[6n[32766;32766H[6n
+<<< Welcome to the pre-nixos auto-install boot image (25.05.20251022.c8aa8cc, x86_64) - ttyS0 >>>
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+(PRE_NIXOS_AUTO_INSTALL=)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792351162349__\n'
+
+
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792351162349__\n'
+pre-nixos boot image version 0.10.8
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+__PROMPT_READY__1792351162349__\n'
+[?2004l__PROMPT_READY__1792351162349__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792351179428__%s__UID_MARK__1792351179428__\n' "$(id -u)"
+
+[?2004l[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792351179531__\n'
+printf '__UID_MARK__1792351179428__%s__UID_MARK__1792351179428__\n' "$(id -u)"
+[?2004lexport PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792351179531__\n'
+LAN IPv4 address: 10.0.2.15
+__UID_MARK__1792351179428__1000__UID_MARK__1792351179428__
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792351179531__\n'
+[?2004l__PROMPT_READY__1792351179531__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792351179428__%s__UID_MARK__1792351179428__\n' "$(id -u)"
+sudo -i
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792351179428__%s__UID_MARK__1792351179428__\n' "$(id -u)"
+[?2004lsudo -i
+__UID_MARK__1792351179428__1000__UID_MARK__1792351179428__
+[?2004hPRE-NIXOS> sudo -i
+[?2004lpre-nixos boot image version 0.10.8
+LAN IPv4 address: 10.0.2.15
+[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792351182941__\n'
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792351182941__\n'
+[?2004l__PROMPT_READY__1792351182941__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792351183025__%s__UID_MARK__1792351183025__\n' "$(id -u)"
+printf '__UID_MARK__1792351183025__%s__UID_MARK__1792351183025__\n' "$(id -u)"
+[?2004l__UID_MARK__1792351183025__0__UID_MARK__1792351183025__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792351183360__%s__UID_MARK__1792351183360__\n' "$(id -u)"
+printf '__UID_MARK__1792351183360__%s__UID_MARK__1792351183360__\n' "$(id -u)"
+[?2004l__UID_MARK__1792351183360__0__UID_MARK__1792351183360__
+[?2004hPRE-NIXOS> { lsblk -dnro NAME,TRAN,RM /dev/sda; printf '
+__EXIT__=%s
+' $?; }
+{ lsblk -dnro NAME,TRAN,RM /dev/sda; printf '
+[?2004l[?2004h> __EXIT__=%s
+[?2004l[?2004h> ' $?; }
+[?2004lsda usb 0
+
+__EXIT__=0
+[?2004hPRE-NIXOS> dmesg --color=never 2>&1 || dmesg 2>&1 || true
+LAN IPv4 address: 10.0.2.15
+dmesg --color=never 2>&1 || dmesg 2>&1 || true
+[?2004l[    0.000000] Linux version 6.12.54 (nixbld@localhost) (gcc (GCC) 14.3.0, GNU ld (GNU Binutils) 2.44) #1-NixOS SMP PREEMPT_DYNAMIC Sun Oct 19 14:34:07 UTC 2025
+[    0.000000] Command line: BOOT_IMAGE=/boot//nix/store/cjrhr0f61a0c68r4vq0qxws3jadn48yj-linux-6.12.54/bzImage init=/nix/store/kh0g9xg91hs1rbgkw6x9p4pyy67mvnbm-nixos-system-nixos-25.05.20251022.c8aa8cc/init root=LABEL=nixos-minimal-25.05-x86_64 boot.shell_on_fail console=ttyS0,115200n8 console=tty0 nohibernate loglevel=4 lsm=landlock,yama,bpf  initrd=/boot//nix/store/y4jkdvcm47cc5kr7mijnbs4969x71frv-initrd-linux-6.12.54/initrd
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000007ffdbfff] usable
+[    0.000000] BIOS-e820: [mem 0x000000007ffdc000-0x000000007fffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 3.0.0 present.
+[    0.000000] DMI: QEMU Ubuntu 24.04 PC v2 (i440FX + PIIX, arch_caps fix, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.000000] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.000000] last_pfn = 0x7ffdc max_arch_pfn = 0x400000000
+[    0.000000] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[    0.000000] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.000000] found SMP MP-table at [mem 0x000f5460-0x000f546f]
+[    0.000000] RAMDISK: [mem 0x7e623000-0x7ffdbfff]
+[    0.000000] ACPI: Early table checksum verification disabled
+[    0.000000] ACPI: RSDP 0x00000000000F5270 000014 (v00 BOCHS )
+[    0.000000] ACPI: RSDT 0x000000007FFE1CBF 000034 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.000000] ACPI: FACP 0x000000007FFE1B6B 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.000000] ACPI: DSDT 0x000000007FFE0040 001B2B (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.000000] ACPI: FACS 0x000000007FFE0000 000040
+[    0.000000] ACPI: APIC 0x000000007FFE1BDF 000080 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.000000] ACPI: HPET 0x000000007FFE1C5F 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.000000] ACPI: WAET 0x000000007FFE1C97 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.000000] ACPI: Reserving FACP table memory at [mem 0x7ffe1b6b-0x7ffe1bde]
+[    0.000000] ACPI: Reserving DSDT table memory at [mem 0x7ffe0040-0x7ffe1b6a]
+[    0.000000] ACPI: Reserving FACS table memory at [mem 0x7ffe0000-0x7ffe003f]
+[    0.000000] ACPI: Reserving APIC table memory at [mem 0x7ffe1bdf-0x7ffe1c5e]
+[    0.000000] ACPI: Reserving HPET table memory at [mem 0x7ffe1c5f-0x7ffe1c96]
+[    0.000000] ACPI: Reserving WAET table memory at [mem 0x7ffe1c97-0x7ffe1cbe]
+[    0.000000] No NUMA configuration found
+[    0.000000] Faking a node at [mem 0x0000000000000000-0x000000007ffdbfff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x7e61d8c0-0x7e622dff]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.000000]   DMA32    [mem 0x0000000001000000-0x000000007ffdbfff]
+[    0.000000]   Normal   empty
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+[    0.000000]   node   0: [mem 0x0000000000100000-0x000000007ffdbfff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000000001000-0x000000007ffdbfff]
+[    0.000000] On node 0, zone DMA: 1 pages in unavailable ranges
+[    0.000000] On node 0, zone DMA: 97 pages in unavailable ranges
+[    0.000000] On node 0, zone DMA32: 36 pages in unavailable ranges
+[    0.000000] ACPI: PM-Timer IO Port: 0x608
+[    0.000000] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[    0.000000] IOAPIC[0]: apic_id 0, version 32, address 0xfec00000, GSI 0-23
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+[    0.000000] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+[    0.000000] ACPI: Using ACPI (MADT) for SMP configuration information
+[    0.000000] ACPI: HPET id: 0x8086a201 base: 0xfed00000
+[    0.000000] CPU topo: Max. logical packages:   1
+[    0.000000] CPU topo: Max. logical dies:       1
+[    0.000000] CPU topo: Max. dies per package:   1
+[    0.000000] CPU topo: Max. threads per core:   1
+[    0.000000] CPU topo: Num. cores per package:     2
+[    0.000000] CPU topo: Num. threads per package:   2
+[    0.000000] CPU topo: Allowing 2 present CPUs plus 0 hotplug CPUs
+[    0.000000] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[    0.000000] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+[    0.000000] [mem 0x80000000-0xfffbffff] available for PCI devices
+[    0.000000] Booting paravirtualized kernel on bare hardware
+[    0.000000] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+[    0.000000] setup_percpu: NR_CPUS:384 nr_cpumask_bits:2 nr_cpu_ids:2 nr_node_ids:1
+[    0.000000] percpu: Embedded 116 pages/cpu s294912 r65536 d114688 u1048576
+[    0.000000] pcpu-alloc: s294912 r65536 d114688 u1048576 alloc=1*2097152
+[    0.000000] pcpu-alloc: [0] 0 1 
+[    0.000000] Kernel command line: BOOT_IMAGE=/boot//nix/store/cjrhr0f61a0c68r4vq0qxws3jadn48yj-linux-6.12.54/bzImage init=/nix/store/kh0g9xg91hs1rbgkw6x9p4pyy67mvnbm-nixos-system-nixos-25.05.20251022.c8aa8cc/init root=LABEL=nixos-minimal-25.05-x86_64 boot.shell_on_fail console=ttyS0,115200n8 console=tty0 nohibernate loglevel=4 lsm=landlock,yama,bpf  initrd=/boot//nix/store/y4jkdvcm47cc5kr7mijnbs4969x71frv-initrd-linux-6.12.54/initrd
+[    0.000000] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 524154
+[    0.000000] Policy zone: DMA32
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] allocated 4194304 bytes of page_ext
+[    0.000000] ftrace: allocating 46196 entries in 181 pages
+[    0.000000] ftrace: allocated 181 pages with 5 groups
+[    0.000000] Dynamic Preempt: voluntary
+[    0.000000] rcu: Preemptible hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=2.
+[    0.000000] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] 	Rude variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[    0.000000] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] NR_IRQS: 24832, nr_irqs: 440, preallocated irqs: 16
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)
+[    0.000000] Console: colour VGA+ 80x25
+[    0.000000] printk: legacy console [tty0] enabled
+[    0.000000] printk: legacy console [ttyS0] enabled
+[    0.000000] ACPI: Core revision 20240827
+[    0.000000] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+[    0.006000] APIC: Switch to symmetric I/O mode setup
+[    0.018000] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[    0.027000] tsc: Unable to calibrate against PIT
+[    0.027000] tsc: using HPET reference calibration
+[    0.027000] tsc: Detected 2800.283 MHz processor
+[    0.000761] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x285d4c29563, max_idle_ns: 440795242342 ns
+[    0.002227] Calibrating delay loop (skipped), value calculated using timer frequency.. 5600.56 BogoMIPS (lpj=2800283)
+[    0.009773] Last level iTLB entries: 4KB 512, 2MB 255, 4MB 127
+[    0.009860] Last level dTLB entries: 4KB 512, 2MB 255, 4MB 127, 1GB 0
+[    0.010538] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+[    0.010538] Spectre V2 : Mitigation: Retpolines
+[    0.010538] Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+[    0.013538] x86/fpu: x87 FPU will use FXSAVE
+[    0.302790] Freeing SMP alternatives memory: 40K
+[    0.304727] pid_max: default: 32768 minimum: 301
+[    0.321792] LSM: initializing lsm=capability,landlock,yama,bpf
+[    0.328693] landlock: Up and running.
+[    0.328770] Yama: becoming mindful.
+[    0.331602] LSM support for eBPF active
+[    0.339157] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.339569] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.504538] smpboot: CPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[    0.545538] Performance Events: PMU not available due to virtualization, using software events only.
+[    0.548284] signal: max sigframe size: 1440
+[    0.553717] rcu: Hierarchical SRCU implementation.
+[    0.553909] rcu: 	Max phase no-delay instances is 400.
+[    0.563245] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.584443] NMI watchdog: Perf NMI watchdog permanently disabled
+[    0.591040] smp: Bringing up secondary CPUs ...
+[    0.611912] smpboot: x86: Booting SMP configuration:
+[    0.612078] .... node  #0, CPUs:      #1
+[    0.705284] smp: Brought up 1 node, 2 CPUs
+[    0.706070] smpboot: Total of 2 processors activated (11325.95 BogoMIPS)
+[    0.730606] Memory: 1974456K/2096616K available (16384K kernel code, 2645K rwdata, 13032K rodata, 3424K init, 3344K bss, 111268K reserved, 0K cma-reserved)
+[    0.761809] devtmpfs: initialized
+[    0.771932] x86/mm: Memory block size: 128MB
+[    0.827311] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[    0.828659] futex hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.843271] pinctrl core: initialized pinctrl subsystem
+[    0.865815] PM: RTC time: 19:16:33, date: 2026-10-18
+[    0.898643] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.910767] DMA: preallocated 256 KiB GFP_KERNEL pool for atomic allocations
+[    0.912294] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.912862] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.913833] audit: initializing netlink subsys (disabled)
+[    0.919490] audit: type=2000 audit(1792350992.945:1): state=initialized audit_enabled=0 res=1
+[    0.957715] thermal_sys: Registered thermal governor 'bang_bang'
+[    0.957876] thermal_sys: Registered thermal governor 'step_wise'
+[    0.957909] thermal_sys: Registered thermal governor 'user_space'
+[    0.960756] cpuidle: using governor menu
+[    0.963818] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+[    0.970726] PCI: Using configuration type 1 for base access
+[    0.972304] mtrr: your CPUs had inconsistent fixed MTRR settings
+[    0.972363] mtrr: your CPUs had inconsistent variable MTRR settings
+[    0.972391] mtrr: your CPUs had inconsistent MTRRdefType settings
+[    0.972405] mtrr: probably your BIOS does not setup all CPUs.
+[    0.972420] mtrr: corrected configuration.
+[    0.976408] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[    1.106867] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    1.107062] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    1.170211] ACPI: Added _OSI(Module Device)
+[    1.170319] ACPI: Added _OSI(Processor Device)
+[    1.170348] ACPI: Added _OSI(Processor Aggregator Device)
+[    1.233681] ACPI: 1 ACPI AML tables successfully acquired and loaded
+[    1.275766] ACPI: Interpreter enabled
+[    1.278737] ACPI: PM: (supports S0 S3 S4 S5)
+[    1.278851] ACPI: Using IOAPIC for interrupt routing
+[    1.279782] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[    1.279861] PCI: Using E820 reservations for host bridge windows
+[    1.283139] ACPI: Enabled 2 GPEs in block 00 to 0F
+[    1.383056] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[    1.384339] acpi PNP0A03:00: _OSC: OS supports [ASPM ClockPM Segments MSI HPX-Type3]
+[    1.384714] acpi PNP0A03:00: _OSC: not requesting OS control; OS requires [ExtendedConfig ASPM ClockPM MSI]
+[    1.386200] acpi PNP0A03:00: fail to add MMCONFIG information, can't access extended configuration space under this bridge
+[    1.395268] acpiphp: Slot [3] registered
+[    1.395844] acpiphp: Slot [4] registered
+[    1.396169] acpiphp: Slot [5] registered
+[    1.396480] acpiphp: Slot [6] registered
+[    1.396750] acpiphp: Slot [7] registered
+[    1.396939] acpiphp: Slot [8] registered
+[    1.397240] acpiphp: Slot [9] registered
+[    1.397401] acpiphp: Slot [10] registered
+[    1.397678] acpiphp: Slot [11] registered
+[    1.397830] acpiphp: Slot [12] registered
+[    1.398075] acpiphp: Slot [13] registered
+[    1.398252] acpiphp: Slot [14] registered
+[    1.398384] acpiphp: Slot [15] registered
+[    1.398648] acpiphp: Slot [16] registered
+[    1.398889] acpiphp: Slot [17] registered
+[    1.399100] acpiphp: Slot [18] registered
+[    1.399388] acpiphp: Slot [19] registered
+[    1.399699] acpiphp: Slot [20] registered
+[    1.399860] acpiphp: Slot [21] registered
+[    1.399991] acpiphp: Slot [22] registered
+[    1.400201] acpiphp: Slot [23] registered
+[    1.400390] acpiphp: Slot [24] registered
+[    1.400575] acpiphp: Slot [25] registered
+[    1.400759] acpiphp: Slot [26] registered
+[    1.401072] acpiphp: Slot [27] registered
+[    1.401400] acpiphp: Slot [28] registered
+[    1.401538] acpiphp: Slot [29] registered
+[    1.401538] acpiphp: Slot [30] registered
+[    1.401538] acpiphp: Slot [31] registered
+[    1.402743] PCI host bridge to bus 0000:00
+[    1.403361] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+[    1.403637] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+[    1.403666] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+[    1.403739] pci_bus 0000:00: root bus resource [mem 0x80000000-0xfebfffff window]
+[    1.403755] pci_bus 0000:00: root bus resource [mem 0x100000000-0x17fffffff window]
+[    1.404047] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    1.406589] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+[    1.417729] pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+[    1.421160] pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint
+[    1.428184] pci 0000:00:01.1: BAR 4 [io  0xc0c0-0xc0cf]
+[    1.431814] pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+[    1.431997] pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+[    1.432062] pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+[    1.432096] pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+[    1.434621] pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+[    1.435896] pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI
+[    1.436066] pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB
+[    1.437538] pci 0000:00:02.0: [1234:1111] type 00 class 0x030000 conventional PCI endpoint
+[    1.438644] pci 0000:00:02.0: BAR 0 [mem 0xfd000000-0xfdffffff pref]
+[    1.440538] pci 0000:00:02.0: BAR 2 [mem 0xfeb94000-0xfeb94fff]
+[    1.442538] pci 0000:00:02.0: ROM [mem 0xfeb80000-0xfeb8ffff pref]
+[    1.444736] pci 0000:00:02.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+[    1.448964] pci 0000:00:03.0: [1b36:000d] type 00 class 0x0c0330 conventional PCI endpoint
+[    1.451666] pci 0000:00:03.0: BAR 0 [mem 0xfeb90000-0xfeb93fff 64bit]
+[    1.485586] pci 0000:00:04.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint
+[    1.487538] pci 0000:00:04.0: BAR 0 [io  0xc080-0xc09f]
+[    1.489646] pci 0000:00:04.0: BAR 1 [mem 0xfeb95000-0xfeb95fff]
+[    1.493538] pci 0000:00:04.0: BAR 4 [mem 0xfe000000-0xfe003fff 64bit pref]
+[    1.513237] pci 0000:00:05.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+[    1.515538] pci 0000:00:05.0: BAR 0 [io  0xc0a0-0xc0bf]
+[    1.517538] pci 0000:00:05.0: BAR 1 [mem 0xfeb96000-0xfeb96fff]
+[    1.519538] pci 0000:00:05.0: BAR 4 [mem 0xfe004000-0xfe007fff 64bit pref]
+[    1.523657] pci 0000:00:05.0: ROM [mem 0xfeb00000-0xfeb7ffff pref]
+[    1.543916] pci 0000:00:06.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[    1.546538] pci 0000:00:06.0: BAR 0 [io  0xc000-0xc07f]
+[    1.548538] pci 0000:00:06.0: BAR 1 [mem 0xfeb97000-0xfeb97fff]
+[    1.553633] pci 0000:00:06.0: BAR 4 [mem 0xfe008000-0xfe00bfff 64bit pref]
+[    1.589705] ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+[    1.593538] ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+[    1.596276] ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+[    1.598662] ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+[    1.599895] ACPI: PCI: Interrupt link LNKS configured for IRQ 9
+[    1.633469] iommu: Default domain type: Translated
+[    1.633657] iommu: DMA domain TLB invalidation policy: lazy mode
+[    1.635404] ACPI: bus type USB registered
+[    1.636563] usbcore: registered new interface driver usbfs
+[    1.637128] usbcore: registered new interface driver hub
+[    1.637377] usbcore: registered new device driver usb
+[    1.659714] NetLabel: Initializing
+[    1.659802] NetLabel:  domain hash size = 128
+[    1.659831] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[    1.661272] NetLabel:  unlabeled traffic allowed by default
+[    1.661377] PCI: Using ACPI for IRQ routing
+[    1.661603] PCI: pci_cache_line_size set to 64 bytes
+[    1.662278] e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+[    1.662576] e820: reserve RAM buffer [mem 0x7ffdc000-0x7fffffff]
+[    1.675938] pci 0000:00:02.0: vgaarb: setting as boot VGA device
+[    1.676144] pci 0000:00:02.0: vgaarb: bridge control possible
+[    1.676236] pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+[    1.676314] vgaarb: loaded
+[    1.678496] hpet: 3 channels of 0 reserved for per-cpu timers
+[    1.679086] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+[    1.679342] hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+[    1.686774] clocksource: Switched to clocksource tsc-early
+[    1.699210] VFS: Disk quotas dquot_6.6.0
+[    1.699948] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    1.707011] pnp: PnP ACPI init
+[    1.712997] pnp 00:02: [dma 2]
+[    1.719570] pnp: PnP ACPI: found 6 devices
+[    1.862719] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[    1.866502] NET: Registered PF_INET protocol family
+[    1.869260] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    1.963283] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    1.963558] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    1.963921] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    1.964559] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)
+[    1.965324] TCP: Hash tables configured (established 16384 bind 16384)
+[    1.968802] MPTCP token hash table entries: 2048 (order: 3, 49152 bytes, linear)
+[    1.969504] UDP hash table entries: 1024 (order: 3, 32768 bytes, linear)
+[    1.969943] UDP-Lite hash table entries: 1024 (order: 3, 32768 bytes, linear)
+[    1.972941] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    1.973754] NET: Registered PF_XDP protocol family
+[    1.975069] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+[    1.975189] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+[    1.975208] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+[    1.975224] pci_bus 0000:00: resource 7 [mem 0x80000000-0xfebfffff window]
+[    1.975246] pci_bus 0000:00: resource 8 [mem 0x100000000-0x17fffffff window]
+[    1.976229] pci 0000:00:01.0: PIIX3: Enabling Passive Release
+[    1.976374] pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+[    2.519374] ACPI: \_SB_.LNKC: Enabled at IRQ 11
+[    2.927180] pci 0000:00:03.0: quirk_usb_early_handoff+0x0/0x7b0 took 928368 usecs
+[    2.927848] PCI: CLS 0 bytes, default 64
+[    2.939584] Trying to unpack rootfs image as initramfs...
+[    3.079520] Initialise system trusted keyrings
+[    3.083745] workingset: timestamp_bits=40 max_order=19 bucket_order=0
+[    3.242540] Key type asymmetric registered
+[    3.242961] Asymmetric key parser 'x509' registered
+[    3.244798] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 251)
+[    3.248569] io scheduler mq-deadline registered
+[    3.248942] io scheduler kyber registered
+[    3.302559] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    3.310580] 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[    3.328075] Linux agpgart interface v0.103
+[    3.328518] ACPI: bus type drm_connector registered
+[    3.364474] usbcore: registered new interface driver usbserial_generic
+[    3.365079] usbserial: USB Serial support registered for generic
+[    3.365338] amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled
+[    3.368822] drop_monitor: Initializing network drop monitor service
+[    3.372361] NET: Registered PF_INET6 protocol family
+[    3.973147] tsc: Refined TSC clocksource calibration: 2800.217 MHz
+[    3.973981] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x285d0db652a, max_idle_ns: 440795334687 ns
+[    3.974619] clocksource: Switched to clocksource tsc
+[    5.919904] Freeing initrd memory: 26340K
+[    5.945095] Segment Routing with IPv6
+[    5.945947] In-situ OAM (IOAM) with IPv6
+[    5.955493] IPI shorthand broadcast: enabled
+[    5.995249] sched_clock: Marking stable (6022184025, -27461327)->(6203390708, -208668010)
+[    6.005175] registered taskstats version 1
+[    6.036522] Loading compiled-in X.509 certificates
+[    6.108835] Demotion targets for Node 0: null
+[    6.114596] Key type .fscrypt registered
+[    6.115042] Key type fscrypt-provisioning registered
+[    6.158057] PM:   Magic number: 14:114:294
+[    6.158479] misc hpet: hash matches
+[    6.158556] tty tty27: hash matches
+[    6.167046] RAS: Correctable Errors collector initialized.
+[    6.200841] clk: Disabling unused clocks
+[    6.201213] PM: genpd: Disabling unused power domains
+[    6.231552] Freeing unused decrypted memory: 2028K
+[    6.378453] Freeing unused kernel image (initmem) memory: 3424K
+[    6.378971] Write protecting the kernel read-only data: 30720k
+[    6.387348] Freeing unused kernel image (rodata/data gap) memory: 1304K
+[    6.748257] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[    6.750448] Run /init as init process
+[    6.751052]   with arguments:
+[    6.751166]     /init
+[    6.751229]   with environment:
+[    6.751274]     HOME=/
+[    6.751315]     TERM=linux
+[    9.663309] stage-1-init: [Sun Oct 18 19:16:41 UTC 2026] loading module loop...
+[    9.831905] loop: module loaded
+[   10.093136] stage-1-init: [Sun Oct 18 19:16:42 UTC 2026] loading module overlay...
+[   10.409456] stage-1-init: [Sun Oct 18 19:16:42 UTC 2026] loading module vfat...
+[   10.697909] stage-1-init: [Sun Oct 18 19:16:42 UTC 2026] loading module nls_cp437...
+[   10.944852] stage-1-init: [Sun Oct 18 19:16:42 UTC 2026] loading module nls_iso8859-1...
+[   11.145456] stage-1-init: [Sun Oct 18 19:16:43 UTC 2026] loading module dm_mod...
+[   11.327930] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@lists.linux.dev
+[   11.490001] stage-1-init: [Sun Oct 18 19:16:43 UTC 2026] running udev...
+[   12.521407] stage-1-init: [Sun Oct 18 19:16:44 UTC 2026] Starting systemd-udevd version 257.9
+[   13.995636] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[   14.013275] serio: i8042 KBD port at 0x60,0x64 irq 1
+[   14.013923] serio: i8042 AUX port at 0x60,0x64 irq 12
+[   14.060785] SCSI subsystem initialized
+[   14.538083] libata version 3.00 loaded.
+[   14.571450] ata_piix 0000:00:01.1: version 2.13
+[   15.262002] scsi host0: ata_piix
+[   15.274441] scsi host1: ata_piix
+[   15.278941] ata1: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc0c0 irq 14 lpm-pol 0
+[   15.279085] ata2: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc0c8 irq 15 lpm-pol 0
+[   15.440030] ata2: found unknown device (class 0)
+[   15.449968] ata2.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100
+[   15.482804] scsi 1:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5
+[   15.636332] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+[   15.733187] sr 1:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray
+[   15.734034] cdrom: Uniform CD-ROM driver Revision: 3.20
+[   15.761016] sr 1:0:0:0: Attached scsi CD-ROM sr0
+[   15.853597] ACPI: \_SB_.LNKD: Enabled at IRQ 10
+[   15.857084] xhci_hcd 0000:00:03.0: xHCI Host Controller
+[   15.863388] xhci_hcd 0000:00:03.0: new USB bus registered, assigned bus number 1
+[   15.877324] xhci_hcd 0000:00:03.0: hcc params 0x00087001 hci version 0x100 quirks 0x0000000000000010
+[   15.912183] xhci_hcd 0000:00:03.0: xHCI Host Controller
+[   15.915000] xhci_hcd 0000:00:03.0: new USB bus registered, assigned bus number 2
+[   15.915258] xhci_hcd 0000:00:03.0: Host supports USB 3.0 SuperSpeed
+[   15.932569] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 6.12
+[   15.932695] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[   15.932987] usb usb1: Product: xHCI Host Controller
+[   15.933049] usb usb1: Manufacturer: Linux 6.12.54 xhci-hcd
+[   15.933089] usb usb1: SerialNumber: 0000:00:03.0
+[   15.958533] hub 1-0:1.0: USB hub found
+[   15.968137] hub 1-0:1.0: 4 ports detected
+[   16.011915] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[   16.013513] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 6.12
+[   16.013602] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[   16.013894] usb usb2: Product: xHCI Host Controller
+[   16.013932] usb usb2: Manufacturer: Linux 6.12.54 xhci-hcd
+[   16.013956] usb usb2: SerialNumber: 0000:00:03.0
+[   16.022946] hub 2-0:1.0: USB hub found
+[   16.026451] hub 2-0:1.0: 4 ports detected
+[   16.369889] usb 2-1: new SuperSpeed USB device number 2 using xhci_hcd
+[   16.391570] usb 2-1: New USB device found, idVendor=46f4, idProduct=0001, bcdDevice= 0.00
+[   16.391845] usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[   16.391873] usb 2-1: Product: QEMU USB HARDDRIVE
+[   16.391889] usb 2-1: Manufacturer: QEMU
+[   16.391902] usb 2-1: SerialNumber: 1-0000:00:03.0-1
+[   16.475340] usb-storage 2-1:1.0: USB Mass Storage device detected
+[   16.493196] scsi host2: usb-storage 2-1:1.0
+[   16.500550] usbcore: registered new interface driver usb-storage
+[   16.544068] usbcore: registered new interface driver uas
+[   16.615766] ACPI: \_SB_.LNKA: Enabled at IRQ 10
+[   16.994192] ACPI: \_SB_.LNKB: Enabled at IRQ 11
+[   17.039566] virtio_blk virtio2: 2/0/0 default/read/poll queues
+[   17.060876] virtio_blk virtio2: [vda] 8388608 512-byte logical blocks (4.29 GB/4.00 GiB)
+[   17.203688] virtio_net virtio1 ens5: renamed from eth0
+[   17.500224] stage-1-init: [Sun Oct 18 19:16:49 UTC 2026] starting device mapper and LVM...
+[   17.550224] scsi 2:0:0:0: Direct-Access     QEMU     QEMU HARDDISK    2.5+ PQ: 0 ANSI: 5
+[   17.646200] sd 2:0:0:0: [sda] 2807040 512-byte logical blocks: (1.44 GB/1.34 GiB)
+[   17.647298] sd 2:0:0:0: [sda] Write Protect is off
+[   17.647370] sd 2:0:0:0: [sda] Mode Sense: 63 00 00 08
+[   17.648347] sd 2:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[   17.665213]  sda: sda1 sda2
+[   17.668297] sd 2:0:0:0: [sda] Attached SCSI disk
+[   17.896872] random: crng init done
+[   18.723886] stage-1-init: [Sun Oct 18 19:16:50 UTC 2026] mounting tmpfs on /...
+[   19.666224] stage-1-init: [Sun Oct 18 19:16:51 UTC 2026] mounting /dev/root on /iso...
+[   19.901506] ISO 9660 Extensions: Microsoft Joliet Level 3
+[   19.920233] ISO 9660 Extensions: Microsoft Joliet Level 3
+[   19.930037] ISO 9660 Extensions: RRIP_1991A
+[   20.435462] stage-1-init: [Sun Oct 18 19:16:52 UTC 2026] mounting /mnt-root/iso/nix-store.squashfs on /nix/.ro-store...
+[   20.507150] loop0: detected capacity change from 0 to 2706776
+[   20.685164] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[   21.354072] stage-1-init: [Sun Oct 18 19:16:53 UTC 2026] mounting tmpfs on /nix/.rw-store...
+[   22.311292] stage-1-init: [Sun Oct 18 19:16:54 UTC 2026] mounting overlay on /nix/store...
+[   30.918435] booting system configuration /nix/store/kh0g9xg91hs1rbgkw6x9p4pyy67mvnbm-nixos-system-nixos-25.05.20251022.c8aa8cc
+[   32.574437] stage-2-init: running activation script...
+[   42.515026] stage-2-init: setting up /etc...
+[   54.291087] stage-2-init: unpacking the NixOS/Nixpkgs sources...
+[   56.576295] stage-2-init: ln: failed to create symbolic link '/root/.nix-defexpr/channels/channels': Read-only file system
+[   58.364160] systemd[1]: Inserted module 'autofs4'
+[   59.029383] systemd[1]: systemd 257.9 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP -SYSVINIT +LIBARCHIVE)
+[   59.030199] systemd[1]: Detected virtualization qemu.
+[   59.030740] systemd[1]: Detected architecture x86-64.
+[   59.031953] systemd[1]: Detected first boot.
+[   59.114095] systemd[1]: Hostname set to <nixos>.
+[   59.118925] systemd[1]: Initializing machine ID from random generator.
+[   61.134188] systemd[1]: bpf-restrict-fs: LSM BPF program attached
+[   63.753815] Guest personality initialized and is inactive
+[   63.755802] VMCI host device registered (name=vmci, major=10, minor=123)
+[   63.755904] Initialized host personality
+[   63.804994] NET: Registered PF_VSOCK protocol family
+[   68.422861] systemd[1]: Populated /etc with preset unit settings.
+[   73.336097] systemd[1]: Queued start job for default target Multi-User System.
+[   73.625179] systemd[1]: Unnecessary job was removed for /dev/loop0.
+[   73.626751] systemd[1]: Unnecessary job was removed for QEMU_HARDDISK nixos-minimal-25.05-x86_64.
+[   73.690921] systemd[1]: Created slice Slice /system/getty.
+[   73.718038] systemd[1]: Created slice Slice /system/modprobe.
+[   73.738984] systemd[1]: Created slice Slice /system/serial-getty.
+[   73.760273] systemd[1]: Created slice User and Session Slice.
+[   73.767417] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[   73.771467] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[   73.775855] systemd[1]: Expecting device /dev/ttyS0...
+[   73.778407] systemd[1]: Reached target Local Encrypted Volumes.
+[   73.780470] systemd[1]: Reached target Containers.
+[   73.782384] systemd[1]: Reached target Path Units.
+[   73.784119] systemd[1]: Reached target Remote File Systems.
+[   73.785820] systemd[1]: Reached target Slice Units.
+[   73.787396] systemd[1]: Reached target Swaps.
+[   73.788938] systemd[1]: Reached target ZFS pool import target.
+[   73.870460] systemd[1]: Listening on Process Core Dump Socket.
+[   73.918991] systemd[1]: Listening on Credential Encryption/Decryption.
+[   73.934204] systemd[1]: Listening on Journal Audit Socket.
+[   73.943059] systemd[1]: Listening on Journal Socket (/dev/log).
+[   73.949011] systemd[1]: Listening on Journal Sockets.
+[   73.955849] systemd[1]: Listening on Network Service Netlink Socket.
+[   73.964173] systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[   73.967182] systemd[1]: Make TPM PCR Policy was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+[   73.970451] systemd[1]: Listening on udev Control Socket.
+[   73.974509] systemd[1]: Listening on udev Kernel Socket.
+[   74.061882] systemd[1]: Mounting Huge Pages File System...
+[   74.093375] systemd[1]: Mounting POSIX Message Queue File System...
+[   74.162368] systemd[1]: Mounting Kernel Debug File System...
+[   74.238409] systemd[1]: Mounting Kernel Trace File System...
+[   74.396113] systemd[1]: Starting Create List of Static Device Nodes...
+[   74.599685] systemd[1]: Starting Load Kernel Module configfs...
+[   74.769616] systemd[1]: Starting Load Kernel Module drm...
+[   75.077189] systemd[1]: Starting Load Kernel Module efi_pstore...
+[   75.368384] systemd[1]: Starting Load Kernel Module fuse...
+[   75.450712] systemd[1]: Starting mount-pstore.service...
+[   75.458947] systemd[1]: Clear Stale Hibernate Storage Info was skipped because of an unmet condition check (ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67).
+[   75.571993] systemd[1]: Starting Journal Service...
+[   75.629307] systemd[1]: Starting Load Kernel Modules...
+[   75.719431] systemd[1]: Starting Userspace Out-Of-Memory (OOM) Killer...
+[   75.763582] systemd[1]: Starting Remount Root and Kernel File Systems...
+[   75.766410] systemd[1]: Early TPM SRK Setup was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+[   75.849146] systemd[1]: Starting Coldplug All udev Devices...
+[   75.970482] systemd[1]: Mounted Huge Pages File System.
+[   75.980422] systemd[1]: Mounted POSIX Message Queue File System.
+[   75.985424] systemd[1]: Mounted Kernel Debug File System.
+[   75.994582] systemd[1]: Mounted Kernel Trace File System.
+[   76.806314] systemd[1]: Finished Create List of Static Device Nodes.
+[   76.898288] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[   78.693512] systemd[1]: Finished Remount Root and Kernel File Systems.
+[   78.759753] systemd[1]: Starting Load/Save OS Random Seed...
+[   78.801272] spl: loading out-of-tree module taints kernel.
+[   78.841238] systemd[1]: Starting Network Time Synchronization...
+[   78.844894] systemd[1]: TPM SRK Setup was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+[   80.429465] systemd-journald[412]: Collecting audit messages is enabled.
+[   81.378541] systemd[1]: Finished Load/Save OS Random Seed.
+[   81.391951] systemd[1]: Reached target First Boot Complete.
+[   81.622486] systemd[1]: Finished Create Static Device Nodes in /dev gracefully.
+[   81.704056] systemd[1]: Starting Create Static Device Nodes in /dev...
+[   82.071794] fuse: init (API version 7.41)
+[   82.226095] systemd[1]: modprobe@drm.service: Deactivated successfully.
+[   82.238498] systemd[1]: Finished Load Kernel Module drm.
+[   82.298035] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[   82.308473] systemd[1]: Finished Load Kernel Module fuse.
+[   82.316403] systemd[1]: modprobe@fuse.service: Consumed 491ms CPU time, 3M memory peak, 2.1M read from disk.
+[   82.381506] systemd[1]: Mounting FUSE Control File System...
+[   82.793180] systemd[1]: Mounted FUSE Control File System.
+[   82.915411] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+[   82.927419] systemd[1]: Finished Load Kernel Module configfs.
+[   82.933398] systemd[1]: modprobe@configfs.service: Consumed 477ms CPU time, 2.1M memory peak, 1.3M read from disk.
+[   82.979549] systemd[1]: Mounting Kernel Configuration File System...
+[   83.221623] systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+[   83.241406] systemd[1]: Finished Load Kernel Module efi_pstore.
+[   83.249256] systemd[1]: modprobe@efi_pstore.service: Consumed 413ms CPU time, 1.6M memory peak, 1M read from disk.
+[   83.407477] systemd[1]: Mounted Kernel Configuration File System.
+[   84.004356] systemd[1]: Started Userspace Out-Of-Memory (OOM) Killer.
+[   93.732944] systemd[1]: Finished Create Static Device Nodes in /dev.
+[   93.770840] systemd[1]: Started Journal Service.
+[  109.268613] zfs: module license 'CDDL' taints kernel.
+[  109.269061] Disabling lock debugging due to kernel taint
+[  109.269251] zfs: module license taints kernel.
+[  109.736247] systemd-journald[412]: Received client request to flush runtime journal.
+[  115.379485] ZFS: Loaded module v2.3.4-1, ZFS pool version 5000, ZFS filesystem version 5
+[  151.601217] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input2
+[  151.853056] ACPI: button: Power Button [PWRF]
+[  152.647354] piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+[  152.701400] i2c i2c-0: Memory type 0x07 not supported yet, not instantiating SPD
+[  154.573028] rtc_cmos 00:05: RTC can wake from S4
+[  154.671503] bochs-drm 0000:00:02.0: vgaarb: deactivate vga console
+[  154.808457] Console: switching to colour dummy device 80x25
+[  154.944102] rtc_cmos 00:05: registered as rtc0
+[  154.998560] rtc_cmos 00:05: setting system clock to 2026-10-18T19:19:07 UTC (1792351147)
+[  155.181506] rtc_cmos 00:05: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+[  155.203553] [drm] Found bochs VGA, ID 0xb0c5.
+[  155.203858] [drm] Framebuffer size 16384 kB @ 0xfd000000, mmio @ 0xfeb94000.
+[  155.392509] parport_pc 00:03: reported by Plug and Play ACPI
+[  155.393916] parport0: PC-style at 0x378, irq 7 [PCSPP(,...)]
+[  155.410297] [drm] Found EDID data blob.
+[  155.425433] [drm] Initialized bochs-drm 1.0.0 for 0000:00:02.0 on minor 0
+[  155.482905] fbcon: bochs-drmdrmfb (fb0) is primary device
+[  155.536026] Floppy drive(s): fd0 is 2.88M AMI BIOS
+[  155.581176] FDC 0 is a S82078B
+[  155.609497] Console: switching to colour frame buffer device 160x50
+[  155.683229] bochs-drm 0000:00:02.0: [drm] fb0: bochs-drmdrmfb frame buffer device
+[  157.019263] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[  157.265489] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[  157.269243] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[  159.836479] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[  166.288490] ppdev: user-space parallel port driver
+[  167.526551] mousedev: PS/2 mouse device common for all mice
+[  168.307994] kvm_amd: Nested Virtualization enabled
+[  168.308241] kvm_amd: Nested Paging disabled
+[  168.311255] kvm_amd: PMU virtualization is disabled
+[  170.994973] powernow_k8: Power state transitions not supported
+[  170.998977] powernow_k8: Power state transitions not supported
+[  171.579587] EDAC MC: Ver: 3.0.0
+[  181.510665] virtio_net virtio1 lan: renamed from ens5
+[  183.556916] NET: Registered PF_PACKET protocol family
+[  236.674981] hrtimer: interrupt took 6791896 ns
+[  301.034332]  vda:
+[  302.033004]  vda:
+[  303.232215]  vda: vda1
+[  308.147776]  vda: vda1 vda2
+[  309.141165]  vda: vda1 vda2
+[  324.636837] EXT4-fs (dm-0): mounted filesystem 9bb64490-b143-429e-a13b-18c695dfa982 r/w with ordered data mode. Quota mode: none.
+[  325.611401] Adding 4092k swap on /dev/mapper/main-swap.  Priority:-2 extents:1 across:4092k 
+[?2004hPRE-NIXOS> journalctl --no-pager -u pre-nixos.service -b || true
+journalctl --no-pager -u pre-nixos.service -b || true
+[?2004lOct 18 19:18:45 nixos systemd[1]: Starting Pre-NixOS setup...
+Oct 18 19:18:51 nixos pre-nixos-start[673]: pre-nixos boot image version 0.10.8
+Oct 18 19:19:47 nixos pre-nixos-start[833]: LAN IPv4 address: 10.0.2.15
+Oct 18 19:19:47 nixos pre-nixos-start[833]: Tearing down existing storage on /dev/vda
+Oct 18 19:19:47 nixos pre-nixos-start[833]: Removing metadata from dependent volumes on /dev/vda
+Oct 18 19:19:49 nixos pre-nixos-start[833]: Zapping partition table on /dev/vda
+Oct 18 19:19:51 nixos pre-nixos-start[833]: Wiping filesystem signatures on /dev/vda
+Oct 18 19:19:51 nixos pre-nixos-start[833]: Storage cleanup finished on /dev/vda
+Oct 18 19:19:52 nixos pre-nixos-start[937]: disko version 1.12.0-dirty
+Oct 18 19:21:14 nixos pre-nixos-start[941]: warning: error: unable to download 'https://cache.nixos.org/nix-cache-info': SSL peer certificate or SSH remote key was not OK (60) SSL certificate problem: self-signed certificate in certificate chain; retrying in 320 ms
+Oct 18 19:21:14 nixos pre-nixos-start[941]: warning: error: unable to download 'https://cache.nixos.org/nix-cache-info': SSL peer certificate or SSH remote key was not OK (60) SSL certificate problem: self-signed certificate in certificate chain; retrying in 620 ms
+Oct 18 19:21:15 nixos pre-nixos-start[941]: warning: error: unable to download 'https://cache.nixos.org/nix-cache-info': SSL peer certificate or SSH remote key was not OK (60) SSL certificate problem: self-signed certificate in certificate chain; retrying in 1102 ms
+Oct 18 19:21:16 nixos pre-nixos-start[941]: warning: error: unable to download 'https://cache.nixos.org/nix-cache-info': SSL peer certificate or SSH remote key was not OK (60) SSL certificate problem: self-signed certificate in certificate chain; retrying in 2562 ms
+Oct 18 19:21:18 nixos pre-nixos-start[941]: warning: unable to download 'https://cache.nixos.org/nix-cache-info': SSL peer certificate or SSH remote key was not OK (60) SSL certificate problem: self-signed certificate in certificate chain
+Oct 18 19:21:19 nixos pre-nixos-start[941]: these 3 derivations will be built:
+Oct 18 19:21:19 nixos pre-nixos-start[941]:   /nix/store/j84k3mh068chl60l0hn9y90q2k9xhj89-die-hook.drv
+Oct 18 19:21:19 nixos pre-nixos-start[941]:   /nix/store/p12dh2wg9hpdrcm1n78srjhs7brfazjj-make-binary-wrapper-hook.drv
+Oct 18 19:21:19 nixos pre-nixos-start[941]:   /nix/store/spmwgcp5pz6nv1dr6pk8wk10n1q46cfg-disko-destroy-format-mount.drv
+Oct 18 19:21:21 nixos pre-nixos-start[941]: building '/nix/store/j84k3mh068chl60l0hn9y90q2k9xhj89-die-hook.drv'...
+Oct 18 19:21:23 nixos pre-nixos-start[941]: building '/nix/store/p12dh2wg9hpdrcm1n78srjhs7brfazjj-make-binary-wrapper-hook.drv'...
+Oct 18 19:21:25 nixos pre-nixos-start[941]: building '/nix/store/spmwgcp5pz6nv1dr6pk8wk10n1q46cfg-disko-destroy-format-mount.drv'...
+Oct 18 19:21:29 nixos pre-nixos-start[1015]: umount: /mnt: not mounted
+Oct 18 19:21:29 nixos pre-nixos-start[1017]: ++ realpath /dev/vda
+Oct 18 19:21:29 nixos pre-nixos-start[1016]: + disk=/dev/vda
+Oct 18 19:21:29 nixos pre-nixos-start[1016]: + lsblk -a -f
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: NAME   FSTYPE   FSVER            LABEL                      UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: fd0
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop0  squashfs 4.0                                                                                    0   100% /nix/.ro-store
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop1
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop2
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop3
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop4
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop5
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop6
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: loop7
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: sda    iso9660  Joliet Extension nixos-minimal-25.05-x86_64 1980-01-01-00-00-00-00
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: ├─sda1 iso9660  Joliet Extension nixos-minimal-25.05-x86_64 1980-01-01-00-00-00-00                     0   100% /iso
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: └─sda2 vfat     FAT12            EFIBOOT                    1234-5678
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: sr0
+Oct 18 19:21:29 nixos pre-nixos-start[1018]: vda
+Oct 18 19:21:29 nixos pre-nixos-start[1019]: + lsblk --output-all --json
+Oct 18 19:21:29 nixos pre-nixos-start[1021]: + bash -x
+Oct 18 19:21:29 nixos pre-nixos-start[1022]: ++ dirname /nix/store/01kl43q8l71ql3brwkq318yzxwlbfi1d-disk-deactivate/disk-deactivate
+Oct 18 19:21:29 nixos pre-nixos-start[1020]: + jq -r -f /nix/store/01kl43q8l71ql3brwkq318yzxwlbfi1d-disk-deactivate/zfs-swap-deactivate.jq
+Oct 18 19:21:30 nixos pre-nixos-start[1023]: + lsblk --output-all --json
+Oct 18 19:21:30 nixos pre-nixos-start[1025]: + bash -x
+Oct 18 19:21:30 nixos pre-nixos-start[1026]: ++ dirname /nix/store/01kl43q8l71ql3brwkq318yzxwlbfi1d-disk-deactivate/disk-deactivate
+Oct 18 19:21:30 nixos pre-nixos-start[1024]: + jq -r --arg disk_to_clear /dev/vda -f /nix/store/01kl43q8l71ql3brwkq318yzxwlbfi1d-disk-deactivate/disk-deactivate.jq
+Oct 18 19:21:31 nixos pre-nixos-start[1025]: + set -fu
+Oct 18 19:21:31 nixos pre-nixos-start[1027]: ++ type zdb
+Oct 18 19:21:31 nixos pre-nixos-start[1028]: ++ zdb -l /dev/vda
+Oct 18 19:21:31 nixos pre-nixos-start[1029]: ++ sed -nr 's/ +name: '\''(.*)'\''/\1/p'
+Oct 18 19:21:32 nixos pre-nixos-start[1025]: + zpool=
+Oct 18 19:21:32 nixos pre-nixos-start[1025]: + [[ -n '' ]]
+Oct 18 19:21:32 nixos pre-nixos-start[1025]: + unset zpool
+Oct 18 19:21:32 nixos pre-nixos-start[1130]: ++ lsblk /dev/vda -l -p -o type,name
+Oct 18 19:21:32 nixos pre-nixos-start[1131]: ++ awk 'match($1,"raid.*") {print $2}'
+Oct 18 19:21:32 nixos pre-nixos-start[1025]: + md_dev=
+Oct 18 19:21:32 nixos pre-nixos-start[1025]: + [[ -n '' ]]
+Oct 18 19:21:32 nixos pre-nixos-start[1025]: + wipefs --all -f /dev/vda
+Oct 18 19:21:32 nixos pre-nixos-start[1025]: + dd if=/dev/zero of=/dev/vda bs=440 count=1
+Oct 18 19:21:32 nixos pre-nixos-start[1133]: 1+0 records in
+Oct 18 19:21:32 nixos pre-nixos-start[1133]: 1+0 records out
+Oct 18 19:21:32 nixos pre-nixos-start[1133]: 440 bytes copied, 0.00700672 s, 62.8 kB/s
+Oct 18 19:21:32 nixos pre-nixos-start[1016]: + lsblk -a -f
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: NAME   FSTYPE   FSVER            LABEL                      UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: fd0
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop0  squashfs 4.0                                                                                    0   100% /nix/.ro-store
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop1
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop2
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop3
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop4
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop5
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop6
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: loop7
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: sda    iso9660  Joliet Extension nixos-minimal-25.05-x86_64 1980-01-01-00-00-00-00
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: ├─sda1 iso9660  Joliet Extension nixos-minimal-25.05-x86_64 1980-01-01-00-00-00-00                     0   100% /iso
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: └─sda2 vfat     FAT12            EFIBOOT                    1234-5678
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: sr0
+Oct 18 19:21:32 nixos pre-nixos-start[1135]: vda
+Oct 18 19:21:32 nixos pre-nixos-start[1137]: ++ mktemp -d
+Oct 18 19:21:33 nixos pre-nixos-start[937]: + disko_devices_dir=/tmp/tmp.UW5lFpe2sj
+Oct 18 19:21:33 nixos pre-nixos-start[937]: + trap 'rm -rf "$disko_devices_dir"' EXIT
+Oct 18 19:21:33 nixos pre-nixos-start[937]: + mkdir -p /tmp/tmp.UW5lFpe2sj
+Oct 18 19:21:33 nixos pre-nixos-start[1139]: + destroy=1
+Oct 18 19:21:33 nixos pre-nixos-start[1139]: + device=/dev/vda
+Oct 18 19:21:33 nixos pre-nixos-start[1139]: + imageName=vda
+Oct 18 19:21:33 nixos pre-nixos-start[1139]: + imageSize=2G
+Oct 18 19:21:33 nixos pre-nixos-start[1139]: + name=vda
+Oct 18 19:21:33 nixos pre-nixos-start[1139]: + type=disk
+Oct 18 19:21:33 nixos pre-nixos-start[1140]: + device=/dev/vda
+Oct 18 19:21:33 nixos pre-nixos-start[1140]: + efiGptPartitionFirst=1
+Oct 18 19:21:33 nixos pre-nixos-start[1140]: + type=gpt
+Oct 18 19:21:33 nixos pre-nixos-start[1140]: + blkid /dev/vda
+Oct 18 19:21:33 nixos pre-nixos-start[1140]: + sgdisk --clear /dev/vda
+Oct 18 19:21:34 nixos pre-nixos-start[1142]: Creating new GPT entries in memory.
+Oct 18 19:21:34 nixos pre-nixos-start[1142]: The operation has completed successfully.
+Oct 18 19:21:34 nixos pre-nixos-start[1140]: + sgdisk --align-end --new=1:0:+1G --partition-guid=1:R --change-name=1:disk-vda-vda1 --typecode=1:EF00 --attributes=1:=:0 /dev/vda
+Oct 18 19:21:35 nixos pre-nixos-start[1145]: The operation has completed successfully.
+Oct 18 19:21:35 nixos pre-nixos-start[1140]: + partprobe /dev/vda
+Oct 18 19:21:36 nixos pre-nixos-start[1140]: + udevadm trigger --subsystem-match=block
+Oct 18 19:21:36 nixos pre-nixos-start[1140]: + udevadm settle --timeout 120
+Oct 18 19:21:40 nixos pre-nixos-start[1140]: + sgdisk --align-end --new=2:0:-0 --partition-guid=2:R --change-name=2:disk-vda-vda2 --typecode=2:8300 --attributes=2:=:0 /dev/vda
+Oct 18 19:21:41 nixos pre-nixos-start[1181]: The operation has completed successfully.
+Oct 18 19:21:41 nixos pre-nixos-start[1140]: + partprobe /dev/vda
+Oct 18 19:21:42 nixos pre-nixos-start[1140]: + udevadm trigger --subsystem-match=block
+Oct 18 19:21:42 nixos pre-nixos-start[1140]: + udevadm settle --timeout 120
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + device=/dev/disk/by-partlabel/disk-vda-vda1
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + extraArgs=('-n' 'EFI')
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + declare -a extraArgs
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + format=vfat
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + mountOptions=('umask=0077')
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + declare -a mountOptions
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + mountpoint=/boot
+Oct 18 19:21:46 nixos pre-nixos-start[1214]: + type=filesystem
+Oct 18 19:21:46 nixos pre-nixos-start[1216]: + blkid /dev/disk/by-partlabel/disk-vda-vda1
+Oct 18 19:21:46 nixos pre-nixos-start[1217]: + grep -q TYPE=
+Oct 18 19:21:47 nixos pre-nixos-start[1214]: + mkfs.vfat -n EFI /dev/disk/by-partlabel/disk-vda-vda1
+Oct 18 19:21:47 nixos pre-nixos-start[1218]: mkfs.fat 4.2 (2021-01-31)
+Oct 18 19:21:47 nixos pre-nixos-start[1219]: + device=/dev/disk/by-partlabel/disk-vda-vda2
+Oct 18 19:21:47 nixos pre-nixos-start[1219]: + type=lvm_pv
+Oct 18 19:21:47 nixos pre-nixos-start[1219]: + vg=main
+Oct 18 19:21:47 nixos pre-nixos-start[1222]: + grep -q TYPE=
+Oct 18 19:21:47 nixos pre-nixos-start[1221]: + blkid /dev/disk/by-partlabel/disk-vda-vda2
+Oct 18 19:21:48 nixos pre-nixos-start[1219]: + pvcreate /dev/disk/by-partlabel/disk-vda-vda2
+Oct 18 19:21:48 nixos pre-nixos-start[1224]:   Physical volume "/dev/disk/by-partlabel/disk-vda-vda2" successfully created.
+Oct 18 19:21:48 nixos pre-nixos-start[1219]: + echo /dev/disk/by-partlabel/disk-vda-vda2
+Oct 18 19:21:48 nixos pre-nixos-start[1225]: + name=main
+Oct 18 19:21:48 nixos pre-nixos-start[1225]: + type=lvm_vg
+Oct 18 19:21:48 nixos pre-nixos-start[1225]: + modprobe dm-snapshot
+Oct 18 19:21:49 nixos pre-nixos-start[1225]: + readarray -t lvm_devices
+Oct 18 19:21:49 nixos pre-nixos-start[1229]: ++ cat /tmp/tmp.UW5lFpe2sj/lvm_main
+Oct 18 19:21:49 nixos pre-nixos-start[1225]: + vgdisplay main
+Oct 18 19:21:49 nixos pre-nixos-start[1230]:   Volume group "main" not found
+Oct 18 19:21:49 nixos pre-nixos-start[1230]:   Cannot process volume group main
+Oct 18 19:21:49 nixos pre-nixos-start[1225]: + vgcreate main /dev/disk/by-partlabel/disk-vda-vda2
+Oct 18 19:21:50 nixos pre-nixos-start[1231]:   Volume group "main" successfully created
+Oct 18 19:21:50 nixos pre-nixos-start[1225]: + lvdisplay main/slash
+Oct 18 19:21:50 nixos pre-nixos-start[1233]:   Failed to find logical volume "main/slash"
+Oct 18 19:21:50 nixos pre-nixos-start[1225]: + lvcreate --yes -L 3064M -n slash main
+Oct 18 19:21:51 nixos pre-nixos-start[1234]:   Logical volume "slash" created.
+Oct 18 19:21:51 nixos pre-nixos-start[1225]: + lvdisplay main/swap
+Oct 18 19:21:52 nixos pre-nixos-start[1241]:   Failed to find logical volume "main/swap"
+Oct 18 19:21:52 nixos pre-nixos-start[1225]: + lvcreate --yes -L 4M -n swap main
+Oct 18 19:21:53 nixos pre-nixos-start[1244]:   Logical volume "swap" created.
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + device=/dev/main/slash
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + extraArgs=('-L' 'slash')
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + declare -a extraArgs
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + format=ext4
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + mountOptions=('relatime')
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + declare -a mountOptions
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + mountpoint=/
+Oct 18 19:21:53 nixos pre-nixos-start[1253]: + type=filesystem
+Oct 18 19:21:53 nixos pre-nixos-start[1255]: + blkid /dev/main/slash
+Oct 18 19:21:53 nixos pre-nixos-start[1256]: + grep -q TYPE=
+Oct 18 19:21:54 nixos pre-nixos-start[1253]: + mkfs.ext4 -L slash /dev/main/slash
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: mke2fs 1.47.2 (1-Jan-2025)
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: [82B blob data]
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: Creating filesystem with 784384 4k blocks and 196224 inodes
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: Filesystem UUID: 9bb64490-b143-429e-a13b-18c695dfa982
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: Superblock backups stored on blocks:
+Oct 18 19:21:54 nixos pre-nixos-start[1259]:         32768, 98304, 163840, 229376, 294912
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: [49B blob data]
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: [46B blob data]
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: Creating journal (16384 blocks): done
+Oct 18 19:21:54 nixos pre-nixos-start[1259]: [83B blob data]
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + device=/dev/main/swap
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + discardPolicy=
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + extraArgs=('--label' 'swap')
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + declare -a extraArgs
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + mountOptions=('defaults')
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + declare -a mountOptions
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + priority=
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + randomEncryption=
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + resumeDevice=
+Oct 18 19:21:54 nixos pre-nixos-start[1261]: + type=swap
+Oct 18 19:21:54 nixos pre-nixos-start[1262]: + blkid /dev/main/swap -o export
+Oct 18 19:21:54 nixos pre-nixos-start[1263]: + grep -q '^TYPE='
+Oct 18 19:21:55 nixos pre-nixos-start[1261]: + mkswap --label swap /dev/main/swap
+Oct 18 19:21:55 nixos pre-nixos-start[1265]: Setting up swapspace version 1, size = 4 MiB (4190208 bytes)
+Oct 18 19:21:55 nixos pre-nixos-start[1265]: LABEL=swap, UUID=6716ab4c-21ac-45fd-91a2-f723faa9909c
+Oct 18 19:21:55 nixos pre-nixos-start[937]: + set -efux
+Oct 18 19:21:55 nixos pre-nixos-start[1266]: + destroy=1
+Oct 18 19:21:55 nixos pre-nixos-start[1266]: + device=/dev/vda
+Oct 18 19:21:55 nixos pre-nixos-start[1266]: + imageName=vda
+Oct 18 19:21:55 nixos pre-nixos-start[1266]: + imageSize=2G
+Oct 18 19:21:55 nixos pre-nixos-start[1266]: + name=vda
+Oct 18 19:21:55 nixos pre-nixos-start[1266]: + type=disk
+Oct 18 19:21:55 nixos pre-nixos-start[1268]: + device=/dev/vda
+Oct 18 19:21:55 nixos pre-nixos-start[1268]: + efiGptPartitionFirst=1
+Oct 18 19:21:55 nixos pre-nixos-start[1268]: + type=gpt
+Oct 18 19:21:55 nixos pre-nixos-start[1269]: + name=main
+Oct 18 19:21:55 nixos pre-nixos-start[1269]: + type=lvm_vg
+Oct 18 19:21:55 nixos pre-nixos-start[1269]: + vgchange -a y
+Oct 18 19:21:55 nixos pre-nixos-start[1269]:   2 logical volume(s) in volume group "main" now active
+Oct 18 19:21:55 nixos pre-nixos-start[1271]: + name=main
+Oct 18 19:21:55 nixos pre-nixos-start[1271]: + type=lvm_vg
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + device=/dev/main/slash
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + extraArgs=('-L' 'slash')
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + declare -a extraArgs
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + format=ext4
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + mountOptions=('relatime')
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + declare -a mountOptions
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + mountpoint=/
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + type=filesystem
+Oct 18 19:21:55 nixos pre-nixos-start[1272]: + findmnt /dev/main/slash /mnt/
+Oct 18 19:21:56 nixos pre-nixos-start[1272]: + mount /dev/main/slash /mnt/ -t ext4 -o relatime -o X-mount.mkdir
+Oct 18 19:21:57 nixos pre-nixos-start[1279]: + destroy=1
+Oct 18 19:21:57 nixos pre-nixos-start[1279]: + device=/dev/vda
+Oct 18 19:21:57 nixos pre-nixos-start[1279]: + imageName=vda
+Oct 18 19:21:57 nixos pre-nixos-start[1279]: + imageSize=2G
+Oct 18 19:21:57 nixos pre-nixos-start[1279]: + name=vda
+Oct 18 19:21:57 nixos pre-nixos-start[1279]: + type=disk
+Oct 18 19:21:57 nixos pre-nixos-start[1280]: + device=/dev/vda
+Oct 18 19:21:57 nixos pre-nixos-start[1280]: + efiGptPartitionFirst=1
+Oct 18 19:21:57 nixos pre-nixos-start[1280]: + type=gpt
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + device=/dev/disk/by-partlabel/disk-vda-vda1
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + extraArgs=('-n' 'EFI')
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + declare -a extraArgs
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + format=vfat
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + mountOptions=('umask=0077')
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + declare -a mountOptions
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + mountpoint=/boot
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + type=filesystem
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + findmnt /dev/disk/by-partlabel/disk-vda-vda1 /mnt/boot
+Oct 18 19:21:57 nixos pre-nixos-start[1281]: + mount /dev/disk/by-partlabel/disk-vda-vda1 /mnt/boot -t vfat -o umask=0077 -o X-mount.mkdir
+Oct 18 19:21:57 nixos pre-nixos-start[1284]: + name=main
+Oct 18 19:21:57 nixos pre-nixos-start[1284]: + type=lvm_vg
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + device=/dev/main/swap
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + discardPolicy=
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + extraArgs=('--label' 'swap')
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + declare -a extraArgs
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + mountOptions=('defaults')
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + declare -a mountOptions
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + priority=
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + randomEncryption=
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + resumeDevice=
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + type=swap
+Oct 18 19:21:57 nixos pre-nixos-start[1285]: + test '' '!=' 1
+Oct 18 19:21:57 nixos pre-nixos-start[1286]: + swapon --show
+Oct 18 19:21:57 nixos pre-nixos-start[1288]: ++ readlink -f /dev/main/swap
+Oct 18 19:21:57 nixos pre-nixos-start[1287]: + grep -q '^/dev/dm-1 '
+Oct 18 19:21:58 nixos pre-nixos-start[1285]: + swapon --options=defaults /dev/main/swap
+Oct 18 19:21:58 nixos pre-nixos-start[937]: + rm -rf /tmp/tmp.UW5lFpe2sj
+Oct 18 19:21:59 nixos pre-nixos-start[1297]: LAN IPv4 address: 10.0.2.15
+Oct 18 19:22:03 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Oct 18 19:22:03 nixos systemd[1]: Finished Pre-NixOS setup.
+Oct 18 19:22:03 nixos systemd[1]: [0;1;39m[0;1;31m[0;1;39mpre-nixos.service: Consumed 2min 1.237s CPU time, 407.4M memory peak, 235.9M read from disk, 135.6M written to disk, 17.5K incoming IP traffic, 4.2K outgoing IP traffic.[0m
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792351553826__%s__UID_MARK__1792351553826__\n' "$(id -u)"
+printf '__UID_MARK__1792351553826__%s__UID_MARK__1792351553826__\n' "$(id -u)"
+[?2004l__UID_MARK__1792351553826__0__UID_MARK__1792351553826__
+[?2004hPRE-NIXOS> ls -1 /tmp/pre-nixos*.log 2>/dev/null || true
+ls -1 /tmp/pre-nixos*.log 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> poweroff
+poweroff
+[?2004l
+Broadcast message from root@nixos on pts/0 (Sun 2026-10-18 19:25:53 UTC):
+
+The system will power off now!
+
+[?2004hPRE-NIXOS> [!p]104[?7h[6n[32766;32766H[6n[  577.714320] reboot: Power down
