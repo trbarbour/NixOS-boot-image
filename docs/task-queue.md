@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-04-25T20-37-02Z_
+_Last updated: 2026-10-18T17-33-41Z_
 
 ## Active Tasks
 
@@ -28,25 +28,31 @@ _Last updated: 2026-04-25T20-37-02Z_
    - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
    - 2025-10-24T03-00-00Z updates capture serial tails and systemd diagnostics in the harness log when timeouts occur. 【F:docs/work-notes/2025-10-24T03-00-00Z-boot-image-vm-diagnostics.md†L1-L17】【F:tests/test_boot_image_vm.py†L286-L341】【F:tests/test_boot_image_vm.py†L599-L675】
 
+
 2. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
    - Use the now-working dev shell workflow to produce new ISOs whenever changes land, then run `pytest tests/test_boot_image_vm.py -vv` without interruption to validate end-to-end behaviour.
    - Promote passing serial/journal logs to `docs/boot-logs/` with updated test reports.
    - 2025-10-29T21-32-03Z - Rebuilt the ISO and reran the full regression suite; see `docs/work-notes/2025-10-29T21-32-03Z-boot-image-vm-regression.md` and `docs/test-reports/2025-10-29T21-32-03Z-boot-image-vm-test.md` for command output and results.【F:docs/work-notes/2025-10-29T21-32-03Z-boot-image-vm-regression.md†L1-L7】【F:docs/test-reports/2025-10-29T21-32-03Z-boot-image-vm-test.md†L1-L15】
 
+
 3. **Capture follow-up boot timings after configuration adjustments.**
     - With the harness stable, collect new timing data after each substantive change to detect regressions early.
     - 2026-04-25T19-35-35Z - Root-cause review replaced the broad early-DHCP approach with a targeted networkd refresh fast-path (`networkctl reload` + `networkctl reconfigure lan`) and retained restart fallback; next VM timing pass should measure improvement without overriding static/rename workflows. See `docs/work-notes/2026-04-25T19-35-35Z-network-init-delay-root-cause.md`.
+
 
 4. **Ensure the full test suite runs without skips.**
     - Audit pytest skips and prerequisites so the VM suite remains active, and maintain CI coverage for the entire suite.
     - 2026-10-18T02-53-00Z - In a Claude Code cloud session the full suite ran with no skips: `236 passed` in 17m14s, VM tests included, under TCG. See `notes/2026-10-18T025300Z-vm-run.md`. CI coverage is still outstanding.
 
+
 5. **Add unit coverage for the TUI plan editor.**
    - Drive `pre_nixos.tui._edit_plan` via a fake window with scripted inputs for arrays and LVs, including invalid input handling.
    - 2026-04-25T17-43-55Z - Added a regression that verifies LV edits in `_edit_plan` also refresh the derived `plan["disko"]` structure used by `apply`, preventing stale LV sizes from being provisioned.
 
+
 6. **Narrow the flake's package source (`src = ./.`).**
    - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
+
 
 7. **Make the VM harness (`tests/vm/`) type-check cleanly.**
    - 2026-10-18T03-25-00Z - `mypy --check-untyped-defs` reports 18 errors in `tests/vm/{controller,fixtures,metadata}.py`. Reviewed: none is a known runtime bug.
@@ -56,36 +62,27 @@ _Last updated: 2026-04-25T20-37-02Z_
      - The rest are generator-fixture return types and `object`-typed metadata dicts.
    - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
 
-8. **Fix the race in `test_pre_nixos_cleans_raid_lvm_residue`.**
-   - 2026-10-18T04-04-07Z - The test seeds RAID/LVM residue while the boot-time `pre-nixos` run may still be active, and that run tears the residue down, as its journal shows. Fix: `wait_for_unit_inactive("pre-nixos", timeout=600)` before seeding; the boot-time run took 3m53s under TCG. See `notes/2026-10-18T040407Z-vm-run.md`.
-   - 2026-10-18T04-46-23Z - Waiting first (`0b7c040`) is necessary but not sufficient. The boot-time run provisions vdb/vdc itself, so after it finishes they are busy and `mdadm --create` fails. Details: `notes/2026-10-18T044623Z-vm-run.md`. The scenario's assumption that the extra disks are free after boot is wrong. Options:
-     - **A.** Tear down the boot run's provisioning in the test, then seed. This duplicates the product's cleanup logic and is brittle.
-     - **B. (recommended)** Hot-plug vdb/vdc through the QEMU monitor after the boot run. Deterministic, tests the shipped ISO, keeps the scenario's meaning. Needs a monitor socket in the harness, and hot-plug needs a spike first.
-     - **C.** A test-only ISO with the boot-time run disabled. Tests a different artefact and costs an extra build.
-     - **D.** Treat the boot run's own RAID/LVM as the residue. Least code, but it changes what the test proves.
-   - **Awaiting user decision.** Branch `claude/gallant-dijkstra-n9lqn1` carries `0b7c040` and the ordering unit test; no PR has been opened.
 
-9. **Let `collect_pre_nixos_journal.py` capture the whole run.**
+8. **Let `collect_pre_nixos_journal.py` capture the whole run.**
    - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
 
-11. **Exclude the boot medium from storage plans (safety; x86 and AArch64).** trbarbour/NixOS-boot-image#306
-   - 2026-10-18T15-00-00Z - The boot disk is excluded only from the cleanup scan (`resolve_boot_disk`). The plan path (`enumerate_disks` → `plan_storage` → disko) skips only `RM=1` devices, so a USB boot stick reporting `RM=0` is planned (reproduced). Fix: one protected-disk set (parents of all mounted filesystems plus `resolve_boot_disk`), applied on both paths, with unit and VM tests. The AArch64 plan's §3.1 depends on this.
-   - 2026-10-18T15-30-00Z - The user noted the boot-time "only if empty" safeguard. Verified: it aborts on existing storage, **but it skips the boot disk**, so a correctly identified boot stick passes the check while the plan still includes it (`RM=0`). The safeguard does not mitigate #306. Correction recorded: the VM runs' "Tearing down existing storage" lines come from `apply_plan`'s pre-disko wipe on empty disks; data-bearing disks were not wiped at boot.
-   - 2026-10-18T16-11-34Z - Fixed in `761d7d9` (version 0.10.4): `resolve_protected_disks` is applied to the plan, the scan and the destructive preconditions, and requirements §2.3 is amended. 8 reproduction and 2 wiring unit tests; the provisioning VM tests pass (`notes/2026-10-18T161134Z-vm-run.md`). Remaining: a VM test booting the ISO from a non-removable USB disk (spike first), and the PR.
 
-12. **Fix forced storage teardown when filesystems are still mounted.** trbarbour/NixOS-boot-image#307
-   - 2026-10-18T15-50-00Z - Root causes shown by the action log: deactivation before unmount; parent mount before child (`/mnt` before `/mnt/boot`); `umount '[SWAP]'`. The VM residue scenario (`tests/vm/test_pre_nixos_cleanup.py`, now hot-plug based) reproduces it deterministically and is the regression test. The user recalls this teardown being unreliable in complex cases. After #306.
-   - 2026-10-18T17-07-29Z - Fixed in `bd69184` (release mounts and swap before deactivating). Kernel-model unit tests pass, and the VM residue scenario passes. The full suite is green on #308's head (290 passed, `notes/2026-10-18T170729Z-vm-run.md`). Closes when #308 merges.
-
-10. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
+9. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
    - Goal: build an AArch64 boot image that can be written to a microSD card to boot e.g. a CM4. Use the stock NixOS AArch64 SD image as the base; it works, including on the serial console.
    - Deliverable: a top-down plan from requirements, with a design debate for each choice and a list of unknowns, each with an experiment to resolve it. Start after the race-fix PR.
    - 2026-10-18T14-21-35Z - Plan written: `plans/2026-10-18T142135Z-aarch64-cm4-boot-image-plan.md`.
      - E1 (module evaluates on the stock SD image), E2 (this host builds AArch64 via binfmt) and E3 (only 44 derivations built locally) are done.
      - Found a safety gap: the SD boot card is not excluded from storage plans (§3.1).
-     - **Awaiting user input (§7)** before implementation.
+     - **Awaiting user input (§7)** before implementation. Its §3.1 (boot-medium protection) is now done via #306.
 
 ## Recently Completed
+- 2026-10-18T17-32-54Z - Merged trbarbour/NixOS-boot-image#308 (0.10.7):
+  - **#306:** disks backing the running system, including the boot medium, are never planned, wiped or counted as existing storage. Requirements §2.3 is amended.
+  - **#307:** forced teardown releases mounts and swap before deactivating.
+  - **Residue VM scenario:** now deterministic, by hot-plugging its disks via QMP.
+  - **Harness fixes:** anchored root-prompt pattern; fail fast on failed units; action-log capture.
+  - Full suite: 290 passed (`notes/2026-10-18T170729Z-vm-run.md`).
+  - Follow-up still open: a VM test that boots the ISO from a non-removable USB disk (needs a spike).
 - 2026-10-18T04-04-07Z - Repaired the VM debug scripts (version `0.9.3`).
   - Five scripts failed at import, because the legacy shim's star-import omits `_resolve_iso_path`; they now import from `tests/vm/` directly.
   - mypy then exposed stale call sites, which are fixed; `collect_pre_nixos_journal.py` is rebuilt on `manual_vm_debug` helpers via `describe_boot_image()`.
