@@ -31,6 +31,7 @@ These amend `automated-pre-nixos-reqs.md`. That document has no IDs, so new IDs 
 | **R-S2** | Disk classification covers eMMC and SD (`mmcblk*`) and NVMe as solid-state devices. Machines **may have no SSD**; a single solid-state device is a valid system disk. | §2.1, §5 "at least one SSD" | U3 |
 | **R-C1** | The installed system keeps every serial console the boot image was booted with (`ttyS*`, `ttyAMA*`, …) and keeps the same primary console. | §3 serial console | §3.6 below |
 | **R-T1** | Every platform's image builds from this repository on an x86_64 build host, including a Claude Code cloud session. | new | §3.3 below |
+| **R-B2** | On AArch64 Pi, the board's boot order must make the **installed system boot after installation**, without the installer running again, while still letting the installer boot on a machine with no installed system. pre-nixos must **verify** the effective boot order before it installs, and must refuse to install, or warn, if the installed system would not be booted. | new | user, 2026-10-18; §3.9 below |
 
 **Anomaly for the user, independent of AArch64.**
 - §2.3 says *"Disk layout changes must **never** be applied automatically at boot."*
@@ -113,11 +114,51 @@ The boot *image* brings its own bootloader (U2). An *installed* system on the CM
 - **Questions for the user:**
   1. Install target: CM4 eMMC, NVMe on the carrier board, or both?
   2. CM4 variant: Lite (no eMMC) or eMMC?
-  3. EEPROM `BOOT_ORDER`: who sets it, especially for NVMe boot? Proposed: document it, not automate it.
+  3. EEPROM `BOOT_ORDER`: now a requirement of its own (R-B2), designed in §3.9.
 
 ### 3.8 Network (§2.6, unchanged requirement)
 
 The `lan` rename uses a MAC-matched systemd `.link` file, which doesn't depend on the architecture. The CM4's `bcmgenet` NIC usually appears as `end0`. **Verify on hardware (E8)**; the VM test (§4) covers the code path with virtio-net.
+
+### 3.9 Boot order (R-B2)
+
+The user's point (2026-10-18): on a Pi-family board, which device boots is decided **before** any of our software runs, by the bootloader in the board's EEPROM and its `BOOT_ORDER` setting. That setting must be right for an installation to succeed. Unlike the rest of the early boot chain (U5), this part does interact with what pre-nixos does.
+
+**Why it matters, with the failure modes to design out:**
+
+1. If the order prefers the SD card and the card is still inserted after installation, the board boots the installer again rather than the installed system.
+2. With boot-time auto-apply (see the §2.3 anomaly), booting the installer again **re-provisions the disks**, destroying the fresh install. A boot loop would destroy it on every boot.
+3. If the order lacks the target device class (for example NVMe), the installed system never boots.
+
+**Candidate order:** installed-system device first, then SD, then retry. For an NVMe target that would be `BOOT_ORDER=0xf16`; the digits are read from the least significant end, with 6 = NVMe, 1 = SD/eMMC and f = restart. An empty NVMe falls through to the SD installer; after installation the NVMe boots first. **One setting serves both phases.** The digit meanings must be confirmed against the Raspberry Pi bootloader documentation for the user's EEPROM version (E11).
+
+**Design debate: where the boot order gets set.**
+
+- **(a) Operator prerequisite, documented.**
+  - The operator sets `BOOT_ORDER` once per board, using `rpiboot`/usbboot from a host or `rpi-eeprom-config` on a running system.
+  - Pros: no EEPROM writes from our code, which keeps the risk of bricking or write-protection surprises out of it.
+  - Cons: easy to forget, and on its own it doesn't meet R-B2's "verify".
+- **(b) The boot image carries a prepared EEPROM update.**
+  - Ship `pieeprom.upd` and `recovery.bin`, so the bootloader applies them at first boot.
+  - Pros: automatic.
+  - Cons: it also changes the EEPROM *firmware version* to whatever we ship, an uncontrolled side effect. It fires on every board the card is put into, and it is not idempotent unless the files are removed afterwards.
+- **(c) pre-nixos changes only `BOOT_ORDER` at install time.**
+  - Read the current configuration (`rpi-eeprom-config`, or `vcgencmd bootloader_config`), change just `BOOT_ORDER` for the planned target class, and stage the update for the next reboot.
+  - Pros: changes exactly what installation needs, and only when installing.
+  - Cons: depends on EEPROM tooling behaving as hoped (E12, E13) and on the EEPROM being writable (E14).
+- **Recommended: (a)+(verify) now, (c) later if E12–E14 come out well.**
+  - Always **read and check** the effective `BOOT_ORDER` before installing. If the target device class would not boot before the SD card, stop with a clear message naming the needed value, in the TUI and on the serial console. This meets R-B2 safely.
+  - Automating the change (c) is a later, separately approved step.
+  - Independent of both: after a successful install, remove the conditions that would let the installer re-provision, for example by marking the SD card's state so a second boot does not auto-apply. That needs a design of its own, and ties into the §2.3 anomaly.
+
+**Tests:**
+
+- Unit tests:
+  - parse `BOOT_ORDER` (a hex nibble list) into an ordered list of device classes;
+  - decide "does target class X boot before SD?";
+  - check the refusal and warning messages.
+- These unit tests use captured `rpi-eeprom-config` output from the user's CM4 (E10) as fixtures.
+- Real EEPROM behaviour can only be checked on hardware (§4).
 
 ## 4. Testing strategy
 
@@ -142,6 +183,12 @@ The `lan` rename uses a MAC-matched systemd `.link` file, which doesn't depend o
 | E7 | CM4 facts: block devices and flags (`lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL`), `/proc/cmdline`, which UART is live | **user runs these** on a CM4 booted from the stock image | needs the user |
 | E8 | NIC name on a CM4 (`ip -br link`) | as E7 | needs the user |
 | E9 | Can the installer fill a firmware partition reproducibly from `populateFirmwareCommands`? | build a firmware-partition derivation and compare its files with the stock image's FIRMWARE partition | to do |
+| E10 | The user's current EEPROM configuration and version | **user runs** `rpi-eeprom-config` and `vcgencmd bootloader_version` on the CM4 (nixpkgs `raspberrypi-eeprom`) | needs the user |
+| E11 | `BOOT_ORDER` digit meanings for the user's bootloader version (1 = SD/eMMC, 4 = USB, 6 = NVMe, f = restart?) | check the Raspberry Pi bootloader documentation for that version; confirm on hardware | to do |
+| E12 | Is the EEPROM configuration readable from the booted SD image without a reboot? | run `rpi-eeprom-config` and `vcgencmd bootloader_config` in the stock image | needs the user |
+| E13 | Can only `BOOT_ORDER` be changed, keeping the current EEPROM firmware version? (Which image does `rpi-eeprom-config --apply` use?) | read the tool's source in nixpkgs `raspberrypi-eeprom`, then try it on the user's CM4 | to do / user |
+| E14 | Is the CM4's EEPROM write-protected (WP pin, `eeprom_write_protect`)? | user checks the carrier board and `config.txt` | needs the user |
+| E15 | CM4 variant constraints: with eMMC fitted, can the carrier board's microSD slot boot at all (both share the SD interface)? If not, an eMMC CM4 cannot boot this image from a microSD card, and its install target is NVMe or USB. | Raspberry Pi CM4 documentation; the user's board | to do / user |
 
 ## 6. Work breakdown (in order; each item cites its requirements)
 
@@ -153,7 +200,8 @@ The `lan` rename uses a MAC-matched systemd `.link` file, which doesn't depend o
 6. **Flake refactor (§3.2) and platform-conditional module (§3.4)**, with the Nix evaluation check. *(R-P1, R-P2)*
 7. **AArch64 VM test (§4):** E5 and E6. *(R-S1, §2.6–2.8)*
 8. **Installed-system bootloader (§3.7):** once the user has answered §3.7; E9. *(R-B1)*
-9. **Hardware acceptance on a CM4** (user), recorded in `docs/test-reports/`. *(all)*
+9. **Boot-order verification (§3.9):** parse and check `BOOT_ORDER`, refuse or warn before installing, and prevent re-provisioning after install; E10–E15. Automated `BOOT_ORDER` changes only after separate approval. *(R-B2)*
+10. **Hardware acceptance on a CM4** (user), recorded in `docs/test-reports/`. It includes the reboot after installation booting the installed system, with the SD card still inserted. *(all)*
 
 Version policy: each feature is a minor bump and each fix a patch bump (AGENTS.md).
 
@@ -161,6 +209,7 @@ Version policy: each feature is a minor bump and each fix a patch bump (AGENTS.m
 
 1. Approve or amend the requirements text in §2.
 2. Decide the §2.3 auto-apply anomaly: change the requirement or the behaviour.
-3. Answer §3.7: install target, CM4 variant, EEPROM boot order.
+3. Answer §3.7 (install target, CM4 variant) and §3.9: accept or amend the recommendation to verify `BOOT_ORDER` now and automate the change later. Is it acceptable for the installer to refuse to install when the boot order is wrong?
 4. Run E7 and E8 on a CM4 booted from the stock image, and paste the output:
    `lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL; cat /proc/cmdline; ip -br link; ls /dev/ttyAMA* /dev/ttyS*`
+5. Run E10, E12 and E14 on the CM4: `rpi-eeprom-config; vcgencmd bootloader_version; vcgencmd bootloader_config`. In the stock image these may need `nix-shell -p raspberrypi-eeprom libraspberrypi`.
