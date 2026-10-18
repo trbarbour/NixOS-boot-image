@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 import pytest
 
+from scripts.nix_git_inputs import nix_command
 from tests.vm.metadata import (
     append_run_ledger_entry,
     record_run_timings,
@@ -272,14 +273,10 @@ def boot_image_build(
     env["PRE_NIXOS_ROOT_KEY"] = str(boot_ssh_key_pair.public_key)
     build_started = time.perf_counter()
     result = subprocess.run(
-        [
+        nix_command(
             nix_executable,
-            "build",
-            ".#bootImage",
-            "--impure",
-            "--no-link",
-            "--print-out-paths",
-        ],
+            ["build", ".#bootImage", "--impure", "--no-link", "--print-out-paths"],
+        ),
         cwd=REPO_ROOT,
         check=True,
         capture_output=True,

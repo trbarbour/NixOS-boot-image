@@ -167,6 +167,24 @@ nix build
 > release tag instead (for a less frequently moving baseline), run
 > `scripts/update_nixos_stable.py --latest-release`.
 
+### Hosts that block GitHub archive downloads
+
+Nix fetches `github:` flake inputs as GitHub archive tarballs. Some hosts
+(for example Claude Code cloud sessions) sit behind a proxy that allows
+anonymous `git` reads but refuses those tarballs with HTTP 403. On such hosts,
+`scripts/nix_git_inputs.py` fetches every locked `github` input over
+`git+https` at its locked revision instead. It checks each fetched input's
+`narHash` against `flake.lock` and refuses to continue on any mismatch:
+
+```bash
+scripts/nix_git_inputs.py build .#bootImage --impure   # runs nix with overrides
+scripts/nix_git_inputs.py --print                       # just print the overrides
+```
+
+The VM test fixtures and the VM debug scripts apply the same overrides when
+`PRE_NIXOS_NIX_GIT_INPUTS=1` is set. Any value other than unset, `0` or `1` is
+rejected.
+
 ### Running flake checks locally
 
 The flake defines a regression check that ensures `pre-nixos` continues to

@@ -21,6 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts.nix_git_inputs import nix_command  # noqa: E402
 from tests.test_boot_image_vm import (  # type: ignore  # noqa: E402
     BootImageBuild,
     BootImageVM,
@@ -46,14 +47,10 @@ def build_boot_image(public_key: Path) -> BootImageBuild:
     env = os.environ.copy()
     env["PRE_NIXOS_ROOT_KEY"] = str(public_key)
     result = _run(
-        [
+        nix_command(
             "nix",
-            "build",
-            ".#bootImage",
-            "--impure",
-            "--no-link",
-            "--print-out-paths",
-        ],
+            ["build", ".#bootImage", "--impure", "--no-link", "--print-out-paths"],
+        ),
         env=env,
         cwd=REPO_ROOT,
     )

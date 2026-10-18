@@ -51,6 +51,12 @@ _Last updated: 2026-04-25T20-37-02Z_
    - 2026-10-18T02-01-07Z - The pasted setup script fails because it sources `scripts/lib/nix_environment.sh` relative to its own path. VM tests need `openssh-client`. The proxy blocks `github:` flake tarballs (a `git+https` override works). There is no KVM. See the same work note (F2 and "Unknowns and plan").
 
 
+8. **Repair VM debug scripts' imports.**
+   - 2026-10-18T03-05-00Z - `scripts/manual_vm_debug.py`, `scripts/collect_pre_nixos_journal.py` and `scripts/collect_sshd_pre_nixos_debug.py` (and `collect_sshd_dependency_audit.py`, via `manual_vm_debug`) fail at import time with `ImportError: cannot import name '_resolve_iso_path' from 'tests.test_boot_image_vm'`. Verified on the unmodified tree; the helper moved to `tests/vm/fixtures.py` in `11aa4b6`. Add an import smoke test for every script so this can't regress silently.
+
+9. **Narrow the flake's package source (`src = ./.`).**
+   - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
+
 ## Recently Completed
 - 2026-04-25T20-37-02Z - Kept GRUB serial support enabled, taught installed-system configuration generation to mirror the booted console ordering (`/proc/cmdline`) so explicit serial-menu boots keep serial primary while default boots remain display-primary, added regression coverage in `tests/test_install.py`, and bumped patch version to `0.8.8`; details in `docs/work-notes/2026-04-25T20-37-02Z-console-policy-alignment.md`.
 - 2026-04-25T19-35-35Z - Reverted the global early-DHCP module change, switched `configure_lan` from unconditional `systemctl restart systemd-networkd` to `networkctl reload`/`reconfigure` with restart fallback, added unit coverage for both paths in `tests/test_network.py`, and bumped patch version to `0.8.7`; details in `docs/work-notes/2026-04-25T19-35-35Z-network-init-delay-root-cause.md`.
