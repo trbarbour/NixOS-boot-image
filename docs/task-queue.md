@@ -75,6 +75,11 @@ _Last updated: 2026-10-18T17-33-41Z_
      - Found a safety gap: the SD boot card is not excluded from storage plans (§3.1).
      - **Awaiting user input (§7)** before implementation. Its §3.1 (boot-medium protection) is now done via #306.
 
+10. **Fix trbarbour/NixOS-boot-image#309: the USB boot stick blocks auto-provisioning.** *(found by the #306 USB-stick spike, 2026-10-18T19-09-18Z)*
+    - Root cause proven in the guest: the boot disk resolved to `/dev/dev/sda`, and the boot-time gate `pre-nixos-detect-storage` ignored the protected set. See `notes/2026-10-18T190817Z-usb-stick-spike.md`.
+    - Fix (0.10.8): unit regressions plus the permanent VM test `tests/vm/test_usb_stick_boot.py`.
+    - Remaining: VM verification on an ISO built from the fix, then a commit, push and PR (if the user asks).
+
 ## Recently Completed
 - 2026-10-18T17-32-54Z - Merged trbarbour/NixOS-boot-image#308 (0.10.7):
   - **#306:** disks backing the running system, including the boot medium, are never planned, wiped or counted as existing storage. Requirements §2.3 is amended.

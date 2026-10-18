@@ -1,0 +1,59 @@
+qemu: -device qemu-xhci,id=xhci -drive file=run2/stick.img,if=none,id=stick,format=raw -device usb-storage,bus=xhci.0,drive=stick,removable=off,bootindex=0 -drive file=run2/target.img,if=virtio,format=raw
+logged in after 205s
+$ lsblk -o NAME,RM,TRAN,TYPE,SIZE,MOUNTPOINTS
+NAME   RM TRAN   TYPE  SIZE MOUNTPOINTS
+fd0     1        disk    4K
+loop0   0        loop  1.3G /nix/.ro-store
+sda     0 usb    disk  1.3G
+├─sda1  0        part  1.3G /iso
+└─sda2  0        part    3M
+sr0     1 ata    rom  1024M
+vda     0 virtio disk    4G
+$ findmnt -n -o SOURCE /iso
+/dev/sda1
+$ cat /sys/block/sda/removable 2>/dev/null
+0
+pre-nixos finished
+$ cat /run/pre-nixos/storage-status 2>/dev/null
+STATE=plan-only
+DETAIL=existing-storage
+AUTO_INSTALL=skipped
+$ lsblk -o NAME,TYPE,SIZE,MOUNTPOINTS
+NAME   TYPE  SIZE MOUNTPOINTS
+fd0    disk    4K
+loop0  loop  1.3G /nix/.ro-store
+sda    disk  1.3G
+├─sda1 part  1.3G /iso
+└─sda2 part    3M
+sr0    rom  1024M
+vda    disk    4G
+$ journalctl -u pre-nixos -b --no-pager | tail -n 40
+Oct 18 17:45:48 nixos systemd[1]: Starting Pre-NixOS setup...
+Oct 18 17:45:53 nixos pre-nixos-start[698]: pre-nixos boot image version 0.10.6
+Oct 18 17:46:40 nixos pre-nixos-start[837]: LAN IPv4 address: 10.0.2.15
+Oct 18 17:46:41 nixos pre-nixos-start[893]: LAN IPv4 address: 10.0.2.15
+Oct 18 17:46:45 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Oct 18 17:46:45 nixos systemd[1]: Finished Pre-NixOS setup.
+Oct 18 17:46:45 nixos systemd[1]: pre-nixos.service: Consumed 27.129s CPU time, 50.5M memory peak, 56.6M read from disk.
+$ PRE_NIXOS_LOG_EVENTS=1 PRE_NIXOS_LOG_FILE=/tmp/d.log pre-nixos-detect-storage 2>&1 | grep -E 'resolve_boot_disk|device_' ; echo detect_rc=${PIPESTATUS[0]}
+{"boot_disk": "/dev/dev/sda", "event": "pre_nixos.storage.resolve_boot_disk", "probes": [{"candidates": [{"candidate": "/dev/sda1", "exists": true, "parent": "/dev/sda", "resolved": "/dev/dev/sda"}], "probe": "mountpoint", "selected": "/dev/dev/sda", "source": "/dev/sda1", "target": "/iso"}], "timestamp": "2026-10-18T17:46:52.247061+00:00"}
+{"boot_disk": "/dev/dev/sda", "device": "/dev/fd0", "event": "pre_nixos.storage.device_filtered", "reasons": ["ignored_prefix", "removable_media"], "removable": true, "resolved": "/dev/fd0", "timestamp": "2026-10-18T17:46:52.431897+00:00"}
+{"boot_disk": "/dev/dev/sda", "device": "/dev/sda", "event": "pre_nixos.storage.device_detected", "reasons": ["partitions", "signatures"], "removable": false, "resolved": "/dev/sda", "timestamp": "2026-10-18T17:46:52.712887+00:00"}
+{"boot_disk": "/dev/dev/sda", "device": "/dev/vda", "event": "pre_nixos.storage.device_filtered", "reasons": ["no_signatures"], "removable": false, "resolved": "/dev/vda", "timestamp": "2026-10-18T17:46:52.967557+00:00"}
+detect_rc=0
+$ PRE_NIXOS_LOG_EVENTS=1 PRE_NIXOS_LOG_FILE=/tmp/p.log pre-nixos --plan-only 2>&1 | grep -E 'resolve_protected|device_' ; echo plan_rc=${PIPESTATUS[0]}
+PRE_NIXOS_LOG_EVENTS=1 PRE_NIXOS_LOG_FILE=/tmp/p.log pre-nixos --plan-only 2>&1 | grep -E 'resolve_protected|device_' ; echo plan_rc=${PIPESTATUS[0]} }
+LAN IPv4 address: 10.0.2.15
+{"boot_disk": "/dev/dev/sda", "event": "pre_nixos.storage.resolve_protected_disks", "protected": ["/dev/dev/sda", "/dev/sda"], "swaps": [], "system_devices": ["/dev/sda1", "/dev/loop0"], "target_disks": [], "timestamp": "2026-10-18T17:47:00.790760+00:00"}
+plan_rc=0
+$ cat /proc/cmdline
+BOOT_IMAGE=/boot//nix/store/cjrhr0f61a0c68r4vq0qxws3jadn48yj-linux-6.12.54/bzImage init=/nix/store/sp3vhs48h8cczkh793nvxz4q2dp5a2xg-nixos-system-nixos-25.05.20251022.c8aa8cc/init root=LABEL=nixos-minimal-25.05-x86_64 boot.shell_on_fail console=ttyS0,115200n8 console=tty0 nohibernate loglevel=4 lsm=landlock,yama,bpf  initrd=/boot//nix/store/y4jkdvcm47cc5kr7mijnbs4969x71frv-initrd-linux-6.12.54/initrd
+$ findmnt -rn -o TARGET,SOURCE,FSTYPE | grep -vE '^/(proc|sys|dev|run)'
+findmnt -rn -o TARGET,SOURCE,FSTYPE | grep -vE '^/(proc|sys|dev|run)' '
+/ tmpfs tmpfs
+/iso /dev/sda1 iso9660
+/nix/.ro-store /dev/loop0 squashfs
+/nix/.rw-store tmpfs tmpfs
+/nix/store overlay overlay
+/nix/store overlay overlay
+STICK UNCHANGED

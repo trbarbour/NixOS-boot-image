@@ -185,6 +185,25 @@ _BOOT_FILESYSTEM_TYPES = ("squashfs", "iso9660")
 INSTALL_TARGET_ROOT = "/mnt"
 
 
+def _parent_disk(env: DetectionEnvironment, device: str) -> Optional[str]:
+    """Return the path of the disk holding partition *device*, if any.
+
+    ``lsblk -p`` prints full paths (``/dev/sda``); prefixing ``/dev/`` again
+    produced ``/dev/dev/sda``, so the boot stick went unrecognised (#309).
+    """
+
+    parent = _run_command(
+        env, ["lsblk", "-npo", "PKNAME", device], ignore_errors=True
+    ).strip()
+    if not parent:
+        return None
+    if not parent.startswith("/"):
+        raise RuntimeError(
+            f"lsblk -npo PKNAME {device} printed {parent!r}, not a device path"
+        )
+    return parent
+
+
 def _resolve_boot_disk_with_probes(
     env: DetectionEnvironment,
 ) -> tuple[Optional[str], list[dict[str, object]]]:
@@ -196,7 +215,6 @@ def _resolve_boot_disk_with_probes(
                 continue
             candidate = base + arg[len(prefix) :]
             exists = env.path_exists(candidate)
-            resolved_candidate = env.realpath(candidate) if exists else None
             probe: dict[str, object] = {
                 "probe": "cmdline",
                 "argument": arg,
@@ -206,13 +224,9 @@ def _resolve_boot_disk_with_probes(
             if not exists:
                 probes.append(probe)
                 continue
-            boot_device = resolved_candidate
-            parent = _run_command(
-                env, ["lsblk", "-npo", "PKNAME", boot_device], ignore_errors=True
-            ).strip()
-            resolved_boot = (
-                env.realpath(f"/dev/{parent}") if parent else boot_device
-            )
+            boot_device = env.realpath(candidate)
+            parent = _parent_disk(env, boot_device)
+            resolved_boot = env.realpath(parent) if parent else boot_device
             probe["parent"] = parent or None
             probe["resolved"] = resolved_boot
             probes.append(probe)
@@ -240,7 +254,6 @@ def _resolve_boot_disk_with_probes(
         candidates_info: list[dict[str, object]] = []
         for candidate in _candidate_paths_from_source(source):
             exists = env.path_exists(candidate)
-            resolved_candidate = env.realpath(candidate) if exists else None
             candidate_info: dict[str, object] = {
                 "candidate": candidate,
                 "exists": exists,
@@ -248,13 +261,9 @@ def _resolve_boot_disk_with_probes(
             if not exists:
                 candidates_info.append(candidate_info)
                 continue
-            boot_device = resolved_candidate
-            parent = _run_command(
-                env, ["lsblk", "-npo", "PKNAME", boot_device], ignore_errors=True
-            ).strip()
-            resolved_boot = (
-                env.realpath(f"/dev/{parent}") if parent else boot_device
-            )
+            boot_device = env.realpath(candidate)
+            parent = _parent_disk(env, boot_device)
+            resolved_boot = env.realpath(parent) if parent else boot_device
             candidate_info["parent"] = parent or None
             candidate_info["resolved"] = resolved_boot
             source_info["selected"] = resolved_boot
@@ -506,7 +515,10 @@ def detect_existing_storage(
 ) -> list[ExistingStorageDevice]:
     """Inspect the system and return devices that contain existing storage."""
 
-    env = env or DetectionEnvironment()
+    return _detect_existing_storage(env or DetectionEnvironment())
+
+
+def _detect_existing_storage(env: DetectionEnvironment) -> list[ExistingStorageDevice]:
     return scan_existing_storage(env, protected_disks=_resolve_protected_disks(env))
 
 
@@ -528,17 +540,24 @@ def has_existing_storage(
     return bool(scan_existing_storage(env, boot_disk=boot_disk))
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:  # pragma: no cover - thin wrapper
-    del argv
-    env = DetectionEnvironment()
+def detection_exit_status(env: DetectionEnvironment) -> int:
+    """Exit status of ``pre-nixos-detect-storage``, which gates auto-provisioning.
+
+    0: existing storage found (plan only); 1: none (provisioning may proceed);
+    2: detection failed (the service falls back to plan only).  Disks backing
+    the running system, the boot medium included, never count (reqs §2.3).
+    """
+
     try:
-        boot_disk = resolve_boot_disk(env)
-        if has_existing_storage(env, boot_disk=boot_disk):
-            return 0
-        return 1
+        return 0 if _detect_existing_storage(env) else 1
     except Exception as exc:
         print(f"pre-nixos-detect-storage: {exc}", file=sys.stderr)
         return 2
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:  # pragma: no cover - thin wrapper
+    del argv
+    return detection_exit_status(DetectionEnvironment())
 
 
 if __name__ == "__main__":  # pragma: no cover
