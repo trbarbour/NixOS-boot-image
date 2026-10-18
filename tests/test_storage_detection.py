@@ -45,12 +45,10 @@ def make_env(
         ("findmnt", "-nr", "-t", "squashfs", "-o", "SOURCE"): CommandOutput(
             stdout="", returncode=1
         ),
-        # System mount points consulted by resolve_protected_disks (#306);
-        # not mountpoints unless a test says otherwise.
-        **{
-            ("findmnt", "-n", "-o", "SOURCE", target): CommandOutput(stdout="", returncode=1)
-            for target in ("/", "/nix/store", "/boot", "/boot/firmware")
-        },
+        # Mount table and active swaps consulted by resolve_protected_disks
+        # (#306); empty unless a test says otherwise.
+        ("findmnt", "-rn", "-o", "TARGET,SOURCE"): CommandOutput(stdout=""),
+        ("swapon", "--show=NAME", "--noheadings", "--raw"): CommandOutput(stdout=""),
         ("findmnt", "-nr", "-t", "iso9660", "-o", "SOURCE"): CommandOutput(
             stdout="", returncode=1
         ),

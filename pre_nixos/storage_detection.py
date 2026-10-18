@@ -19,6 +19,7 @@ __all__ = [
     "collect_boot_probe_data",
     "resolve_boot_disk",
     "resolve_protected_disks",
+    "INSTALL_TARGET_ROOT",
     "scan_existing_storage",
     "has_existing_storage",
     "main",
@@ -166,18 +167,10 @@ _BOOT_MOUNT_TARGETS = (
 
 _BOOT_FILESYSTEM_TYPES = ("squashfs", "iso9660")
 
-# Mount points that belong to the *running system* (never the install target,
-# which disko mounts under /mnt).  The disks behind them must never be planned,
-# wiped or counted as existing storage (reqs §2.3; trbarbour/NixOS-boot-image#306).
-_SYSTEM_MOUNT_TARGETS = (
-    "/",
-    "/nix/store",
-    "/nix/.ro-store",
-    "/iso",
-    "/run/archiso/bootmnt",
-    "/boot",
-    "/boot/firmware",
-)
+# Where the installer mounts the system it is installing (disko's
+# --root-mountpoint).  Mounts under it, and swap on the disks behind them,
+# belong to the install *target*, not the running system.
+INSTALL_TARGET_ROOT = "/mnt"
 
 
 def _resolve_boot_disk_with_probes(
@@ -283,41 +276,77 @@ def _backing_disks(env: DetectionEnvironment, device: str) -> set[str]:
     return disks
 
 
+def _is_install_target(mountpoint: str) -> bool:
+    root = INSTALL_TARGET_ROOT.rstrip("/")
+    return mountpoint == root or mountpoint.startswith(root + "/")
+
+
+def _device_from_source(source: str) -> Optional[str]:
+    """Return the block device named by a mount *source*, if it names one.
+
+    Pseudo filesystems report bare words (tmpfs, overlay, none); bind mounts
+    report ``/dev/sda1[/sub/dir]``.
+    """
+
+    device = source.split("[", 1)[0].strip()
+    if not device.startswith("/"):
+        return None
+    return device
+
+
+def _disks_behind(env: DetectionEnvironment, devices: Iterable[str]) -> set[str]:
+    disks: set[str] = set()
+    for device in devices:
+        if env.path_exists(device):
+            disks |= _backing_disks(env, env.realpath(device))
+    return disks
+
+
 def _resolve_protected_disks(env: DetectionEnvironment) -> frozenset[str]:
     """Return the disks backing the running system, including the boot medium.
 
-    Combines :func:`resolve_boot_disk` with the disks beneath each mounted
-    system mount point (``_SYSTEM_MOUNT_TARGETS``).  Fails rather than
-    returning a smaller set when a mounted system device cannot be traced to
-    its disks, because an incomplete set could let the boot medium be wiped.
+    Combines :func:`resolve_boot_disk` with the physical disks beneath every
+    mounted filesystem and active swap area of the running system.  Mounts at
+    or under ``INSTALL_TARGET_ROOT`` (and swap on the disks behind them) belong
+    to the install target and are left out, so a re-run can still clean it.
+    Fails rather than returning a smaller set when a system device cannot be
+    traced to its disks, because an incomplete set could let it be wiped.
     """
 
-    protected: set[str] = set()
     boot_disk = resolve_boot_disk(env)
+    system_devices: list[str] = []
+    target_devices: list[str] = []
+    listing = _run_command(env, ["findmnt", "-rn", "-o", "TARGET,SOURCE"])
+    for line in listing.splitlines():
+        parts = line.split(" ", 1)
+        if len(parts) != 2:
+            continue
+        mountpoint, source = parts[0], parts[1].strip()
+        device = _device_from_source(source)
+        if device is None:
+            continue
+        (target_devices if _is_install_target(mountpoint) else system_devices).append(device)
+    swaps = [
+        line.strip()
+        for line in _run_command(
+            env, ["swapon", "--show=NAME", "--noheadings", "--raw"]
+        ).splitlines()
+        if line.strip().startswith("/")
+    ]
+
+    target_disks = _disks_behind(env, target_devices)
+    swap_disks = _disks_behind(env, swaps) - target_disks
+    protected = _disks_behind(env, system_devices) | swap_disks
     if boot_disk:
         protected.add(boot_disk)
-    sources: dict[str, str] = {}
-    for target in _SYSTEM_MOUNT_TARGETS:
-        source = _run_command(
-            env, ["findmnt", "-n", "-o", "SOURCE", target], ignore_errors=True
-        ).strip()
-        if not source:
-            continue
-        sources[target] = source
-        # Pseudo filesystems report bare words (tmpfs, overlay, none); only
-        # absolute paths and LABEL=/UUID=-style tags can name block devices.
-        if not (source.startswith("/") or source.startswith(tuple(_MOUNT_SOURCE_PREFIXES))):
-            continue
-        for candidate in _candidate_paths_from_source(source):
-            if env.path_exists(candidate):
-                protected |= _backing_disks(env, env.realpath(candidate))
-                break
     result = frozenset(protected)
     log_event(
         "pre_nixos.storage.resolve_protected_disks",
         protected=sorted(result),
         boot_disk=boot_disk,
-        sources=sources,
+        system_devices=system_devices,
+        swaps=swaps,
+        target_disks=sorted(target_disks),
     )
     return result
 

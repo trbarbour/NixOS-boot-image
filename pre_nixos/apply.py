@@ -12,7 +12,7 @@ import textwrap
 from pathlib import Path
 from typing import Any, Collection, Dict, List, Tuple
 
-from . import state, storage_cleanup
+from . import state, storage_cleanup, storage_detection
 from .logging_utils import log_event
 
 DISKO_CONFIG_PATH = Path("/var/log/pre-nixos/disko-config.nix")
@@ -92,8 +92,13 @@ def apply_plan(
     a caller bug; refuse before anything is written (reqs §2.3).
     """
 
+    # Compare canonical paths: a loaded plan may name a disk by an alias such
+    # as /dev/disk/by-id/... (Codex review on trbarbour/NixOS-boot-image#308).
     overlap = (
-        sorted(set(_collect_root_devices(plan)) & set(protected_disks))
+        sorted(
+            {os.path.realpath(d) for d in _collect_root_devices(plan)}
+            & {os.path.realpath(d) for d in protected_disks}
+        )
         if protected_disks
         else []
     )
@@ -157,7 +162,7 @@ def apply_plan(
     cmd_parts = ["disko", "--mode", disko_mode]
     if allow_yes_wipe and disko_mode == "destroy,format,mount":
         cmd_parts.append("--yes-wipe-all-disks")
-    cmd_parts.extend(["--root-mountpoint", "/mnt", str(config_path)])
+    cmd_parts.extend(["--root-mountpoint", storage_detection.INSTALL_TARGET_ROOT, str(config_path)])
     cmd = " ".join(cmd_parts)
     commands.append(cmd)
     log_event(

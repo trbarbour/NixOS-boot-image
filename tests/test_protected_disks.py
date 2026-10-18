@@ -9,7 +9,7 @@ Requirement: automated-pre-nixos-reqs.md §2.3 (boot medium).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Mapping, Sequence, Tuple
 
 import pytest
 
@@ -18,19 +18,42 @@ from pre_nixos.storage_detection import CommandOutput, DetectionEnvironment
 # Bound at import: the autouse storage stub replaces the module attribute.
 from pre_nixos.storage_detection import resolve_protected_disks
 
-CommandMap = Dict[Tuple[str, ...], CommandOutput]
-NOT_MOUNTED = CommandOutput(stdout="", returncode=1)
+MOUNT_LISTING = ("findmnt", "-rn", "-o", "TARGET,SOURCE")
+SWAP_LISTING = ("swapon", "--show=NAME", "--noheadings", "--raw")
 
 
-def make_env(commands: CommandMap) -> DetectionEnvironment:
-    """Fake environment: unknown ``findmnt`` targets are not mountpoints."""
+def make_env(
+    *,
+    mounts: Mapping[str, str],
+    swaps: Sequence[str] = (),
+    stacks: Mapping[str, Sequence[str]],
+) -> DetectionEnvironment:
+    """Fake host given its mount table, active swaps and block-device stacks.
+
+    ``stacks`` maps a device to its ``lsblk -s`` rows (itself, then what it
+    sits on), e.g. ``{"/dev/sda1": ["/dev/sda1 part", "/dev/sda disk"]}``.
+    """
 
     def run(cmd):  # type: ignore[no-untyped-def]
         key = tuple(cmd)
-        if key in commands:
-            return commands[key]
-        if key[0] == "findmnt":
-            return NOT_MOUNTED
+        if key == MOUNT_LISTING:
+            return CommandOutput(stdout="".join(f"{t} {s}\n" for t, s in mounts.items()))
+        if key == SWAP_LISTING:
+            return CommandOutput(stdout="".join(f"{s}\n" for s in swaps))
+        if key[:4] == ("findmnt", "-n", "-o", "SOURCE"):  # resolve_boot_disk probes
+            source = mounts.get(key[4])
+            return CommandOutput(stdout=f"{source}\n") if source else CommandOutput("", 1)
+        if key[:2] == ("findmnt", "-nr"):  # squashfs / iso9660 probes
+            return CommandOutput("", 1)
+        if key[:3] == ("lsblk", "-npo", "PKNAME"):
+            rows = stacks.get(key[3], [])
+            parents = [r.split()[0] for r in rows[1:] if r.split()[1] == "disk"]
+            return CommandOutput(stdout=(parents[0].removeprefix("/dev/") + "\n") if parents else "\n")
+        if key[:3] == ("lsblk", "-nrspo", "NAME,TYPE"):
+            rows = stacks.get(key[3])
+            if rows is None:
+                return CommandOutput("", 32)
+            return CommandOutput(stdout="\n".join(rows) + "\n")
         raise AssertionError(f"unexpected command invocation: {cmd}")
 
     return DetectionEnvironment(
@@ -41,24 +64,10 @@ def make_env(commands: CommandMap) -> DetectionEnvironment:
     )
 
 
-def mount(target: str, source: str) -> Tuple[Tuple[str, ...], CommandOutput]:
-    return ("findmnt", "-n", "-o", "SOURCE", target), CommandOutput(stdout=f"{source}\n")
-
-
-def deps(device: str, *rows: str) -> Tuple[Tuple[str, ...], CommandOutput]:
-    return ("lsblk", "-nrspo", "NAME,TYPE", device), CommandOutput(stdout="\n".join(rows) + "\n")
-
-
 def test_iso_on_usb_stick_is_protected() -> None:
     env = make_env(
-        dict(
-            [
-                mount("/iso", "/dev/sda"),
-                (("lsblk", "-npo", "PKNAME", "/dev/sda"), CommandOutput(stdout="")),
-                mount("/", "tmpfs"),
-                deps("/dev/sda", "/dev/sda disk"),
-            ]
-        )
+        mounts={"/": "tmpfs", "/iso": "/dev/sda", "/nix/store": "overlay"},
+        stacks={"/dev/sda": ["/dev/sda disk"]},
     )
     assert resolve_protected_disks(env) == frozenset({"/dev/sda"})
 
@@ -67,56 +76,78 @@ def test_sd_card_root_is_protected() -> None:
     """AArch64 SD image: root is an ext4 partition on the card."""
 
     env = make_env(
-        dict(
-            [
-                mount("/", "/dev/mmcblk0p2"),
-                deps("/dev/mmcblk0p2", "/dev/mmcblk0p2 part", "/dev/mmcblk0 disk"),
-                mount("/boot/firmware", "/dev/mmcblk0p1"),
-                deps("/dev/mmcblk0p1", "/dev/mmcblk0p1 part", "/dev/mmcblk0 disk"),
-            ]
-        )
+        mounts={"/": "/dev/mmcblk0p2", "/boot/firmware": "/dev/mmcblk0p1"},
+        stacks={
+            "/dev/mmcblk0p2": ["/dev/mmcblk0p2 part", "/dev/mmcblk0 disk"],
+            "/dev/mmcblk0p1": ["/dev/mmcblk0p1 part", "/dev/mmcblk0 disk"],
+        },
     )
     assert resolve_protected_disks(env) == frozenset({"/dev/mmcblk0"})
 
 
 def test_root_on_lvm_on_raid_protects_every_member_disk() -> None:
     env = make_env(
-        dict(
-            [
-                mount("/", "/dev/mapper/main-slash"),
-                deps(
-                    "/dev/mapper/main-slash",
-                    "/dev/mapper/main-slash lvm",
-                    "/dev/md0 raid1",
-                    "/dev/sda2 part",
-                    "/dev/sda disk",
-                    "/dev/sdb2 part",
-                    "/dev/sdb disk",
-                ),
+        mounts={"/": "/dev/mapper/main-slash"},
+        stacks={
+            "/dev/mapper/main-slash": [
+                "/dev/mapper/main-slash lvm",
+                "/dev/md0 raid1",
+                "/dev/sda2 part",
+                "/dev/sda disk",
+                "/dev/sdb2 part",
+                "/dev/sdb disk",
             ]
-        )
+        },
     )
     assert resolve_protected_disks(env) == frozenset({"/dev/sda", "/dev/sdb"})
 
 
-def test_install_target_mounted_on_mnt_is_not_protected() -> None:
-    """After auto-apply, disko leaves the *target* mounted on /mnt; it must stay plannable."""
+def test_separate_system_filesystems_on_other_disks_are_protected() -> None:
+    """Every mount of the running system counts, not a fixed list (Codex review)."""
 
-    env = make_env(dict([mount("/", "tmpfs"), mount("/mnt", "/dev/mapper/main-slash")]))
+    env = make_env(
+        mounts={"/": "/dev/sda2", "/home": "/dev/sdb1", "/var": "/dev/sdc1[/var]"},
+        stacks={
+            "/dev/sda2": ["/dev/sda2 part", "/dev/sda disk"],
+            "/dev/sdb1": ["/dev/sdb1 part", "/dev/sdb disk"],
+            "/dev/sdc1": ["/dev/sdc1 part", "/dev/sdc disk"],
+        },
+    )
+    assert resolve_protected_disks(env) == frozenset({"/dev/sda", "/dev/sdb", "/dev/sdc"})
+
+
+def test_active_swap_on_another_disk_is_protected() -> None:
+    env = make_env(
+        mounts={"/": "tmpfs"},
+        swaps=["/dev/sdd2"],
+        stacks={"/dev/sdd2": ["/dev/sdd2 part", "/dev/sdd disk"]},
+    )
+    assert resolve_protected_disks(env) == frozenset({"/dev/sdd"})
+
+
+def test_install_target_and_its_swap_are_not_protected() -> None:
+    """After auto-apply, disko leaves the *target* mounted on /mnt with its swap on."""
+
+    env = make_env(
+        mounts={
+            "/": "tmpfs",
+            "/mnt": "/dev/mapper/main-slash",
+            "/mnt/boot": "/dev/vda1",
+        },
+        swaps=["/dev/dm-1"],
+        stacks={
+            "/dev/mapper/main-slash": ["/dev/mapper/main-slash lvm", "/dev/vda2 part", "/dev/vda disk"],
+            "/dev/vda1": ["/dev/vda1 part", "/dev/vda disk"],
+            "/dev/dm-1": ["/dev/dm-1 lvm", "/dev/vda2 part", "/dev/vda disk"],
+        },
+    )
     assert resolve_protected_disks(env) == frozenset()
 
 
 def test_unresolvable_system_mount_is_an_error_not_unprotected() -> None:
     """Fail safe: if a system mount's disks cannot be determined, refuse."""
 
-    env = make_env(
-        dict(
-            [
-                mount("/", "/dev/sda1"),
-                (("lsblk", "-nrspo", "NAME,TYPE", "/dev/sda1"), CommandOutput(stdout="", returncode=32)),
-            ]
-        )
-    )
+    env = make_env(mounts={"/": "/dev/sda1"}, stacks={})
     with pytest.raises(RuntimeError, match="/dev/sda1"):
         resolve_protected_disks(env)
 
@@ -143,23 +174,41 @@ def test_protected_boot_stick_is_left_out_of_the_storage_plan(tmp_path: Path) ->
     assert sorted(plan["disko"]["disk"]) == ["nvme0n1"]
 
 
+def _plan_targeting(device: str) -> Dict[str, object]:
+    return {"partitions": {}, "disko": {"disk": {"boot": {"device": device}}}}
+
+
 def test_apply_plan_refuses_a_plan_touching_a_protected_disk() -> None:
     """Runtime precondition at the destructive boundary (defence in depth)."""
 
-    plan = {"partitions": {"sda": [{"name": "sda1", "type": "efi"}]}, "disko": {"disk": {"sda": {"device": "/dev/sda"}}}}
     with pytest.raises(RuntimeError, match="protected"):
-        apply.apply_plan(plan, dry_run=True, protected_disks=frozenset({"/dev/sda"}))
+        apply.apply_plan(_plan_targeting("/dev/sda"), dry_run=True, protected_disks=frozenset({"/dev/sda"}))
+
+
+def test_apply_plan_refuses_a_protected_disk_named_by_an_alias(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A loaded plan may name the disk via /dev/disk/by-id (Codex review)."""
+
+    alias = "/dev/disk/by-id/usb-Stick_0123-0:0"
+    monkeypatch.setattr(apply.os.path, "realpath", lambda p: "/dev/sda" if p == alias else p)
+    with pytest.raises(RuntimeError, match="protected"):
+        apply.apply_plan(_plan_targeting(alias), dry_run=True, protected_disks=frozenset({"/dev/sda"}))
 
 
 def test_scan_does_not_count_protected_disks_as_existing_storage() -> None:
     """The boot medium's own data must not block auto-provisioning (§2.3)."""
 
-    env = make_env(
-        {
-            ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(stdout="/dev/mmcblk0 disk 0\n/dev/nvme0n1 disk 0\n"),
-            ("lsblk", "-rno", "TYPE", "/dev/nvme0n1"): CommandOutput(stdout="disk\n"),
-            ("wipefs", "-n", "/dev/nvme0n1"): CommandOutput(stdout=""),
-        }
+    commands: Dict[Tuple[str, ...], CommandOutput] = {
+        ("lsblk", "-dnpo", "NAME,TYPE,RM"): CommandOutput(stdout="/dev/mmcblk0 disk 0\n/dev/nvme0n1 disk 0\n"),
+        ("lsblk", "-rno", "TYPE", "/dev/nvme0n1"): CommandOutput(stdout="disk\n"),
+        ("wipefs", "-n", "/dev/nvme0n1"): CommandOutput(stdout=""),
+    }
+    env = DetectionEnvironment(
+        run=lambda cmd: commands[tuple(cmd)],
+        path_exists=lambda path: True,
+        realpath=lambda path: path,
+        read_cmdline=lambda: [],
     )
     found = storage_detection.scan_existing_storage(env, protected_disks=frozenset({"/dev/mmcblk0"}))
     assert found == []

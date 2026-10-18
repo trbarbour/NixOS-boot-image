@@ -170,8 +170,13 @@ def _refuse_protected_targets(
 ) -> None:
     """Exit if any target is, or lies on, a disk backing the running system."""
 
-    protected = _expand_devices_with_lsblk(set(protected_disks)) if protected_disks else set()
-    overlap = sorted(set(targets) & protected)
+    # Compare canonical paths so aliases (/dev/disk/by-id/...) cannot slip by.
+    protected = (
+        {os.path.realpath(d) for d in _expand_devices_with_lsblk(set(protected_disks))}
+        if protected_disks
+        else set()
+    )
+    overlap = sorted({os.path.realpath(t) for t in targets} & protected)
     if overlap:
         print(
             "Refusing to modify protected device(s) backing the running system "
