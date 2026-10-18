@@ -23,7 +23,7 @@ from scripts.manual_vm_debug import (
     record_command,
     write_header,
 )
-from tests.test_boot_image_vm import BootImageVM
+from tests.vm.controller import BootImageVM
 
 
 def default_output_dir() -> Path:
@@ -101,6 +101,7 @@ def main(argv: Iterable[str]) -> int:
             ssh_port=ssh_port,
             harness_log=harness_log,
             serial_log=serial_log,
+            metadata_path=output_dir / "metadata.json",
         )
         run_probes(vm, note_path)
         if not args.skip_shutdown:

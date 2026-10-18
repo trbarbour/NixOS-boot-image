@@ -51,6 +51,14 @@ _Last updated: 2026-04-25T20-37-02Z_
 7. **Narrow the flake's package source (`src = ./.`).**
    - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
 
+8. **Make the VM harness (`tests/vm/`) type-check cleanly.**
+   - 2026-10-18T03-25-00Z - `mypy --check-untyped-defs` reports 18 errors in `tests/vm/{controller,fixtures,metadata}.py`. Reviewed: none is a known runtime bug.
+     - 4× "Missing return": the functions end in `_raise_with_transcript`, which always raises but is annotated `-> None`; annotate it `NoReturn`.
+     - 3× undefined `Dict`: annotations only, under `from __future__ import annotations`.
+     - 4× undefined `pexpect`: a `TYPE_CHECKING` import alias.
+     - The rest are generator-fixture return types and `object`-typed metadata dicts.
+   - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
+
 ## Recently Completed
 - 2026-10-18T02-53-00Z - Migrated the dev environment from Codex to Claude Code cloud. Added `scripts/nix_git_inputs.py` (verified git overrides for `github:` inputs), the SessionStart hook `.claude/hooks/session-start.sh`, and shared `scripts/lib/dev_packages.sh`/`python_venv.sh` (now including `openssh-client`). The full suite passes under TCG. Details: `docs/work-notes/2026-10-18T02-01-07Z-claude-code-environment-migration.md`, `notes/2026-10-18T025300Z-vm-run.md`.
 - 2026-10-18T03-30-00Z - Made the unit tests independent of host storage: an autouse `existing_storage` stub (`tests/storage_stub.py`) fails any test that reaches `detect_existing_storage()` without declaring a scenario, using a `BaseException` so production `except Exception` handlers can't hide it. This exposed 9 dependent tests (4 failing, 5 passing by accident). Added failure-path tests for the scan, the CLI, the TUI header and TUI apply; removed two stale `# pragma: no cover`; bumped version to `0.9.1`. See `docs/work-notes/2026-10-18T02-01-07Z-claude-code-environment-migration.md` (F1).
