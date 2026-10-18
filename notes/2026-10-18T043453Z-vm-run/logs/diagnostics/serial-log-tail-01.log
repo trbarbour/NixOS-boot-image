@@ -1,0 +1,50 @@
+
+/dev/vdb: 2 bytes were erased at offset 0x000001fe (PMBR): 55 aa
+
+/dev/vdc: 8 bytes were erased at offset 0x00000200 (gpt): 45 46 49 20 50 41 52 54
+
+/dev/vdc: 8 bytes were erased at offset 0x5ffffe00 (gpt): 45 46 49 20 50 41 52 54
+
+/dev/vdc: 2 bytes were erased at offset 0x000001fe (PMBR): 55 aa
+
+
+
+__EXIT__=0
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792298441414__%s__UID_MARK__1792298441414__\n' "$(id -u)"
+printf '__UID_MARK__1792298441414__%s__UID_MARK__1792298441414__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1792298441414__0__UID_MARK__1792298441414__
+
+[?2004hPRE-NIXOS> { mdadm --create /dev/md127 --force --level=1 --metadata=1.2 --raid-devices=2 /dev/vdb /dev/vdc; printf '
+__EXIT__=%s
+' $?; }
+{ mdadm --create /dev/md127 --force --level=1 --metadata=1.2 --raid-devices=2 /dev/vdb /dev/vdc; printf '
+
+[?2004l
+[?2004h> __EXIT__=%s
+
+[?2004l
+[?2004h> ' $?; }
+
+[?2004l
+mdadm: super1.x cannot open /dev/vdb: Device or resource busy
+
+mdadm: /dev/vdb is not suitable for this array.
+
+mdadm: super1.x cannot open /dev/vdc: Device or resource busy
+
+mdadm: /dev/vdc is not suitable for this array.
+
+mdadm: create aborted
+
+
+
+__EXIT__=1
+
+[?2004hPRE-NIXOS> 

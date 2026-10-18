@@ -58,6 +58,12 @@ _Last updated: 2026-04-25T20-37-02Z_
 
 8. **Fix the race in `test_pre_nixos_cleans_raid_lvm_residue`.**
    - 2026-10-18T04-04-07Z - The test seeds RAID/LVM residue while the boot-time `pre-nixos` run may still be active, and that run tears the residue down, as its journal shows. Fix: `wait_for_unit_inactive("pre-nixos", timeout=600)` before seeding; the boot-time run took 3m53s under TCG. See `notes/2026-10-18T040407Z-vm-run.md`.
+   - 2026-10-18T04-46-23Z - Waiting first (`0b7c040`) is necessary but not sufficient. The boot-time run provisions vdb/vdc itself, so after it finishes they are busy and `mdadm --create` fails. Details: `notes/2026-10-18T044623Z-vm-run.md`. The scenario's assumption that the extra disks are free after boot is wrong. Options:
+     - **A.** Tear down the boot run's provisioning in the test, then seed. This duplicates the product's cleanup logic and is brittle.
+     - **B. (recommended)** Hot-plug vdb/vdc through the QEMU monitor after the boot run. Deterministic, tests the shipped ISO, keeps the scenario's meaning. Needs a monitor socket in the harness, and hot-plug needs a spike first.
+     - **C.** A test-only ISO with the boot-time run disabled. Tests a different artefact and costs an extra build.
+     - **D.** Treat the boot run's own RAID/LVM as the residue. Least code, but it changes what the test proves.
+   - **Awaiting user decision.** Branch `claude/gallant-dijkstra-n9lqn1` carries `0b7c040` and the ordering unit test; no PR has been opened.
 
 9. **Let `collect_pre_nixos_journal.py` capture the whole run.**
    - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
