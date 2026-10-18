@@ -1,0 +1,21 @@
+× pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (; enabled; preset: ignored)
+Active: failed (Result: exit-code) since Sun 2026-10-18 14:55:54 UTC; 10min ago
+Invocation: 588564b16471422e926b8fbaa8f70109
+Process: 1372 ExecStart=/nix/store/ri9h1fx91p8awb5v67sbms1bwh0s7i5s-unit-script-pre-nixos-start/bin/pre-nixos-start (code=exited, status=1/FAILURE)
+Main PID: 1372 (code=exited, status=1/FAILURE)
+IP: 0B in, 0B out
+IO: 17.8M read, 137.5K written
+Mem peak: 18.7M
+CPU: 55.551s
+Oct 18 14:55:49 nixos pre-nixos-start[1392]:   File "/nix/store/s2pbac9izhsa…nup
+Oct 18 14:55:49 nixos pre-nixos-start[1392]:     _verify_md_lvm_absent(
+Oct 18 14:55:49 nixos pre-nixos-start[1392]:   File "/nix/store/s2pbac9izhsa…ent
+Oct 18 14:55:49 nixos pre-nixos-start[1392]:     raise RuntimeError(
+Oct 18 14:55:49 nixos pre-nixos-start[1392]: RuntimeError: cleanup verificat…ain
+Oct 18 14:55:50 nixos pre-nixos-start[1616]: LAN IPv4 address: 10.0.2.15
+Oct 18 14:55:54 nixos systemd[1]: pre-nixos.service: Main process exited, c…LURE
+Oct 18 14:55:54 nixos systemd[1]: pre-nixos.service: Failed with result 'ex…de'.
+Oct 18 14:55:54 nixos systemd[1]: Failed to start Pre-NixOS setup.
+Oct 18 14:55:54 nixos systemd[1]: pre-nixos.service: Consumed 55.551s CPU t…isk.
+Hint: Some lines were ellipsized, use -l to show in full.

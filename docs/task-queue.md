@@ -58,9 +58,32 @@ _Last updated: 2026-04-25T20-37-02Z_
 
 8. **Fix the race in `test_pre_nixos_cleans_raid_lvm_residue`.**
    - 2026-10-18T04-04-07Z - The test seeds RAID/LVM residue while the boot-time `pre-nixos` run may still be active, and that run tears the residue down, as its journal shows. Fix: `wait_for_unit_inactive("pre-nixos", timeout=600)` before seeding; the boot-time run took 3m53s under TCG. See `notes/2026-10-18T040407Z-vm-run.md`.
+   - 2026-10-18T04-46-23Z - Waiting first (`0b7c040`) is necessary but not sufficient. The boot-time run provisions vdb/vdc itself, so after it finishes they are busy and `mdadm --create` fails. Details: `notes/2026-10-18T044623Z-vm-run.md`. The scenario's assumption that the extra disks are free after boot is wrong. Options:
+     - **A.** Tear down the boot run's provisioning in the test, then seed. This duplicates the product's cleanup logic and is brittle.
+     - **B. (recommended)** Hot-plug vdb/vdc through the QEMU monitor after the boot run. Deterministic, tests the shipped ISO, keeps the scenario's meaning. Needs a monitor socket in the harness, and hot-plug needs a spike first.
+     - **C.** A test-only ISO with the boot-time run disabled. Tests a different artefact and costs an extra build.
+     - **D.** Treat the boot run's own RAID/LVM as the residue. Least code, but it changes what the test proves.
+   - **Awaiting user decision.** Branch `claude/gallant-dijkstra-n9lqn1` carries `0b7c040` and the ordering unit test; no PR has been opened.
 
 9. **Let `collect_pre_nixos_journal.py` capture the whole run.**
    - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
+
+11. **Exclude the boot medium from storage plans (safety; x86 and AArch64).** trbarbour/NixOS-boot-image#306
+   - 2026-10-18T15-00-00Z - The boot disk is excluded only from the cleanup scan (`resolve_boot_disk`). The plan path (`enumerate_disks` → `plan_storage` → disko) skips only `RM=1` devices, so a USB boot stick reporting `RM=0` is planned (reproduced). Fix: one protected-disk set (parents of all mounted filesystems plus `resolve_boot_disk`), applied on both paths, with unit and VM tests. The AArch64 plan's §3.1 depends on this.
+   - 2026-10-18T15-30-00Z - The user noted the boot-time "only if empty" safeguard. Verified: it aborts on existing storage, **but it skips the boot disk**, so a correctly identified boot stick passes the check while the plan still includes it (`RM=0`). The safeguard does not mitigate #306. Correction recorded: the VM runs' "Tearing down existing storage" lines come from `apply_plan`'s pre-disko wipe on empty disks; data-bearing disks were not wiped at boot.
+   - 2026-10-18T16-11-34Z - Fixed in `761d7d9` (version 0.10.4): `resolve_protected_disks` is applied to the plan, the scan and the destructive preconditions, and requirements §2.3 is amended. 8 reproduction and 2 wiring unit tests; the provisioning VM tests pass (`notes/2026-10-18T161134Z-vm-run.md`). Remaining: a VM test booting the ISO from a non-removable USB disk (spike first), and the PR.
+
+12. **Fix forced storage teardown when filesystems are still mounted.** trbarbour/NixOS-boot-image#307
+   - 2026-10-18T15-50-00Z - Root causes shown by the action log: deactivation before unmount; parent mount before child (`/mnt` before `/mnt/boot`); `umount '[SWAP]'`. The VM residue scenario (`tests/vm/test_pre_nixos_cleanup.py`, now hot-plug based) reproduces it deterministically and is the regression test. The user recalls this teardown being unreliable in complex cases. After #306.
+   - 2026-10-18T17-07-29Z - Fixed in `bd69184` (release mounts and swap before deactivating). Kernel-model unit tests pass, and the VM residue scenario passes. The full suite is green on #308's head (290 passed, `notes/2026-10-18T170729Z-vm-run.md`). Closes when #308 merges.
+
+10. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
+   - Goal: build an AArch64 boot image that can be written to a microSD card to boot e.g. a CM4. Use the stock NixOS AArch64 SD image as the base; it works, including on the serial console.
+   - Deliverable: a top-down plan from requirements, with a design debate for each choice and a list of unknowns, each with an experiment to resolve it. Start after the race-fix PR.
+   - 2026-10-18T14-21-35Z - Plan written: `plans/2026-10-18T142135Z-aarch64-cm4-boot-image-plan.md`.
+     - E1 (module evaluates on the stock SD image), E2 (this host builds AArch64 via binfmt) and E3 (only 44 derivations built locally) are done.
+     - Found a safety gap: the SD boot card is not excluded from storage plans (§3.1).
+     - **Awaiting user input (§7)** before implementation.
 
 ## Recently Completed
 - 2026-10-18T04-04-07Z - Repaired the VM debug scripts (version `0.9.3`).

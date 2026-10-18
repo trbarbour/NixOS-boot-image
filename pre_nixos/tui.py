@@ -606,6 +606,8 @@ class TUIState:
     auto_install_enabled: bool = False
     last_auto_install: install.AutoInstallResult | None = None
     install_network: install.InstallNetworkConfig | None = None
+    # Disks backing the running system; never planned or applied (reqs §2.3).
+    protected_disks: frozenset[str] = frozenset()
 
 
 def _initial_state(
@@ -1123,7 +1125,7 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     auto_message_row = 1
     try:
         with _suspend_curses(stdscr):
-            apply.apply_plan(state.plan)
+            apply.apply_plan(state.plan, protected_disks=state.protected_disks)
     except Exception as exc:  # pragma: no cover - subprocess failure is rare
         _show_modal(stdscr, [f"Failed to apply plan: {exc}"])
         return False
@@ -1238,10 +1240,12 @@ def run() -> None:
     """Launch the interactive provisioning TUI."""
 
     lan_config = network.configure_lan()
-    disks = inventory.enumerate_disks()
+    protected_disks = storage_detection.resolve_protected_disks()
+    disks = inventory.exclude_disks(inventory.enumerate_disks(), protected_disks)
     ram_gb = inventory.detect_ram_gb()
     plan = planner.plan_storage("fast", disks, ram_gb=ram_gb)
     state = _initial_state(plan, disks, lan_config)
+    state.protected_disks = protected_disks
 
     def refresh_renderer() -> None:
         state.renderer = PlanRenderer(state.plan, state.disks)

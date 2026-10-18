@@ -10,9 +10,9 @@ import shutil
 import subprocess
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Collection, Dict, List, Tuple
 
-from . import state, storage_cleanup
+from . import state, storage_cleanup, storage_detection
 from .logging_utils import log_event
 
 DISKO_CONFIG_PATH = Path("/var/log/pre-nixos/disko-config.nix")
@@ -79,8 +79,35 @@ def _run(cmd: str, execute: bool) -> None:
         raise subprocess.CalledProcessError(result.returncode, cmd)
 
 
-def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
-    """Apply a storage plan."""
+def apply_plan(
+    plan: Dict[str, Any],
+    dry_run: bool = False,
+    *,
+    protected_disks: Collection[str] = (),
+) -> List[str]:
+    """Apply a storage plan.
+
+    Precondition: the plan references none of *protected_disks* (the disks
+    backing the running system).  Plans are built without them, so a hit means
+    a caller bug; refuse before anything is written (reqs §2.3).
+    """
+
+    # Compare canonical paths: a loaded plan may name a disk by an alias such
+    # as /dev/disk/by-id/... (Codex review on trbarbour/NixOS-boot-image#308).
+    overlap = (
+        sorted(
+            {os.path.realpath(d) for d in _collect_root_devices(plan)}
+            & {os.path.realpath(d) for d in protected_disks}
+        )
+        if protected_disks
+        else []
+    )
+    if overlap:
+        log_event("pre_nixos.apply.apply_plan.protected_disk_refused", devices=overlap)
+        raise RuntimeError(
+            "refusing to apply a storage plan that targets protected disk(s) "
+            "backing the running system: " + ", ".join(overlap)
+        )
 
     commands: List[str] = []
     execute = not dry_run and os.environ.get("PRE_NIXOS_EXEC") == "1"
@@ -135,7 +162,7 @@ def apply_plan(plan: Dict[str, Any], dry_run: bool = False) -> List[str]:
     cmd_parts = ["disko", "--mode", disko_mode]
     if allow_yes_wipe and disko_mode == "destroy,format,mount":
         cmd_parts.append("--yes-wipe-all-disks")
-    cmd_parts.extend(["--root-mountpoint", "/mnt", str(config_path)])
+    cmd_parts.extend(["--root-mountpoint", storage_detection.INSTALL_TARGET_ROOT, str(config_path)])
     cmd = " ".join(cmd_parts)
     commands.append(cmd)
     log_event(

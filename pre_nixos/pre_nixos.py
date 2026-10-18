@@ -5,7 +5,7 @@ import io
 import json
 import os
 import sys
-from typing import Iterable, Sequence, Set
+from typing import Collection, Iterable, Sequence, Set
 
 from . import (
     apply,
@@ -165,10 +165,32 @@ def _forced_cleanup_action() -> str | None:
     return storage_cleanup.WIPE_SIGNATURES
 
 
+def _refuse_protected_targets(
+    targets: Iterable[str], protected_disks: Collection[str]
+) -> None:
+    """Exit if any target is, or lies on, a disk backing the running system."""
+
+    # Compare canonical paths so aliases (/dev/disk/by-id/...) cannot slip by.
+    protected = (
+        {os.path.realpath(d) for d in _expand_devices_with_lsblk(set(protected_disks))}
+        if protected_disks
+        else set()
+    )
+    overlap = sorted({os.path.realpath(t) for t in targets} & protected)
+    if overlap:
+        print(
+            "Refusing to modify protected device(s) backing the running system "
+            "(boot medium): " + ", ".join(overlap),
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
 def _handle_existing_storage(
     plan: dict[str, object],
     execute: bool,
     forced_action: str | None = None,
+    protected_disks: Collection[str] = (),
 ) -> bool:
     try:
         devices = storage_detection.detect_existing_storage()
@@ -199,6 +221,7 @@ def _handle_existing_storage(
     cleanup_targets = _collect_plan_devices(plan)
     cleanup_targets.update(entry.device for entry in devices)
     cleanup_targets = _expand_devices_with_lsblk(cleanup_targets)
+    _refuse_protected_targets(cleanup_targets, protected_disks)
     if cleanup_targets:
         print(
             "The selected cleanup will be applied to all devices referenced in "
@@ -355,12 +378,28 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"Install skipped: {result.reason}.")
             return
 
+        try:
+            protected_disks = storage_detection.resolve_protected_disks()
+        except Exception as exc:
+            print(
+                f"Cannot determine the disks backing the running system ({exc}); "
+                "refusing to plan or modify storage.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        explicit_targets = [args.partition_boot] if args.partition_boot else []
+        explicit_targets += list(args.partition_lvm)
+        _refuse_protected_targets(
+            (_normalise_device_path(dev) or dev for dev in explicit_targets),
+            protected_disks,
+        )
         if args.partition_boot:
             partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
         for dev in args.partition_lvm:
             partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
 
-        disks = inventory.enumerate_disks()
+        disks = inventory.exclude_disks(inventory.enumerate_disks(), protected_disks)
         ram_gb = inventory.detect_ram_gb()
         plan = planner.plan_storage(
             args.mode,
@@ -394,7 +433,10 @@ def main(argv: list[str] | None = None) -> None:
         )
         if will_modify_storage:
             if not _handle_existing_storage(
-                plan, execute=will_modify_storage, forced_action=forced_cleanup_action
+                plan,
+                execute=will_modify_storage,
+                forced_action=forced_cleanup_action,
+                protected_disks=protected_disks,
             ):
                 return
             if _is_interactive() and not _confirm_storage_reset():
@@ -402,7 +444,7 @@ def main(argv: list[str] | None = None) -> None:
                 return
 
         if not args.plan_only:
-            apply.apply_plan(plan, dry_run=args.dry_run)
+            apply.apply_plan(plan, dry_run=args.dry_run, protected_disks=protected_disks)
             result = install.auto_install(
                 lan_config,
                 plan,

@@ -1,0 +1,50 @@
+
+[  394.475890] pci 0000:00:06.0: BAR 4 [mem 0x100000000-0x100003fff 64bit pref]: assigned
+
+[  394.476441] pci 0000:00:06.0: BAR 1 [mem 0x80000000-0x80000fff]: assigned
+
+[  394.476565] pci 0000:00:06.0: BAR 0 [io  0x1000-0x107f]: assigned
+
+[  394.483192] virtio-pci 0000:00:06.0: enabling device (0000 -> 0003)
+
+[  395.141363] ACPI: \_SB_.LNKB: Enabled at IRQ 11
+
+[  395.556548] virtio_blk virtio3: 2/0/0 default/read/poll queues
+
+[  395.689298] virtio_blk virtio3: [vdb] 3145728 512-byte logical blocks (1.61 GB/1.50 GiB)
+
+[  396.921319] pci 0000:00:07.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+
+[  396.923398] pci 0000:00:07.0: BAR 0 [io  0x0000-0x007f]
+
+[  396.924870] pci 0000:00:07.0: BAR 1 [mem 0x00000000-0x00000fff]
+
+[  396.925423] pci 0000:00:07.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+
+[  396.970163] pci 0000:00:07.0: BAR 4 [mem 0x100004000-0x100007fff 64bit pref]: assigned
+
+[  396.970599] pci 0000:00:07.0: BAR 1 [mem 0x80001000-0x80001fff]: assigned
+
+[  396.970913] pci 0000:00:07.0: BAR 0 [io  0x1080-0x10ff]: assigned
+
+[  396.985300] virtio-pci 0000:00:07.0: enabling device (0000 -> 0003)
+
+[  397.396535] virtio_blk virtio4: 2/0/0 default/read/poll queues
+
+[  397.403898] virtio_blk virtio4: [vdc] 3145728 512-byte logical blocks (1.61 GB/1.50 GiB)
+
+[  399.693043] md/raid1:md127: not clean -- starting background reconstruction
+
+[  399.693258] md/raid1:md127: active with 2 out of 2 mirrors
+
+[  399.695001] md127: detected capacity change from 0 to 3141632
+
+[  399.700142] md: resync of RAID array md127
+
+[  429.448532] md: md127: resync done.
+
+[  452.362125] md127: detected capacity change from 3141632 to 0
+
+[  452.362266] md: md127 stopped.
+
+[?2004hPRE-NIXOS> 

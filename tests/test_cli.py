@@ -23,7 +23,7 @@ def test_cli_plan_only(monkeypatch, capsys, tmp_path):
         network_unit=None,
     )
 
-    def fake_apply(plan, dry_run=False):
+    def fake_apply(plan, dry_run=False, protected_disks=frozenset()):
         called.append(dry_run)
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
@@ -125,7 +125,7 @@ def test_cli_apply_called(monkeypatch, tmp_path, capsys):
         network_unit=None,
     )
 
-    def fake_apply(plan, dry_run=False):
+    def fake_apply(plan, dry_run=False, protected_disks=frozenset()):
         called.append(dry_run)
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
@@ -167,7 +167,7 @@ def test_cli_auto_install_disabled_without_env(monkeypatch, tmp_path):
 
     monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: sample_lan)
 
-    def fake_apply(plan, dry_run=False):
+    def fake_apply(plan, dry_run=False, protected_disks=frozenset()):
         return None
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
@@ -206,7 +206,7 @@ def test_cli_interactive_confirms_before_apply(monkeypatch, existing_storage):
 
     called = []
 
-    def fake_apply(plan, dry_run=False):
+    def fake_apply(plan, dry_run=False, protected_disks=frozenset()):
         called.append(dry_run)
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
@@ -235,7 +235,7 @@ def test_cli_abort_when_confirmation_declined(monkeypatch, capsys, existing_stor
 
     called = []
 
-    def fake_apply(plan, dry_run=False):
+    def fake_apply(plan, dry_run=False, protected_disks=frozenset()):
         called.append(dry_run)
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
@@ -319,7 +319,7 @@ def test_cli_no_auto_install_flag(monkeypatch, tmp_path):
     )
     called = []
 
-    def fake_apply(plan, dry_run=False):
+    def fake_apply(plan, dry_run=False, protected_disks=frozenset()):
         called.append(True)
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", fake_apply)
@@ -360,7 +360,7 @@ def test_cli_static_network_defaults_from_dhcp(monkeypatch, tmp_path):
             "192.0.2.25", "255.255.255.0", 24, "192.0.2.1"
         ),
     )
-    monkeypatch.setattr(pre_nixos.apply, "apply_plan", lambda plan, dry_run=False: None)
+    monkeypatch.setattr(pre_nixos.apply, "apply_plan", lambda plan, dry_run=False, protected_disks=frozenset(): None)
     monkeypatch.setattr(
         pre_nixos.state,
         "record_install_network_config",
@@ -406,7 +406,7 @@ def test_cli_reuses_saved_install_network(monkeypatch, tmp_path):
 
     monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: sample_lan)
     monkeypatch.setattr(pre_nixos.install, "load_install_network_config", lambda: saved_network)
-    monkeypatch.setattr(pre_nixos.apply, "apply_plan", lambda plan, dry_run=False: None)
+    monkeypatch.setattr(pre_nixos.apply, "apply_plan", lambda plan, dry_run=False, protected_disks=frozenset(): None)
     monkeypatch.setattr(
         pre_nixos.state,
         "clear_install_network_config",
@@ -444,7 +444,7 @@ def test_cli_auto_install_failure_exits(monkeypatch, tmp_path):
         network_unit=None,
     )
     monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: sample_lan)
-    def noop_apply_failure(plan, dry_run=False):
+    def noop_apply_failure(plan, dry_run=False, protected_disks=frozenset()):
         return None
 
     monkeypatch.setattr(pre_nixos.apply, "apply_plan", noop_apply_failure)
@@ -535,3 +535,51 @@ def test_cleanup_covers_plan_devices(monkeypatch):
         "/dev/nvme1n1p1",
         "/dev/nvme1n1p2",
     }
+
+
+def test_cli_keeps_protected_disks_out_of_the_plan(monkeypatch, existing_storage, tmp_path):
+    """trbarbour/NixOS-boot-image#306: the boot medium never reaches apply_plan."""
+
+    existing_storage.devices = []
+    existing_storage.protected_disks = frozenset({"/dev/sdb"})
+    monkeypatch.setattr(
+        pre_nixos.inventory,
+        "enumerate_disks",
+        lambda: [
+            Disk(name="sda", size=500 * 1024**3, rotational=False),
+            Disk(name="sdb", size=64 * 1024**3, rotational=False),  # the boot stick
+        ],
+    )
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: None)
+    monkeypatch.setattr(pre_nixos, "_is_interactive", lambda: False)
+    monkeypatch.setattr(
+        pre_nixos.install, "auto_install", lambda *a, **k: AutoInstallResult(status="skipped")
+    )
+    applied = []
+    monkeypatch.setattr(
+        pre_nixos.apply,
+        "apply_plan",
+        lambda plan, dry_run=False, protected_disks=frozenset(): applied.append(
+            (sorted(plan["disko"]["disk"]), protected_disks)
+        ),
+    )
+
+    pre_nixos.main([])
+
+    assert applied == [(["sda"], frozenset({"/dev/sdb"}))]
+
+
+def test_cli_refuses_to_partition_a_protected_disk(monkeypatch, existing_storage, capsys):
+    existing_storage.protected_disks = frozenset({"/dev/sdb"})
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: None)
+    monkeypatch.setattr(pre_nixos, "_expand_devices_with_lsblk", lambda devices: set(devices))
+    partitioned = []
+    monkeypatch.setattr(
+        pre_nixos.partition, "create_partitions", lambda *a, **k: partitioned.append(a)
+    )
+
+    with pytest.raises(SystemExit):
+        pre_nixos.main(["--partition-boot", "sdb"])
+
+    assert partitioned == []
+    assert "Refusing to modify protected device(s)" in capsys.readouterr().err
