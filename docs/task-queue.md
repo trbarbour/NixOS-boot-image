@@ -44,6 +44,12 @@ _Last updated: 2026-04-25T20-37-02Z_
    - Drive `pre_nixos.tui._edit_plan` via a fake window with scripted inputs for arrays and LVs, including invalid input handling.
    - 2026-04-25T17-43-55Z - Added a regression that verifies LV edits in `_edit_plan` also refresh the derived `plan["disko"]` structure used by `apply`, preventing stale LV sizes from being provisioned.
 
+6. **Make CLI/TUI unit tests hermetic with respect to host storage.**
+   - 2026-10-18T02-01-07Z - Four tests in `tests/test_cli.py` and `tests/test_tui.py` fail because they run the real `detect_existing_storage()` (`wipefs -n /dev/vda` → EPERM in the Claude Code container). Fake the scan in those tests. See `docs/work-notes/2026-10-18T02-01-07Z-claude-code-environment-migration.md` (F1). Creating a GitHub issue failed with 403.
+
+7. **Finish migrating the dev environment from Codex to Claude Code cloud.**
+   - 2026-10-18T02-01-07Z - The pasted setup script fails because it sources `scripts/lib/nix_environment.sh` relative to its own path. VM tests need `openssh-client`. The proxy blocks `github:` flake tarballs (a `git+https` override works). There is no KVM. See the same work note (F2 and "Unknowns and plan").
+
 
 ## Recently Completed
 - 2026-04-25T20-37-02Z - Kept GRUB serial support enabled, taught installed-system configuration generation to mirror the booted console ordering (`/proc/cmdline`) so explicit serial-menu boots keep serial primary while default boots remain display-primary, added regression coverage in `tests/test_install.py`, and bumped patch version to `0.8.8`; details in `docs/work-notes/2026-04-25T20-37-02Z-console-policy-alignment.md`.
