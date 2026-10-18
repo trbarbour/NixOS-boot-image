@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-04-25T20-37-02Z_
+_Last updated: 2026-10-18T02-15-51Z_
 
 ## Active Tasks
 
@@ -43,6 +43,12 @@ _Last updated: 2026-04-25T20-37-02Z_
 5. **Add unit coverage for the TUI plan editor.**
    - Drive `pre_nixos.tui._edit_plan` via a fake window with scripted inputs for arrays and LVs, including invalid input handling.
    - 2026-04-25T17-43-55Z - Added a regression that verifies LV edits in `_edit_plan` also refresh the derived `plan["disko"]` structure used by `apply`, preventing stale LV sizes from being provisioned.
+
+6. **Make the Claude Code cloud environment run the full suite unattended.**
+   - 2026-10-18T01-56-17Z - The pasted `codex-setup.sh` exits 1 (it sources a lib relative to its own path); `openssh-client` is missing; the proxy blocks `github:` flake tarballs, but shallow `git+https` overrides work. With manual provisioning, the whole suite ran (VM: 4 passed). Decide between design options B/C and F1–F3 and resolve unknowns U1–U3; see `docs/work-notes/2026-10-18T01-56-17Z-claude-code-environment-migration.md`.
+
+7. **Make the CLI/TUI unit tests hermetic with respect to the host storage scan.**
+   - 2026-10-18T01-56-17Z - Four tests call the real `detect_existing_storage` and fail when `wipefs` cannot probe the host disk; root cause proven (see the work note above). File a GitHub issue once the integration has write access (attempt returned 403).
 
 
 ## Recently Completed
