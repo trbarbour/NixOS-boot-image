@@ -1,0 +1,60 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/8fckzmpwd4wpy7cgs01axj57dpif41i8-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/jdizx02lqcf33brrvhrw0zi2j0k95ysf-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+    "nar_hash": "sha256-vQjiRUodK2IM4mz1IbG5vFcmyHOCSIzr7+npCvPV1Yw=",
+    "root_key_fingerprint": "256 SHA256:bm2AKgNRvzOcDIXSotSyvfi0qLAfE1NJApvt0D7Gk9g boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/jdizx02lqcf33brrvhrw0zi2j0k95ysf-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-10-18T163716Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-10-18T16:37:16.533802+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-10-18T163716Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-10-18T163716Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-boot",
+      "d",
+      "-serial",
+      "stdio",
+      "-cdrom",
+      "/nix/store/jdizx02lqcf33brrvhrw0zi2j0k95ysf-nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso/iso/nixos-minimal-25.05.20251022.c8aa8cc-x86_64-linux.iso",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-60/boot-image-disk-primary-hotplug0/disk.img,if=virtio,format=raw",
+      "-qmp",
+      "unix:/tmp/qmp-5wez74y2/qmp.sock,server=on,wait=off",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:58017-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/pytest-of-root/pytest-60/boot-image-disk-primary-hotplug0/disk.img",
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 58017
+  },
+  "timings": {
+    "boot_to_login_seconds": 184.258,
+    "build_seconds": 400.103,
+    "end": "2026-10-18T16:45:14.054423+00:00",
+    "start": "2026-10-18T16:37:16.429992+00:00",
+    "total_seconds": 477.515
+  }
+}
