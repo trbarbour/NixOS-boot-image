@@ -42,8 +42,18 @@
         else
           null;
 
+      # RAID arrays get no write-intent bitmap (reqs §2.2).  disko has no option
+      # for it, and since mdadm 4.4 omitting --bitmap makes mdadm ask, so the
+      # `echo 'y'` disko pipes in would answer that question instead of
+      # "Continue creating array?".  --replace-fail turns an upstream change of
+      # this line into a build failure.
       diskoOverlay = final: _: {
-        disko = disko.packages.${final.stdenv.hostPlatform.system}.disko;
+        disko = disko.packages.${final.stdenv.hostPlatform.system}.disko.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            substituteInPlace lib/types/mdadm.nix \
+              --replace-fail "mdadm --create " "mdadm --create --bitmap=none "
+          '';
+        });
       };
 
       pkgsFor = system:

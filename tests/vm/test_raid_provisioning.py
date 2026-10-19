@@ -47,6 +47,8 @@ def test_ssd_plus_hdd_pair_is_provisioned_with_raid1(
     lvs = _pairs(vm.run_as_root_checked("lvs --noheadings -o lv_name,vg_name", timeout=120))
     assert {("slash", "main"), ("swap", "swap")} <= lvs, lvs
 
-    # Recorded, not asserted, until the bitmap policy is decided (queue item 11, U4).
-    detail = vm.run_as_root("mdadm --detail /dev/md/md0 | grep -E 'Intent Bitmap|State :'", timeout=120)
-    print(f"mdadm --detail /dev/md/md0:\n{detail}")
+    # Reqs §2.2 [R-R1]: no write-intent bitmap.  mdadm --detail prints an
+    # "Intent Bitmap" line only when the array has one.
+    detail = vm.run_as_root_checked("mdadm --detail /dev/md/md0", timeout=120)
+    assert "Intent Bitmap" not in detail, detail
+    assert "bitmap:" not in mdstat, mdstat

@@ -1386,3 +1386,27 @@ def test_unit_wait_stops_at_once_when_the_unit_fails(
     }
     assert "pre-nixos actions log (unit failed)" in labels
     assert "systemctl status pre-nixos (unit failed)" in labels
+
+
+def test_clean_command_output_drops_console_broadcasts() -> None:
+    """Regression: pre-nixos' LAN announcement interleaved with `pvs` (RAID VM test)."""
+
+    from tests.vm.controller import clean_command_output
+
+    raw = (
+        "pvs --noheadings -o pv_name,vg_name\r\n"
+        "  LAN IPv4 address: 10.0.2.15\r\n"
+        "  /dev/md127 swap\r\n"
+        "LAN IPv4 address unavailable (lan missing)\r\n"
+        "pre-nixos boot image version 0.11.2\r\n"
+        "  /dev/sda2  main\r\n"
+    )
+    assert clean_command_output(raw, "pvs --noheadings -o pv_name,vg_name") == (
+        "/dev/md127 swap\n/dev/sda2  main"
+    )
+
+
+def test_clean_command_output_keeps_ordinary_lines_mentioning_lan() -> None:
+    from tests.vm.controller import clean_command_output
+
+    assert clean_command_output("lan UP 10.0.2.15/24\n", "ip -br addr") == "lan UP 10.0.2.15/24"
