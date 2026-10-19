@@ -16,13 +16,14 @@ import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence
 
 import pytest
 
 from scripts.nix_git_inputs import nix_command
 from tests.vm.boot_medium import UsbStick, boot_medium_args, make_usb_stick
 from tests.vm.qmp import allocate_qmp_socket_path
+from tests.vm.scsi_disks import ScsiDisk, scsi_disk_args
 from tests.vm.metadata import (
     append_run_ledger_entry,
     record_run_timings,
@@ -396,12 +397,13 @@ def _launch_boot_image_vm(
     _pexpect: "pexpect",
     qemu_executable: str,
     boot_image_build: BootImageBuild,
-    vm_disk_image: Path,
+    vm_disk_image: Optional[Path],
     extra_disks: List[Path],
     ssh_executable: str,
     request: pytest.FixtureRequest,
     log_dir: Optional[Path] = None,
     usb_stick: Optional[UsbStick] = None,
+    scsi_disks: Sequence[ScsiDisk] = (),
 ) -> "BootImageVM":
     from tests.vm.controller import BootImageVM
 
@@ -438,9 +440,10 @@ def _launch_boot_image_vm(
         "-serial",
         "stdio",
         *boot_medium_args(boot_image_build.iso_path, usb_stick),
-        "-drive",
-        f"file={vm_disk_image},if=virtio,format=raw",
     ]
+    if vm_disk_image is not None:
+        cmd.extend(["-drive", f"file={vm_disk_image},if=virtio,format=raw"])
+    cmd.extend(scsi_disk_args(scsi_disks))
     for disk_path in extra_disks:
         cmd.extend(["-drive", f"file={disk_path},if=virtio,format=raw"])
     cmd.extend(
@@ -464,7 +467,7 @@ def _launch_boot_image_vm(
         qemu_command=cmd,
         qemu_version=qemu_version,
         disk_image=vm_disk_image,
-        extra_disks=extra_disks,
+        extra_disks=[*extra_disks, *(d.path for d in scsi_disks)],
         ssh_host="127.0.0.1",
         ssh_port=ssh_forward_port,
         ssh_executable=ssh_executable,
@@ -667,6 +670,47 @@ def boot_image_vm_from_usb_stick(
     )
 
 
+@pytest.fixture(scope="session")
+def raid_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> List[ScsiDisk]:
+    """An SSD plus an equal pair of HDDs: the planner mirrors the pair (RAID-1).
+
+    The HDDs exceed twice the VM's 2 GiB of RAM, so the pair qualifies as the
+    swap group (planner swap-room check, #313).
+    """
+
+    sizes = (("ssd", False, 4), ("hdda", True, 5), ("hddb", True, 5))
+    disks: List[ScsiDisk] = []
+    for serial, rotational, gib in sizes:
+        path = _create_disk_image(
+            tmp_path_factory, prefix=f"boot-image-raid-{serial}", size_bytes=gib * 1024**3
+        )
+        disks.append(ScsiDisk(path=path, rotational=rotational, serial=serial))
+    return disks
+
+
+@pytest.fixture(scope="session")
+def boot_image_vm_with_raid_disks(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    raid_scsi_disks: List[ScsiDisk],
+    ssh_executable: str,
+    request: pytest.FixtureRequest,
+) -> "BootImageVM":
+    """A VM whose only disks are ``raid_scsi_disks`` (no virtio disk: those look rotational)."""
+
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        qemu_executable=qemu_executable,
+        boot_image_build=boot_image_build,
+        vm_disk_image=None,
+        extra_disks=[],
+        ssh_executable=ssh_executable,
+        request=request,
+        scsi_disks=raid_scsi_disks,
+    )
+
+
 __all__ = [
     "BootImageBuild",
     "RunTimings",
@@ -689,6 +733,8 @@ __all__ = [
     "boot_image_vm",
     "boot_image_vm_for_hotplug",
     "boot_image_vm_from_usb_stick",
+    "boot_image_vm_with_raid_disks",
+    "raid_scsi_disks",
     "nix_executable",
     "probe_qemu_version",
     "qemu_executable",

@@ -1,0 +1,73 @@
+logged in after 102s
+fd0 rot=1
+loop0 rot=1
+loop1 rot=0
+loop2 rot=0
+loop3 rot=0
+loop4 rot=0
+loop5 rot=0
+loop6 rot=0
+loop7 rot=0
+sda rot=0
+sdb rot=1
+sdc rot=1
+sr0 rot=1
+pre-nixos finished
+$ cat /run/pre-nixos/storage-status
+STATE=applied
+DETAIL=auto-applied
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disabled
+$ cat /proc/mdstat
+Personalities : [raid1]
+md127 : active raid1 sdc1[1] sdb1[0]
+2093056 blocks super 1.2 [2/2] [UU]
+bitmap: 0/1 pages [0KB], 65536KB chunk
+unused devices: <none>
+$ mdadm --detail /dev/md/md0 2>&1 | grep -E 'Raid Level|Intent|State :|Devices' ; ls -l /dev/md/ 2>&1
+Raid Level : raid1
+Raid Devices : 2
+Total Devices : 2
+Intent Bitmap : Internal
+State : clean
+Active Devices : 2
+Working Devices : 2
+Failed Devices : 0
+Spare Devices : 0
+total 0
+lrwxrwxrwx 1 root root 8 Oct 19 00:36 md0 -> ../md127
+$ vgs --noheadings -o vg_name,pv_count; lvs --noheadings -o lv_name,vg_name,lv_size
+main   1
+swap   1
+slash main 2.99g
+swap  swap 1.99g
+$ lsblk -o NAME,ROTA,TYPE,SIZE,MOUNTPOINTS
+NAME            ROTA TYPE   SIZE MOUNTPOINTS
+fd0                1 disk     4K
+loop0              1 loop   1.4G /nix/.ro-store
+sda                0 disk     4G
+├─sda1             0 part     1G /mnt/boot
+└─sda2             0 part     3G
+└─main-slash     0 lvm      3G /mnt
+sdb                1 disk     2G
+└─sdb1             1 part     2G
+└─md127          1 raid1    2G
+└─swap-swap    1 lvm      2G [SWAP]
+sdc                1 disk     2G
+└─sdc1             1 part     2G
+└─md127          1 raid1    2G
+└─swap-swap    1 lvm      2G [SWAP]
+sr0                1 rom    1.5G /iso
+$ journalctl -u pre-nixos -b --no-pager | grep -iE 'mdadm|bitmap|continue creating|raid|error|fail|Traceback' | head -30
+Oct 19 00:36:03 nixos pre-nixos-start[1124]: ++ awk 'match($1,"raid.*") {print $2}'
+Oct 19 00:36:06 nixos pre-nixos-start[1251]: ++ awk 'match($1,"raid.*") {print $2}'
+Oct 19 00:36:08 nixos pre-nixos-start[1373]: ++ awk 'match($1,"raid.*") {print $2}'
+Oct 19 00:36:25 nixos pre-nixos-start[1562]: + type=mdraid
+Oct 19 00:36:31 nixos pre-nixos-start[1620]: + type=mdraid
+Oct 19 00:36:32 nixos pre-nixos-start[1628]:   Failed to find logical volume "main/slash"
+Oct 19 00:36:33 nixos pre-nixos-start[1646]: + type=mdadm
+Oct 19 00:36:33 nixos pre-nixos-start[1648]: ++ cat /tmp/tmp.c0SLG3jk4M/raid_md0
+Oct 19 00:36:33 nixos pre-nixos-start[1652]: ++ wc -l /tmp/tmp.c0SLG3jk4M/raid_md0
+Oct 19 00:36:33 nixos pre-nixos-start[1650]: + mdadm --create /dev/md/md0 --level=1 --raid-devices=2 --metadata=default --force --homehost=any /dev/disk/by-partlabel/disk-sdb-sdb1 /dev/disk/by-partlabel/disk-sdc-sdc1
+Oct 19 00:36:35 nixos pre-nixos-start[1650]: To optimalize recovery speed, it is recommended to enable write-indent bitmap, do you want to enable it now? [y/N]? mdadm: array /dev/md/md0 started.
+Oct 19 00:36:44 nixos pre-nixos-start[1747]:   Failed to find logical volume "swap/swap"
