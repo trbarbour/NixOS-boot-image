@@ -45,7 +45,9 @@ for c in ["uname -m; cat /proc/cmdline", "lsblk -o NAME,RM,ROTA,TYPE,SIZE,MOUNTP
     print(f"$ {c}\n{vm.run_as_root(c, timeout=300)}", flush=True)
 vm.wait_for_unit_inactive("pre-nixos", timeout=2400)
 print(f"pre-nixos finished after {time.time()-t0:.0f}s", flush=True)
-for c in ["cat /run/pre-nixos/storage-status",
+for c in ["systemctl status pre-nixos --no-pager -l | head -20",
+          "journalctl -u pre-nixos -b --no-pager | tail -60",
+          "cat /run/pre-nixos/storage-status",
           "lsblk -o NAME,TYPE,SIZE,MOUNTPOINTS",
           "journalctl -u pre-nixos -b --no-pager | grep -iE 'error|fail|Traceback|protected|existing|auto' | head -20",
           "nixos-generate-config --show-hardware-config --root /mnt 2>&1 | head -60"]:
