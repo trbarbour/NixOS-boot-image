@@ -9,6 +9,7 @@
 #   qemu-system-x86 qemu-utils           - booting the ISO in tests/vm
 #   qemu-user-static                     - building aarch64-linux under binfmt
 #                                          (scripts/lib/aarch64_emulation.sh)
+#   qemu-system-arm                      - booting the AArch64 image (qemu-system-aarch64)
 #   openssh-client                       - ssh/ssh-keygen used by tests/vm fixtures
 
 DEV_APT_PACKAGES=(
@@ -24,6 +25,7 @@ DEV_APT_PACKAGES=(
   qemu-system-x86
   qemu-utils
   qemu-user-static
+  qemu-system-arm
   openssh-client
 )
 

@@ -118,14 +118,17 @@
       preInstallerPackage = preInstallerConfig.pkgs.pre-nixos;
 
       # The stock AArch64 SD image (Raspberry Pi 4 family, e.g. CM4), unchanged
-      # apart from pre-nixos (R-P2).  Built on x86_64 under binfmt emulation
-      # (R-T1; scripts/lib/aarch64_emulation.sh).
+      # apart from pre-nixos (R-P2): Hydra's sd_image job, i.e. the *installer*
+      # variant (installation-device profile: root/nixos console logins without
+      # a password, as on the x86 ISO).  The bare sd-image-aarch64.nix leaves
+      # root locked (E5 run4, 2026-10-19).  Built on x86_64 under binfmt
+      # emulation (R-T1; scripts/lib/aarch64_emulation.sh).
       aarch64System = "aarch64-linux";
-      stockSdImageModules = [ "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix" ];
+      stockSdImageModules = [ "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64-installer.nix" ];
       aarch64Config = mkPreInstaller {
         system = aarch64System;
         imageModules = stockSdImageModules ++ [
-          # As the x86 installer modules do; the SD image module sets none.
+          # The x86 ISO gets this from its CD modules; the SD modules set none.
           ({ lib, ... }: { system.stateVersion = lib.mkDefault lib.trivial.release; })
         ];
       };
