@@ -234,7 +234,7 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
      - The module's `boot.kernelParams`, GRUB serial lines and memtest86 are now under `lib.mkIf pkgs.stdenv.hostPlatform.isx86`. The x86 values are byte-identical to before (compared by evaluation).
      - New check `checks.x86_64-linux.stock-aarch64-boot-settings` compares ours with stock: kernel parameters, GRUB and extlinux enablement, firmware commands, kernel version. It passes, and it **fails** when an extra kernel parameter is injected (verified).
      - Found and fixed: the existing check `pre-nixos-propagates-required-tools` never ran its assertion, because it was let-bound and lazy; a literal `false` still passed. It is now forced with `assert`.
-     - E4 (SD image build under emulation) started 2026-10-19 at about 02:40Z.
+     - **E4 done:** the SD image built under emulation in 754 s (2026-10-19 02:28:04Z to 02:40:38Z, at 0.15.0): `/nix/store/24ywhnjh…-nixos-image-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst`. (An earlier version of this line guessed the start as "about 02:40Z"; the real start is from `date -u`.)
 7. **AArch64 VM test (§4):** E5 and E6. *(R-S1, §2.6–2.8)*
 8. **Installed-system bootloader (§3.7):** once the user has answered §3.7; E9. *(R-B1)*
 9. **Boot-order verification (§3.9):** parse and check `BOOT_ORDER`, refuse or warn before installing, and prevent re-provisioning after install; E10–E15. Automated `BOOT_ORDER` changes only after separate approval. *(R-B2)*
