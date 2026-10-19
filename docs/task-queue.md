@@ -89,6 +89,12 @@ _Last updated: 2026-10-18T17-33-41Z_
     - No VM test provisions a multi-disk (RAID) layout, so this path is unverified. Add one: boot with 2 equal disks and assert `/dev/md*` exists and the plan's VGs and LVs exist. Then decide whether the bitmap is wanted (it speeds up resync).
     - Details: `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
 
+12. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
+    - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.
+    - Reqs §2.4: swap goes in `main` "when no rotating tier exists and capacity allows"; "if there is insufficient capacity anywhere, swap may be omitted". A 4 MiB swap is neither a real size nor omitted, so it looks like `slash` is sized before swap.
+    - Similarly, SSD + 3 HDD gives `data` 4M on `large`.
+    - To do: reproduce in a unit test, then root-cause against §2.4.
+
 ## Recently Completed
 - 2026-10-19T00-19-13Z - Merged trbarbour/NixOS-boot-image#312 (0.11.1). nixpkgs is now 26.05 (`26f4107e47e3`). Pin updates work over git (`nix_git_inputs.py --update`, and `update_nixos_stable.py` via `git ls-remote`). Fixed #311 (disko could not build offline: `makeBinaryWrapper` added to the image) with the closure test `tests/vm/test_disko_offline_closure.py`. The residue test's `mdadm` is now non-interactive. All VM tests pass. Details: `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
 - 2026-10-18T22-18-16Z - Merged trbarbour/NixOS-boot-image#310 (0.10.9): fixed #309 (the USB boot stick was counted as existing storage; the boot disk resolved to `/dev/dev/sda`). Added the USB-stick VM test, the `run_as_root_checked` echo fix, the AArch64 user answers and the requirements. VM-verified.
