@@ -18,9 +18,10 @@ from tests.vm.metadata import DMESG_CAPTURE_COMMAND, record_boot_image_diagnosti
 from tests.vm.qmp import QmpClient, hotplug_virtio_disk
 
 SHELL_PROMPT = "PRE-NIXOS> "
+CHECKED_BEGIN_MARKER = "__BEGIN__"
+
 # A bare "#" prompt must start a line (optionally as "sh-5.2#"); unanchored, it
 # matched "CPU#1" in a kernel soft-lockup warning during boot (2026-10-18).
-CHECKED_BEGIN_MARKER = "__BEGIN__"
 ROOT_PROMPT_PATTERNS = (r"root@.*# ?", r"(?:^|[\r\n])(?:sh-[0-9.]+)?# ?")
 # Where pre-nixos writes its structured action log inside the guest.
 PRE_NIXOS_ACTIONS_LOG = (
@@ -45,6 +46,31 @@ ANSI_ESCAPE_PATTERN = re.compile(
     ,
     re.VERBOSE,
 )
+
+# pre-nixos broadcasts these to every console, the harness's serial shell
+# included, at any moment; they interleave with command output (RAID VM test
+# 2026-10-19: "LAN IPv4 address: 10.0.2.15" inside `pvs` output).
+CONSOLE_BROADCAST_PATTERN = re.compile(
+    r"^(LAN IPv4 address(: | unavailable)|pre-nixos boot image version )"
+)
+
+
+def clean_command_output(raw: str, command: str) -> str:
+    """Return a command's output without prompts, ANSI codes, echo or broadcasts."""
+
+    cleaned: List[str] = []
+    for raw_line in raw.replace("\r", "").splitlines():
+        stripped = ANSI_ESCAPE_PATTERN.sub("", raw_line)
+        if stripped.startswith(SHELL_PROMPT):
+            stripped = stripped[len(SHELL_PROMPT) :]
+        stripped = stripped.strip()
+        if not stripped or CONSOLE_BROADCAST_PATTERN.match(stripped):
+            continue
+        cleaned.append(stripped)
+    if cleaned and cleaned[0] == command:
+        cleaned = cleaned[1:]
+    return "\n".join(cleaned).strip()
+
 
 @dataclass
 class BootImageVM:
@@ -833,20 +859,7 @@ class BootImageVM:
             self._raise_with_transcript(
                 f"pexpect error while running command '{command}': {exc}"
             )
-        output = self.child.before.replace("\r", "")
-        lines = output.splitlines()
-        cleaned: List[str] = []
-        for raw_line in lines:
-            stripped = self._strip_ansi(raw_line)
-            if stripped.startswith(SHELL_PROMPT):
-                stripped = stripped[len(SHELL_PROMPT) :]
-            stripped = stripped.strip()
-            if not stripped:
-                continue
-            cleaned.append(stripped)
-        if cleaned and cleaned[0] == command:
-            cleaned = cleaned[1:]
-        return "\n".join(cleaned).strip()
+        return clean_command_output(self.child.before, command)
 
     def _ensure_root_privileges(self) -> None:
         """Re-establish a root shell when privileged operations are required."""

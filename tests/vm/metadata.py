@@ -24,7 +24,7 @@ def write_boot_image_metadata(
     serial_log: Path,
     qemu_command: List[str],
     qemu_version: Optional[str] = None,
-    disk_image: Path,
+    disk_image: Optional[Path],
     extra_disks: Optional[List[Path]] = None,
     ssh_host: str,
     ssh_port: int,
@@ -53,7 +53,7 @@ def write_boot_image_metadata(
         },
         "qemu": {
             "command": qemu_command,
-            "disk_image": str(disk_image),
+            "disk_image": None if disk_image is None else str(disk_image),
         },
         "ssh": {
             "host": ssh_host,

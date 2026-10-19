@@ -35,6 +35,11 @@ The system must automate the hardware setup process on new servers prior to NixO
   - group of **3–4× HDDs** → RAID-5.
   - group of **5+ HDDs** → RAID-6.
 - RAID arrays must use `mdadm`.
+- RAID arrays are created **without a write-intent bitmap** [R-R1]. An
+  internal bitmap costs write performance, and an external one (e.g. on an
+  SSD) is not supported by mdadm 4.4 and later. An internal bitmap can be
+  added later, outside the boot image, with
+  `mdadm --grow --bitmap=internal /dev/mdX`. (User decision, 2026-10-19.)
 
 ### 2.3 Partitioning
 

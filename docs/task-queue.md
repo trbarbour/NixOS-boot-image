@@ -79,29 +79,32 @@ _Last updated: 2026-10-18T17-33-41Z_
      - Install target: NVMe. Refusing to install on a wrong `BOOT_ORDER` is acceptable.
      - **Next:** implement work items 3 to 9 of the plan in order (not started).
 
-10. **Update the nixpkgs pin from 25.05 to 26.05 (plan E16).** *(found 2026-10-18T22-03-51Z; **decided by the user 2026-10-18T22-16-29Z**: 26.05 is stable, so update)*
-    - Plan: do it after PR #310 merges, as its own PR. Update the inputs and `flake.lock`, then rebuild the ISO. Run the full unit suite and the VM regression. Re-run E1 (module evaluation on the 26.05 SD image).
-    - The user's working stock AArch64 image is 26.05, and the AGENTS.md newness policy prefers the newer version.
-    - It affects the x86 ISO too, so it needs its own build and VM regression run. Decide before AArch64 work item 6 (the flake refactor).
-    - 2026-10-18T23-29-20Z - **VM-verified**: all 6 VM tests pass on 26.05. On the way, fixed #311 (disko could not build its script offline: `makeBinaryWrapper` missing from the image) and the residue test's `mdadm` 4.4 prompt. Remaining: a PR (if the user asks).
-    - 2026-10-18 - Done on the branch (0.11.0):
-      - The pin is `nixos-26.05` (`26f4107e47e3`, the same revision as the user's working CM4 image).
-      - `scripts/update_nixos_stable.py` now uses git. The GitHub API answered 403 here, and tarballs are blocked.
-      - New `nix_git_inputs.py --update INPUT --ref REF`.
-      - Fixed two 26.05 evaluation warnings.
-      - E1 re-run on 26.05: passes. See `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
-
-11. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
+10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
     - Cause: 15 unrooted 25.05 ISOs at 1.4 GiB each were left in `/nix/store` by earlier builds. Deleting them freed 20.1 GiB.
     - Plan: a helper that deletes boot-image store paths other than the current one, called from the VM fixture's build step (or the session hook) when free space is low. Record the disk headroom in the run metadata so this shows up early.
+    - 2026-10-19 - It happened again, and the full VM regression's output was lost (ENOSPC, also in `/tmp`). A second cause: pytest kept the tmp dirs of the **last 3 sessions**, each holding the VM disk images (now including 14 GiB of RAID disks, about 5 GiB of it written by the RAID-1 resync).
+      - Mitigation (0.12.1): `tmp_path_retention_count = 1` in `pytest.ini`. Verified by experiment: three consecutive runs left only the latest dir.
+      - Still to do: the stale-ISO helper above, and recording the disk headroom.
 
-12. **VM test for disko creating RAID (reqs §2.2) under mdadm 4.4.** *(found 2026-10-18 during the 26.05 bump)*
+11. **VM test for disko creating RAID (reqs §2.2) under mdadm 4.4.** *(found 2026-10-18 during the 26.05 bump)*
     - mdadm 4.4 asks about a write-intent bitmap when `--bitmap` is omitted. disko's `echo 'y' | mdadm --create` now answers that question, so arrays get an internal bitmap, and a later "Continue creating array?" would get end-of-file, i.e. "no".
     - No VM test provisions a multi-disk (RAID) layout, so this path is unverified. Add one: boot with 2 equal disks and assert `/dev/md*` exists and the plan's VGs and LVs exist. Then decide whether the bitmap is wanted (it speeds up resync).
     - Details: `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
+    - 2026-10-19T01-08-01Z - **Done on the branch (0.12.0).**
+      - `tests/vm/test_raid_provisioning.py` passes: SSD plus HDD pair, RAID-1, no bitmap. The new requirement is §2.2 [R-R1], decided by the user, and enforced by patching disko with `--bitmap=none`.
+      - Found and fixed #313 on the way: HDD-only plans had no `main`/`slash`.
+      - Spike and decisions: `notes/2026-10-19T003559Z-raid-spike.md`.
+      - 2026-10-19T02-03-22Z - The full VM regression at 0.12.1 passes (8 of 8). Remaining: a PR (if the user asks).
+
+12. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
+    - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.
+    - Reqs §2.4: swap goes in `main` "when no rotating tier exists and capacity allows"; "if there is insufficient capacity anywhere, swap may be omitted". A 4 MiB swap is neither a real size nor omitted, so it looks like `slash` is sized before swap.
+    - Similarly, SSD + 3 HDD gives `data` 4M on `large`.
+    - To do: reproduce in a unit test, then root-cause against §2.4.
 
 ## Recently Completed
+- 2026-10-19T00-19-13Z - Merged trbarbour/NixOS-boot-image#312 (0.11.1). nixpkgs is now 26.05 (`26f4107e47e3`). Pin updates work over git (`nix_git_inputs.py --update`, and `update_nixos_stable.py` via `git ls-remote`). Fixed #311 (disko could not build offline: `makeBinaryWrapper` added to the image) with the closure test `tests/vm/test_disko_offline_closure.py`. The residue test's `mdadm` is now non-interactive. All VM tests pass. Details: `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
 - 2026-10-18T22-18-16Z - Merged trbarbour/NixOS-boot-image#310 (0.10.9): fixed #309 (the USB boot stick was counted as existing storage; the boot disk resolved to `/dev/dev/sda`). Added the USB-stick VM test, the `run_as_root_checked` echo fix, the AArch64 user answers and the requirements. VM-verified.
 - 2026-10-18T17-32-54Z - Merged trbarbour/NixOS-boot-image#308 (0.10.7):
   - **#306:** disks backing the running system, including the boot medium, are never planned, wiped or counted as existing storage. Requirements §2.3 is amended.

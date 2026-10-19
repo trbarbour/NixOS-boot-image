@@ -39,13 +39,26 @@ def _build(nix: str, attr: str) -> Path:
     return Path(_nix(nix, ["build", "--impure", "--no-link", "--print-out-paths", attr]).split()[-1])
 
 
+GIB = 1024**3
+LAYOUTS = {
+    "single-disk": [Disk(name="vda", size=4 * GIB)],
+    # SSD + HDD pair: the pair becomes a raid1 swap group (reqs §2.2).
+    "raid1": [
+        Disk(name="sda", size=4 * GIB),
+        Disk(name="sdb", size=5 * GIB, rotational=True),
+        Disk(name="sdc", size=5 * GIB, rotational=True),
+    ],
+}
+
+
+@pytest.mark.parametrize("layout", sorted(LAYOUTS))
 def test_disko_script_builds_from_the_image_closure(
-    nix_executable: str, tmp_path: Path
+    nix_executable: str, tmp_path: Path, layout: str
 ) -> None:
     toplevel = _build(nix_executable, f"{CONFIG}.config.system.build.toplevel")
     disko = _build(nix_executable, f"{CONFIG}.pkgs.disko")
 
-    plan = planner.plan_storage("fast", [Disk(name="vda", size=4 * 1024**3)], ram_gb=2)
+    plan = planner.plan_storage("fast", LAYOUTS[layout], ram_gb=2)
     config = tmp_path / "disko-config.nix"
     config.write_text(apply._render_disko_config(plan["disko"]))
     dry = subprocess.run(
@@ -55,6 +68,10 @@ def test_disko_script_builds_from_the_image_closure(
     )
     assert dry.returncode == 0, dry.stderr[-4000:]
     script = Path(dry.stdout.split()[-1])  # .../bin/disko-destroy-format-mount
+    creates = [line for line in script.read_text().splitlines() if "mdadm --create" in line]
+    assert bool(creates) == bool(plan["arrays"]), creates
+    # Reqs §2.2 [R-R1]: arrays are created without a write-intent bitmap.
+    assert all("--bitmap=none" in line for line in creates), creates
     drv = subprocess.run(
         ["nix-store", "--query", "--deriver", str(script.parents[1])],
         capture_output=True,
