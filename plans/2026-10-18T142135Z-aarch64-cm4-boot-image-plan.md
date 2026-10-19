@@ -247,6 +247,18 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
        - the stale `test_multiple_hdd…` expectation and #313 (earlier).
      - Spike record: `notes/2026-10-19T031843Z-aarch64-e5-spike.md`.
 8. **Installed-system bootloader (§3.7):** once the user has answered §3.7; E9. *(R-B1)*
+   - **2026-10-19: user chose option (a).**
+   - **2026-10-19 12:32Z, finding E9a: the stock U-Boot cannot boot from NVMe.** So option (a) as written cannot work for an NVMe target.
+     - Evidence: nixpkgs builds `ubootRaspberryPi4_64bit` (2026.04) from plain `rpi_4_defconfig` with no `extraConfig`.
+     - Experiment: `make rpi_4_defconfig` on that source tarball gives `# CONFIG_NVME is not set` and `# CONFIG_NVME_PCI is not set`, although `CONFIG_PCI_BRCMSTB=y` is set.
+     - `board/raspberrypi/rpi/rpi.env` sets `boot_targets=mmc usb pxe dhcp`, and the boot command is `bootflow scan`.
+     - Consequences:
+       - stock U-Boot loaded from NVMe would not see the NVMe disk;
+       - with the SD card inserted, it would boot the SD card's `extlinux.conf`, against R-B2.
+     - `boot.loader.raspberryPi` was removed from nixpkgs (rename.nix, PR 241534).
+     - Options put to the user:
+       - **(a') recommended:** (a), but with U-Boot built with `CONFIG_NVME_PCI=y` and `nvme` first in `boot_targets`. This keeps extlinux and boot-time rollback.
+       - **(d):** the Pi firmware boots the kernel directly from the NVMe FAT partition, with our own install hook. This has no boot menu.
 9. **Boot-order verification (§3.9):** parse and check `BOOT_ORDER`, refuse or warn before installing, and prevent re-provisioning after install; E10–E15. Automated `BOOT_ORDER` changes only after separate approval. *(R-B2)*
 10. **Hardware acceptance on a CM4** (user), recorded in `docs/test-reports/`. It includes the reboot after installation booting the installed system, with the SD card still inserted. *(all)*
 
