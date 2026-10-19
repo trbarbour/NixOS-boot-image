@@ -13,6 +13,19 @@ import re
 _EMMC_HARDWARE_AREA = re.compile(r"mmcblk\d+(boot|gp)\d+")
 
 
+# Kernel devices that are never storage-planning candidates: loop, RAM disks
+# and zram (zram_drv.c "zram%d"), device-mapper and md nodes (built *from*
+# disks), floppies and optical drives, and MTD flash emulation (mtdblock.c
+# "mtdblock%d"; QEMU virt's flash showed up as mtdblock0 with ROTA 0).
+_NON_CANDIDATE_PREFIXES = ("loop", "zram", "ram", "dm", "md", "fd", "sr", "mtdblock")
+
+
+def is_non_candidate_device(name: str) -> bool:
+    """True for a bare kernel disk name that must never be planned or counted."""
+
+    return name.startswith(_NON_CANDIDATE_PREFIXES) or is_emmc_hardware_area(name)
+
+
 def partition_name(disk: str, number: int) -> str:
     """Return the kernel's name for partition ``number`` of ``disk``.
 
@@ -30,4 +43,4 @@ def is_emmc_hardware_area(name: str) -> bool:
     return _EMMC_HARDWARE_AREA.fullmatch(name) is not None
 
 
-__all__ = ["is_emmc_hardware_area", "partition_name"]
+__all__ = ["is_emmc_hardware_area", "is_non_candidate_device", "partition_name"]

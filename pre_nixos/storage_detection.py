@@ -9,7 +9,7 @@ import subprocess
 import sys
 from typing import Callable, Collection, Iterable, Optional, Sequence
 
-from .block_names import is_emmc_hardware_area
+from .block_names import is_non_candidate_device
 from .logging_utils import log_event
 
 __all__ = [
@@ -95,15 +95,6 @@ _MOUNT_SOURCE_PREFIXES = {
 }
 
 
-_IGNORED_DEVICE_PREFIXES = (
-    "/dev/loop",
-    "/dev/zram",
-    "/dev/ram",
-    "/dev/dm",
-    "/dev/md",
-    "/dev/fd",
-    "/dev/sr",
-)
 
 
 # ``lsblk`` and ``wipefs`` return 32 when the target device disappears between
@@ -436,10 +427,8 @@ def scan_existing_storage(
         resolved = env.realpath(device)
         skip_reasons: list[str] = []
         detection_reasons: list[str] = []
-        if device.startswith(_IGNORED_DEVICE_PREFIXES):
+        if is_non_candidate_device(os.path.basename(device)):
             skip_reasons.append("ignored_prefix")
-        if is_emmc_hardware_area(os.path.basename(device)):
-            skip_reasons.append("emmc_hardware_area")
         if removable == "1":
             skip_reasons.append("removable_media")
         if boot_disk and resolved == boot_disk:

@@ -93,3 +93,44 @@ def test_existing_storage_scan_ignores_emmc_hardware_areas() -> None:
         read_cmdline=lambda: [],
     )
     assert scan_existing_storage(env) == []
+
+
+@pytest.mark.parametrize(
+    "name,expected",
+    [
+        ("mtdblock0", True),  # drivers/mtd/mtdblock.c:343, mtd_blkdevs.c:367 ("%s%d")
+        ("zram0", True),  # drivers/block/zram/zram_drv.c:2713 ("zram%d")
+        ("loop3", True),
+        ("dm-0", True),
+        ("md127", True),
+        ("sr0", True),
+        ("mmcblk0boot0", True),
+        ("mmcblk0", False),
+        ("nvme0n1", False),
+        ("vdb", False),
+        ("sda", False),
+    ],
+)
+def test_non_candidate_devices(name: str, expected: bool) -> None:
+    from pre_nixos.block_names import is_non_candidate_device
+
+    assert is_non_candidate_device(name) is expected
+
+
+def test_aarch64_virt_guest_plans_main_on_the_real_disk(tmp_path: Path) -> None:
+    """E5 run5 (2026-10-19): QEMU virt's 128M flash appeared as mtdblock0
+    (ROTA 0), became main as an "SSD", left no room for slash, and pre-nixos
+    failed on the planner postcondition."""
+
+    root = tmp_path
+    for name, rotational, size in (("mtdblock0", "0", 128 * 1024**2), ("vdb", "1", 4 * 1024**3)):
+        entry = root / name
+        (entry / "queue").mkdir(parents=True)
+        (entry / "device").mkdir()
+        (entry / "removable").write_text("0")
+        (entry / "queue" / "rotational").write_text(rotational)
+        (entry / "size").write_text(str(size // 512))
+    disks = inventory.enumerate_disks(root)
+    assert [d.name for d in disks] == ["vdb"]
+    plan = planner.plan_storage("fast", disks, ram_gb=2)
+    assert any(lv["name"] == "slash" and lv["vg"] == "main" for lv in plan["lvs"])

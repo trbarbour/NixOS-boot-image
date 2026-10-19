@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Collection, List
 import math
 
-from .block_names import is_emmc_hardware_area
+from .block_names import is_non_candidate_device
 
 
 @dataclass
@@ -44,9 +44,7 @@ def enumerate_disks(sys_block: Path = Path("/sys/block")) -> List[Disk]:
 
     for entry in entries:
         name = entry.name
-        if name.startswith(("loop", "ram", "dm", "sr", "md")):
-            continue
-        if is_emmc_hardware_area(name):
+        if is_non_candidate_device(name):
             continue
         if _read_text(entry / "removable") == "1":
             continue
