@@ -1,0 +1,89 @@
+[2026-10-19T01:13:46.992729+00:00] Boot image artifact metadata
+[2026-10-19T01:13:46.992729+00:00]   ISO: /nix/store/gv743s42pjmb64cmcy38mmgl4n7jqk6m-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso/iso/nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso
+[2026-10-19T01:13:46.992729+00:00]   Store path: /nix/store/gv743s42pjmb64cmcy38mmgl4n7jqk6m-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso
+[2026-10-19T01:13:46.992729+00:00]   Deriver: /nix/store/cs3491595rmakw1pix0bxghar0mfhg8c-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso.drv
+[2026-10-19T01:13:46.992729+00:00]   NAR hash: sha256-pWHyQFocUqGDcdsIAu+5+Ss+52VAyVQmyKobbpT4w/s=
+[2026-10-19T01:13:46.992729+00:00]   Embedded root key fingerprint: 256 SHA256:WvsKR2bg1tjrJh4zSaxUs1+dC9cyMT0i+SQGKxWJ0OM boot-image-vm-test (ED25519)
+[2026-10-19T01:13:46.992729+00:00]   QEMU version: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+[2026-10-19T01:13:46.992729+00:00]   Disk image: /tmp/pytest-of-root/pytest-109/boot-image-disk-primary-hotplug0/disk.img
+[2026-10-19T01:13:46.992729+00:00]   QEMU command: /usr/bin/qemu-system-x86_64 -m 2048 -smp 2 -display none -no-reboot -serial stdio -boot d -cdrom /nix/store/gv743s42pjmb64cmcy38mmgl4n7jqk6m-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso/iso/nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso -drive file=/tmp/pytest-of-root/pytest-109/boot-image-disk-primary-hotplug0/disk.img,if=virtio,format=raw -qmp unix:/tmp/qmp-so5i_bq3/qmp.sock,server=on,wait=off -device virtio-rng-pci -netdev user,id=net0,hostfwd=tcp:127.0.0.1:38903-:22 -device virtio-net-pci,netdev=net0
+[2026-10-19T01:13:46.992856+00:00] Harness metadata written to /home/user/NixOS-boot-image/notes/2026-10-19T011346Z-vm-run/logs/metadata.json
+[2026-10-19T01:13:46.992893+00:00] Starting login sequence
+[2026-10-19T01:13:46.993263+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=300s)
+[2026-10-19T01:13:47.433647+00:00] Serial output: ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+[2026-10-19T01:13:47.433797+00:00] Serial output: e%@)0(B
+[2026-10-19T01:13:47.439605+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2026-10-19T01:13:47.439753+00:00] Serial output: x
+[2026-10-19T01:13:47.440063+00:00] Serial output: NixOS
+[2026-10-19T01:13:47.440154+00:00] Serial output: x
+[2026-10-19T01:13:47.443530+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2026-10-19T01:13:47.443631+00:00] Serial output: x
+[2026-10-19T01:13:47.447073+00:00] Serial output: NixOS 26.05.20261015.26f4107 Installer
+[2026-10-19T01:13:47.447646+00:00] Serial output: x
+[2026-10-19T01:13:47.447784+00:00] Serial output: x
+[2026-10-19T01:13:47.452063+00:00] Serial output: Options                                                                                      >
+[2026-10-19T01:13:47.452224+00:00] Serial output: x
+[2026-10-19T01:13:47.452374+00:00] Serial output: x
+[2026-10-19T01:13:47.453838+00:00] Serial output: Memtest86+
+[2026-10-19T01:13:47.454230+00:00] Serial output: x
+[2026-10-19T01:13:47.454386+00:00] Serial output: x
+[2026-10-19T01:13:47.455840+00:00] Serial output: x
+[2026-10-19T01:13:47.455943+00:00] Serial output: x
+[2026-10-19T01:13:47.457005+00:00] Serial output: x
+[2026-10-19T01:13:47.457091+00:00] Serial output: x
+[2026-10-19T01:13:47.457979+00:00] Serial output: x
+[2026-10-19T01:13:47.461550+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2026-10-19T01:13:47.461864+00:00] Serial output: Press [Tab] to edit options
+[2026-10-19T01:13:47.464437+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:47.464527+00:00] Serial output: 10
+[2026-10-19T01:13:48.509526+00:00] Serial output: seconds...
+[2026-10-19T01:13:48.509706+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:48.509982+00:00] Serial output: 9
+[2026-10-19T01:13:49.554220+00:00] Serial output: seconds...
+[2026-10-19T01:13:49.554917+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:49.555066+00:00] Serial output: 8
+[2026-10-19T01:13:50.596546+00:00] Serial output: seconds...
+[2026-10-19T01:13:50.596787+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:50.596846+00:00] Serial output: 7
+[2026-10-19T01:13:51.639966+00:00] Serial output: seconds...
+[2026-10-19T01:13:51.640547+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:51.640647+00:00] Serial output: 6
+[2026-10-19T01:13:52.684764+00:00] Serial output: seconds...
+[2026-10-19T01:13:52.685211+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:52.685279+00:00] Serial output: 5
+[2026-10-19T01:13:53.727705+00:00] Serial output: seconds...
+[2026-10-19T01:13:53.727991+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:53.728071+00:00] Serial output: 4
+[2026-10-19T01:13:54.770953+00:00] Serial output: seconds...
+[2026-10-19T01:13:54.771149+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:54.771198+00:00] Serial output: 3
+[2026-10-19T01:13:55.815022+00:00] Serial output: seconds...
+[2026-10-19T01:13:55.815196+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:55.815253+00:00] Serial output: 2
+[2026-10-19T01:13:56.857979+00:00] Serial output: seconds...
+[2026-10-19T01:13:56.858193+00:00] Serial output: Automatic boot in
+[2026-10-19T01:13:56.858251+00:00] Serial output: 1
+[2026-10-19T01:13:57.901819+00:00] Serial output: second...
+[2026-10-19T01:13:57.907342+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2026-10-19T01:13:57.907552+00:00] Serial output: x
+[2026-10-19T01:13:57.907868+00:00] Serial output: NixOS
+[2026-10-19T01:13:57.907923+00:00] Serial output: x
+[2026-10-19T01:13:57.911360+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2026-10-19T01:13:57.911436+00:00] Serial output: x
+[2026-10-19T01:13:57.915249+00:00] Serial output: NixOS 26.05.20261015.26f4107 Installer
+[2026-10-19T01:13:57.915366+00:00] Serial output: x
+[2026-10-19T01:13:57.915413+00:00] Serial output: x
+[2026-10-19T01:13:57.918596+00:00] Serial output: Options                                                                                      >
+[2026-10-19T01:13:57.918870+00:00] Serial output: x
+[2026-10-19T01:13:57.918916+00:00] Serial output: x
+[2026-10-19T01:13:57.922668+00:00] Serial output: Memtest86+
+[2026-10-19T01:13:57.922998+00:00] Serial output: x
+[2026-10-19T01:13:57.923156+00:00] Serial output: x
+[2026-10-19T01:13:57.924922+00:00] Serial output: x
+[2026-10-19T01:13:57.925016+00:00] Serial output: x
+[2026-10-19T01:13:57.926668+00:00] Serial output: x
+[2026-10-19T01:13:57.926960+00:00] Serial output: x
+[2026-10-19T01:13:57.928649+00:00] Serial output: x
+[2026-10-19T01:13:57.932450+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2026-10-19T01:13:57.932557+00:00] Serial output: Press [Tab] to edit options
+[2026-10-19T01:13:57.958920+00:00] Serial output: e%@)0(B

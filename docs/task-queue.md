@@ -88,6 +88,11 @@ _Last updated: 2026-10-18T17-33-41Z_
     - mdadm 4.4 asks about a write-intent bitmap when `--bitmap` is omitted. disko's `echo 'y' | mdadm --create` now answers that question, so arrays get an internal bitmap, and a later "Continue creating array?" would get end-of-file, i.e. "no".
     - No VM test provisions a multi-disk (RAID) layout, so this path is unverified. Add one: boot with 2 equal disks and assert `/dev/md*` exists and the plan's VGs and LVs exist. Then decide whether the bitmap is wanted (it speeds up resync).
     - Details: `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
+    - 2026-10-19T01-08-01Z - **Done on the branch (0.12.0).**
+      - `tests/vm/test_raid_provisioning.py` passes: SSD plus HDD pair, RAID-1, no bitmap. The new requirement is §2.2 [R-R1], decided by the user, and enforced by patching disko with `--bitmap=none`.
+      - Found and fixed #313 on the way: HDD-only plans had no `main`/`slash`.
+      - Spike and decisions: `notes/2026-10-19T003559Z-raid-spike.md`.
+      - Remaining: the full VM regression, then a PR (if the user asks).
 
 12. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
     - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.
