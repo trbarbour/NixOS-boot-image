@@ -33,6 +33,7 @@ pre-nixos = "pre_nixos.pre_nixos:main"
 pre-nixos-detect-storage = "pre_nixos.storage_detection:main"
 pre-nixos-tui = "pre_nixos.tui:run"
 pre-nixos-console = "pre_nixos.console:main"
+pre-nixos-install-boot-files = "pre_nixos.boot_platform:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]

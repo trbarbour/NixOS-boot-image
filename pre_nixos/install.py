@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
-from . import network, state
+from . import boot_platform, network, state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -584,6 +584,7 @@ def _inject_configuration(
     storage_plan: Optional[Dict[str, Any]],
     install_network: Optional[InstallNetworkConfig] = None,
     console_kernel_params: Optional[Sequence[str]] = None,
+    boot_setup: boot_platform.BootSetup = boot_platform.NIXOS_DEFAULT_SETUP,
 ) -> None:
     """Rewrite ``configuration.nix`` with the managed auto-install block."""
 
@@ -797,11 +798,7 @@ def _inject_configuration(
             "  boot.swraid.enable = true;",
             "  boot.initrd.services.lvm.enable = true;",
             f"  boot.kernelParams = {_format_nix_list(effective_console_kernel_params)};",
-            "  boot.loader.grub.extraConfig = ''",
-            "    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
-            "    terminal_input serial console",
-            "    terminal_output serial console",
-            "  '';",
+            *boot_platform.loader_config_lines(boot_setup),
             "",
             '  nix.settings.experimental-features = [ "nix-command" "flakes" ];',
             "  # pre-nixos auto-install end",
@@ -1045,6 +1042,21 @@ def auto_install(
             reason="empty-authorized-key",
         )
 
+    try:
+        boot_setup = boot_platform.boot_setup_from_environment()
+    except ValueError as exc:
+        log_event("pre_nixos.install.installed_boot_invalid", error=str(exc))
+        return _record_result(
+            "failed",
+            status_dir=status_dir,
+            reason="installed-boot-config",
+        )
+    log_event(
+        "pre_nixos.install.installed_boot",
+        kind=boot_setup.kind.value,
+        rpi_firmware=boot_setup.rpi_firmware,
+    )
+
     if not _wait_for_mount(root_path, attempts=mount_attempts, delay=mount_delay):
         return _record_result(
             "failed",
@@ -1095,6 +1107,7 @@ def auto_install(
             storage_plan,
             install_network,
             console_kernel_params,
+            boot_setup,
         )
         _rewrite_hardware_configuration(root_path)
     except Exception as exc:  # pragma: no cover - unexpected filesystem errors
@@ -1130,6 +1143,18 @@ def auto_install(
             status_dir=status_dir,
             reason="network-unit-copy",
         )
+
+    try:
+        boot_files = boot_platform.install_boot_files(boot_setup, root_path)
+    except (OSError, RuntimeError) as exc:
+        log_event("pre_nixos.install.boot_files_failed", error=str(exc))
+        return _record_result(
+            "failed",
+            status_dir=status_dir,
+            reason="boot-files",
+        )
+    if boot_files:
+        log_event("pre_nixos.install.boot_files_copied", count=len(boot_files))
 
     log_event("pre_nixos.install.nixos_install.start", root_path=root_path)
     result = subprocess.run(

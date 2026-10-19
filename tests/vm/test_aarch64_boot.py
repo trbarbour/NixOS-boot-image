@@ -62,3 +62,29 @@ def test_aarch64_image_brings_up_lan(aarch64_boot_image_vm: BootImageVM) -> None
     vm.wait_for_unit_inactive("pre-nixos", timeout=PRE_NIXOS_TIMEOUT)
     addresses = vm.wait_for_ipv4("lan", timeout=600)
     assert any("inet " in line for line in addresses), addresses
+
+
+def test_aarch64_image_puts_the_pi_boot_chain_on_the_target(
+    aarch64_boot_image_vm: BootImageVM,
+) -> None:
+    """Plan item 8 (R-B1): firmware and the NVMe U-Boot reach the target's vfat /boot.
+
+    The image declares the boot chain to the service; the manual-install entry
+    point (the same code auto-install runs before ``nixos-install``) copies it
+    onto the disko-mounted FAT partition.  Booting it needs the Pi firmware
+    (out of scope here, U5): hardware experiments E9b/E9c.
+    """
+
+    vm = aarch64_boot_image_vm
+    vm.wait_for_unit_inactive("pre-nixos", timeout=PRE_NIXOS_TIMEOUT)
+    environment = vm.run_as_root_checked("systemctl show -p Environment pre-nixos", timeout=120)
+    assert "PRE_NIXOS_INSTALLED_BOOT=rpi4-uboot-extlinux" in environment, environment
+    assert vm.run_as_root_checked("findmnt -n -o FSTYPE /mnt/boot", timeout=120).strip() == "vfat"
+
+    output = vm.run_as_root_checked("pre-nixos-install-boot-files --root /mnt", timeout=300)
+    assert "rpi4-uboot-extlinux: copied" in output, output
+    vm.run_as_root_checked(
+        'cmp "$PRE_NIXOS_RPI_FIRMWARE/u-boot-rpi4.bin" /mnt/boot/u-boot-rpi4.bin', timeout=120
+    )
+    vm.run_as_root_checked("grep -qx kernel=u-boot-rpi4.bin /mnt/boot/config.txt", timeout=120)
+    vm.run_as_root_checked("test -f /mnt/boot/start4.elf", timeout=120)

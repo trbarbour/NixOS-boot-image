@@ -82,6 +82,9 @@ _Last updated: 2026-10-18T17-33-41Z_
      - Requirements §2 approved and applied to `automated-pre-nixos-reqs.md` (R-IDs).
      - Install target: NVMe. Refusing to install on a wrong `BOOT_ORDER` is acceptable.
      - **Next:** implement work items 3 to 9 of the plan in order (not started).
+   - 2026-10-19:
+     - Items 3 to 7 are done, and PR trbarbour/NixOS-boot-image#315 is open for them.
+     - Item 8 is in progress, with option (a'): an NVMe-capable U-Boot. Design: `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
 
 10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
@@ -103,6 +106,19 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Similarly, SSD + 3 HDD gives `data` 4M on `large`.
     - To do: reproduce in a unit test, then root-cause against §2.4.
     - Related (2026-10-19, AArch64 E5 run5): a solid-state device too small for `slash` still becomes `main`. The planner postcondition (#313) then stops pre-nixos, which is safe but leaves no plan at all. Seen with QEMU virt's 128M flash (`mtdblock0`); that device is now excluded as a non-candidate. Design question: choose `main` only where `slash` fits.
+
+12. **End-to-end install VM test (E9d).** *(gap, 2026-10-19)*
+    - No VM test runs `nixos-install` and then boots the installed system, on either x86 or AArch64. Images are built without `PRE_NIXOS_AUTO_INSTALL`.
+    - For AArch64: boot the installed NVMe disk with U-Boot for `qemu_arm64` and extlinux. That checks the extlinux, initrd and LVM-root part of plan item 8 (design §3, E9d).
+    - Unknowns: `nixos-install` builds the generated configuration, so it needs substitutes or network inside the VM, and it is slow under TCG.
+
+13. **Firmware updates on the installed Pi.** *(follow-up, plan item 8 design D2)*
+    - The firmware and U-Boot on `/boot` are written once, at install, as on the stock SD card.
+    - Decide whether `nixos-rebuild` should refresh them.
+
+14. **Test-only path in `install._is_mount_ready`.** *(anomaly, 2026-10-19)*
+    - Under pytest, the function treats `ROOT/etc` existing as "mounted" (`PYTEST_CURRENT_TEST`). That is test logic in product code.
+    - Replace it with an injected predicate, as `boot_platform.install_boot_files` does.
 
 ## Recently Completed
 - 2026-10-19T02-13-57Z - Merged trbarbour/NixOS-boot-image#314 (0.12.1). Added the RAID-1 provisioning VM test. RAID arrays are now created with no write-intent bitmap (reqs §2.2 R-R1; disko patched with `--bitmap=none`). Fixed #313 (HDD-only plans had no `main/slash`; the swap-room check compared bytes with GiB). The harness filters console broadcasts out of command output, and pytest keeps only one session's tmp dirs. Full VM regression 8/8. Details: `notes/2026-10-19T003559Z-raid-spike.md`.

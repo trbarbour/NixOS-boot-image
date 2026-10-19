@@ -130,6 +130,15 @@
         imageModules = stockSdImageModules ++ [
           # The x86 ISO gets this from its CD modules; the SD modules set none.
           ({ lib, ... }: { system.stateVersion = lib.mkDefault lib.trivial.release; })
+          # The installed system boots from NVMe via the Pi firmware and an
+          # NVMe-capable U-Boot (AArch64 plan item 8; R-B1).
+          ({ config, pkgs, ... }: {
+            services.pre-nixos.installedBoot = "rpi4-uboot-extlinux";
+            services.pre-nixos.rpiFirmware = pkgs.callPackage ./nix/rpi4-nvme-firmware.nix {
+              inherit (config.sdImage) populateFirmwareCommands;
+              ubootRpi4Nvme = pkgs.callPackage ./nix/uboot-rpi4-nvme.nix { };
+            };
+          })
         ];
       };
       stockAarch64Config = nixpkgs.lib.nixosSystem {
@@ -164,6 +173,8 @@
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
             bootImageSd = aarch64Config.config.system.build.sdImage;
+            ubootRpi4Nvme = aarch64Config.pkgs.callPackage ./nix/uboot-rpi4-nvme.nix { };
+            rpi4NvmeFirmware = aarch64Config.config.services.pre-nixos.rpiFirmware;
           } else {
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
