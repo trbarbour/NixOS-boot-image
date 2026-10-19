@@ -237,6 +237,15 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
      - Found and fixed: the existing check `pre-nixos-propagates-required-tools` never ran its assertion, because it was let-bound and lazy; a literal `false` still passed. It is now forced with `assert`.
      - **E4 done:** the SD image built under emulation in 754 s (2026-10-19 02:28:04Z to 02:40:38Z, at 0.15.0): `/nix/store/24ywhnjh…-nixos-image-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst`. (An earlier version of this line guessed the start as "about 02:40Z"; the real start is from `date -u`.)
 7. **AArch64 VM test (§4):** E5 and E6. *(R-S1, §2.6–2.8)*
+   - **2026-10-19: done (0.17.1).** `tests/vm/test_aarch64_boot.py` (3 tests) uses the fixtures in `tests/vm/aarch64_fixtures.py` and the typed `Machine` in `tests/vm/machines.py`.
+     - It does a direct kernel boot of the image's own system closure on `qemu-system-aarch64 -M virt`.
+     - It asserts: the stock kernel parameters (R-P2); auto-applied provisioning with `main/slash` on the target, with the SD card untouched (R-S1); and `lan` with IPv4 (§2.6).
+     - **The full VM regression passes 11 of 11 in one run** (2907 s; ended 2026-10-19 06:58:42Z).
+     - Product faults found and fixed on the way:
+       - root was locked on the bare SD base (fix: the installer variant);
+       - QEMU's `mtdblock0` was planned as an SSD (fix: one non-candidate device list);
+       - the stale `test_multiple_hdd…` expectation and #313 (earlier).
+     - Spike record: `notes/2026-10-19T031843Z-aarch64-e5-spike.md`.
 8. **Installed-system bootloader (§3.7):** once the user has answered §3.7; E9. *(R-B1)*
 9. **Boot-order verification (§3.9):** parse and check `BOOT_ORDER`, refuse or warn before installing, and prevent re-provisioning after install; E10–E15. Automated `BOOT_ORDER` changes only after separate approval. *(R-B2)*
 10. **Hardware acceptance on a CM4** (user), recorded in `docs/test-reports/`. It includes the reboot after installation booting the installed system, with the SD card still inserted. *(all)*
