@@ -1,0 +1,171 @@
+E5: logged in after 234s
+$ uname -m; cat /proc/cmdline
+aarch64
+console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf init=/nix/store/72lfnl4lbln648xrpx462c72k5ma4j03-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init console=ttyAMA0,115200n8 systemd.default_device_timeout_sec=900
+$ df -h / | tail -1
+/dev/vda2       7.8G  3.7G  3.7G  50% /
+$ lsblk -o NAME,RM,ROTA,TYPE,SIZE,MOUNTPOINTS
+NAME      RM ROTA TYPE  SIZE MOUNTPOINTS
+mtdblock0  0    0 disk  128M
+vda        0    1 disk    8G
+├─vda1     0    1 part   30M
+└─vda2     0    1 part    8G /nix/store
+/
+vdb        0    1 disk    4G
+$ findmnt -n -o SOURCE /
+/dev/vda2
+$ ip -br link
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+enp0s2           DOWN           52:54:00:12:34:56 <BROADCAST,MULTICAST>
+$ systemctl is-active pre-nixos
+activating
+pre-nixos finished after 647s
+$ systemctl status pre-nixos --no-pager -l | head -20
+○ pre-nixos.service - Pre-NixOS setup
+Loaded: loaded (/etc/systemd/system/pre-nixos.service; enabled; preset: ignored)
+Active: inactive (dead) since Mon 2026-10-19 04:45:27 UTC; 4s ago
+Invocation: 888dc504528a46b897ed4623f24874f3
+Process: 644 ExecStart=/nix/store/ns3zwybfak1ig4kd2h6r9kcqznmznyld-unit-script-pre-nixos-start/bin/pre-nixos-start (code=exited, status=0/SUCCESS)
+Main PID: 644 (code=exited, status=0/SUCCESS)
+IP: 0B in, 0B out
+IO: 84.4M read, 221.5M written
+Mem peak: 306M
+CPU: 2min 31.329s
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + test '' '!=' 1
+Oct 19 04:41:39 nixos pre-nixos-start[1975]: + swapon --show
+Oct 19 04:41:39 nixos pre-nixos-start[1977]: ++ readlink -f /dev/main/swap
+Oct 19 04:41:39 nixos pre-nixos-start[1976]: + grep -q '^/dev/dm-1 '
+Oct 19 04:41:39 nixos pre-nixos-start[1974]: + swapon --options=defaults /dev/main/swap
+Oct 19 04:41:39 nixos pre-nixos-start[1598]: + rm -rf /tmp/tmp.zXii8UeiEb
+Oct 19 04:45:23 nixos pre-nixos-start[1986]: LAN IPv4 address unavailable (preferred interface "lan" not found)
+Oct 19 04:45:27 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Oct 19 04:45:27 nixos systemd[1]: Finished Pre-NixOS setup.
+$ journalctl -u pre-nixos -b --no-pager | tail -60
+Oct 19 04:41:36 nixos pre-nixos-start[1949]: + device=/dev/vdb
+Oct 19 04:41:36 nixos pre-nixos-start[1949]: + efiGptPartitionFirst=1
+Oct 19 04:41:36 nixos pre-nixos-start[1949]: + type=gpt
+Oct 19 04:41:36 nixos pre-nixos-start[1950]: + name=main
+Oct 19 04:41:36 nixos pre-nixos-start[1950]: + type=lvm_vg
+Oct 19 04:41:36 nixos pre-nixos-start[1950]: + vgchange -a y
+Oct 19 04:41:37 nixos pre-nixos-start[1950]:   2 logical volume(s) in volume group "main" now active
+Oct 19 04:41:37 nixos pre-nixos-start[1951]: + name=main
+Oct 19 04:41:37 nixos pre-nixos-start[1951]: + type=lvm_vg
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + device=/dev/main/slash
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + extraArgs=('-L' 'slash')
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + declare -a extraArgs
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + format=ext4
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + mountOptions=('relatime')
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + declare -a mountOptions
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + mountpoint=/
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + type=filesystem
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + findmnt /dev/main/slash /mnt/
+Oct 19 04:41:37 nixos pre-nixos-start[1952]: + mount /dev/main/slash /mnt/ -t ext4 -o relatime -o X-mount.mkdir
+Oct 19 04:41:38 nixos pre-nixos-start[1963]: + destroy=1
+Oct 19 04:41:38 nixos pre-nixos-start[1963]: + device=/dev/vdb
+Oct 19 04:41:38 nixos pre-nixos-start[1963]: + imageName=vdb
+Oct 19 04:41:38 nixos pre-nixos-start[1963]: + imageSize=2G
+Oct 19 04:41:38 nixos pre-nixos-start[1963]: + name=vdb
+Oct 19 04:41:38 nixos pre-nixos-start[1963]: + type=disk
+Oct 19 04:41:38 nixos pre-nixos-start[1964]: + device=/dev/vdb
+Oct 19 04:41:38 nixos pre-nixos-start[1964]: + efiGptPartitionFirst=1
+Oct 19 04:41:38 nixos pre-nixos-start[1964]: + type=gpt
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + device=/dev/disk/by-partlabel/disk-vdb-vdb1
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + extraArgs=('-n' 'EFI')
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + declare -a extraArgs
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + format=vfat
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + mountOptions=('umask=0077')
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + declare -a mountOptions
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + mountpoint=/boot
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + type=filesystem
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + findmnt /dev/disk/by-partlabel/disk-vdb-vdb1 /mnt/boot
+Oct 19 04:41:38 nixos pre-nixos-start[1965]: + mount /dev/disk/by-partlabel/disk-vdb-vdb1 /mnt/boot -t vfat -o umask=0077 -o X-mount.mkdir
+Oct 19 04:41:38 nixos pre-nixos-start[1973]: + name=main
+Oct 19 04:41:38 nixos pre-nixos-start[1973]: + type=lvm_vg
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + device=/dev/main/swap
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + discardPolicy=
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + extraArgs=('--label' 'swap')
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + declare -a extraArgs
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + mountOptions=('defaults')
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + declare -a mountOptions
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + priority=
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + randomEncryption=
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + resumeDevice=
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + type=swap
+Oct 19 04:41:38 nixos pre-nixos-start[1974]: + test '' '!=' 1
+Oct 19 04:41:39 nixos pre-nixos-start[1975]: + swapon --show
+Oct 19 04:41:39 nixos pre-nixos-start[1977]: ++ readlink -f /dev/main/swap
+Oct 19 04:41:39 nixos pre-nixos-start[1976]: + grep -q '^/dev/dm-1 '
+Oct 19 04:41:39 nixos pre-nixos-start[1974]: + swapon --options=defaults /dev/main/swap
+Oct 19 04:41:39 nixos pre-nixos-start[1598]: + rm -rf /tmp/tmp.zXii8UeiEb
+Oct 19 04:45:23 nixos pre-nixos-start[1986]: LAN IPv4 address unavailable (preferred interface "lan" not found)
+Oct 19 04:45:27 nixos systemd[1]: pre-nixos.service: Deactivated succe[  645.567161] hrtimer: interrupt took 11235248 ns
+ssfully.
+Oct 19 04:45:27 nixos systemd[1]: Finished Pre-NixOS setup.
+Oct 19 04:45:27 nixos systemd[1]: pre-nixos.service: Consumed 2min 31.329s CPU time over 8min 22.213s wall clock time, 306M memory peak, 84.4M read from disk, 221.5M written to disk.
+$ cat /run/pre-nixos/storage-status
+STATE=applied
+DETAIL=auto-applied
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disabled
+$ lsblk -o NAME,TYPE,SIZE,MOUNTPOINTS
+NAME           TYPE  SIZE MOUNTPOINTS
+mtdblock0      disk  128M
+vda            disk    8G
+├─vda1         part   30M
+└─vda2         part    8G /nix/store
+/
+vdb            disk    4G
+├─vdb1         part    1G /mnt/boot
+└─vdb2         part    3G
+├─main-slash lvm     3G /mnt
+└─main-swap  lvm     4M [SWAP]
+$ journalctl -u pre-nixos -b --no-pager | grep -iE 'error|fail|Traceback|protected|existing|auto' | head -20
+Oct 19 04:37:40 nixos pre-nixos-start[769]: Tearing down existing storage on /dev/vdb
+Oct 19 04:41:28 nixos pre-nixos-start[1911]:   Failed to find logical volume "main/slash"
+Oct 19 04:41:31 nixos pre-nixos-start[1923]:   Failed to find logical volume "main/swap"
+$ ip -br addr; networkctl list --no-pager 2>&1 | head; journalctl -b --no-pager | grep -iE 'lan|rename|enp0s2|link' | head -20
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+enp0s2           DOWN
+IDX LINK   TYPE     OPERATIONAL SETUP
+1 lo     loopback carrier     unmanaged
+2 enp0s2 ether    off         unmanaged
+2 links listed.
+Oct 19 04:34:57 nixos kernel: Kernel command line: console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf init=/nix/store/72lfnl4lbln648xrpx462c72k5ma4j03-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init console=ttyAMA0,115200n8 systemd.default_device_timeout_sec=900
+Oct 19 04:34:57 nixos kernel: LSM: initializing lsm=capability,landlock,yama,bpf,ima
+Oct 19 04:34:57 nixos kernel: landlock: Up and running.
+Oct 19 04:34:57 nixos kernel: NET: Registered PF_NETLINK/PF_ROUTE protocol family
+Oct 19 04:34:57 nixos kernel: audit: initializing netlink subsys (disabled)
+Oct 19 04:35:26 nixos kernel: virtio_net virtio1 enp0s2: renamed from eth0
+Oct 19 04:36:13 nixos systemd[1]: Listening on Network Management Metrics Varlink Socket.
+Oct 19 04:36:13 nixos systemd[1]: Listening on Network Management Netlink Socket.
+Oct 19 04:36:28 nixos systemd-resolved[371]: Negative trust anchors: home.arpa 10.in-addr.arpa 16.172.in-addr.arpa 17.172.in-addr.arpa 18.172.in-addr.arpa 19.172.in-addr.arpa 20.172.in-addr.arpa 21.172.in-addr.arpa 22.172.in-addr.arpa 23.172.in-addr.arpa 24.172.in-addr.arpa 25.172.in-addr.arpa 26.172.in-addr.arpa 27.172.in-addr.arpa 28.172.in-addr.arpa 29.172.in-addr.arpa 30.172.in-addr.arpa 31.172.in-addr.arpa 170.0.0.192.in-addr.arpa 171.0.0.192.in-addr.arpa 168.192.in-addr.arpa d.f.ip6.arpa ipv4only.arpa resolver.arpa corp home internal intranet lan local private test
+Oct 19 04:36:57 nixos systemd-networkd[592]: lo: Link UP
+Oct 19 04:41:39 nixos pre-nixos-start[1977]: ++ readlink -f /dev/main/swap
+Oct 19 04:45:23 nixos pre-nixos-start[1986]: LAN IPv4 address unavailable (preferred interface "lan" not found)
+$ nixos-generate-config --show-hardware-config --root /mnt 2>&1 | head -60
+# Do not modify this file!  It was generated by ‘nixos-generate-config’
+# and may be overwritten by future invocations.  Please make changes
+# to /etc/nixos/configuration.nix instead.
+{ config, lib, pkgs, modulesPath, ... }:
+{
+imports =
+[ (modulesPath + "/profiles/qemu-guest.nix")
+];
+boot.initrd.availableKernelModules = [ "virtio_pci" ];
+boot.initrd.kernelModules = [ "dm-snapshot" ];
+boot.kernelModules = [ ];
+boot.extraModulePackages = [ ];
+fileSystems."/" =
+{ device = "/dev/mapper/main-slash";
+fsType = "ext4";
+};
+fileSystems."/boot" =
+{ device = "/dev/disk/by-uuid/F74A-26BB";
+fsType = "vfat";
+options = [ "fmask=0077" "dmask=0077" ];
+};
+swapDevices =
+[ { device = "/dev/mapper/main-swap"; }
+];
+nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
+}

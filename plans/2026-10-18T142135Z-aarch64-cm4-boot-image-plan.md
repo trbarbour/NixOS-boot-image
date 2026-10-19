@@ -189,8 +189,8 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
 | E2 | Can this x86_64 host build AArch64? | binfmt + `qemu-aarch64-static` (`F` flag), trivial derivation | **Yes**, 14 s |
 | E3 | How much of the image must be built locally? | `nix build --dry-run` | **44 small derivations; 643 paths substituted** |
 | E4 | Full SD image build time under emulation | build `bootImageSd` once and keep the store path for reuse | to do; not run alongside the VM suite (CPU contention) |
-| E5 | Can `qemu-system-aarch64 -M virt` (TCG) boot the image's system directly, and how fast is boot→login? | spike, then timeout calibration | to do |
-| E6 | What does `nixos-generate-config` emit on a non-EFI AArch64 system? (The installer builds on its output.) | run it inside the E5 VM | to do |
+| E5 | Can `qemu-system-aarch64 -M virt` (TCG) boot the image's system directly, and how fast is boot→login? | spike, then timeout calibration | **Yes**, with a direct kernel boot. Boot to root login takes 234 s; pre-nixos finishes in about 647 s. Needs `systemd.default_device_timeout_sec`, an 8G virtual card and an embedded key. See `notes/2026-10-19T031843Z-aarch64-e5-spike.md`. Along the way it found and fixed: the locked root on the bare SD base, and `mtdblock0` planned as an SSD. |
+| E6 | What does `nixos-generate-config` emit on a non-EFI AArch64 system? (The installer builds on its output.) | run it inside the E5 VM | **Done**: a normal hardware configuration (root `/dev/mapper/main-slash`, `/boot` vfat by UUID, swap, `hostPlatform = aarch64-linux`). In the VM it imports `qemu-guest.nix`. |
 | E7 | CM4 facts: block devices and flags (`lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL`), `/proc/cmdline`, which UART is live | **user runs these** on a CM4 booted from the stock image | **Done** (§8.1) |
 | E8 | NIC name on a CM4 (`ip -br link`) | as E7 | **Done**: `end0`, plus `wlan0` (§8.1) |
 | E9 | Can the installer fill a firmware partition reproducibly from `populateFirmwareCommands`? | build a firmware-partition derivation and compare its files with the stock image's FIRMWARE partition | to do |
