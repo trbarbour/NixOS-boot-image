@@ -89,7 +89,13 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Plan: a helper that deletes boot-image store paths other than the current one, called from the VM fixture's build step (or the session hook) when free space is low. Record the disk headroom in the run metadata so this shows up early.
     - 2026-10-19 - It happened again, and the full VM regression's output was lost (ENOSPC, also in `/tmp`). A second cause: pytest kept the tmp dirs of the **last 3 sessions**, each holding the VM disk images (now including 14 GiB of RAID disks, about 5 GiB of it written by the RAID-1 resync).
       - Mitigation (0.12.1): `tmp_path_retention_count = 1` in `pytest.ini`. Verified by experiment: three consecutive runs left only the latest dir.
-      - Still to do: the stale-ISO helper above, and recording the disk headroom.
+      - 2026-10-19 (0.17.1) - It happened again twice: the AArch64 image build hit `zstd … No space left on device`, and the x86 regression's RAID and USB tests failed with ENOSPC.
+        - Root cause: **every VM fixture was session-scoped**, so all VMs and their disk images lived until the end of the run (primary, hot-plug, residue, 14 GiB of RAID disks, USB stick and target, the AArch64 card), on top of a 21 GiB store.
+        - Fix: VM and disk fixtures are now module-scoped (each is used by exactly one test file) and delete their images at teardown. The image builds stay session-scoped.
+        - Disk headroom is now logged in `harness.log` at VM start and at teardown.
+        - `nix-collect-garbage` freed 18.0 GiB this time.
+        - Pitfall: `pgrep -f "pytest -m vm"` matches its own command line; use `pgrep -f "[p]ytest -m vm"`.
+      - Still to do: the stale-ISO helper above.
 
 11. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
     - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.

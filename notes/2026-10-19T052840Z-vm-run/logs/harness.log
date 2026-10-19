@@ -1,0 +1,592 @@
+[2026-10-19T05:28:40.862234+00:00] Boot image artifact metadata
+[2026-10-19T05:28:40.862234+00:00]   ISO: /nix/store/6rpgv68i2309zvndxms7z40rl1qpz3x4-nixos-image-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst/sd-image/nixos-image-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst
+[2026-10-19T05:28:40.862234+00:00]   Store path: /nix/store/6rpgv68i2309zvndxms7z40rl1qpz3x4-nixos-image-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst
+[2026-10-19T05:28:40.862234+00:00]   Deriver: /nix/store/qqkzyazyqg5qa2aa9spkylpyk4cqibzb-nixos-image-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst.drv
+[2026-10-19T05:28:40.862234+00:00]   NAR hash: sha256-vmvt9YoomnDoyoy4vjq1eA5DKTg+iA/j863HYSaDl5w=
+[2026-10-19T05:28:40.862234+00:00]   Embedded root key fingerprint: 256 SHA256:4bOdjDzZ3i7xvbXAJF89/Ikbwi3mg8XSVEu2K/Cyg90 boot-image-vm-test (ED25519)
+[2026-10-19T05:28:40.862234+00:00]   QEMU version: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+[2026-10-19T05:28:40.862234+00:00]   Disk image: /tmp/pytest-of-root/pytest-0/boot-image-disk-aarch64-target0/disk.img
+[2026-10-19T05:28:40.862234+00:00]   QEMU command: /usr/bin/qemu-system-aarch64 -m 2048 -smp 2 -display none -no-reboot -serial stdio -M virt -cpu cortex-a72 -kernel /nix/store/gy82s7vdyl88mjp9avip4dx7f2frwjpm-nixos-system-nixos-sd-card-26.05.20261015.26f4107/kernel -initrd /nix/store/gy82s7vdyl88mjp9avip4dx7f2frwjpm-nixos-system-nixos-sd-card-26.05.20261015.26f4107/initrd -append 'console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf init=/nix/store/gy82s7vdyl88mjp9avip4dx7f2frwjpm-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init systemd.default_device_timeout_sec=900' -drive file=/tmp/pytest-of-root/pytest-0/aarch64-sd-card0/sd.img,if=virtio,format=raw -drive file=/tmp/pytest-of-root/pytest-0/boot-image-disk-aarch64-target0/disk.img,if=virtio,format=raw -qmp unix:/tmp/qmp-m7bvshdy/qmp.sock,server=on,wait=off -device virtio-rng-pci -netdev user,id=net0,hostfwd=tcp:127.0.0.1:37505-:22 -device virtio-net-pci,netdev=net0
+[2026-10-19T05:28:40.862371+00:00] Harness metadata written to /home/user/NixOS-boot-image/notes/2026-10-19T052840Z-vm-run/logs/metadata.json
+[2026-10-19T05:28:40.862415+00:00] Starting login sequence
+[2026-10-19T05:28:40.862892+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=900s)
+[2026-10-19T05:33:06.538033+00:00] Serial output: [    0.000000] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[2026-10-19T05:33:06.538297+00:00] Serial output: [    0.000000] Linux version 6.18.56 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT Sun Oct 11 13:26:12 UTC 2026
+[2026-10-19T05:33:06.538329+00:00] Serial output: [    0.000000] KASLR enabled
+[2026-10-19T05:33:06.538532+00:00] Serial output: [    0.000000] random: crng init done
+[2026-10-19T05:33:06.538616+00:00] Serial output: [    0.000000] Machine model: linux,dummy-virt
+[2026-10-19T05:33:06.538640+00:00] Serial output: [    0.000000] efi: UEFI not found.
+[2026-10-19T05:33:06.538657+00:00] Serial output: [    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[2026-10-19T05:33:06.538676+00:00] Serial output: [    0.000000] NUMA: Faking a node at [mem 0x0000000040000000-0x00000000bfffffff]
+[2026-10-19T05:33:06.538706+00:00] Serial output: [    0.000000] NODE_DATA(0) allocated [mem 0xbfa06500-0xbfa09c7f]
+[2026-10-19T05:33:06.538744+00:00] Serial output: [    0.000000] Zone ranges:
+[2026-10-19T05:33:06.538779+00:00] Serial output: [    0.000000]   DMA      [mem 0x0000000040000000-0x00000000bfffffff]
+[2026-10-19T05:33:06.538814+00:00] Serial output: [    0.000000]   DMA32    empty
+[2026-10-19T05:33:06.538849+00:00] Serial output: [    0.000000]   Normal   empty
+[2026-10-19T05:33:06.538892+00:00] Serial output: [    0.000000]   Device   empty
+[2026-10-19T05:33:06.538934+00:00] Serial output: [    0.000000] Movable zone start for each node
+[2026-10-19T05:33:06.538973+00:00] Serial output: [    0.000000] Early memory node ranges
+[2026-10-19T05:33:06.539023+00:00] Serial output: [    0.000000]   node   0: [mem 0x0000000040000000-0x00000000bfffffff]
+[2026-10-19T05:33:06.539054+00:00] Serial output: [    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x00000000bfffffff]
+[2026-10-19T05:33:06.539083+00:00] Serial output: [    0.000000] cma: Reserved 32 MiB at 0x00000000bb800000
+[2026-10-19T05:33:06.539112+00:00] Serial output: [    0.000000] psci: probing for conduit method from DT.
+[2026-10-19T05:33:06.539150+00:00] Serial output: [    0.000000] psci: PSCIv1.1 detected in firmware.
+[2026-10-19T05:33:06.539187+00:00] Serial output: [    0.000000] psci: Using standard PSCI v0.2 function IDs
+[2026-10-19T05:33:06.539215+00:00] Serial output: [    0.000000] psci: Trusted OS migration not required
+[2026-10-19T05:33:06.539244+00:00] Serial output: [    0.000000] psci: SMC Calling Convention v1.0
+[2026-10-19T05:33:06.539279+00:00] Serial output: [    0.000000] percpu: Embedded 76 pages/cpu s186520 r8192 d116584 u311296
+[2026-10-19T05:33:06.539313+00:00] Serial output: [    0.000000] Detected PIPT I-cache on CPU0
+[2026-10-19T05:33:06.539348+00:00] Serial output: [    0.000000] CPU features: detected: Spectre-v2
+[2026-10-19T05:33:06.539606+00:00] Serial output: [    0.000000] CPU features: detected: Spectre-v3a
+[2026-10-19T05:33:06.539664+00:00] Serial output: [    0.000000] CPU features: detected: Spectre-v4
+[2026-10-19T05:33:06.539710+00:00] Serial output: [    0.000000] CPU features: detected: Spectre-BHB
+[2026-10-19T05:33:06.539746+00:00] Serial output: [    0.000000] CPU features: kernel page table isolation forced ON by KASLR
+[2026-10-19T05:33:06.539785+00:00] Serial output: [    0.000000] CPU features: detected: Kernel page table isolation (KPTI)
+[2026-10-19T05:33:06.539822+00:00] Serial output: [    0.000000] CPU features: detected: ARM erratum 1742098
+[2026-10-19T05:33:06.539856+00:00] Serial output: [    0.000000] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[2026-10-19T05:33:06.539890+00:00] Serial output: [    0.000000] alternatives: applying boot alternatives
+[2026-10-19T05:33:06.539924+00:00] Serial output: [    0.000000] Kernel command line: console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf init=/nix/store/gy82s7vdyl88mjp9avip4dx7f2frwjpm-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init systemd.default_device_timeout_sec=900
+[2026-10-19T05:33:06.539963+00:00] Serial output: [    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[2026-10-19T05:33:06.539992+00:00] Serial output: [    0.000000] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[2026-10-19T05:33:06.540020+00:00] Serial output: [    0.000000] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[2026-10-19T05:33:06.540039+00:00] Serial output: [    0.000000] software IO TLB: SWIOTLB bounce buffer size adjusted to 2MB
+[2026-10-19T05:33:06.540051+00:00] Serial output: [    0.000000] software IO TLB: area num 2.
+[2026-10-19T05:33:06.540062+00:00] Serial output: [    0.000000] software IO TLB: mapped [mem 0x00000000bb400000-0x00000000bb600000] (2MB)
+[2026-10-19T05:33:06.540072+00:00] Serial output: [    0.000000] Fallback order for Node 0: 0
+[2026-10-19T05:33:06.540082+00:00] Serial output: [    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 524288
+[2026-10-19T05:33:06.540095+00:00] Serial output: [    0.000000] Policy zone: DMA
+[2026-10-19T05:33:06.540105+00:00] Serial output: [    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[2026-10-19T05:33:06.540114+00:00] Serial output: [    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[2026-10-19T05:33:06.540123+00:00] Serial output: [    0.000000] allocated 4194304 bytes of page_ext
+[2026-10-19T05:33:06.540133+00:00] Serial output: [    0.000000] ftrace: allocating 74856 entries in 294 pages
+[2026-10-19T05:33:06.540152+00:00] Serial output: [    0.000000] ftrace: allocated 294 pages with 4 groups
+[2026-10-19T05:33:06.540172+00:00] Serial output: [    0.000000] rcu: Hierarchical RCU implementation.
+[2026-10-19T05:33:06.540182+00:00] Serial output: [    0.000000] rcu: 	RCU event tracing is enabled.
+[2026-10-19T05:33:06.540203+00:00] Serial output: [    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=2.
+[2026-10-19T05:33:06.540232+00:00] Serial output: [    0.000000] 	Trampoline variant of Tasks RCU enabled.
+[2026-10-19T05:33:06.540259+00:00] Serial output: [    0.000000] 	Rude variant of Tasks RCU enabled.
+[2026-10-19T05:33:06.540287+00:00] Serial output: [    0.000000] 	Tracing variant of Tasks RCU enabled.
+[2026-10-19T05:33:06.540315+00:00] Serial output: [    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[2026-10-19T05:33:06.540375+00:00] Serial output: [    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[2026-10-19T05:33:06.540403+00:00] Serial output: [    0.000000] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[2026-10-19T05:33:06.540431+00:00] Serial output: [    0.000000] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[2026-10-19T05:33:06.540459+00:00] Serial output: [    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[2026-10-19T05:33:06.540487+00:00] Serial output: [    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[2026-10-19T05:33:06.540514+00:00] Serial output: [    0.000000] Root IRQ handler: gic_handle_irq
+[2026-10-19T05:33:06.540563+00:00] Serial output: [    0.000000] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[2026-10-19T05:33:06.540599+00:00] Serial output: [    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[2026-10-19T05:33:06.540632+00:00] Serial output: [    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[2026-10-19T05:33:06.540668+00:00] Serial output: [    0.000000] arch_timer: cp15 timer running at 62.50MHz (virt).
+[2026-10-19T05:33:06.540702+00:00] Serial output: [    0.000000] clocksource: arch_sys_counter: mask: 0x1ffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[2026-10-19T05:33:06.540737+00:00] Serial output: [    0.000110] sched_clock: 57 bits at 63MHz, resolution 16ns, wraps every 4398046511096ns
+[2026-10-19T05:33:06.540770+00:00] Serial output: [    0.010307] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)
+[2026-10-19T05:33:06.540804+00:00] Serial output: [    0.023255] Console: colour dummy device 80x25
+[2026-10-19T05:33:06.540837+00:00] Serial output: [    0.024049] printk: legacy console [tty0] enabled
+[2026-10-19T05:33:06.540870+00:00] Serial output: [    0.032244] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=250000)
+[2026-10-19T05:33:06.540906+00:00] Serial output: [    0.032608] pid_max: default: 32768 minimum: 301
+[2026-10-19T05:33:06.540936+00:00] Serial output: [    0.037290] LSM: initializing lsm=capability,landlock,yama,bpf,ima
+[2026-10-19T05:33:06.540964+00:00] Serial output: [    0.039848] landlock: Up and running.
+[2026-10-19T05:33:06.540991+00:00] Serial output: [    0.040271] Yama: becoming mindful.
+[2026-10-19T05:33:06.541018+00:00] Serial output: [    0.046135] LSM support for eBPF active
+[2026-10-19T05:33:06.541046+00:00] Serial output: [    0.050070] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[2026-10-19T05:33:06.541073+00:00] Serial output: [    0.050274] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[2026-10-19T05:33:06.541100+00:00] Serial output: [    0.175561] rcu: Hierarchical SRCU implementation.
+[2026-10-19T05:33:06.541128+00:00] Serial output: [    0.175778] rcu: 	Max phase no-delay instances is 1000.
+[2026-10-19T05:33:06.541160+00:00] Serial output: [    0.179278] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[2026-10-19T05:33:06.541188+00:00] Serial output: [    0.191228] EFI services will not be available.
+[2026-10-19T05:33:06.541229+00:00] Serial output: [    0.194112] smp: Bringing up secondary CPUs ...
+[2026-10-19T05:33:06.541273+00:00] Serial output: [    0.215651] Detected PIPT I-cache on CPU1
+[2026-10-19T05:33:06.541304+00:00] Serial output: [    0.217249] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[2026-10-19T05:33:06.541333+00:00] Serial output: [    0.225533] smp: Brought up 1 node, 2 CPUs
+[2026-10-19T05:33:06.541361+00:00] Serial output: [    0.225675] SMP: Total of 2 processors activated.
+[2026-10-19T05:33:06.541402+00:00] Serial output: [    0.225741] CPU: All CPU(s) started at EL1
+[2026-10-19T05:33:06.541429+00:00] Serial output: [    0.226167] CPU features: detected: 32-bit EL0 Support
+[2026-10-19T05:33:06.541456+00:00] Serial output: [    0.226221] CPU features: detected: 32-bit EL1 Support
+[2026-10-19T05:33:06.541483+00:00] Serial output: [    0.226328] CPU features: detected: CRC32 instructions
+[2026-10-19T05:33:06.541511+00:00] Serial output: [    0.226595] CPU features: detected: PMUv3
+[2026-10-19T05:33:06.541558+00:00] Serial output: [    0.239634] alternatives: applying system-wide alternatives
+[2026-10-19T05:33:06.541592+00:00] Serial output: [    0.293686] Memory: 1914960K/2097152K available (24384K kernel code, 7090K rwdata, 26576K rodata, 4736K init, 1103K bss, 138112K reserved, 32768K cma-reserved)
+[2026-10-19T05:33:06.541626+00:00] Serial output: [    0.358019] devtmpfs: initialized
+[2026-10-19T05:33:06.541658+00:00] Serial output: [    0.428465] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[2026-10-19T05:33:06.541691+00:00] Serial output: [    0.429416] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).
+[2026-10-19T05:33:06.541725+00:00] Serial output: [    0.435736] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[2026-10-19T05:33:06.541758+00:00] Serial output: [    0.435881] 0 pages in range for non-PLT usage
+[2026-10-19T05:33:06.541796+00:00] Serial output: [    0.436011] 508256 pages in range for PLT usage
+[2026-10-19T05:33:06.541829+00:00] Serial output: [    0.442368] pinctrl core: initialized pinctrl subsystem
+[2026-10-19T05:33:06.541862+00:00] Serial output: [    0.463720] DMI not present or invalid.
+[2026-10-19T05:33:06.541896+00:00] Serial output: [    0.535446] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[2026-10-19T05:33:06.541926+00:00] Serial output: [    0.569148] DMA: preallocated 256 KiB GFP_KERNEL pool for atomic allocations
+[2026-10-19T05:33:06.541958+00:00] Serial output: [    0.572401] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[2026-10-19T05:33:06.541986+00:00] Serial output: [    0.576019] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[2026-10-19T05:33:06.542013+00:00] Serial output: [    0.576512] audit: initializing netlink subsys (disabled)
+[2026-10-19T05:33:06.542031+00:00] Serial output: [    0.589567] audit: type=2000 audit(0.452:1): state=initialized audit_enabled=0 res=1
+[2026-10-19T05:33:06.542042+00:00] Serial output: [    0.598244] thermal_sys: Registered thermal governor 'fair_share'
+[2026-10-19T05:33:06.542055+00:00] Serial output: [    0.598321] thermal_sys: Registered thermal governor 'bang_bang'
+[2026-10-19T05:33:06.542075+00:00] Serial output: [    0.598382] thermal_sys: Registered thermal governor 'step_wise'
+[2026-10-19T05:33:06.542103+00:00] Serial output: [    0.598405] thermal_sys: Registered thermal governor 'user_space'
+[2026-10-19T05:33:06.542130+00:00] Serial output: [    0.598423] thermal_sys: Registered thermal governor 'power_allocator'
+[2026-10-19T05:33:06.542163+00:00] Serial output: [    0.599606] cpuidle: using governor ladder
+[2026-10-19T05:33:06.542191+00:00] Serial output: [    0.600414] cpuidle: using governor menu
+[2026-10-19T05:33:06.542219+00:00] Serial output: [    0.602874] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[2026-10-19T05:33:06.542248+00:00] Serial output: [    0.604150] ASID allocator initialised with 32768 entries
+[2026-10-19T05:33:06.542280+00:00] Serial output: [    0.612748] Serial: AMBA PL011 UART driver
+[2026-10-19T05:33:06.542308+00:00] Serial output: [    0.717787] 9000000.pl011: ttyAMA0 at MMIO 0x9000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[2026-10-19T05:33:06.542335+00:00] Serial output: [    0.721750] printk: console [ttyAMA0] enabled
+[2026-10-19T05:33:06.542363+00:00] Serial output: [    0.777308] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[2026-10-19T05:33:06.542390+00:00] Serial output: [    0.777408] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[2026-10-19T05:33:06.542417+00:00] Serial output: [    0.777450] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[2026-10-19T05:33:06.542444+00:00] Serial output: [    0.777470] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[2026-10-19T05:33:06.542472+00:00] Serial output: [    0.777489] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[2026-10-19T05:33:06.542499+00:00] Serial output: [    0.777506] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[2026-10-19T05:33:06.542526+00:00] Serial output: [    0.777536] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[2026-10-19T05:33:06.542580+00:00] Serial output: [    0.777559] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[2026-10-19T05:33:06.542614+00:00] Serial output: [    0.804786] fbcon: Taking over console
+[2026-10-19T05:33:06.542647+00:00] Serial output: [    0.805274] ACPI: Interpreter disabled.
+[2026-10-19T05:33:06.542681+00:00] Serial output: [    0.816227] iommu: Default domain type: Translated
+[2026-10-19T05:33:06.542714+00:00] Serial output: [    0.816776] iommu: DMA domain TLB invalidation policy: strict mode
+[2026-10-19T05:33:06.542747+00:00] Serial output: [    0.822219] SCSI subsystem initialized
+[2026-10-19T05:33:06.542781+00:00] Serial output: [    0.826649] usbcore: registered new interface driver usbfs
+[2026-10-19T05:33:06.542814+00:00] Serial output: [    0.827091] usbcore: registered new interface driver hub
+[2026-10-19T05:33:06.542847+00:00] Serial output: [    0.827271] usbcore: registered new device driver usb
+[2026-10-19T05:33:06.542880+00:00] Serial output: [    0.829420] pps_core: LinuxPPS API ver. 1 registered
+[2026-10-19T05:33:06.542908+00:00] Serial output: [    0.829496] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[2026-10-19T05:33:06.542936+00:00] Serial output: [    0.829589] PTP clock support registered
+[2026-10-19T05:33:06.542972+00:00] Serial output: [    0.830099] EDAC MC: Ver: 3.0.0
+[2026-10-19T05:33:06.543250+00:00] Serial output: [    0.832128] scmi_core: SCMI protocol bus registered
+[2026-10-19T05:33:06.543434+00:00] Serial output: [    0.835502] FPGA manager framework
+[2026-10-19T05:33:06.543479+00:00] Serial output: [    0.848780] vgaarb: loaded
+[2026-10-19T05:33:06.543519+00:00] Serial output: [    0.854945] clocksource: Switched to clocksource arch_sys_counter
+[2026-10-19T05:33:06.543569+00:00] Serial output: [    0.890802] VFS: Disk quotas dquot_6.6.0
+[2026-10-19T05:33:06.543602+00:00] Serial output: [    0.891177] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[2026-10-19T05:33:06.543640+00:00] Serial output: [    0.893701] netfs: FS-Cache loaded
+[2026-10-19T05:33:06.543675+00:00] Serial output: [    0.896639] pnp: PnP ACPI: disabled
+[2026-10-19T05:33:06.543707+00:00] Serial output: [    0.955684] NET: Registered PF_INET protocol family
+[2026-10-19T05:33:06.543731+00:00] Serial output: [    0.957564] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[2026-10-19T05:33:06.543759+00:00] Serial output: [    1.118993] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[2026-10-19T05:33:06.543795+00:00] Serial output: [    1.119543] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[2026-10-19T05:33:06.543828+00:00] Serial output: [    1.119896] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[2026-10-19T05:33:06.543872+00:00] Serial output: [    1.120852] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)
+[2026-10-19T05:33:06.543905+00:00] Serial output: [    1.121536] TCP: Hash tables configured (established 16384 bind 16384)
+[2026-10-19T05:33:06.543937+00:00] Serial output: [    1.127728] MPTCP token hash table entries: 2048 (order: 4, 49152 bytes, linear)
+[2026-10-19T05:33:06.543975+00:00] Serial output: [    1.128371] UDP hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[2026-10-19T05:33:06.544010+00:00] Serial output: [    1.128767] UDP-Lite hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[2026-10-19T05:33:06.544032+00:00] Serial output: [    1.133005] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[2026-10-19T05:33:06.544047+00:00] Serial output: [    1.133664] NET: Registered PF_XDP protocol family
+[2026-10-19T05:33:06.544060+00:00] Serial output: [    1.133896] PCI: CLS 0 bytes, default 64
+[2026-10-19T05:33:06.544072+00:00] Serial output: [    1.142932] kvm [1]: HYP mode not available
+[2026-10-19T05:33:06.544083+00:00] Serial output: [    1.148456] Trying to unpack rootfs image as initramfs...
+[2026-10-19T05:33:06.544096+00:00] Serial output: [    1.309801] Initialise system trusted keyrings
+[2026-10-19T05:33:06.544108+00:00] Serial output: [    1.315296] workingset: timestamp_bits=42 max_order=19 bucket_order=0
+[2026-10-19T05:33:06.544120+00:00] Serial output: [    1.328031] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[2026-10-19T05:33:06.544133+00:00] Serial output: [    1.329629] 9p: Installing v9fs 9p2000 file system support
+[2026-10-19T05:33:06.544146+00:00] Serial output: [    1.389596] Key type asymmetric registered
+[2026-10-19T05:33:06.544158+00:00] Serial output: [    1.389779] Asymmetric key parser 'x509' registered
+[2026-10-19T05:33:06.544193+00:00] Serial output: [    1.402460] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 242)
+[2026-10-19T05:33:06.544230+00:00] Serial output: [    1.407863] io scheduler mq-deadline registered
+[2026-10-19T05:33:06.544263+00:00] Serial output: [    1.408145] io scheduler kyber registered
+[2026-10-19T05:33:06.544296+00:00] Serial output: [    1.444172] pl061_gpio 9030000.pl061: PL061 GPIO chip registered
+[2026-10-19T05:33:06.544329+00:00] Serial output: [    1.465725] ledtrig-cpu: registered to indicate activity on CPUs
+[2026-10-19T05:33:06.544388+00:00] Serial output: [    1.471490] pci-host-generic 4010000000.pcie: host bridge /pcie@10000000 ranges:
+[2026-10-19T05:33:06.544421+00:00] Serial output: [    1.472423] pci-host-generic 4010000000.pcie:       IO 0x003eff0000..0x003effffff -> 0x0000000000
+[2026-10-19T05:33:06.544454+00:00] Serial output: [    1.473117] pci-host-generic 4010000000.pcie:      MEM 0x0010000000..0x003efeffff -> 0x0010000000
+[2026-10-19T05:33:06.544486+00:00] Serial output: [    1.473240] pci-host-generic 4010000000.pcie:      MEM 0x8000000000..0xffffffffff -> 0x8000000000
+[2026-10-19T05:33:06.544518+00:00] Serial output: [    1.474002] pci-host-generic 4010000000.pcie: Memory resource size exceeds max for 32 bits
+[2026-10-19T05:33:06.544589+00:00] Serial output: [    1.478785] pci-host-generic 4010000000.pcie: ECAM at [mem 0x4010000000-0x401fffffff] for [bus 00-ff]
+[2026-10-19T05:33:06.544624+00:00] Serial output: [    1.480785] pci-host-generic 4010000000.pcie: PCI host bridge to bus 0000:00
+[2026-10-19T05:33:06.544656+00:00] Serial output: [    1.481276] pci_bus 0000:00: root bus resource [bus 00-ff]
+[2026-10-19T05:33:06.544688+00:00] Serial output: [    1.481410] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[2026-10-19T05:33:06.544720+00:00] Serial output: [    1.481477] pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
+[2026-10-19T05:33:06.544752+00:00] Serial output: [    1.481507] pci_bus 0000:00: root bus resource [mem 0x8000000000-0xffffffffff]
+[2026-10-19T05:33:06.544791+00:00] Serial output: [    1.486082] pci 0000:00:00.0: [1b36:0008] type 00 class 0x060000 conventional PCI endpoint
+[2026-10-19T05:33:06.544824+00:00] Serial output: [    1.492473] pci 0000:00:01.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint
+[2026-10-19T05:33:06.544868+00:00] Serial output: [    1.492794] pci 0000:00:01.0: BAR 0 [io  0x0000-0x001f]
+[2026-10-19T05:33:06.544901+00:00] Serial output: [    1.492883] pci 0000:00:01.0: BAR 1 [mem 0x00000000-0x00000fff]
+[2026-10-19T05:33:06.544934+00:00] Serial output: [    1.492976] pci 0000:00:01.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[2026-10-19T05:33:06.544966+00:00] Serial output: [    1.493620] pci 0000:00:02.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+[2026-10-19T05:33:06.544998+00:00] Serial output: [    1.493703] pci 0000:00:02.0: BAR 0 [io  0x0000-0x001f]
+[2026-10-19T05:33:06.545030+00:00] Serial output: [    1.493732] pci 0000:00:02.0: BAR 1 [mem 0x00000000-0x00000fff]
+[2026-10-19T05:33:06.545062+00:00] Serial output: [    1.493756] pci 0000:00:02.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[2026-10-19T05:33:06.545094+00:00] Serial output: [    1.493795] pci 0000:00:02.0: ROM [mem 0x00000000-0x0007ffff pref]
+[2026-10-19T05:33:06.545127+00:00] Serial output: [    1.496326] pci 0000:00:03.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[2026-10-19T05:33:06.545159+00:00] Serial output: [    1.496439] pci 0000:00:03.0: BAR 0 [io  0x0000-0x007f]
+[2026-10-19T05:33:06.545201+00:00] Serial output: [    1.496469] pci 0000:00:03.0: BAR 1 [mem 0x00000000-0x00000fff]
+[2026-10-19T05:33:06.545264+00:00] Serial output: [    1.496495] pci 0000:00:03.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[2026-10-19T05:33:06.545296+00:00] Serial output: [    1.497065] pci 0000:00:04.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[2026-10-19T05:33:06.545328+00:00] Serial output: [    1.497154] pci 0000:00:04.0: BAR 0 [io  0x0000-0x007f]
+[2026-10-19T05:33:06.545360+00:00] Serial output: [    1.497183] pci 0000:00:04.0: BAR 1 [mem 0x00000000-0x00000fff]
+[2026-10-19T05:33:06.545391+00:00] Serial output: [    1.497208] pci 0000:00:04.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[2026-10-19T05:33:06.545424+00:00] Serial output: [    1.502080] pci 0000:00:02.0: ROM [mem 0x10000000-0x1007ffff pref]: assigned
+[2026-10-19T05:33:06.545456+00:00] Serial output: [    1.503061] pci 0000:00:01.0: BAR 4 [mem 0x8000000000-0x8000003fff 64bit pref]: assigned
+[2026-10-19T05:33:06.545488+00:00] Serial output: [    1.503295] pci 0000:00:02.0: BAR 4 [mem 0x8000004000-0x8000007fff 64bit pref]: assigned
+[2026-10-19T05:33:06.545520+00:00] Serial output: [    1.503375] pci 0000:00:03.0: BAR 4 [mem 0x8000008000-0x800000bfff 64bit pref]: assigned
+[2026-10-19T05:33:06.545570+00:00] Serial output: [    1.503413] pci 0000:00:04.0: BAR 4 [mem 0x800000c000-0x800000ffff 64bit pref]: assigned
+[2026-10-19T05:33:06.545602+00:00] Serial output: [    1.503459] pci 0000:00:01.0: BAR 1 [mem 0x10080000-0x10080fff]: assigned
+[2026-10-19T05:33:06.545633+00:00] Serial output: [    1.503490] pci 0000:00:02.0: BAR 1 [mem 0x10081000-0x10081fff]: assigned
+[2026-10-19T05:33:06.545665+00:00] Serial output: [    1.503513] pci 0000:00:03.0: BAR 1 [mem 0x10082000-0x10082fff]: assigned
+[2026-10-19T05:33:06.545697+00:00] Serial output: [    1.503535] pci 0000:00:04.0: BAR 1 [mem 0x10083000-0x10083fff]: assigned
+[2026-10-19T05:33:06.545729+00:00] Serial output: [    1.503563] pci 0000:00:03.0: BAR 0 [io  0x1000-0x107f]: assigned
+[2026-10-19T05:33:06.545774+00:00] Serial output: [    1.503606] pci 0000:00:04.0: BAR 0 [io  0x1080-0x10ff]: assigned
+[2026-10-19T05:33:06.545806+00:00] Serial output: [    1.503627] pci 0000:00:01.0: BAR 0 [io  0x1100-0x111f]: assigned
+[2026-10-19T05:33:06.545838+00:00] Serial output: [    1.503647] pci 0000:00:02.0: BAR 0 [io  0x1120-0x113f]: assigned
+[2026-10-19T05:33:06.545870+00:00] Serial output: [    1.504022] pci_bus 0000:00: resource 4 [io  0x0000-0xffff]
+[2026-10-19T05:33:06.545901+00:00] Serial output: [    1.504117] pci_bus 0000:00: resource 5 [mem 0x10000000-0x3efeffff]
+[2026-10-19T05:33:06.545933+00:00] Serial output: [    1.504156] pci_bus 0000:00: resource 6 [mem 0x8000000000-0xffffffffff]
+[2026-10-19T05:33:06.545969+00:00] Serial output: [    1.595757] virtio-pci 0000:00:01.0: enabling device (0000 -> 0003)
+[2026-10-19T05:33:06.546001+00:00] Serial output: [    1.603962] virtio-pci 0000:00:02.0: enabling device (0000 -> 0003)
+[2026-10-19T05:33:06.546033+00:00] Serial output: [    1.607953] virtio-pci 0000:00:03.0: enabling device (0000 -> 0003)
+[2026-10-19T05:33:06.546055+00:00] Serial output: [    1.613071] virtio-pci 0000:00:04.0: enabling device (0000 -> 0003)
+[2026-10-19T05:33:06.546068+00:00] Serial output: [    1.650977] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[2026-10-19T05:33:06.546082+00:00] Serial output: [    1.673406] msm_serial: driver initialized
+[2026-10-19T05:33:06.546095+00:00] Serial output: [    1.676613] SuperH (H)SCI(F) driver initialized
+[2026-10-19T05:33:06.546122+00:00] Serial output: [    1.677360] STM32 USART driver initialized
+[2026-10-19T05:33:06.546155+00:00] Serial output: [    1.783244] loop: module loaded
+[2026-10-19T05:33:06.546191+00:00] Serial output: [    1.784316] virtio_blk virtio2: 2/0/0 default/read/poll queues
+[2026-10-19T05:33:06.546223+00:00] Serial output: [    1.802407] virtio_blk virtio2: [vda] 16777216 512-byte logical blocks (8.59 GB/8.00 GiB)
+[2026-10-19T05:33:06.546256+00:00] Serial output: [    1.824501]  vda: vda1 vda2
+[2026-10-19T05:33:06.546288+00:00] Serial output: [    1.829432] virtio_blk virtio3: 2/0/0 default/read/poll queues
+[2026-10-19T05:33:06.546320+00:00] Serial output: [    1.833571] virtio_blk virtio3: [vdb] 8388608 512-byte logical blocks (4.29 GB/4.00 GiB)
+[2026-10-19T05:33:06.546352+00:00] Serial output: [    1.845214] megasas: 07.734.00.00-rc1
+[2026-10-19T05:33:06.546384+00:00] Serial output: [    1.855686] physmap-flash 0.flash: physmap platform flash device: [mem 0x00000000-0x03ffffff]
+[2026-10-19T05:33:06.546416+00:00] Serial output: [    1.860722] 0.flash: Found 2 x16 devices at 0x0 in 32-bit bank. Manufacturer ID 0x000000 Chip ID 0x000000
+[2026-10-19T05:33:06.546449+00:00] Serial output: [    1.862157] Intel/Sharp Extended Query Table at 0x0031
+[2026-10-19T05:33:06.546481+00:00] Serial output: [    1.865884] Using buffer write method
+[2026-10-19T05:33:06.546512+00:00] Serial output: [    1.868291] physmap-flash 0.flash: physmap platform flash device: [mem 0x04000000-0x07ffffff]
+[2026-10-19T05:33:06.546561+00:00] Serial output: [    1.869784] 0.flash: Found 2 x16 devices at 0x0 in 32-bit bank. Manufacturer ID 0x000000 Chip ID 0x000000
+[2026-10-19T05:33:06.546594+00:00] Serial output: [    1.870052] Intel/Sharp Extended Query Table at 0x0031
+[2026-10-19T05:33:06.546628+00:00] Serial output: [    1.872781] Using buffer write method
+[2026-10-19T05:33:06.546660+00:00] Serial output: [    1.873327] Concatenating MTD devices:
+[2026-10-19T05:33:06.546692+00:00] Serial output: [    1.873391] (0): "0.flash"
+[2026-10-19T05:33:06.546724+00:00] Serial output: [    1.873429] (1): "0.flash"
+[2026-10-19T05:33:06.546756+00:00] Serial output: [    1.873458] into device "0.flash"
+[2026-10-19T05:33:06.546787+00:00] Serial output: [    2.975847] Freeing initrd memory: 27872K
+[2026-10-19T05:33:06.546820+00:00] Serial output: [    3.263543] tun: Universal TUN/TAP device driver, 1.6
+[2026-10-19T05:33:06.546851+00:00] Serial output: [    3.277007] thunder_xcv, ver 1.0
+[2026-10-19T05:33:06.546883+00:00] Serial output: [    3.277274] thunder_bgx, ver 1.0
+[2026-10-19T05:33:06.546915+00:00] Serial output: [    3.277404] nicpf, ver 1.0
+[2026-10-19T05:33:06.546947+00:00] Serial output: [    3.281398] e1000: Intel(R) PRO/1000 Network Driver
+[2026-10-19T05:33:06.546978+00:00] Serial output: [    3.281477] e1000: Copyright (c) 1999-2006 Intel Corporation.
+[2026-10-19T05:33:06.547010+00:00] Serial output: [    3.281625] e1000e: Intel(R) PRO/1000 Network Driver
+[2026-10-19T05:33:06.547041+00:00] Serial output: [    3.281653] e1000e: Copyright(c) 1999 - 2015 Intel Corporation.
+[2026-10-19T05:33:06.547073+00:00] Serial output: [    3.281811] igb: Intel(R) Gigabit Ethernet Network Driver
+[2026-10-19T05:33:06.547105+00:00] Serial output: [    3.281841] igb: Copyright (c) 2007-2014 Intel Corporation.
+[2026-10-19T05:33:06.547141+00:00] Serial output: [    3.282009] igbvf: Intel(R) Gigabit Virtual Function Network Driver
+[2026-10-19T05:33:06.547179+00:00] Serial output: [    3.282041] igbvf: Copyright (c) 2009 - 2012 Intel Corporation.
+[2026-10-19T05:33:06.547211+00:00] Serial output: [    3.283317] sky2: driver version 1.30
+[2026-10-19T05:33:06.547246+00:00] Serial output: [    3.293200] usbcore: registered new interface driver usb-storage
+[2026-10-19T05:33:06.547278+00:00] Serial output: [    3.293797] usbcore: registered new interface driver usbserial_generic
+[2026-10-19T05:33:06.547310+00:00] Serial output: [    3.294099] usbserial: USB Serial support registered for generic
+[2026-10-19T05:33:06.547344+00:00] Serial output: [    3.297756] hv_vmbus: registering driver hyperv_keyboard
+[2026-10-19T05:33:06.547375+00:00] Serial output: [    3.307714] rtc-pl031 9010000.pl031: registered as rtc0
+[2026-10-19T05:33:06.547407+00:00] Serial output: [    3.308516] rtc-pl031 9010000.pl031: setting system clock to 2026-10-19T05:28:47 UTC (1792387727)
+[2026-10-19T05:33:06.547439+00:00] Serial output: [    3.312462] i2c_dev: i2c /dev entries driver
+[2026-10-19T05:33:06.547471+00:00] Serial output: [    3.329953] sdhci: Secure Digital Host Controller Interface driver
+[2026-10-19T05:33:06.547504+00:00] Serial output: [    3.330029] sdhci: Copyright(c) Pierre Ossman
+[2026-10-19T05:33:06.547552+00:00] Serial output: [    3.332544] Synopsys Designware Multimedia Card Interface Driver
+[2026-10-19T05:33:06.547585+00:00] Serial output: [    3.335475] sdhci-pltfm: SDHCI platform and OF driver helper
+[2026-10-19T05:33:06.547618+00:00] Serial output: [    3.344682] hid: raw HID events driver (C) Jiri Kosina
+[2026-10-19T05:33:06.547650+00:00] Serial output: [    3.359266] usbcore: registered new interface driver usbhid
+[2026-10-19T05:33:06.547682+00:00] Serial output: [    3.359340] usbhid: USB HID core driver
+[2026-10-19T05:33:06.547714+00:00] Serial output: [    3.369345] hw perfevents: enabled with armv8_pmuv3 PMU driver, 7 (0,8000003f) counters available
+[2026-10-19T05:33:06.547738+00:00] Serial output: [    3.379240] drop_monitor: Initializing network drop monitor service
+[2026-10-19T05:33:06.547765+00:00] Serial output: [    3.380746] NET: Registered PF_INET6 protocol family
+[2026-10-19T05:33:06.547799+00:00] Serial output: [    3.395326] Segment Routing with IPv6
+[2026-10-19T05:33:06.547832+00:00] Serial output: [    3.395613] In-situ OAM (IOAM) with IPv6
+[2026-10-19T05:33:06.547864+00:00] Serial output: [    3.396457] NET: Registered PF_PACKET protocol family
+[2026-10-19T05:33:06.547896+00:00] Serial output: [    3.398487] 9pnet: Installing 9P2000 support
+[2026-10-19T05:33:06.547928+00:00] Serial output: [    3.399048] Key type dns_resolver registered
+[2026-10-19T05:33:06.547960+00:00] Serial output: [    3.443477] registered taskstats version 1
+[2026-10-19T05:33:06.547992+00:00] Serial output: [    3.445872] Loading compiled-in X.509 certificates
+[2026-10-19T05:33:06.548028+00:00] Serial output: [    3.488648] Demotion targets for Node 0: null
+[2026-10-19T05:33:06.548050+00:00] Serial output: [    3.490646] Key type .fscrypt registered
+[2026-10-19T05:33:06.548066+00:00] Serial output: [    3.490762] Key type fscrypt-provisioning registered
+[2026-10-19T05:33:06.548079+00:00] Serial output: [    3.493623] ima: No TPM chip found, activating TPM-bypass!
+[2026-10-19T05:33:06.548091+00:00] Serial output: [    3.493782] ima: Allocated hash algorithm: sha1
+[2026-10-19T05:33:06.548104+00:00] Serial output: [    3.496442] ima: No architecture policies found
+[2026-10-19T05:33:06.548117+00:00] Serial output: [    3.506794] input: gpio-keys as /devices/platform/gpio-keys/input/input0
+[2026-10-19T05:33:06.548129+00:00] Serial output: [    3.577755] clk: Disabling unused clocks
+[2026-10-19T05:33:06.548141+00:00] Serial output: [    3.578481] PM: genpd: Disabling unused power domains
+[2026-10-19T05:33:06.548152+00:00] Serial output: [    3.689471] Freeing unused kernel memory: 4736K
+[2026-10-19T05:33:06.548164+00:00] Serial output: [    3.692561] Run /init as init process
+[2026-10-19T05:33:06.548198+00:00] Serial output: [    4.114006] systemd[1]: Successfully made /usr/ read-only.
+[2026-10-19T05:33:06.548216+00:00] Serial output: [    4.483505] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[2026-10-19T05:33:06.548234+00:00] Serial output: [    4.484112] systemd[1]: Detected virtualization qemu.
+[2026-10-19T05:33:06.548246+00:00] Serial output: [    4.484853] systemd[1]: Detected architecture arm64.
+[2026-10-19T05:33:06.548258+00:00] Serial output: [    4.485078] systemd[1]: Running in initrd.
+[2026-10-19T05:33:06.548270+00:00] Serial output: [    4.520574] systemd[1]: Initializing machine ID from random generator.
+[2026-10-19T05:33:06.548282+00:00] Serial output: [    4.526721] systemd[1]: Hostname set to <nixos>.
+[2026-10-19T05:33:06.548294+00:00] Serial output: [    6.749116] systemd[1]: Queued start job for default target Initrd Default Target.
+[2026-10-19T05:33:06.548306+00:00] Serial output: [    6.836663] systemd[1]: Created slice Slice /system/modprobe.
+[2026-10-19T05:33:06.548316+00:00] Serial output: [    6.847771] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[2026-10-19T05:33:06.548326+00:00] Serial output: [    6.851776] systemd[1]: Expecting device /dev/disk/by-label/NIXOS_SD...
+[2026-10-19T05:33:06.548338+00:00] Serial output: [    6.854000] systemd[1]: Reached target Path Units.
+[2026-10-19T05:33:06.548393+00:00] Serial output: [    6.856851] systemd[1]: Reached target Slice Units.
+[2026-10-19T05:33:06.548411+00:00] Serial output: [    6.859349] systemd[1]: Reached target Swaps.
+[2026-10-19T05:33:06.548441+00:00] Serial output: [    6.861029] systemd[1]: Reached target Timer Units.
+[2026-10-19T05:33:06.548476+00:00] Serial output: [    6.868879] systemd[1]: Listening on D-Bus System Message Bus Socket.
+[2026-10-19T05:33:06.548509+00:00] Serial output: [    6.875822] systemd[1]: Listening on Journal Socket (/dev/log).
+[2026-10-19T05:33:06.548562+00:00] Serial output: [    6.882039] systemd[1]: Listening on Journal Sockets.
+[2026-10-19T05:33:06.548597+00:00] Serial output: [    6.887976] systemd[1]: Listening on udev Control Socket.
+[2026-10-19T05:33:06.548634+00:00] Serial output: [    6.892529] systemd[1]: Listening on udev Kernel Socket.
+[2026-10-19T05:33:06.548669+00:00] Serial output: [    6.895893] systemd[1]: Reached target Socket Units.
+[2026-10-19T05:33:06.548702+00:00] Serial output: [    6.953763] systemd[1]: Starting Create List of Static Device Nodes...
+[2026-10-19T05:33:06.548737+00:00] Serial output: [    6.957844] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[2026-10-19T05:33:06.548772+00:00] Serial output: [    6.992853] systemd[1]: Mounting Kernel Configuration File System...
+[2026-10-19T05:33:06.548805+00:00] Serial output: [    7.161488] systemd[1]: Starting Journal Service...
+[2026-10-19T05:33:06.548826+00:00] Serial output: [    7.257466] systemd[1]: Starting Load Kernel Modules...
+[2026-10-19T05:33:06.548853+00:00] Serial output: [    7.273518] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[2026-10-19T05:33:06.548886+00:00] Serial output: [    7.404944] systemd[1]: Starting Coldplug All udev Devices...
+[2026-10-19T05:33:06.548920+00:00] Serial output: [    7.668739] systemd[1]: Finished Create List of Static Device Nodes.
+[2026-10-19T05:33:06.548954+00:00] Serial output: [    7.881789] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[2026-10-19T05:33:06.548990+00:00] Serial output: [    7.971496] systemd[1]: Mounted Kernel Configuration File System.
+[2026-10-19T05:33:06.549031+00:00] Serial output: [    8.665439] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+[2026-10-19T05:33:06.549082+00:00] Serial output: [    8.680316] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[2026-10-19T05:33:06.549118+00:00] Serial output: [    8.747228] systemd-journald[78]: Collecting audit messages is disabled.
+[2026-10-19T05:33:06.549152+00:00] Serial output: [    8.751892] systemd[1]: Finished Load Kernel Modules.
+[2026-10-19T05:33:06.549195+00:00] Serial output: [    8.821149] systemd[1]: Starting Apply Kernel Variables...
+[2026-10-19T05:33:06.549229+00:00] Serial output: [    9.023158] systemd[1]: Finished Create Static Device Nodes in /dev gracefully.
+[2026-10-19T05:33:06.549263+00:00] Serial output: [    9.120922] systemd[1]: Starting Create Static Device Nodes in /dev...
+[2026-10-19T05:33:06.549296+00:00] Serial output: [    9.989102] systemd[1]: Finished Apply Kernel Variables.
+[2026-10-19T05:33:06.549329+00:00] Serial output: [   10.376316] systemd[1]: Finished Create Static Device Nodes in /dev.
+[2026-10-19T05:33:06.549362+00:00] Serial output: [   10.393759] systemd[1]: Reached target Preparation for Local File Systems.
+[2026-10-19T05:33:06.549397+00:00] Serial output: [   10.400367] systemd[1]: Reached target Local File Systems.
+[2026-10-19T05:33:06.549431+00:00] Serial output: [   10.456749] systemd[1]: Starting Rule-based Manager for Device Events and Files...
+[2026-10-19T05:33:06.549466+00:00] Serial output: [   10.778159] systemd[1]: Started Journal Service.
+[2026-10-19T05:33:06.549499+00:00] Serial output: [   43.044840] virtio_net virtio1 enp0s2: renamed from eth0
+[2026-10-19T05:33:06.549532+00:00] Serial output: [   47.774962] EXT4-fs (vda2): mounted filesystem 44444444-4444-4444-8888-888888888888 r/w with ordered data mode. Quota mode: none.
+[2026-10-19T05:33:06.549600+00:00] Serial output: [   69.959364] systemd-journald[78]: Received SIGTERM from PID 1 (systemd).
+[2026-10-19T05:33:06.549635+00:00] Serial output: [   72.091116] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[2026-10-19T05:33:06.549671+00:00] Serial output: [   72.091956] systemd[1]: Detected virtualization qemu.
+[2026-10-19T05:33:06.549706+00:00] Serial output: [   72.092795] systemd[1]: Detected architecture arm64.
+[2026-10-19T05:33:06.549738+00:00] Serial output: [   72.095194] systemd[1]: Detected first boot.
+[2026-10-19T05:33:06.549771+00:00] Serial output: [   72.127428] systemd[1]: Initializing machine ID from random generator.
+[2026-10-19T05:33:06.549808+00:00] Serial output: [   75.108586] systemd[1]: bpf-restrict-fs: LSM BPF program attached
+[2026-10-19T05:33:06.549841+00:00] Serial output: [   77.122265] NET: Registered PF_VSOCK protocol family
+[2026-10-19T05:33:06.549875+00:00] Serial output: [   77.155682] Guest personality initialized and is inactive
+[2026-10-19T05:33:06.549908+00:00] Serial output: [   77.157556] VMCI host device registered (name=vmci, major=10, minor=261)
+[2026-10-19T05:33:06.549944+00:00] Serial output: [   77.157678] Initialized host personality
+[2026-10-19T05:33:06.549979+00:00] Serial output: [   77.373701] systemd[1]: Applying preset policy.
+[2026-10-19T05:33:06.550013+00:00] Serial output: [   84.590952] systemd[1]: Populated /etc with preset unit settings.
+[2026-10-19T05:33:06.550052+00:00] Serial output: [   89.743566] systemd[1]: initrd-switch-root.service: Deactivated successfully.
+[2026-10-19T05:33:06.550088+00:00] Serial output: [   89.749783] systemd[1]: Stopped initrd-switch-root.service.
+[2026-10-19T05:33:06.550127+00:00] Serial output: [   89.794630] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 1.
+[2026-10-19T05:33:06.550150+00:00] Serial output: [   89.825261] systemd[1]: Created slice Slice /system/getty.
+[2026-10-19T05:33:06.550197+00:00] Serial output: [   89.847789] systemd[1]: Created slice Slice /system/serial-getty.
+[2026-10-19T05:33:06.550232+00:00] Serial output: [   89.869138] systemd[1]: Created slice User and Session Slice.
+[2026-10-19T05:33:06.550264+00:00] Serial output: [   89.877317] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[2026-10-19T05:33:06.550300+00:00] Serial output: [   89.882027] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[2026-10-19T05:33:06.550334+00:00] Serial output: [   89.885167] systemd[1]: Expecting device /dev/ttyAMA0...
+[2026-10-19T05:33:06.550368+00:00] Serial output: [   89.888686] systemd[1]: Reached target Local Encrypted Volumes.
+[2026-10-19T05:33:06.550401+00:00] Serial output: [   89.893341] systemd[1]: Stopped target initrd-fs.target.
+[2026-10-19T05:33:06.550434+00:00] Serial output: [   89.897290] systemd[1]: Stopped target initrd-root-fs.target.
+[2026-10-19T05:33:06.550468+00:00] Serial output: [   89.900557] systemd[1]: Stopped target initrd-switch-root.target.
+[2026-10-19T05:33:06.550502+00:00] Serial output: [   89.905560] systemd[1]: Reached target Virtual Machines and Containers.
+[2026-10-19T05:33:06.550534+00:00] Serial output: [   89.909536] systemd[1]: Reached target Path Units.
+[2026-10-19T05:33:06.550601+00:00] Serial output: [   89.913174] systemd[1]: Reached target Remote File Systems.
+[2026-10-19T05:33:06.550653+00:00] Serial output: [   89.917093] systemd[1]: Reached target Slice Units.
+[2026-10-19T05:33:06.550689+00:00] Serial output: [   89.920274] systemd[1]: Reached target Swaps.
+[2026-10-19T05:33:06.550722+00:00] Serial output: [   89.923731] systemd[1]: Reached target ZFS pool import target.
+[2026-10-19T05:33:06.550756+00:00] Serial output: [   89.961283] systemd[1]: Listening on Process Core Dump Socket.
+[2026-10-19T05:33:06.550789+00:00] Serial output: [   89.984721] systemd[1]: Listening on Credential Encryption/Decryption.
+[2026-10-19T05:33:06.550822+00:00] Serial output: [   90.065038] systemd[1]: Starting Journal Log Access Socket...
+[2026-10-19T05:33:06.550855+00:00] Serial output: [   90.085586] systemd[1]: Listening on Journal Audit Socket.
+[2026-10-19T05:33:06.550896+00:00] Serial output: [   90.105075] systemd[1]: Listening on Network Management Metrics Varlink Socket.
+[2026-10-19T05:33:06.550930+00:00] Serial output: [   90.120126] systemd[1]: Listening on Network Management Netlink Socket.
+[2026-10-19T05:33:06.550965+00:00] Serial output: [   90.133435] systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[2026-10-19T05:33:06.550988+00:00] Serial output: [   90.139011] systemd[1]: Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[2026-10-19T05:33:06.551003+00:00] Serial output: [   90.144275] systemd[1]: Listening on udev Control Socket.
+[2026-10-19T05:33:06.551015+00:00] Serial output: [   90.220304] systemd[1]: Mounting Huge Pages File System...
+[2026-10-19T05:33:06.551029+00:00] Serial output: [   90.264088] systemd[1]: Mounting POSIX Message Queue File System...
+[2026-10-19T05:33:06.551058+00:00] Serial output: [   90.359191] systemd[1]: Mounting Kernel Debug File System...
+[2026-10-19T05:33:06.551094+00:00] Serial output: [   90.452970] systemd[1]: Mounting Kernel Trace File System...
+[2026-10-19T05:33:06.551129+00:00] Serial output: [   90.601000] systemd[1]: Starting Create List of Static Device Nodes...
+[2026-10-19T05:33:06.551166+00:00] Serial output: [   90.624918] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[2026-10-19T05:33:06.551208+00:00] Serial output: [   90.860856] systemd[1]: Mounting Kernel Configuration File System...
+[2026-10-19T05:33:06.551245+00:00] Serial output: [   90.880188] systemd[1]: Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[2026-10-19T05:33:06.551280+00:00] Serial output: [   90.881480] systemd[1]: Load Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore
+[2026-10-19T05:33:06.551326+00:00] Serial output: [   91.116190] systemd[1]: Starting Load Kernel Module fuse...
+[2026-10-19T05:33:06.551363+00:00] Serial output: [   91.132209] systemd[1]: Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[2026-10-19T05:33:06.551401+00:00] Serial output: [   91.222059] systemd[1]: Starting Journal Service...
+[2026-10-19T05:33:06.551435+00:00] Serial output: [   91.328760] systemd[1]: Starting Load Kernel Modules...
+[2026-10-19T05:33:06.551471+00:00] Serial output: [   91.504278] systemd[1]: Starting Userspace Out-Of-Memory (OOM) Killer...
+[2026-10-19T05:33:06.551506+00:00] Serial output: [   91.657608] systemd[1]: Starting Remount Root and Kernel File Systems...
+[2026-10-19T05:33:06.551568+00:00] Serial output: [   91.681624] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[2026-10-19T05:33:06.551603+00:00] Serial output: [   91.964574] systemd[1]: Starting Coldplug All udev Devices...
+[2026-10-19T05:33:06.551637+00:00] Serial output: [   92.458601] fuse: init (API version 7.45)
+[2026-10-19T05:33:06.551671+00:00] Serial output: [   92.913787] spl: loading out-of-tree module taints kernel.
+[2026-10-19T05:33:06.551705+00:00] Serial output: [   92.996342] systemd[1]: Listening on Journal Log Access Socket.
+[2026-10-19T05:33:06.551740+00:00] Serial output: [   93.068240] systemd[1]: Mounted Huge Pages File System.
+[2026-10-19T05:33:06.551773+00:00] Serial output: [   93.304596] systemd[1]: Mounted POSIX Message Queue File System.
+[2026-10-19T05:33:06.551806+00:00] Serial output: [   93.340504] systemd[1]: Mounted Kernel Debug File System.
+[2026-10-19T05:33:06.551839+00:00] Serial output: [   93.403293] systemd[1]: Mounted Kernel Trace File System.
+[2026-10-19T05:33:06.551873+00:00] Serial output: [   93.492551] EXT4-fs (vda2): re-mounted 44444444-4444-4444-8888-888888888888.
+[2026-10-19T05:33:06.551906+00:00] Serial output: [   93.531697] systemd[1]: Finished Create List of Static Device Nodes.
+[2026-10-19T05:33:06.551939+00:00] Serial output: [   93.679613] systemd[1]: Mounted Kernel Configuration File System.
+[2026-10-19T05:33:06.551972+00:00] Serial output: [   93.725599] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[2026-10-19T05:33:06.552005+00:00] Serial output: [   93.776005] systemd[1]: Finished Load Kernel Module fuse.
+[2026-10-19T05:33:06.552042+00:00] Serial output: [   93.860251] systemd[1]: Finished Remount Root and Kernel File Systems.
+[2026-10-19T05:33:06.552078+00:00] Serial output: [   94.097699] systemd[1]: Mounting FUSE Control File System...
+[2026-10-19T05:33:06.552116+00:00] Serial output: [   94.114045] systemd[1]: Platform Persistent Storage Archival skipped, unmet condition check ConditionDirectoryNotEmpty=/sys/fs/pstore
+[2026-10-19T05:33:06.552154+00:00] Serial output: [   94.211957] systemd-journald[317]: Collecting audit messages is enabled.
+[2026-10-19T05:33:06.552193+00:00] Serial output: [   94.304454] systemd[1]: Starting Load/Save OS Random Seed...
+[2026-10-19T05:33:06.552225+00:00] Serial output: [   94.717031] systemd[1]: Starting Network Time Synchronization...
+[2026-10-19T05:33:06.552260+00:00] Serial output: [   95.141276] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[2026-10-19T05:33:06.552285+00:00] Serial output: [   95.196036] systemd[1]: TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[2026-10-19T05:33:06.552299+00:00] Serial output: [   95.353368] systemd[1]: Started Journal Service.
+[2026-10-19T05:33:06.552311+00:00] Serial output: [   95.762876] zfs: module license 'CDDL' taints kernel.
+[2026-10-19T05:33:06.552324+00:00] Serial output: [   95.763199] Disabling lock debugging due to kernel taint
+[2026-10-19T05:33:06.552385+00:00] Serial output: [   95.763422] zfs: module license taints kernel.
+[2026-10-19T05:33:06.552422+00:00] Serial output: [   97.292676] ZFS: Loaded module v2.4.4-1, ZFS pool version 5000, ZFS filesystem version 5
+[2026-10-19T05:33:06.552467+00:00] Serial output: [  101.060024] systemd-journald[317]: Received client request to flush runtime journal.
+[2026-10-19T05:33:06.552501+00:00] Serial output: [  116.654658] EXT4-fs (vda2): resizing filesystem from 1028027 to 2087424 blocks
+[2026-10-19T05:33:06.552525+00:00] Serial output: [  117.844864] EXT4-fs (vda2): resized filesystem to 2087424
+[2026-10-19T05:33:06.552573+00:00] Serial output: [  137.659532] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[2026-10-19T05:33:06.552617+00:00] Serial output: [  138.151157] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[2026-10-19T05:33:06.552653+00:00] Serial output: [  138.153115] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[2026-10-19T05:33:06.552690+00:00] Serial output: pre-nixos boot image version 0.17.0
+[2026-10-19T05:33:06.552723+00:00] Serial output: [  180.357953] virtio_net virtio1 lan: renamed from enp0s2
+[2026-10-19T05:33:06.552757+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2026-10-19T05:33:06.616968+00:00] Serial output: 7
+[2026-10-19T05:33:07.045796+00:00] Serial output: 8
+[2026-10-19T05:33:07.056958+00:00] Serial output: 7
+[2026-10-19T05:33:07.415855+00:00] Serial output: 8
+[2026-10-19T05:33:07.417793+00:00] Serial output: 3008;start=94b3464b30194b3eba848fdc8484a02c;user=root;hostname=nixos;machineid=2916e523813d49a5aaefe49fafb10cc4;bootid=f38c8ce843834e6c9a5f80431ce01aaf;pid=1316;pidfdid=1317;comm=(agetty);servicename=serial-getty@ttyAMA0.service;invocationid=e4e9f1b73e7649208c6375825559ea64;type=service
+[2026-10-19T05:33:08.180232+00:00] Serial output: <<< Welcome to the pre-nixos auto-install boot image (sd-card-26.05.20261015.26f4107, aarch64) - ttyAMA0 >>>
+[2026-10-19T05:33:08.180393+00:00] Serial output: Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+[2026-10-19T05:33:08.180414+00:00] Serial output: (PRE_NIXOS_AUTO_INSTALL=)
+[2026-10-19T05:33:08.180423+00:00] Serial output: The "nixos" and "root" accounts have empty passwords for console logins.
+[2026-10-19T05:33:08.180432+00:00] Serial output: SSH access:
+[2026-10-19T05:33:08.180440+00:00] Serial output: - Use the matching private key for the embedded root SSH key to log in as root.
+[2026-10-19T05:33:08.180449+00:00] Serial output: - Add additional public keys to /root/.ssh/authorized_keys if needed.
+[2026-10-19T05:33:08.180461+00:00] Serial output: Networking starts automatically; verify connectivity with ip addr or networkctl.
+[2026-10-19T05:33:08.180470+00:00] Serial output: Run "nixos-help" for the NixOS manual.
+[2026-10-19T05:33:08.180478+00:00] Serial output: nixos
+[2026-10-19T05:33:08.180489+00:00] Matched pattern: 'login: '
+[2026-10-19T05:33:08.180807+00:00] Awaiting patterns: \(automatic login\) (timeout=1s)
+[2026-10-19T05:33:08.181168+00:00] Serial output: nixos
+[2026-10-19T05:33:08.181203+00:00] Matched pattern: '\\(automatic login\\)'
+[2026-10-19T05:33:08.181225+00:00] Automatic login banner observed
+[2026-10-19T05:33:08.231829+00:00] Awaiting patterns: __PROMPT_READY__1792387988181__ (timeout=120s)
+[2026-10-19T05:33:08.237386+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-10-19T05:33:08.237847+00:00] Matched pattern: '__PROMPT_READY__1792387988181__'
+[2026-10-19T05:33:08.238076+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-10-19T05:33:09.413620+00:00] Serial output: \n'
+[2026-10-19T05:33:09.414587+00:00] Serial output: 3008;start=781599efb14c41d9b571096ed914450c;user=root;hostname=nixos;machineid=2916e523813d49a5aaefe49fafb10cc4;bootid=f38c8ce843834e6c9a5f80431ce01aaf;pid=1316;pidfdid=1317;comm=login;targetuser=nixos;sessionid=3;type=session
+[2026-10-19T05:33:11.145240+00:00] Serial output: pre-nixos boot image version 0.17.0
+[2026-10-19T05:33:11.145412+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2026-10-19T05:33:11.148904+00:00] Serial output: [
+[2026-10-19T05:33:11.149025+00:00] Serial output: nixos@nixos:~]$
+[2026-10-19T05:33:11.172464+00:00] Serial output: export PS1='
+[2026-10-19T05:33:11.172691+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-10-19T05:33:11.172738+00:00] Shell prompt configured for interaction
+[2026-10-19T05:33:11.172738+00:00]   context=initial login
+[2026-10-19T05:33:11.223435+00:00] Running command: printf '__UID_MARK__1792387991172__%s__UID_MARK__1792387991172__\n' "$(id -u)"
+[2026-10-19T05:33:11.274946+00:00] Failed to parse id -u output; resynchronising prompt before retry
+[2026-10-19T05:33:11.274946+00:00]   attempt=1, error=UID marker not found in output block: '', block=UID marker not found in output block: ''
+[2026-10-19T05:33:11.325504+00:00] Awaiting patterns: __PROMPT_READY__1792387991275__ (timeout=120s)
+[2026-10-19T05:33:11.325953+00:00] Serial output: printf '__UID_MARK__1792387991172__%s__UID_MARK__1792387991172__\n' "$(id -u)"
+[2026-10-19T05:33:11.329164+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-10-19T05:33:11.329265+00:00] Matched pattern: '__PROMPT_READY__1792387991275__'
+[2026-10-19T05:33:11.329322+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-10-19T05:33:11.602524+00:00] Serial output: \n'
+[2026-10-19T05:33:11.602751+00:00] Serial output: __UID_MARK__1792387991172__1000__UID_MARK__1792387991172__
+[2026-10-19T05:33:11.604244+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-10-19T05:33:11.604362+00:00] Shell prompt configured for interaction
+[2026-10-19T05:33:11.604362+00:00]   context=uid validation resync
+[2026-10-19T05:33:11.657871+00:00] Running command: printf '__UID_MARK__1792387991172__%s__UID_MARK__1792387991172__\n' "$(id -u)"
+[2026-10-19T05:33:11.709320+00:00] Recovered UID marker after parse failure
+[2026-10-19T05:33:11.709320+00:00]   attempt=2, source=serial log tail, uid=2004
+[2026-10-19T05:33:11.709432+00:00] Initial shell lacks root privileges
+[2026-10-19T05:33:11.709482+00:00] Attempting to escalate with sudo -i
+[2026-10-19T05:33:11.760132+00:00] Awaiting patterns: \[sudo\] password for nixos:, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=120s)
+[2026-10-19T05:33:11.760799+00:00] Serial output: PRE-NIXOS> printf '__UID_MARK__1792387991172__%s__UID_MARK__1792387991172__\n' "$(id -u)"
+[2026-10-19T05:33:11.967339+00:00] Serial output: sudo -i
+[2026-10-19T05:33:11.967512+00:00] Serial output: __UID_MARK__1792387991172__1000__UID_MARK__1792387991172__
+[2026-10-19T05:33:11.971178+00:00] Serial output: PRE-NIXOS> sudo -i
+[2026-10-19T05:33:14.027041+00:00] Serial output: pre-nixos boot image version 0.17.0
+[2026-10-19T05:33:14.027298+00:00] Serial output: LAN IPv4 address: 10.0.2.15
+[2026-10-19T05:33:14.037383+00:00] Serial output: [
+[2026-10-19T05:33:14.037920+00:00] Serial output: 0;
+[2026-10-19T05:33:14.038106+00:00] Matched pattern: 'root@.*# ?'
+[2026-10-19T05:33:14.088551+00:00] Awaiting patterns: __PROMPT_READY__1792387994038__ (timeout=120s)
+[2026-10-19T05:33:14.119655+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-10-19T05:33:14.119772+00:00] Matched pattern: '__PROMPT_READY__1792387994038__'
+[2026-10-19T05:33:14.119821+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-10-19T05:33:14.119848+00:00] Serial output: \n'
+[2026-10-19T05:33:14.123786+00:00] Serial output: __PROMPT_READY__1792387994038__
+[2026-10-19T05:33:14.123935+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-10-19T05:33:14.123958+00:00] Shell prompt configured for interaction
+[2026-10-19T05:33:14.123958+00:00]   context=sudo -i
+[2026-10-19T05:33:14.187827+00:00] Running command: printf '__UID_MARK__1792387994124__%s__UID_MARK__1792387994124__\n' "$(id -u)"
+[2026-10-19T05:33:14.405554+00:00] id -u after sudo -i returned: '0'
+[2026-10-19T05:33:14.405735+00:00] Successfully escalated privileges with sudo -i
+[2026-10-19T05:33:14.466915+00:00] Running command: printf '__UID_MARK__1792387994408__%s__UID_MARK__1792387994408__\n' "$(id -u)"
+[2026-10-19T05:33:14.709432+00:00] Running command: { printf '\n__BEGIN__\n'; uname -m; printf '\n__EXIT__=%s\n' $?; }
+[2026-10-19T05:33:14.895021+00:00] Checked command exited with status 0: uname -m
+[2026-10-19T05:33:14.895021+00:00]   aarch64
+[2026-10-19T05:33:14.951568+00:00] Running command: printf '__UID_MARK__1792387994895__%s__UID_MARK__1792387994895__\n' "$(id -u)"
+[2026-10-19T05:33:15.242360+00:00] Running command: { printf '\n__BEGIN__\n'; cat /proc/cmdline; printf '\n__EXIT__=%s\n' $?; }
+[2026-10-19T05:33:15.499248+00:00] Checked command exited with status 0: cat /proc/cmdline
+[2026-10-19T05:33:15.499248+00:00]   console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf init=/nix/store/gy82s7vdyl88mjp9avip4dx7f2frwjpm-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init systemd.default_device_timeout_sec=900
+[2026-10-19T05:33:15.503009+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:20.768821+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:26.130976+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:31.306031+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:36.536676+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:41.801621+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:47.030117+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:52.214961+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:33:57.479068+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:02.775915+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:07.949975+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:13.189949+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:18.442078+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:23.655816+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:28.903554+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:34.075255+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:39.260462+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:44.446180+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:49.649629+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:34:54.864766+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:00.067916+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:05.247865+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:10.480770+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:15.714055+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:20.930308+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:26.127357+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:31.347924+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:36.598224+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:41.930070+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:47.197899+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:52.405666+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:35:57.621730+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:36:02.879928+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:36:08.303295+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:36:13.514638+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:36:18.773058+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:36:24.158452+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-10-19T05:36:24.402362+00:00] Running command: :
+[2026-10-19T05:36:24.520864+00:00] Running command: printf '__UID_MARK__1792388184463__%s__UID_MARK__1792388184463__\n' "$(id -u)"
+[2026-10-19T05:36:24.871558+00:00] Running command: { printf '\n__BEGIN__\n'; lsblk -nrpo NAME /dev/vda; printf '\n__EXIT__=%s\n' $?; }
+[2026-10-19T05:36:25.187560+00:00] Checked command exited with status 0: lsblk -nrpo NAME /dev/vda
+[2026-10-19T05:36:25.187560+00:00]   /dev/vda
+[2026-10-19T05:36:25.187560+00:00]   /dev/vda1
+[2026-10-19T05:36:25.187560+00:00]   /dev/vda2
+[2026-10-19T05:36:25.246153+00:00] Running command: printf '__UID_MARK__1792388185187__%s__UID_MARK__1792388185187__\n' "$(id -u)"
+[2026-10-19T05:36:25.494171+00:00] Running command: { printf '\n__BEGIN__\n'; findmnt -n -o SOURCE /; printf '\n__EXIT__=%s\n' $?; }
+[2026-10-19T05:36:25.762637+00:00] Checked command exited with status 0: findmnt -n -o SOURCE /
+[2026-10-19T05:36:25.762637+00:00]   /dev/vda2
+[2026-10-19T05:36:25.823028+00:00] Running command: printf '__UID_MARK__1792388185762__%s__UID_MARK__1792388185762__\n' "$(id -u)"
+[2026-10-19T05:36:25.992717+00:00] Running command: { printf '\n__BEGIN__\n'; pvs --noheadings -o pv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[2026-10-19T05:36:26.437792+00:00] Checked command exited with status 0: pvs --noheadings -o pv_name,vg_name
+[2026-10-19T05:36:26.437792+00:00]   /dev/vdb2  main
+[2026-10-19T05:36:26.494622+00:00] Running command: printf '__UID_MARK__1792388186438__%s__UID_MARK__1792388186438__\n' "$(id -u)"
+[2026-10-19T05:36:26.669389+00:00] Running command: { printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[2026-10-19T05:36:27.135822+00:00] Checked command exited with status 0: lvs --noheadings -o lv_name,vg_name
+[2026-10-19T05:36:27.135822+00:00]   slash main
+[2026-10-19T05:36:27.135822+00:00]   swap  main
+[2026-10-19T05:36:27.139007+00:00] Running command: :
+[2026-10-19T05:36:27.199378+00:00] Running command: systemctl is-active pre-nixos 2>/dev/null || true
+[2026-10-19T05:36:27.515807+00:00] pre-nixos reported inactive state
+[2026-10-19T05:36:27.515990+00:00] Running command: :
+[2026-10-19T05:36:27.574314+00:00] Running command: ip -o -4 addr show dev lan 2>/dev/null || true
+[2026-10-19T05:36:27.751953+00:00] Running command: :

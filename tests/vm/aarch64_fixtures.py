@@ -18,6 +18,7 @@ from tests.vm.fixtures import (
     BootImageBuild,
     SSHKeyPair,
     _launch_boot_image_vm,
+    _remove_disk_images,
     _require_executable,
     build_boot_artifact,
 )
@@ -89,10 +90,10 @@ def aarch64_boot_image_build(
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def aarch64_sd_card(
     aarch64_boot_image_build: Aarch64Build, tmp_path_factory: pytest.TempPathFactory
-) -> Path:
+) -> Iterator[Path]:
     """A writable, card-sized copy of the SD image."""
 
     card = tmp_path_factory.mktemp("aarch64-sd-card") / "sd.img"
@@ -103,10 +104,11 @@ def aarch64_sd_card(
     )
     assert card.stat().st_size < SD_CARD_BYTES, "image no longer fits the virtual card"
     subprocess.run(["truncate", "-s", str(SD_CARD_BYTES), str(card)], check=True)
-    return card
+    yield card
+    _remove_disk_images([card])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def aarch64_boot_image_vm(
     _pexpect: "pexpect",
     aarch64_boot_image_build: Aarch64Build,
@@ -117,6 +119,7 @@ def aarch64_boot_image_vm(
 ) -> Iterator["BootImageVM"]:
     """The AArch64 image with an empty 4 GiB virtio target disk (``/dev/vdb``)."""
 
+    target = vm_disk_image_factory(prefix="boot-image-disk-aarch64-target")
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
         machine=aarch64_machine(
@@ -125,8 +128,9 @@ def aarch64_boot_image_vm(
             aarch64_sd_card,
         ),
         boot_image_build=aarch64_boot_image_build.image,
-        vm_disk_image=vm_disk_image_factory(prefix="boot-image-disk-aarch64-target"),
+        vm_disk_image=target,
         extra_disks=[],
         ssh_executable=ssh_executable,
         request=request,
     )
+    _remove_disk_images([target])

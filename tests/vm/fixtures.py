@@ -400,8 +400,8 @@ def vm_disk_image_factory(
     return _factory
 
 
-@pytest.fixture(scope="session")
-def vm_additional_disks(tmp_path_factory: pytest.TempPathFactory) -> List[Path]:
+@pytest.fixture(scope="module")
+def vm_additional_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[Path]]:
     disks: List[Path] = []
     for index, size_bytes in enumerate(ADDITIONAL_DISK_SIZES_BYTES):
         disk_dir = tmp_path_factory.mktemp(f"boot-image-disk{index + 1}")
@@ -409,7 +409,26 @@ def vm_additional_disks(tmp_path_factory: pytest.TempPathFactory) -> List[Path]:
         with disk_path.open("wb") as handle:
             handle.truncate(size_bytes)
         disks.append(disk_path)
-    return disks
+    yield disks
+    _remove_disk_images(disks)
+
+
+def _free_gib(path: Path) -> float:
+    """Free space on ``path``'s filesystem (queue item 10: see exhaustion early)."""
+
+    return shutil.disk_usage(path).free / 1024**3
+
+
+def _remove_disk_images(paths: Sequence[Path]) -> None:
+    """Delete a module's disk images once its VM is down.
+
+    VM fixtures are module-scoped so that only one VM and its disks exist at a
+    time: with session scope every VM's images lived until the end of the run
+    and exhausted the session's disk allowance (2026-10-19, RAID resync).
+    """
+
+    for path in paths:
+        path.unlink(missing_ok=True)
 
 
 def _launch_boot_image_vm(
@@ -515,6 +534,7 @@ def _launch_boot_image_vm(
         with harness_log_path.open("a", encoding="utf-8") as handle:
             handle.write(f"[{timestamp}] {message}\n")
 
+    _log_debug(f"Disk free at VM start: {_free_gib(log_dir):.1f} GiB")
     try:
         vm = BootImageVM(
             child=child,
@@ -564,6 +584,7 @@ def _launch_boot_image_vm(
         run_outcome = "error"
         raise
     finally:
+        _log_debug(f"Disk free at VM teardown: {_free_gib(log_dir):.1f} GiB")
         run_timings.total_seconds = time.perf_counter() - total_started_at
         run_timings.completed_at = datetime.datetime.now(datetime.timezone.utc)
         record_run_timings(metadata_path, run_timings=run_timings)
@@ -607,7 +628,7 @@ def _launch_boot_image_vm(
         shutil.rmtree(qmp_socket.parent, ignore_errors=True)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def boot_image_vm(
     _pexpect: "pexpect",
     qemu_executable: str,
@@ -626,9 +647,10 @@ def boot_image_vm(
         ssh_executable=ssh_executable,
         request=request,
     )
+    _remove_disk_images([vm_disk_image])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def boot_image_vm_for_hotplug(
     _pexpect: "pexpect",
     qemu_executable: str,
@@ -654,18 +676,21 @@ def boot_image_vm_for_hotplug(
         ssh_executable=ssh_executable,
         request=request,
     )
+    _remove_disk_images([vm_disk_image])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def usb_boot_stick(
     boot_image_build: BootImageBuild,
     tmp_path_factory: pytest.TempPathFactory,
-) -> UsbStick:
+) -> Iterator[UsbStick]:
     stick_dir = tmp_path_factory.mktemp("boot-image-usb-stick")
-    return make_usb_stick(boot_image_build.iso_path, stick_dir / "stick.img")
+    stick = make_usb_stick(boot_image_build.iso_path, stick_dir / "stick.img")
+    yield stick
+    _remove_disk_images([stick.path])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def boot_image_vm_from_usb_stick(
     _pexpect: "pexpect",
     qemu_executable: str,
@@ -689,10 +714,11 @@ def boot_image_vm_from_usb_stick(
         ssh_executable=ssh_executable,
         request=request,
     )
+    _remove_disk_images([vm_disk_image])
 
 
-@pytest.fixture(scope="session")
-def raid_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> List[ScsiDisk]:
+@pytest.fixture(scope="module")
+def raid_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[ScsiDisk]]:
     """An SSD plus an equal pair of HDDs: the planner mirrors the pair (RAID-1).
 
     The HDDs exceed twice the VM's 2 GiB of RAM, so the pair qualifies as the
@@ -706,10 +732,11 @@ def raid_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> List[ScsiDisk]:
             tmp_path_factory, prefix=f"boot-image-raid-{serial}", size_bytes=gib * 1024**3
         )
         disks.append(ScsiDisk(path=path, rotational=rotational, serial=serial))
-    return disks
+    yield disks
+    _remove_disk_images([disk.path for disk in disks])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def boot_image_vm_with_raid_disks(
     _pexpect: "pexpect",
     qemu_executable: str,
