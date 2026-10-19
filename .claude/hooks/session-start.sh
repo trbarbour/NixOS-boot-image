@@ -28,6 +28,13 @@ if ! command -v nix >/dev/null 2>&1; then
   exit 1
 fi
 
+# AArch64 boot image builds run under QEMU user-mode emulation (R-T1).
+# shellcheck source=../../scripts/lib/aarch64_emulation.sh
+source "${REPO_ROOT}/scripts/lib/aarch64_emulation.sh"
+if ! ensure_aarch64_emulation; then
+  log "WARNING: AArch64 emulation unavailable; aarch64-linux builds will fail."
+fi
+
 # The session proxy refuses GitHub archive tarballs for unattached repositories,
 # so fetch github: flake inputs over git (verified against flake.lock).
 if [[ -n "${CLAUDE_ENV_FILE:-}" ]]; then

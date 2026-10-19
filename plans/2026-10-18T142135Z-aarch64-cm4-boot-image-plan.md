@@ -221,6 +221,13 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
      - The GRUB serial lines (x86 only) move to item 8.
      - Tests: `tests/test_console_params.py`.
 5. **Build host support (§3.3):** hook and `dev_packages`; E4. *(R-T1)*
+   - **2026-10-19: done (0.15.0), except E4**, which builds the real SD image after item 6.
+     - New `scripts/lib/aarch64_emulation.sh`, called by the SessionStart hook; a failure only warns.
+     - It mounts `binfmt_misc` if needed and registers the packaged qemu-aarch64 rule pointed at `/usr/bin/qemu-aarch64-static` with flag `F`, replacing a different rule. The packaged `-P` wrapper does not exist inside the Nix sandbox.
+     - It adds `extra-extra-platforms = aarch64-linux` to `/etc/nix/nix.custom.conf`. The doubled `extra-` appends; plain `extra-platforms` replaced Nix's default list (observed).
+     - `qemu-user-static` is added to `DEV_APT_PACKAGES`.
+     - Verified on this host: the rule shows `interpreter /usr/bin/qemu-aarch64-static` and `flags: F`; a `runCommand` for `aarch64-linux` built in 4 s and reported `uname -m` = `aarch64`; a second run changed nothing.
+     - Tests: `tests/test_aarch64_emulation.py` (4), against temporary stand-ins for `/proc/sys/fs/binfmt_misc` and `nix.custom.conf`.
 6. **Flake refactor (§3.2) and platform-conditional module (§3.4)**, with the Nix evaluation check. *(R-P1, R-P2)*
 7. **AArch64 VM test (§4):** E5 and E6. *(R-S1, §2.6–2.8)*
 8. **Installed-system bootloader (§3.7):** once the user has answered §3.7; E9. *(R-B1)*

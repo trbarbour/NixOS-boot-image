@@ -7,6 +7,8 @@
 #   python3 python3-venv python3-pip python3-dev build-essential
 #                                        - the .venv used to run pytest
 #   qemu-system-x86 qemu-utils           - booting the ISO in tests/vm
+#   qemu-user-static                     - building aarch64-linux under binfmt
+#                                          (scripts/lib/aarch64_emulation.sh)
 #   openssh-client                       - ssh/ssh-keygen used by tests/vm fixtures
 
 DEV_APT_PACKAGES=(
@@ -21,6 +23,7 @@ DEV_APT_PACKAGES=(
   build-essential
   qemu-system-x86
   qemu-utils
+  qemu-user-static
   openssh-client
 )
 
