@@ -86,10 +86,14 @@ def test_multiple_hdd_buckets_named_separately() -> None:
         Disk(name="sdc", size=1000, rotational=True),
     ]
     plan = plan_storage("fast", disks)
+    # Corrected for #313: this used to expect {"swap", "large"} and no slash,
+    # i.e. a plan without a root filesystem, contrary to reqs §2.4.  Without
+    # SSDs, main takes the redundant pair; swap falls back to large (§2.4).
     vg_names = {vg["name"] for vg in plan["vgs"]}
-    assert "swap" in vg_names and "large" in vg_names
-    lv_vgs = {lv["vg"] for lv in plan["lvs"]}
-    assert lv_vgs == {"swap", "large"}
+    assert vg_names == {"main", "large"}
+    lv_vgs = {lv["name"]: lv["vg"] for lv in plan["lvs"]}
+    assert lv_vgs["slash"] == "main"
+    assert lv_vgs["swap"] == "large"
 
 
 def test_hdd_only_promotes_main_with_efi() -> None:

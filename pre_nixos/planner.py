@@ -162,6 +162,15 @@ def decide_hdd_array(group: List[Disk], prefer_raid6_on_four: bool = False) -> D
     return {"level": level, "devices": devices}
 
 
+def _assert_has_root(plan: Dict[str, Any], disks: List[Disk]) -> None:
+    """Postcondition: any plan for at least one disk has main/slash (reqs §2.4)."""
+
+    if disks:
+        assert any(
+            lv.get("name") == "slash" and lv.get("vg") == "main" for lv in plan["lvs"]
+        ), f"storage plan has no main/slash (#313): vgs={[vg['name'] for vg in plan['vgs']]}"
+
+
 def plan_storage(
     mode: str,
     disks: List[Disk],
@@ -338,6 +347,7 @@ def plan_storage(
                         add_lv_bytes("home", "main", desired)
         add_lv("swap", "main", swap_size)
         plan["disko"] = _plan_to_disko_devices(plan)
+        _assert_has_root(plan, disks)
         return plan
 
     for idx, bucket in enumerate(ssd_buckets):
@@ -356,38 +366,13 @@ def plan_storage(
 
     has_ssd = bool(ssd_buckets)
 
-    # Determine which HDD bucket, if any, should become the swap VG.  We prefer the
-    # smallest suitable bucket instead of the largest.  A bucket is suitable when it
-    # either contains two disks and we have additional HDD capacity or SSDs for data,
-    # or when it contains a single disk but SSDs are present.  The bucket must also
-    # have enough capacity for a swap LV of size ``2 * RAM`` (mirrored size for RAID1
-    # is limited by the smallest disk).
-    swap_bucket_idx: int | None = None
-    required_swap = 2 * ram_gb
-    candidates: List[tuple[int, int]] = []  # (total_size, index)
-    total_buckets = len(hdd_buckets)
-    for idx, bucket in enumerate(hdd_buckets):
-        cond = False
-        if len(bucket) == 2:
-            cond = has_ssd or total_buckets > 1
-        elif len(bucket) == 1:
-            cond = has_ssd
-        if not cond:
-            continue
-        min_size = min(d.size for d in bucket)
-        if min_size < required_swap:
-            continue
-        total_size = sum(d.size for d in bucket)
-        candidates.append((total_size, idx))
-    if candidates:
-        # Pick the smallest total raw size.
-        _, swap_bucket_idx = min(candidates, key=lambda x: x[0])
-
     hdd_arrays = [
         decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
         for bucket in hdd_buckets
     ]
 
+    # Without SSDs, choose main's bucket first: main/slash is mandatory (reqs
+    # §2.4) and the swap VG is optional, so swap must not take it (#313).
     main_bucket_idx: int | None = None
     if not ssd_buckets and hdd_buckets:
         for idx, arr in enumerate(hdd_arrays):
@@ -401,6 +386,35 @@ def plan_storage(
                     break
         if main_bucket_idx is None:
             main_bucket_idx = 0
+
+    # Then determine which other HDD bucket, if any, should become the swap VG.  We prefer the
+    # smallest suitable bucket instead of the largest.  A bucket is suitable when it
+    # either contains two disks and we have additional HDD capacity or SSDs for data,
+    # or when it contains a single disk but SSDs are present.  The bucket must also
+    # have enough capacity for a swap LV of size ``2 * RAM`` (mirrored size for RAID1
+    # is limited by the smallest disk).
+    swap_bucket_idx: int | None = None
+    required_swap = 2 * ram_gb
+    candidates: List[tuple[int, int]] = []  # (total_size, index)
+    total_buckets = len(hdd_buckets)
+    for idx, bucket in enumerate(hdd_buckets):
+        if idx == main_bucket_idx:
+            continue  # main/slash is mandatory; the swap VG is optional (#313)
+        cond = False
+        if len(bucket) == 2:
+            cond = has_ssd or total_buckets > 1
+        elif len(bucket) == 1:
+            cond = has_ssd
+        if not cond:
+            continue
+        min_size = min(_to_bytes(d.size) for d in bucket)
+        if min_size < _to_bytes(required_swap):  # bytes, not GiB (#313)
+            continue
+        total_size = sum(d.size for d in bucket)
+        candidates.append((total_size, idx))
+    if candidates:
+        # Pick the smallest total raw size.
+        _, swap_bucket_idx = min(candidates, key=lambda x: x[0])
 
     large_idx = 0
     for idx, bucket in enumerate(hdd_buckets):
@@ -468,6 +482,7 @@ def plan_storage(
     plan["disko"] = _plan_to_disko_devices(plan)
     if post_commands:
         plan["post_apply_commands"] = post_commands
+    _assert_has_root(plan, disks)
     return plan
 
 
