@@ -409,8 +409,10 @@ def vm_additional_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Li
         with disk_path.open("wb") as handle:
             handle.truncate(size_bytes)
         disks.append(disk_path)
-    yield disks
-    _remove_disk_images(disks)
+    try:
+        yield disks
+    finally:
+        _remove_disk_images(disks)
 
 
 def _free_gib(path: Path) -> float:
@@ -609,7 +611,7 @@ def _launch_boot_image_vm(
                     ssh_port=ssh_forward_port,
                     invocation_args=invocation_args,
                     spawn_timeout=VM_SPAWN_TIMEOUT,
-                    login_timeout=VM_LOGIN_TIMEOUT,
+                    login_timeout=machine.login_timeout,
                     outcome=run_outcome,
                 )
             except Exception:
@@ -638,16 +640,18 @@ def boot_image_vm(
     request: pytest.FixtureRequest,
 ) -> Iterator["BootImageVM"]:
     vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary")
-    yield from _launch_boot_image_vm(
-        _pexpect=_pexpect,
-        machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
-        boot_image_build=boot_image_build,
-        vm_disk_image=vm_disk_image,
-        extra_disks=[],
-        ssh_executable=ssh_executable,
-        request=request,
-    )
-    _remove_disk_images([vm_disk_image])
+    try:
+        yield from _launch_boot_image_vm(
+            _pexpect=_pexpect,
+            machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
+            boot_image_build=boot_image_build,
+            vm_disk_image=vm_disk_image,
+            extra_disks=[],
+            ssh_executable=ssh_executable,
+            request=request,
+        )
+    finally:
+        _remove_disk_images([vm_disk_image])
 
 
 @pytest.fixture(scope="module")
@@ -667,16 +671,18 @@ def boot_image_vm_for_hotplug(
     """
 
     vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary-hotplug")
-    yield from _launch_boot_image_vm(
-        _pexpect=_pexpect,
-        machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
-        boot_image_build=boot_image_build,
-        vm_disk_image=vm_disk_image,
-        extra_disks=[],
-        ssh_executable=ssh_executable,
-        request=request,
-    )
-    _remove_disk_images([vm_disk_image])
+    try:
+        yield from _launch_boot_image_vm(
+            _pexpect=_pexpect,
+            machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
+            boot_image_build=boot_image_build,
+            vm_disk_image=vm_disk_image,
+            extra_disks=[],
+            ssh_executable=ssh_executable,
+            request=request,
+        )
+    finally:
+        _remove_disk_images([vm_disk_image])
 
 
 @pytest.fixture(scope="module")
@@ -686,8 +692,10 @@ def usb_boot_stick(
 ) -> Iterator[UsbStick]:
     stick_dir = tmp_path_factory.mktemp("boot-image-usb-stick")
     stick = make_usb_stick(boot_image_build.iso_path, stick_dir / "stick.img")
-    yield stick
-    _remove_disk_images([stick.path])
+    try:
+        yield stick
+    finally:
+        _remove_disk_images([stick.path])
 
 
 @pytest.fixture(scope="module")
@@ -703,18 +711,20 @@ def boot_image_vm_from_usb_stick(
     """A VM booted from a writable, non-removable USB stick plus one empty disk."""
 
     vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-usb-target")
-    yield from _launch_boot_image_vm(
-        _pexpect=_pexpect,
-        machine=x86_machine(
-            qemu_executable, boot_image_build.iso_path, usb_boot_stick, VM_LOGIN_TIMEOUT
-        ),
-        boot_image_build=boot_image_build,
-        vm_disk_image=vm_disk_image,
-        extra_disks=[],
-        ssh_executable=ssh_executable,
-        request=request,
-    )
-    _remove_disk_images([vm_disk_image])
+    try:
+        yield from _launch_boot_image_vm(
+            _pexpect=_pexpect,
+            machine=x86_machine(
+                qemu_executable, boot_image_build.iso_path, usb_boot_stick, VM_LOGIN_TIMEOUT
+            ),
+            boot_image_build=boot_image_build,
+            vm_disk_image=vm_disk_image,
+            extra_disks=[],
+            ssh_executable=ssh_executable,
+            request=request,
+        )
+    finally:
+        _remove_disk_images([vm_disk_image])
 
 
 @pytest.fixture(scope="module")
@@ -732,8 +742,10 @@ def raid_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[S
             tmp_path_factory, prefix=f"boot-image-raid-{serial}", size_bytes=gib * 1024**3
         )
         disks.append(ScsiDisk(path=path, rotational=rotational, serial=serial))
-    yield disks
-    _remove_disk_images([disk.path for disk in disks])
+    try:
+        yield disks
+    finally:
+        _remove_disk_images([disk.path for disk in disks])
 
 
 @pytest.fixture(scope="module")

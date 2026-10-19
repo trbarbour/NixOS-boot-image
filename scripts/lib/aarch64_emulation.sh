@@ -57,14 +57,23 @@ ensure_aarch64_binfmt() {
     return 0
   fi
   if [[ -f "${BINFMT_DIR}/qemu-aarch64" ]]; then
-    printf -- '-1' >"${BINFMT_DIR}/qemu-aarch64"  # remove a different rule
+    # Remove a different rule.
+    printf -- '-1' >"${BINFMT_DIR}/qemu-aarch64" || {
+      _aarch64_log "WARNING: cannot remove the existing qemu-aarch64 rule; AArch64 builds unavailable."
+      return 1
+    }
   fi
   local rule
   rule="$(aarch64_binfmt_rule)" || {
     _aarch64_log "WARNING: no qemu-aarch64 rule in ${QEMU_BINFMT_CONF}; AArch64 builds unavailable."
     return 1
   }
-  printf '%s' "${rule}" >"${BINFMT_DIR}/register"
+  # Every write's status is checked explicitly: callers use these functions as
+  # conditions ("if ! ensure_aarch64_emulation"), where errexit is off.
+  printf '%s' "${rule}" >"${BINFMT_DIR}/register" || {
+    _aarch64_log "WARNING: cannot register the binfmt rule; AArch64 builds unavailable."
+    return 1
+  }
   _aarch64_log "Registered binfmt rule for AArch64 (${QEMU_AARCH64_STATIC}, flag F)."
 }
 
@@ -75,7 +84,10 @@ ensure_nix_aarch64_platform() {
   if [[ -f "${NIX_CUSTOM_CONF}" ]] && grep -qx "${line}" "${NIX_CUSTOM_CONF}"; then
     return 0
   fi
-  printf '%s\n' "${line}" >>"${NIX_CUSTOM_CONF}"
+  printf '%s\n' "${line}" >>"${NIX_CUSTOM_CONF}" || {
+    _aarch64_log "WARNING: cannot write ${NIX_CUSTOM_CONF}; AArch64 builds unavailable."
+    return 1
+  }
   _aarch64_log "Added '${line}' to ${NIX_CUSTOM_CONF}."
 }
 

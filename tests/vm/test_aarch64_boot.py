@@ -15,6 +15,7 @@ import pytest
 
 from tests.vm.aarch64_fixtures import Aarch64Build
 from tests.vm.controller import BootImageVM
+from tests.vm.fixtures import SSHKeyPair
 
 pytestmark = [pytest.mark.vm, pytest.mark.slow]
 
@@ -57,11 +58,19 @@ def test_aarch64_image_provisions_the_target_and_spares_the_card(
     assert ("slash", "main") in lvs, lvs
 
 
-def test_aarch64_image_brings_up_lan(aarch64_boot_image_vm: BootImageVM) -> None:
+def test_aarch64_image_brings_up_lan_with_root_ssh(
+    aarch64_boot_image_vm: BootImageVM, boot_ssh_key_pair: SSHKeyPair
+) -> None:
+    """§2.6 and remote root SSH with the embedded key (PR #315 review)."""
+
     vm = aarch64_boot_image_vm
     vm.wait_for_unit_inactive("pre-nixos", timeout=PRE_NIXOS_TIMEOUT)
     addresses = vm.wait_for_ipv4("lan", timeout=600)
     assert any("inet " in line for line in addresses), addresses
+    identity = vm.run_ssh(
+        private_key=boot_ssh_key_pair.private_key, command="id -un", timeout=600
+    )
+    assert identity == "root"
 
 
 def test_aarch64_image_puts_the_pi_boot_chain_on_the_target(

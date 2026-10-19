@@ -104,8 +104,10 @@ def aarch64_sd_card(
     )
     assert card.stat().st_size < SD_CARD_BYTES, "image no longer fits the virtual card"
     subprocess.run(["truncate", "-s", str(SD_CARD_BYTES), str(card)], check=True)
-    yield card
-    _remove_disk_images([card])
+    try:
+        yield card
+    finally:
+        _remove_disk_images([card])
 
 
 @pytest.fixture(scope="module")
@@ -120,17 +122,19 @@ def aarch64_boot_image_vm(
     """The AArch64 image with an empty 4 GiB virtio target disk (``/dev/vdb``)."""
 
     target = vm_disk_image_factory(prefix="boot-image-disk-aarch64-target")
-    yield from _launch_boot_image_vm(
-        _pexpect=_pexpect,
-        machine=aarch64_machine(
-            _require_executable("qemu-system-aarch64"),
-            aarch64_boot_image_build.system,
-            aarch64_sd_card,
-        ),
-        boot_image_build=aarch64_boot_image_build.image,
-        vm_disk_image=target,
-        extra_disks=[],
-        ssh_executable=ssh_executable,
-        request=request,
-    )
-    _remove_disk_images([target])
+    try:
+        yield from _launch_boot_image_vm(
+            _pexpect=_pexpect,
+            machine=aarch64_machine(
+                _require_executable("qemu-system-aarch64"),
+                aarch64_boot_image_build.system,
+                aarch64_sd_card,
+            ),
+            boot_image_build=aarch64_boot_image_build.image,
+            vm_disk_image=target,
+            extra_disks=[],
+            ssh_executable=ssh_executable,
+            request=request,
+        )
+    finally:
+        _remove_disk_images([target])

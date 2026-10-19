@@ -80,3 +80,23 @@ def test_missing_qemu_is_reported_and_nix_is_left_alone(tmp_path: Path) -> None:
     assert result.returncode != 0
     assert "qemu-user-static" in result.stderr
     assert not Path(env["NIX_CUSTOM_CONF"]).exists()
+
+
+def test_unwritable_nix_configuration_is_a_failure(tmp_path: Path) -> None:
+    """PR #315 review: a failed write must not be reported as success."""
+
+    env = _env(tmp_path)
+    env["NIX_CUSTOM_CONF"] = str(tmp_path / "absent-dir" / "nix.custom.conf")
+    result = _run("if ! ensure_aarch64_emulation; then echo FAILED; fi", env)
+    assert result.stdout.strip() == "FAILED"
+    assert "cannot write" in result.stderr
+
+
+def test_unwritable_register_is_a_failure(tmp_path: Path) -> None:
+    env = _env(tmp_path)
+    register = Path(env["BINFMT_DIR"]) / "register"
+    register.unlink()
+    register.mkdir()  # "mounted", but writing to it fails
+    result = _run("if ! ensure_aarch64_binfmt; then echo FAILED; fi", env)
+    assert result.stdout.strip() == "FAILED"
+    assert "cannot register" in result.stderr
