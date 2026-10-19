@@ -4,94 +4,54 @@
 
 The script performs three steps:
 
-1. Query the GitHub API for nixpkgs branches/tags and find either:
+1. List the nixpkgs branches/tags with ``git ls-remote`` and find either:
    - the newest stable ``nixos-YY.MM`` channel branch (default), or
    - the newest stable ``YY.MM`` release tag (``--latest-release`` mode).
 2. Update ``flake.nix`` so that ``inputs.nixpkgs.url`` references that target.
 3. Refresh ``flake.lock`` for the ``nixpkgs`` input.
 
-Requires network access and ``nix`` to be available in ``PATH``. Set
-``GITHUB_TOKEN`` (or ``GH_TOKEN``) to increase the GitHub API rate limit when
-running the script repeatedly.
+Requires network access, ``git`` and ``nix`` in ``PATH``.  Both steps that
+touch the network use git (``git ls-remote``, and a git fetch for the lock via
+``scripts/nix_git_inputs.py``), not the GitHub REST API or archive tarballs,
+so the script also works behind proxies that refuse those (e.g. Claude Code
+cloud sessions, where the API answered 403 on 2026-10-18).
 """
 from __future__ import annotations
 
-import json
-import os
-import re
-import subprocess
-import sys
 import argparse
-import urllib.error
-import urllib.request
+import re
+import shutil
+import sys
 from pathlib import Path
 from typing import Iterable
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts import nix_git_inputs  # noqa: E402
 
 RE_CHANNEL = re.compile(r"^nixos-(\d{2})\.(\d{2})$")
 RE_RELEASE_TAG = re.compile(r"^(\d{2})\.(\d{2})$")
 RE_FLAKE_INPUT = re.compile(
     r'(nixpkgs\.url\s*=\s*"github:NixOS/nixpkgs/)(?:nixos-\d{2}\.\d{2}|\d{2}\.\d{2})(";)'
 )
-GITHUB_BRANCHES_URL = "https://api.github.com/repos/NixOS/nixpkgs/branches"
-GITHUB_TAGS_URL = "https://api.github.com/repos/NixOS/nixpkgs/tags"
-USER_AGENT = "nixos-boot-image-update-script"
+NIXPKGS_URL = "https://github.com/NixOS/nixpkgs"
 
 
-def github_request(url: str) -> urllib.request.Request:
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "User-Agent": USER_AGENT,
-    }
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return urllib.request.Request(url, headers=headers)
+def remote_ref_names(kind: str) -> list[str]:
+    """Return nixpkgs branch (``kind="heads"``) or tag (``"tags"``) names."""
 
-
-def fetch_all_branches() -> list[str]:
-    branches: list[str] = []
-    page = 1
-    while True:
-        url = f"{GITHUB_BRANCHES_URL}?per_page=100&page={page}"
-        request = github_request(url)
-        try:
-            with urllib.request.urlopen(request) as response:
-                payload = response.read()
-        except urllib.error.HTTPError as exc:  # pragma: no cover - network failure
-            message = getattr(exc, "reason", exc)
-            raise SystemExit(f"GitHub API request failed: {message}")
-        except urllib.error.URLError as exc:  # pragma: no cover - network failure
-            raise SystemExit(f"Could not reach GitHub: {exc.reason}")
-
-        data = json.loads(payload)
-        if not data:
-            break
-        branches.extend(item["name"] for item in data)
-        page += 1
-    return branches
-
-
-def fetch_all_tags() -> list[str]:
-    tags: list[str] = []
-    page = 1
-    while True:
-        url = f"{GITHUB_TAGS_URL}?per_page=100&page={page}"
-        request = github_request(url)
-        try:
-            with urllib.request.urlopen(request) as response:
-                payload = response.read()
-        except urllib.error.HTTPError as exc:  # pragma: no cover - network failure
-            message = getattr(exc, "reason", exc)
-            raise SystemExit(f"GitHub API request failed: {message}")
-        except urllib.error.URLError as exc:  # pragma: no cover - network failure
-            raise SystemExit(f"Could not reach GitHub: {exc.reason}")
-
-        data = json.loads(payload)
-        if not data:
-            break
-        tags.extend(item["name"] for item in data)
-        page += 1
-    return tags
+    assert kind in ("heads", "tags"), kind
+    prefix = f"refs/{kind}/"
+    try:
+        # A pattern, not --heads/--tags: options after the URL match nothing.
+        refs = nix_git_inputs.ls_remote(NIXPKGS_URL, f"refs/{kind}/*")
+    except nix_git_inputs.NixGitInputsError as exc:
+        raise SystemExit(str(exc))
+    return sorted(
+        {name[len(prefix) :].removesuffix("^{}") for name in refs if name.startswith(prefix)}
+    )
 
 
 def newest_stable_channel(branches: Iterable[str]) -> str:
@@ -141,13 +101,6 @@ def update_flake_nix(path: Path, channel: str) -> None:
     path.write_text(updated, encoding="utf-8")
 
 
-def run(*args: str, cwd: Path) -> None:
-    try:
-        subprocess.run(args, cwd=cwd, check=True)
-    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        raise SystemExit(f"Command {' '.join(args)} failed: {exc}")
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Update nixpkgs to the latest stable channel or release tag.")
     parser.add_argument(
@@ -157,15 +110,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = REPO_ROOT
     if args.latest_release:
-        print("Fetching nixpkgs tags from GitHub…", file=sys.stderr)
-        tags = fetch_all_tags()
+        print("Listing nixpkgs tags…", file=sys.stderr)
+        tags = remote_ref_names("tags")
         target = newest_stable_release_tag(tags)
         print(f"Latest stable release tag: {target}", file=sys.stderr)
     else:
-        print("Fetching nixpkgs branches from GitHub…", file=sys.stderr)
-        branches = fetch_all_branches()
+        print("Listing nixpkgs branches…", file=sys.stderr)
+        branches = remote_ref_names("heads")
         target = newest_stable_channel(branches)
         print(f"Latest stable channel: {target}", file=sys.stderr)
 
@@ -174,7 +127,14 @@ def main() -> None:
     update_flake_nix(flake_path, target)
 
     print("Updating flake.lock…", file=sys.stderr)
-    run("nix", "flake", "update", "--update-input", "nixpkgs", cwd=repo_root)
+    nix = shutil.which("nix")
+    if nix is None:
+        raise SystemExit("nix is not available in PATH")
+    try:
+        revision = nix_git_inputs.update_input(nix, "nixpkgs", target, repo_root)
+    except nix_git_inputs.NixGitInputsError as exc:
+        raise SystemExit(f"Updating flake.lock failed: {exc}")
+    print(f"nixpkgs: {target} -> {revision.rev}", file=sys.stderr)
     print("Update complete.", file=sys.stderr)
 
 

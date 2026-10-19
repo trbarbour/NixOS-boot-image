@@ -24,14 +24,21 @@ class RaidResiduePlan:
     sentinel_path: str
 
 
+# ``--run`` and ``--bitmap=none`` keep mdadm from asking questions: mdadm 4.4
+# (nixpkgs 26.05) asks whether to add a write-intent bitmap when ``--bitmap``
+# is omitted, and on the serial console that question waits forever (VM run
+# 2026-10-18T23:06Z).  ``--bitmap=none`` keeps the 25.05 residue layout.
+MDADM_CREATE_RESIDUE = (
+    "mdadm --create /dev/md127 --run --bitmap=none --force --level=1 "
+    "--metadata=1.2 --raid-devices=2 /dev/vdb /dev/vdc"
+)
+
+
 def build_raid_residue_plan() -> RaidResiduePlan:
     """Return the canonical RAID/LVM residue creation and verification plan."""
 
     preseed_commands = [
-        (
-            "mdadm --create /dev/md127 --force --level=1 --metadata=1.2 "
-            "--raid-devices=2 /dev/vdb /dev/vdc"
-        ),
+        MDADM_CREATE_RESIDUE,
         "mdadm --detail /dev/md127",
         "pvcreate /dev/md127",
         "vgcreate vg_residue /dev/md127",
@@ -77,8 +84,7 @@ RAID_LVM_RESIDUE_SCRIPT = dedent(
     """
     set -euo pipefail
 
-    mdadm --create /dev/md127 --force --level=1 --metadata=1.2 \
-      --raid-devices=2 /dev/vdb /dev/vdc
+    {mdadm_create}
     mdadm --detail /dev/md127
 
     pvcreate /dev/md127
@@ -93,7 +99,7 @@ RAID_LVM_RESIDUE_SCRIPT = dedent(
     ls /dev/vg_residue /dev/vg_residue/lv_residue || true
     blkid || true
     """
-)
+).format(mdadm_create=MDADM_CREATE_RESIDUE)
 
 
 __all__ = ["RAID_LVM_RESIDUE_SCRIPT", "RaidResiduePlan", "build_raid_residue_plan"]

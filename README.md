@@ -165,7 +165,11 @@ nix build
 > `flake.nix` and refreshes the `nixpkgs` lock entry to the latest
 > `nixos-YY.MM` channel available on GitHub. To pin to the latest stable
 > release tag instead (for a less frequently moving baseline), run
-> `scripts/update_nixos_stable.py --latest-release`.
+> `scripts/update_nixos_stable.py --latest-release`. It uses git only
+> (`git ls-remote` and a git fetch), not the GitHub API or archive tarballs,
+> so it also works in Claude Code cloud sessions. To move a single input to a
+> given branch or tag, point its `url` in `flake.nix` at that ref and run
+> `scripts/nix_git_inputs.py --update nixpkgs --ref nixos-26.05`.
 
 ### Claude Code cloud sessions
 

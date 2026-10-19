@@ -2,7 +2,7 @@
   description = "Pre-NixOS setup tool";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
@@ -43,7 +43,7 @@
           null;
 
       diskoOverlay = final: _: {
-        disko = disko.packages.${final.system}.disko;
+        disko = disko.packages.${final.stdenv.hostPlatform.system}.disko;
       };
 
       pkgsFor = system:

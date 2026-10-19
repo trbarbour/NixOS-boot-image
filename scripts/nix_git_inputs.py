@@ -21,6 +21,15 @@ them::
 
     scripts/nix_git_inputs.py build .#bootImage --impure   # runs nix
     scripts/nix_git_inputs.py --print                       # shows the args
+
+``nix flake update`` fetches tarballs too, so it fails on such hosts.
+``--update INPUT --ref REF`` updates one root ``github`` input instead: it
+resolves the branch (or tag) with ``git ls-remote``, fetches that revision over
+git to learn its ``narHash`` and ``lastModified``, and rewrites the lock entry
+as an ordinary ``github`` entry (tarball and git fetches of a revision have
+the same ``narHash``, which the verification above already relies on)::
+
+    scripts/nix_git_inputs.py --update nixpkgs --ref nixos-26.05
 """
 from __future__ import annotations
 
@@ -65,6 +74,23 @@ class GithubInput:
     @property
     def git_url(self) -> str:
         return f"git+https://github.com/{self.owner}/{self.repo}?rev={self.rev}&shallow=1"
+
+
+@dataclass(frozen=True)
+class GithubRevision:
+    """A ``github`` input pinned to a branch head, as recorded in ``flake.lock``."""
+
+    owner: str
+    repo: str
+    ref: str
+    rev: str
+    nar_hash: str
+    last_modified: int
+
+    def __post_init__(self) -> None:
+        assert len(self.rev) == 40, f"rev must be a full commit hash: {self.rev!r}"
+        assert self.nar_hash.startswith("sha256-"), self.nar_hash
+        assert self.ref and not self.ref.startswith("refs/"), self.ref
 
 
 def _require(mapping: Mapping[str, Any], key: str, where: str) -> Any:
@@ -198,6 +224,145 @@ def verified_override_args(nix: str, repo_root: Path = REPO_ROOT) -> list[str]:
     return args
 
 
+def updated_lock(
+    lock: Mapping[str, Any], input_name: str, revision: GithubRevision
+) -> dict[str, Any]:
+    """Return a copy of ``lock`` with root input ``input_name`` set to ``revision``.
+
+    Only a root input that is already a ``github`` input of the same
+    repository may be updated; anything else is refused rather than guessed.
+    """
+
+    parse_lock(lock)  # validates the version and structure
+    new = json.loads(json.dumps(lock))
+    nodes = new["nodes"]
+    node_name = _require(nodes[new["root"]].get("inputs", {}), input_name, "root inputs")
+    if not isinstance(node_name, str):
+        raise NixGitInputsError(f"flake.lock: root input {input_name!r} is a follows")
+    node = nodes[node_name]
+    locked = _require(node, "locked", f"nodes.{node_name}")
+    if locked.get("type") != "github" or (locked.get("owner"), locked.get("repo")) != (
+        revision.owner,
+        revision.repo,
+    ):
+        raise NixGitInputsError(
+            f"flake.lock: {input_name!r} is not github:{revision.owner}/{revision.repo}"
+        )
+    node["locked"] = {
+        "lastModified": revision.last_modified,
+        "narHash": revision.nar_hash,
+        "owner": revision.owner,
+        "repo": revision.repo,
+        "rev": revision.rev,
+        "type": "github",
+    }
+    node["original"] = {
+        "owner": revision.owner,
+        "ref": revision.ref,
+        "repo": revision.repo,
+        "type": "github",
+    }
+    assert any(
+        i.node == node_name and i.rev == revision.rev for i in parse_lock(new)
+    ), "updated input not found in the new lock"
+    return new
+
+
+def format_lock(lock: Mapping[str, Any]) -> str:
+    """Serialise a lock as Nix writes it (sorted keys, 2-space indent)."""
+
+    return json.dumps(lock, indent=2, sort_keys=True) + "\n"
+
+
+def ls_remote(url: str, *patterns: str) -> dict[str, str]:
+    """Return ``{ref name: object id}`` from ``git ls-remote url patterns...``."""
+
+    result = subprocess.run(
+        ["git", "ls-remote", url, *patterns], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        raise NixGitInputsError(f"git ls-remote {url} failed:\n{result.stderr}")
+    refs: dict[str, str] = {}
+    for line in result.stdout.splitlines():
+        if line.strip():
+            object_id, name = line.split()
+            refs[name] = object_id
+    return refs
+
+
+def commit_for_ref(refs: Mapping[str, str], ref: str) -> str:
+    """Return the commit that branch or tag ``ref`` names in an ls-remote listing.
+
+    Annotated tags list the tag object and, as ``<tag>^{}``, the commit it
+    points to (nixpkgs release tags are annotated); the commit is what a lock
+    pins.  A name that is both a branch and a tag is refused as ambiguous.
+    """
+
+    branch = refs.get(f"refs/heads/{ref}")
+    tag = refs.get(f"refs/tags/{ref}^{{}}") or refs.get(f"refs/tags/{ref}")
+    if branch and tag:
+        raise NixGitInputsError(f"{ref!r} is both a branch and a tag")
+    commit = branch or tag
+    if commit is None:
+        raise NixGitInputsError(f"no branch or tag named {ref!r}")
+    return commit
+
+
+def fetch_github_revision(nix: str, owner: str, repo: str, ref: str) -> GithubRevision:
+    """Fetch branch or tag ``ref`` over git and describe it for ``flake.lock``."""
+
+    refs = ls_remote(
+        f"https://github.com/{owner}/{repo}",
+        f"refs/heads/{ref}",
+        f"refs/tags/{ref}",
+        f"refs/tags/{ref}^{{}}",
+    )
+    rev = commit_for_ref(refs, ref)
+    url = f"git+https://github.com/{owner}/{repo}?rev={rev}&shallow=1"
+    result = subprocess.run(
+        [nix, "flake", "metadata", "--json", url], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        raise NixGitInputsError(
+            f"nix flake metadata {url} failed (exit {result.returncode}):\n{result.stderr}"
+        )
+    try:
+        locked = json.loads(result.stdout)["locked"]
+        if locked["rev"] != rev:
+            raise NixGitInputsError(f"nix fetched {locked['rev']}, not {rev}")
+        return GithubRevision(
+            owner=owner,
+            repo=repo,
+            ref=ref,
+            rev=locked["rev"],
+            nar_hash=locked["narHash"],
+            last_modified=int(locked["lastModified"]),
+        )
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        raise NixGitInputsError(f"unexpected nix flake metadata output: {exc}") from exc
+
+
+def update_input(nix: str, input_name: str, ref: str, repo_root: Path = REPO_ROOT) -> GithubRevision:
+    """Point root input ``input_name`` at branch or tag ``ref`` in ``flake.lock``."""
+
+    lock_path = repo_root / "flake.lock"
+    lock = json.loads(lock_path.read_text())
+    current = {i.path: i for i in parse_lock(lock)}.get((input_name,))
+    if current is None:
+        raise NixGitInputsError(f"flake.lock: no root github input {input_name!r}")
+    # Nix re-locks an entry whose ref differs from the flake.nix declaration,
+    # which would silently undo this update (Codex review on #312).
+    declared = f"github:{current.owner}/{current.repo}/{ref}"
+    if f'"{declared}"' not in (repo_root / "flake.nix").read_text():
+        raise NixGitInputsError(
+            f"flake.nix does not declare {input_name}.url = \"{declared}\"; "
+            "change it first (scripts/update_nixos_stable.py does both)"
+        )
+    revision = fetch_github_revision(nix, current.owner, current.repo, ref)
+    lock_path.write_text(format_lock(updated_lock(lock, input_name, revision)))
+    return revision
+
+
 def git_inputs_enabled(environ: Mapping[str, str]) -> bool:
     """Interpret ``PRE_NIXOS_NIX_GIT_INPUTS``; reject anything but unset/0/1."""
 
@@ -230,14 +395,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="print the verified override arguments instead of running nix",
     )
+    parser.add_argument(
+        "--update",
+        metavar="INPUT",
+        help="point root github input INPUT at branch or tag --ref in flake.lock",
+    )
+    parser.add_argument("--ref", help="branch or tag for --update (e.g. nixos-26.05)")
     parser.add_argument("nix_args", nargs=argparse.REMAINDER, help="arguments for nix")
     options = parser.parse_args(argv)
+    if (options.update is None) != (options.ref is None):
+        parser.error("--update and --ref must be given together")
     nix_args = options.nix_args[1:] if options.nix_args[:1] == ["--"] else options.nix_args
 
     nix = shutil.which("nix")
     if nix is None:
         print("nix is not available in PATH", file=sys.stderr)
         return 1
+    if options.update is not None:
+        try:
+            revision = update_input(nix, options.update, options.ref)
+        except NixGitInputsError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        print(f"{options.update}: {revision.ref} -> {revision.rev} ({revision.nar_hash})")
+        return 0
     try:
         overrides = verified_override_args(nix)
     except NixGitInputsError as exc:
