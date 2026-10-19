@@ -207,6 +207,11 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
 1. **Requirements:** apply §2's text to `automated-pre-nixos-reqs.md` once approved, and decide the §2.3 auto-apply anomaly. *(R-P1, R-B1, R-S1, R-S2, R-C1, R-T1)*
 2. **Boot-medium protection (§3.1)**, with unit and VM tests. Platform-independent and safety-critical, so it lands first and also benefits x86. *(R-S1)*
 3. **Partition naming and storage classification (§3.5)**, with unit tests. *(R-S2)*
+   - **2026-10-19: done (0.13.0)** except the typed boot-partition kind, which moves to item 8 because it depends on the §3.7 bootloader design.
+     - New `pre_nixos/block_names.py`. `partition_name()` implements the kernel's rule (`p` when the disk name ends in a digit; `block/partitions/core.c:335-338`). `is_emmc_hardware_area()` recognises `mmcblkNbootM`/`mmcblkNgpM`, which are extra block disks of the same chip (`drivers/mmc/core/block.c:2525-2539, 2637-2638`); RPMB is a character device.
+     - Used by the planner (partition names), `enumerate_disks` (eMMC hardware areas are never candidates) and the existing-storage scan (§2.3: only candidate disks count).
+     - Classification needed no change: the user's CM4 `lsblk` shows `ROTA 0` for `mmcblk0` and `nvme0n1`. The no-SSD case was fixed by #313.
+     - Tests: `tests/test_block_names.py` (16).
 4. **Console parameters (§3.6)**, with unit tests. *(R-C1)*
 5. **Build host support (§3.3):** hook and `dev_packages`; E4. *(R-T1)*
 6. **Flake refactor (§3.2) and platform-conditional module (§3.4)**, with the Nix evaluation check. *(R-P1, R-P2)*

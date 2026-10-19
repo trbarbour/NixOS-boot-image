@@ -9,6 +9,7 @@ import subprocess
 import sys
 from typing import Callable, Collection, Iterable, Optional, Sequence
 
+from .block_names import is_emmc_hardware_area
 from .logging_utils import log_event
 
 __all__ = [
@@ -437,6 +438,8 @@ def scan_existing_storage(
         detection_reasons: list[str] = []
         if device.startswith(_IGNORED_DEVICE_PREFIXES):
             skip_reasons.append("ignored_prefix")
+        if is_emmc_hardware_area(os.path.basename(device)):
+            skip_reasons.append("emmc_hardware_area")
         if removable == "1":
             skip_reasons.append("removable_media")
         if boot_disk and resolved == boot_disk:

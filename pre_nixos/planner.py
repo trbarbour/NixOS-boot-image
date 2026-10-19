@@ -5,6 +5,7 @@ import re
 from typing import List, Dict, Any
 
 from .inventory import Disk
+from .block_names import partition_name
 
 # Default logical volume sizes.  Using fixed sizes avoids consuming the entire
 # volume group, leaving room for administrators to create additional volumes as
@@ -94,8 +95,7 @@ def _array_capacity(level: str, sizes: List[int]) -> int:
 
 def _part_name(device: str, part: int) -> str:
     """Return partition name for ``device`` and ``part`` number."""
-    suffix = f"p{part}" if device.startswith("nvme") else str(part)
-    return f"{device}{suffix}"
+    return partition_name(device, part)
 
 
 def group_by_rotational_and_size(disks: List[Disk], tolerance: float = 0.01) -> Dict[str, Any]:
