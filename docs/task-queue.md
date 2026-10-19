@@ -95,7 +95,7 @@ _Last updated: 2026-10-18T17-33-41Z_
       - `tests/vm/test_raid_provisioning.py` passes: SSD plus HDD pair, RAID-1, no bitmap. The new requirement is §2.2 [R-R1], decided by the user, and enforced by patching disko with `--bitmap=none`.
       - Found and fixed #313 on the way: HDD-only plans had no `main`/`slash`.
       - Spike and decisions: `notes/2026-10-19T003559Z-raid-spike.md`.
-      - Remaining: the full VM regression, then a PR (if the user asks).
+      - 2026-10-19T02-03-22Z - The full VM regression at 0.12.1 passes (8 of 8). Remaining: a PR (if the user asks).
 
 12. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
     - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.

@@ -1,0 +1,199 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261015.26f4107 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261015.26f4107 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot//nix/store/l94h0skn99v3fqhvzjcr7cvcz202nabd-linux-6.18.56/bzImage... ok
+Loading /boot//nix/store/ynggxn04i2f37r1idr07cqsiz515lkqr-initrd-linux-6.18.56/initrd...ok
+pre-nixos boot image version 0.12.0
+[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;start=e6dfa15cae574e9d8ec76a29af856222;user=root;hostname=nixos;machineid=e29ec479d67f44cea2c69da7a5deb503;bootid=e0db382cf4cd4348b365e814ccc8e45e;pid=719;pidfdid=720;comm=(agetty);servicename=serial-getty@ttyS0.service;invocationid=aa832d0bb04a4408b7efae554e35c859;type=service\P+q6E616D65\
+<<< Welcome to the pre-nixos auto-install boot image (26.05.20261015.26f4107, x86_64) - ttyS0 >>>
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+(PRE_NIXOS_AUTO_INSTALL=)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372901213__\n'
+
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372901213__\n'
+]3008;start=879e5788930a4552a6786a8e82581585;user=root;hostname=nixos;machineid=e29ec479d67f44cea2c69da7a5deb503;bootid=e0db382cf4cd4348b365e814ccc8e45e;pid=719;pidfdid=720;comm=login;targetuser=nixos;sessionid=2;type=session\pre-nixos boot image version 0.12.0
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> ' SYS
+TEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372901213__\n'
+[?2004l__PROMPT_READY__1792372901213__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792372913305__%s__UID_MARK__1792372913305__\n' "$(id -u)"
+
+[?2004l[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372913407__\n'
+printf '__UID_MARK__1792372913305__%s__UID_MARK__1792372913305__\n' "$(id -u)"
+[?2004lexport PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372913407__\n'
+__UID_MARK__1792372913305__1000__UID_MARK__1792372913305__
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372913407__\n'
+[?2004l__PROMPT_READY__1792372913407__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792372913305__%s__UID_MARK__1792372913305__\n' "$(id -u)"
+sudo -i
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792372913305__%s__UID_MARK__1792372913305__\n' "$(id -u)"
+[?2004lsudo -i
+__UID_MARK__1792372913305__1000__UID_MARK__1792372913305__
+[?2004hPRE-NIXOS> sudo -i
+[?2004lpre-nixos boot image version 0.12.0
+[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372915532__\n'
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792372915532__\n'
+[?2004l__PROMPT_READY__1792372915532__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792372915606__%s__UID_MARK__1792372915606__\n' "$(id -u)"
+printf '__UID_MARK__1792372915606__%s__UID_MARK__1792372915606__\n' "$(id -u)"
+[?2004l__UID_MARK__1792372915606__0__UID_MARK__1792372915606__
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+command -v disko >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v findmnt >/dev/null 2>&1 && echo OK || echo MISSING
+command -v findmnt >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v lsblk >/dev/null 2>&1 && echo OK || echo MISSING
+command -v lsblk >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> command -v wipefs >/dev/null 2>&1 && echo OK || echo MISSING
+command -v wipefs >/dev/null 2>&1 && echo OK || echo MISSING
+[?2004lOK
+[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+LAN IPv4 address: 10.0.2.15
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004lSTATE=applied
+DETAIL=auto-applied
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disabled
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792373019932__%s__UID_MARK__1792373019932__\n' "$(id -u)"
+printf '__UID_MARK__1792373019932__%s__UID_MARK__1792373019932__\n' "$(id -u)"
+[?2004l__UID_MARK__1792373019932__0__UID_MARK__1792373019932__
+[?2004hPRE-NIXOS> vgs --noheadings --separator '|' -o vg_name
+vgs --noheadings --separator '|' -o vg_name
+[?2004l  main
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792373020420__%s__UID_MARK__1792373020420__\n' "$(id -u)"
+printf '__UID_MARK__1792373020420__%s__UID_MARK__1792373020420__\n' "$(id -u)"
+[?2004l__UID_MARK__1792373020420__0__UID_MARK__1792373020420__
+[?2004hPRE-NIXOS> lvs --noheadings --separator '|' -o lv_name,vg_name
+lvs --noheadings --separator '|' -o lv_name,vg_name
+[?2004l  slash|main
+  swap|main
+[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+[?2004l2: lan    inet [1;35m10.0.2.15[0m/24 metric 1024 brd [1;35m10.0.2.255 [0mscope global dynamic lan\       valid_lft 86298sec preferred_lft 86298sec
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004lactivating
+[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+LAN IPv4 address: 10.0.2.15
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004linactive
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+[?2004l2: lan    inet [1;35m10.0.2.15[0m/24 metric 1024 brd [1;35m10.0.2.255 [0mscope global dynamic lan\       valid_lft 86287sec preferred_lft 86287sec
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> dmesg --color=never 2>&1 || dmesg 2>&1 || true
+dmesg --color=never 2>&1 || dmesg 2>&1 || true
+[?2004l[    0.000000] Linux version 6.18.56 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Sun Oct 11 13:26:12 UTC 2026
+[    0.000000] Command line: BOOT_IMAGE=/boot//nix/store/l94h0skn99v3fqhvzjcr7cvcz202nabd-linux-6.18.56/bzImage init=/nix/store/5806cvplkbmxj55vp6cgfrkdj06bl587-nixos-system-nixos-26.05.20261015.26f4107/init console=ttyS0,115200n8 console=tty0 nohibernate root=fstab loglevel=4 lsm=landlock,yama,bpf  initrd=/boot//nix/store/ynggxn04i2f37r1idr07cqsiz515lkqr-initrd-linux-6.18.56/initrd
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000007ffdcfff] usable
+[    0.000000] BIOS-e820: [mem 0x000000007ffdd000-0x000000007fffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 3.0.0 present.
+[    0.000000] DMI: QEMU Ubuntu 24.04 PC v2 (i440FX + PIIX, arch_caps fix, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] tsc: Fast TSC calibration using PIT
+[    0.000000] tsc: Detected 2099.997 MHz processor
+[    0.010778] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.011020] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.011236] last_pfn = 0x7ffdd max_arch_pfn = 0x400000000
+[    0.012134] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[    0.012340] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.032003] found SMP MP-table at [mem 0x000f5470-0x000f547f]
+[    0.037693] RAMDISK: [mem 0x7e340000-0x7ffdcfff]
+[    0.038303] ACPI: Early table checksum verification disabled
+[    0.038809] ACPI: RSDP 0x00000000000F5280 000014 (v00 BOCHS )
+[    0.039136] ACPI: RSDT 0x000000007FFE1CB9 000034 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.039889] ACPI: FACP 0x000000007FFE1B65 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.040599] ACPI: DSDT 0x000000007FFE0040 001B25 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.040680] ACPI: FACS 0x000000007FFE0000 000040
+[    0.040779] ACPI: APIC 0x000000007FFE1BD9 000080 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.040811] ACPI: HPET 0x000000007FFE1C59 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.040834] ACPI: WAET 0x000000007FFE1C91 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.040933] ACPI: Reserving FACP table memory at [mem 0x7ffe1b65-0x7ffe1bd8]
+[    0.040983] ACPI: Reserving DSDT table memory at [mem 0x7ffe0040-0x7ffe1b64]
+[    0.040992] ACPI: Reserving FACS table memory at [mem 0x7ffe0000-0x7ffe003f]
+[    0.040998] ACPI: Reserving APIC table memory at [mem 0x7ffe1bd9-0x7ffe1c58]
+[    0.041003] ACPI: Reserving HPET table memory at [mem 0x7ffe1c59-0x7ffe1c90]
+[    0.041008] ACPI: Reserving WAET table memory at [mem 0x7ffe1c91-0x7ffe1cb8]
+[    0.050092] No NUMA configuration found
+[    0.050127] Faking a node at [mem 0x0000000000000000-0x000000007ffdcfff]
+[    0.051753] NODE_DATA(0) allocated [me
