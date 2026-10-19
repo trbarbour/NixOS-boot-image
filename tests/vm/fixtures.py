@@ -16,12 +16,13 @@ import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Optional, Sequence
 
 import pytest
 
 from scripts.nix_git_inputs import nix_command
-from tests.vm.boot_medium import UsbStick, boot_medium_args, make_usb_stick
+from tests.vm.boot_medium import UsbStick, make_usb_stick
+from tests.vm.machines import Machine, x86_machine
 from tests.vm.qmp import allocate_qmp_socket_path
 from tests.vm.scsi_disks import ScsiDisk, scsi_disk_args
 from tests.vm.metadata import (
@@ -266,19 +267,32 @@ def resolve_iso_path(store_path: Path) -> Path:
     return iso_candidates[0]
 
 
-@pytest.fixture(scope="session")
-def boot_image_build(
+@dataclass(frozen=True)
+class BuiltArtifact:
+    """A boot image store path with the metadata the run records need."""
+
+    store_path: Path
+    deriver: Optional[str]
+    nar_hash: Optional[str]
+    root_key_fingerprint: str
+    build_duration_seconds: float
+
+
+def build_boot_artifact(
     nix_executable: str,
-    boot_ssh_key_pair: SSHKeyPair,
+    attribute: str,
+    key_pair: SSHKeyPair,
     ssh_keygen_executable: str,
-) -> BootImageBuild:
+) -> BuiltArtifact:
+    """``nix build`` a boot image flake attribute with the test root key embedded."""
+
     env = os.environ.copy()
-    env["PRE_NIXOS_ROOT_KEY"] = str(boot_ssh_key_pair.public_key)
+    env["PRE_NIXOS_ROOT_KEY"] = str(key_pair.public_key)
     build_started = time.perf_counter()
     result = subprocess.run(
         nix_command(
             nix_executable,
-            ["build", ".#bootImage", "--impure", "--no-link", "--print-out-paths"],
+            ["build", attribute, "--impure", "--no-link", "--print-out-paths"],
         ),
         cwd=REPO_ROOT,
         check=True,
@@ -289,17 +303,11 @@ def boot_image_build(
     build_duration = time.perf_counter() - build_started
     paths = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if not paths:
-        raise AssertionError("nix build did not return a store path")
+        raise AssertionError(f"nix build {attribute} did not return a store path")
     store_path = Path(paths[-1])
-    iso_path = resolve_iso_path(store_path)
 
     info_proc = subprocess.run(
-        [
-            nix_executable,
-            "path-info",
-            "--json",
-            str(store_path),
-        ],
+        [nix_executable, "path-info", "--json", str(store_path)],
         check=True,
         capture_output=True,
         text=True,
@@ -322,11 +330,7 @@ def boot_image_build(
             nar_hash = entry.get("narHash")
 
     fingerprint_proc = subprocess.run(
-        [
-            ssh_keygen_executable,
-            "-lf",
-            str(boot_ssh_key_pair.public_key),
-        ],
+        [ssh_keygen_executable, "-lf", str(key_pair.public_key)],
         check=True,
         capture_output=True,
         text=True,
@@ -334,15 +338,31 @@ def boot_image_build(
     fingerprint_lines = [
         line.strip() for line in fingerprint_proc.stdout.splitlines() if line.strip()
     ]
-    fingerprint = fingerprint_lines[0] if fingerprint_lines else ""
-
-    return BootImageBuild(
-        iso_path=iso_path,
+    return BuiltArtifact(
         store_path=store_path,
         deriver=deriver,
         nar_hash=nar_hash,
-        root_key_fingerprint=fingerprint,
+        root_key_fingerprint=fingerprint_lines[0] if fingerprint_lines else "",
         build_duration_seconds=build_duration,
+    )
+
+
+@pytest.fixture(scope="session")
+def boot_image_build(
+    nix_executable: str,
+    boot_ssh_key_pair: SSHKeyPair,
+    ssh_keygen_executable: str,
+) -> BootImageBuild:
+    built = build_boot_artifact(
+        nix_executable, ".#bootImage", boot_ssh_key_pair, ssh_keygen_executable
+    )
+    return BootImageBuild(
+        iso_path=resolve_iso_path(built.store_path),
+        store_path=built.store_path,
+        deriver=built.deriver,
+        nar_hash=built.nar_hash,
+        root_key_fingerprint=built.root_key_fingerprint,
+        build_duration_seconds=built.build_duration_seconds,
     )
 
 
@@ -395,16 +415,15 @@ def vm_additional_disks(tmp_path_factory: pytest.TempPathFactory) -> List[Path]:
 def _launch_boot_image_vm(
     *,
     _pexpect: "pexpect",
-    qemu_executable: str,
+    machine: Machine,
     boot_image_build: BootImageBuild,
     vm_disk_image: Optional[Path],
     extra_disks: List[Path],
     ssh_executable: str,
     request: pytest.FixtureRequest,
     log_dir: Optional[Path] = None,
-    usb_stick: Optional[UsbStick] = None,
     scsi_disks: Sequence[ScsiDisk] = (),
-) -> "BootImageVM":
+) -> Iterator["BootImageVM"]:
     from tests.vm.controller import BootImageVM
 
     log_dir = log_dir or _build_run_log_directory()
@@ -429,7 +448,7 @@ def _launch_boot_image_vm(
     )
 
     cmd = [
-        qemu_executable,
+        machine.executable,
         "-m",
         "2048",
         "-smp",
@@ -439,7 +458,7 @@ def _launch_boot_image_vm(
         "-no-reboot",
         "-serial",
         "stdio",
-        *boot_medium_args(boot_image_build.iso_path, usb_stick),
+        *machine.platform_args,
     ]
     if vm_disk_image is not None:
         cmd.extend(["-drive", f"file={vm_disk_image},if=virtio,format=raw"])
@@ -458,7 +477,7 @@ def _launch_boot_image_vm(
             "virtio-net-pci,netdev=net0",
         ]
     )
-    qemu_version = probe_qemu_version(qemu_executable)
+    qemu_version = probe_qemu_version(machine.executable)
     write_boot_image_metadata(
         metadata_path,
         artifact=boot_image_build,
@@ -512,6 +531,7 @@ def _launch_boot_image_vm(
             run_timings=run_timings,
             boot_started_at=boot_started_at,
             qmp_socket=qmp_socket,
+            login_timeout=machine.login_timeout,
         )
         record_run_timings(metadata_path, run_timings=run_timings)
         try:
@@ -595,11 +615,11 @@ def boot_image_vm(
     vm_disk_image_factory: Callable[..., Path],
     ssh_executable: str,
     request: pytest.FixtureRequest,
-) -> "BootImageVM":
+) -> Iterator["BootImageVM"]:
     vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary")
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
-        qemu_executable=qemu_executable,
+        machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
         boot_image_build=boot_image_build,
         vm_disk_image=vm_disk_image,
         extra_disks=[],
@@ -616,7 +636,7 @@ def boot_image_vm_for_hotplug(
     vm_disk_image_factory: Callable[..., Path],
     ssh_executable: str,
     request: pytest.FixtureRequest,
-) -> "BootImageVM":
+) -> Iterator["BootImageVM"]:
     """A VM booted with only its primary disk; attach more via ``hotplug_disk``.
 
     The boot-time ``pre-nixos`` run provisions every disk it can see, so disks
@@ -627,7 +647,7 @@ def boot_image_vm_for_hotplug(
     vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-primary-hotplug")
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
-        qemu_executable=qemu_executable,
+        machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
         boot_image_build=boot_image_build,
         vm_disk_image=vm_disk_image,
         extra_disks=[],
@@ -654,19 +674,20 @@ def boot_image_vm_from_usb_stick(
     vm_disk_image_factory: Callable[..., Path],
     ssh_executable: str,
     request: pytest.FixtureRequest,
-) -> "BootImageVM":
+) -> Iterator["BootImageVM"]:
     """A VM booted from a writable, non-removable USB stick plus one empty disk."""
 
     vm_disk_image = vm_disk_image_factory(prefix="boot-image-disk-usb-target")
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
-        qemu_executable=qemu_executable,
+        machine=x86_machine(
+            qemu_executable, boot_image_build.iso_path, usb_boot_stick, VM_LOGIN_TIMEOUT
+        ),
         boot_image_build=boot_image_build,
         vm_disk_image=vm_disk_image,
         extra_disks=[],
         ssh_executable=ssh_executable,
         request=request,
-        usb_stick=usb_boot_stick,
     )
 
 
@@ -696,12 +717,12 @@ def boot_image_vm_with_raid_disks(
     raid_scsi_disks: List[ScsiDisk],
     ssh_executable: str,
     request: pytest.FixtureRequest,
-) -> "BootImageVM":
+) -> Iterator["BootImageVM"]:
     """A VM whose only disks are ``raid_scsi_disks`` (no virtio disk: those look rotational)."""
 
     yield from _launch_boot_image_vm(
         _pexpect=_pexpect,
-        qemu_executable=qemu_executable,
+        machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
         boot_image_build=boot_image_build,
         vm_disk_image=None,
         extra_disks=[],
@@ -713,6 +734,8 @@ def boot_image_vm_with_raid_disks(
 
 __all__ = [
     "BootImageBuild",
+    "BuiltArtifact",
+    "build_boot_artifact",
     "RunTimings",
     "DEFAULT_LOGIN_TIMEOUT",
     "DEFAULT_LEDGER_PATH",

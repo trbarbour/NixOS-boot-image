@@ -90,6 +90,7 @@ class BootImageVM:
     disk_image: Optional[Path] = None
     boot_started_at: Optional[float] = None
     qmp_socket: Optional[Path] = None
+    login_timeout: int = VM_LOGIN_TIMEOUT
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
     _log_dir: Path = field(init=False, repr=False)
@@ -770,7 +771,7 @@ class BootImageVM:
             *ROOT_PROMPT_PATTERNS,
         ]
         try:
-            idx = self._expect_normalised(login_patterns, timeout=VM_LOGIN_TIMEOUT)
+            idx = self._expect_normalised(login_patterns, timeout=self.login_timeout)
         except pexpect.TIMEOUT as exc:  # pragma: no cover - integration timing
             self._raise_with_transcript(
                 f"Timed out waiting for initial login prompt: {exc}"

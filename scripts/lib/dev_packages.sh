@@ -10,6 +10,7 @@
 #   qemu-user-static                     - building aarch64-linux under binfmt
 #                                          (scripts/lib/aarch64_emulation.sh)
 #   qemu-system-arm                      - booting the AArch64 image (qemu-system-aarch64)
+#   zstd                                 - unpacking the AArch64 SD image (.img.zst)
 #   openssh-client                       - ssh/ssh-keygen used by tests/vm fixtures
 
 DEV_APT_PACKAGES=(
@@ -26,6 +27,7 @@ DEV_APT_PACKAGES=(
   qemu-utils
   qemu-user-static
   qemu-system-arm
+  zstd
   openssh-client
 )
 

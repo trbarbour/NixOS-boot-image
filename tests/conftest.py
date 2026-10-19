@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 import pytest
 
-pytest_plugins = ["tests.vm.fixtures", "tests.storage_stub"]
+pytest_plugins = ["tests.vm.fixtures", "tests.vm.aarch64_fixtures", "tests.storage_stub"]
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
