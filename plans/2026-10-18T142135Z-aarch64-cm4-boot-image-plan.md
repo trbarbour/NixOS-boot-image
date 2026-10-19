@@ -259,6 +259,13 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
      - Options put to the user:
        - **(a') recommended:** (a), but with U-Boot built with `CONFIG_NVME_PCI=y` and `nvme` first in `boot_targets`. This keeps extlinux and boot-time rollback.
        - **(d):** the Pi firmware boots the kernel directly from the NVMe FAT partition, with our own install hook. This has no boot menu.
+   - **2026-10-19: user chose (a'). Software side done (0.18.1).** Design: `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
+     - **E9 passed:** the firmware files match the stock FIRMWARE partition except `u-boot-rpi4.bin`.
+     - **Full VM regression: 12 of 12** (4066 s; ended 2026-10-19 14:52:04Z). It includes `test_aarch64_image_puts_the_pi_boot_chain_on_the_target` and root SSH on AArch64.
+     - **Still open:**
+       - E9b, U-Boot NVMe on the CM4 (the user has the binary);
+       - E9c, the EEPROM reading GPT (item 10);
+       - E9d, the end-to-end install VM test (task queue item 12).
 9. **Boot-order verification (§3.9):** parse and check `BOOT_ORDER`, refuse or warn before installing, and prevent re-provisioning after install; E10–E15. Automated `BOOT_ORDER` changes only after separate approval. *(R-B2)*
 10. **Hardware acceptance on a CM4** (user), recorded in `docs/test-reports/`. It includes the reboot after installation booting the installed system, with the SD card still inserted. *(all)*
 
