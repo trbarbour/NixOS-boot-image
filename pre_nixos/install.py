@@ -296,14 +296,25 @@ def _read_kernel_cmdline_tokens() -> tuple[str, ...]:
         return ()
 
 
+_VIRTUAL_TERMINAL = re.compile(r"tty\d+")
+
+
+def _is_virtual_terminal(console_value: str) -> bool:
+    """``tty0``/``tty1``… are VGA/framebuffer terminals; anything else is serial."""
+
+    return _VIRTUAL_TERMINAL.fullmatch(console_value.split(",", 1)[0]) is not None
+
+
 def _select_console_kernel_params(
     cmdline_tokens: Optional[Sequence[str]] = None,
 ) -> list[str]:
-    """Return installed-system console kernel params.
+    """Return installed-system console kernel params (reqs §3 R-C1).
 
-    Always include both serial and VGA consoles.  If the booted system's final
-    ``console=`` token targets a serial TTY, place serial last so the installed
-    system keeps serial as the primary console; otherwise keep VGA primary.
+    Keep every ``console=`` the booted system used (``ttyS*``, ``ttyAMA*``, …),
+    each at the position of its last occurrence: the kernel's last console is
+    the primary one, so the booted primary stays primary.  Always include both
+    a serial and a VGA console; a missing kind is added in front, so it never
+    becomes primary.
     """
 
     tokens = (
@@ -316,15 +327,17 @@ def _select_console_kernel_params(
         for token in tokens
         if token.startswith("console=") and "=" in token
     ]
-    serial_values = [value for value in console_values if value.startswith("ttyS")]
-    serial_param = (
-        f"console={serial_values[-1]}" if serial_values else _SERIAL_CONSOLE_PARAM
-    )
-
-    serial_selected = bool(console_values) and console_values[-1].startswith("ttyS")
-    if serial_selected:
-        return [_VGA_CONSOLE_PARAM, serial_param]
-    return [serial_param, _VGA_CONSOLE_PARAM]
+    ordered: list[str] = []
+    for value in console_values:
+        if value in ordered:
+            ordered.remove(value)
+        ordered.append(value)
+    params = [f"console={value}" for value in ordered]
+    if not any(_is_virtual_terminal(value) for value in ordered):
+        params.insert(0, _VGA_CONSOLE_PARAM)
+    if all(_is_virtual_terminal(value) for value in ordered):
+        params.insert(0, _SERIAL_CONSOLE_PARAM)
+    return params
 
 
 def _collect_storage_definitions(

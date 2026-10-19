@@ -213,6 +213,13 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
      - Classification needed no change: the user's CM4 `lsblk` shows `ROTA 0` for `mmcblk0` and `nvme0n1`. The no-SSD case was fixed by #313.
      - Tests: `tests/test_block_names.py` (16).
 4. **Console parameters (§3.6)**, with unit tests. *(R-C1)*
+   - **2026-10-19: done (0.14.0).** `install._select_console_kernel_params` keeps every booted `console=`, each at its last occurrence, so the booted primary stays primary.
+     - Serial means anything but `tty<N>`, which covers `ttyAMA*`.
+     - Both kinds are always present; a missing one is added in front.
+     - Fixture: the user's real CM4 command line gives `ttyS0, ttyAMA0, tty0`, as booted. Previously `ttyAMA0` was dropped.
+     - Existing x86 behaviour is unchanged (`tests/test_install.py`).
+     - The GRUB serial lines (x86 only) move to item 8.
+     - Tests: `tests/test_console_params.py`.
 5. **Build host support (§3.3):** hook and `dev_packages`; E4. *(R-T1)*
 6. **Flake refactor (§3.2) and platform-conditional module (§3.4)**, with the Nix evaluation check. *(R-P1, R-P2)*
 7. **AArch64 VM test (§4):** E5 and E6. *(R-S1, §2.6–2.8)*
