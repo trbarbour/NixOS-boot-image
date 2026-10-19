@@ -78,7 +78,7 @@ Requirements: R-B1 (the installed system boots from its own disk) and R-B2 (it b
 | ID | Question | Method | Status |
 |---|---|---|---|
 | E9a | Can stock U-Boot see NVMe? | `make rpi_4_defconfig`, then read `.config` and `rpi.env` | **done: no** (12:32Z) |
-| E9 | Is our firmware directory the stock FIRMWARE partition with only `u-boot-rpi4.bin` changed? | extract the stock SD image's FAT with mtools, then diff | to do |
+| E9 | Is our firmware directory the stock FIRMWARE partition with only `u-boot-rpi4.bin` changed? | extract the stock SD image's FAT with mtools, then diff | **done: yes** (13:41Z). Both have the same 31 files and only `u-boot-rpi4.bin` differs. Ours (sha256 `4adae2cd…281c`, 732152 bytes) contains `boot_targets=nvme mmc usb pxe dhcp` and `nvme_bootdev`; the stock one has neither. The NVMe U-Boot took 17 min to build under emulation (D5: native is acceptable). |
 | E9b | Does our U-Boot see the CM4's NVMe? | **user, hardware:** put our `u-boot-rpi4.bin` on a stock SD card, then at the `U-Boot>` prompt run `pci enum; nvme scan; nvme info; bootflow scan -l` | to do |
 | E9c | Does the EEPROM boot from a GPT disk with a FAT EF00 partition 1? | hardware acceptance (plan item 10) | to do |
 | E9d | Does the installed system boot through extlinux (kernel, initrd, LVM root)? | VM: U-Boot for `qemu_arm64` with an NVMe disk; extlinux on the target's FAT partition | to do |
