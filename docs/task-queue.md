@@ -51,6 +51,10 @@ _Last updated: 2026-10-18T17-33-41Z_
 
 
 6. **Narrow the flake's package source (`src = ./.`).**
+   - 2026-10-19 evidence that this matters:
+     - Committing four new test files during a VM run changed the `pre-nixos` source, and so the whole AArch64 system.
+     - The image and a second evaluation of the system disagreed (`q9m06…` vs `cbcs15…`). The fixture's precondition caught it.
+     - Test-only edits should not change the product image. Rule until fixed: do not commit or edit tracked files while a VM run is evaluating.
    - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
 
 

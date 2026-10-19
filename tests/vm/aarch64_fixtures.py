@@ -29,7 +29,6 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
     from tests.vm.controller import BootImageVM
 
 SD_IMAGE_ATTRIBUTE = ".#packages.aarch64-linux.bootImageSd"
-SYSTEM_ATTRIBUTE = ".#nixosConfigurations.pre-installer-aarch64.config.system.build.toplevel"
 # E5 run6: an image-sized card leaves the first-boot grow nothing to grow
 # into, and disko then ran out of space; real cards are larger.
 SD_CARD_BYTES = 8 * 1024**3
@@ -41,16 +40,29 @@ class Aarch64Build:
     system: Aarch64System
 
 
-def _drv_closure(store_path: Path) -> set[str]:
+def image_system(image_store_path: Path) -> Path:
+    """The system closure *inside* the image, taken from its own derivation.
+
+    A separate evaluation of the system attribute can disagree with the image:
+    the package source is the whole flake (``src = ./.``), so a tree change
+    between two evaluations yields a different system (first run, 2026-10-19:
+    test files committed mid-run).  Deriving it from the image cannot.
+    """
+
     deriver = subprocess.run(
-        ["nix-store", "--query", "--deriver", str(store_path)],
+        ["nix-store", "--query", "--deriver", str(image_store_path)],
         check=True, capture_output=True, text=True,
     ).stdout.strip()
-    return set(
+    closure = subprocess.run(
+        ["nix-store", "--query", "--requisites", deriver],
+        check=True, capture_output=True, text=True,
+    ).stdout.split()
+    systems = [d for d in closure if "-nixos-system-" in d and d.endswith(".drv")]
+    assert len(systems) == 1, systems
+    return Path(
         subprocess.run(
-            ["nix-store", "--query", "--requisites", deriver],
-            check=True, capture_output=True, text=True,
-        ).stdout.split()
+            ["nix-store", "--realise", systems[0]], check=True, capture_output=True, text=True
+        ).stdout.split()[-1]
     )
 
 
@@ -63,15 +75,6 @@ def aarch64_boot_image_build(
     image = build_boot_artifact(
         nix_executable, SD_IMAGE_ATTRIBUTE, boot_ssh_key_pair, ssh_keygen_executable
     )
-    system = build_boot_artifact(
-        nix_executable, SYSTEM_ATTRIBUTE, boot_ssh_key_pair, ssh_keygen_executable
-    )
-    system_drv = subprocess.run(
-        ["nix-store", "--query", "--deriver", str(system.store_path)],
-        check=True, capture_output=True, text=True,
-    ).stdout.strip()
-    # Precondition: the kernel/initrd we boot are the image's own system.
-    assert system_drv in _drv_closure(image.store_path), (system_drv, image.store_path)
     (sd_file,) = sorted((image.store_path / "sd-image").glob("*.img.zst"))
     return Aarch64Build(
         image=BootImageBuild(
@@ -82,7 +85,7 @@ def aarch64_boot_image_build(
             root_key_fingerprint=image.root_key_fingerprint,
             build_duration_seconds=image.build_duration_seconds,
         ),
-        system=Aarch64System(system.store_path),
+        system=Aarch64System(image_system(image.store_path)),
     )
 
 
