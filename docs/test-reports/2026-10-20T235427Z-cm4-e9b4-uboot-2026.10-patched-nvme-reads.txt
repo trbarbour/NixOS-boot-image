@@ -1,0 +1,39 @@
+U-Boot> pci enum; nvme scan
+U-Boot> mw.b 0x1000000 0xa5 0x400
+U-Boot> nvme read 0x1000000 0 2
+
+nvme read: device 0 block # 0, count 2 ... 2 blocks read: OK
+U-Boot> md.b 0x10001f0 0x10
+010001f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 55 aa  ..............U.
+U-Boot> md.b 0x1000200 0x10
+01000200: 45 46 49 20 50 41 52 54 00 00 01 00 5c 00 00 00  EFI PART....\...
+U-Boot> nvme read 0x1000000 0x800 1
+
+nvme read: device 0 block # 2048, count 1 ... 1 blocks read: OK
+U-Boot> md.b 0x1000000 0x10
+01000000: eb 58 90 4d 53 44 4f 53 35 2e 30 00 02 08 fe 1b  .X.MSDOS5.0.....
+U-Boot> part list nvme 0
+
+Partition Map for nvme device 0  --   Partition Type: EFI
+
+Part    Start LBA       End LBA         Name
+        Attributes
+        Type GUID
+        Partition GUID
+  1     0x00000800      0x000827ff      "EFI system partition"
+        attrs:  0x0000000000000000
+        type:   c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+        guid:   d744b214-5937-4589-9224-200a74640dbe
+  2     0x00082800      0x0008a7ff      "Microsoft reserved partition"
+        attrs:  0x0000000000000000
+        type:   e3c9e316-0b5c-4db8-817d-f92df00215ae
+        guid:   8bc5571d-b92e-467c-888b-b9e145a3d940
+  3     0x0008a800      0x3b85a7ff      "Basic data partition"
+        attrs:  0x0000000000000000
+        type:   ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+        guid:   7a378a6d-cb16-432f-9bc5-67f01f4283c6
+  4     0x3b85a800      0x3b9dd7ff      ""
+        attrs:  0x8000000000000001
+        type:   de94bba4-06d1-4d40-a16a-bfd50179d6ac
+        guid:   e7ce5282-2fcb-468c-94bd-61c1ab33080d
+U-Boot> 
