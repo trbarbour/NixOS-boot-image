@@ -1,0 +1,33 @@
+nvme: translate read/write buffers through the controller, not the block device
+
+nvme_blk_rw() translates the I/O buffer with dev_phys_to_bus() on the block
+(namespace) device.  That device has no dma-ranges, so the translation is
+the identity; only the PCI controller (ns->dev->udev) carries the bridge's
+inbound offset.  Admin commands (queues, PRP pool, identify) already use
+the controller and work.
+
+On a Raspberry Pi CM4 the firmware passes pcie0
+  dma-ranges = <0x02000000 0x4 0x0  0x0 0x0  0x2 0x0>
+(PCIe bus 0x4_0000_0000 = CPU 0), so every read DMA'd to an untranslated
+address: "nvme read" reported OK but a buffer pre-filled with 0xa5 was
+unchanged and "part list" found no partition table (E9b-3, 2026-10-20,
+trbarbour/NixOS-boot-image#316).  Not fixed upstream as of main e36b675ebc
+(2026-10-19).
+
+--- a/drivers/nvme/nvme.c
++++ b/drivers/nvme/nvme.c
+@@ -750,7 +750,13 @@
+ 	u64 prp2;
+ 	u64 total_len = blkcnt << desc->log2blksz;
+ 	u64 temp_len = total_len;
+-	uintptr_t dma_addr = dev_phys_to_bus(udev, (uintptr_t)buffer);
++	/*
++	 * Translate through the controller: the block device has no
++	 * dma-ranges, so its translation is the identity, which is wrong
++	 * behind a bridge with an inbound offset (BCM2711: PCIe bus address
++	 * 0x4_0000_0000 is CPU address 0).
++	 */
++	uintptr_t dma_addr = dev_phys_to_bus(dev->udev, (uintptr_t)buffer);
+ 
+ 	u64 slba = blknr;
+ 	u16 lbas = 1 << (dev->max_transfer_shift - ns->lba_shift);

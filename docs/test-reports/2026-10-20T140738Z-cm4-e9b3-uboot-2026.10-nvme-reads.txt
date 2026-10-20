@@ -1,0 +1,63 @@
+U-Boot> pci enum; nvme scan
+U-Boot> mw.b 0x1000000 0xa5 0x400
+U-Boot> nvme read 0x1000000 0 2
+
+nvme read: device 0 block # 0, count 2 ... 2 blocks read: OK
+U-Boot> md.b 0x10001f0 0x10
+010001f0: a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5  ................
+U-Boot> md.b 0x1000200 0x10
+01000200: a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5  ................
+U-Boot> nvme read 0x1000000 0x800 1
+
+nvme read: device 0 block # 2048, count 1 ... 1 blocks read: OK
+U-Boot> md.b 0x1000000 0x10
+01000000: a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5 a5  ................
+U-Boot> part list nvme 0
+## Unknown partition table type 0
+U-Boot> fdt addr $fdtcontroladdr; fdt print /scb/pcie@7d500000 dma-ranges
+Working FDT set to 3af2eb70
+dma-ranges = <0x02000000 0x00000004 0x00000000 0x00000000 0x00000000 0x00000002 0x00000000>
+U-Boot> bdinfo
+boot_params = 0x0000000000000100
+DRAM bank   = 0x0000000000000000
+-> start    = 0x0000000000000000
+-> size     = 0x000000003b400000
+DRAM bank   = 0x0000000000000001
+-> start    = 0x0000000040000000
+-> size     = 0x00000000bc000000
+DRAM bank   = 0x0000000000000002
+-> start    = 0x0000000100000000
+-> size     = 0x0000000080000000
+DRAM bank   = 0x0000000000000003
+-> start    = 0x0000000180000000
+-> size     = 0x0000000080000000
+flashstart  = 0x0000000000000000
+flashsize   = 0x0000000000000000
+flashoffset = 0x0000000000000000
+baudrate    = 115200 bps
+relocaddr   = 0x000000003b341000
+reloc off   = 0x000000003b2c1000
+Build       = 64-bit
+current eth = ethernet@7d580000
+ethaddr     = e4:5f:01:be:04:85
+IP addr     = <NULL>
+fdt_blob    = 0x000000003af2eb70
+Video       = fb inactive
+lmb_dump_all:
+ memory.count = 0x3
+ memory[0]      [0x0-0x3b3fffff], 0x3b400000 bytes, flags: none
+ memory[1]      [0x40000000-0xfbffffff], 0xbc000000 bytes, flags: none
+ memory[2]      [0x100000000-0x1ffffffff], 0x100000000 bytes, flags: none
+ reserved.count = 0x5
+ reserved[0]    [0x0-0xfff], 0x1000 bytes, flags: no-overwrite
+ reserved[1]    [0x39f23000-0x39f2dfff], 0xb000 bytes, flags: no-notify, no-overwrite
+ reserved[2]    [0x39f2eb60-0x3b3fffff], 0x14d14a0 bytes, flags: no-overwrite
+ reserved[3]    [0x40000000-0xfbffffff], 0xbc000000 bytes, flags: no-overwrite
+ reserved[4]    [0x100000000-0x1ffffffff], 0x100000000 bytes, flags: no-overwrite
+devicetree  = board
+arch_number = 0x0000000000000000
+TLB addr    = 0x000000003b3f0000
+irq_sp      = 0x000000003af2eb60
+sp start    = 0x000000003af2eb60
+Early malloc usage: c78 / 2000
+U-Boot> 

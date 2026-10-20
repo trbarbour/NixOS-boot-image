@@ -30,6 +30,8 @@ ubootRaspberryPi4_64bit.overrideAttrs (old: {
   extraConfig = (old.extraConfig or "") + ''
     CONFIG_NVME_PCI=y
   '';
+  # E9b-3 (2026-10-20, #316): reads must be translated like admin commands.
+  patches = (old.patches or [ ]) ++ [ ./patches/uboot-nvme-rw-dma-translation.patch ];
   postPatch = old.postPatch + ''
     substituteInPlace board/raspberrypi/rpi/rpi.env \
       --replace-fail "boot_targets=mmc usb pxe dhcp" "boot_targets=nvme mmc usb pxe dhcp"
