@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from pre_nixos import boot_platform
+from pre_nixos import boot_order, boot_platform
 from pre_nixos.boot_platform import BootSetup, InstalledBoot
 
 
@@ -110,7 +110,15 @@ def test_rpi_refuses_incomplete_firmware(tmp_path: Path) -> None:
         boot_platform.install_boot_files(_rpi(source), tmp_path, is_mount=lambda _: True)
 
 
+def _good_boot_order(monkeypatch) -> None:
+    """The user's CM4 (EEPROM 2022-11-04): NVMe first, NVMe target."""
+
+    monkeypatch.setattr(boot_order, "read_current", lambda: boot_order.Known(0xF2516, "test"))
+    monkeypatch.setattr(boot_order, "_disk_of_mount", lambda path: "nvme0n1")
+
+
 def test_cli_copies_for_a_manual_install(tmp_path: Path, monkeypatch, capsys) -> None:
+    _good_boot_order(monkeypatch)
     source = _firmware(tmp_path)
     root = tmp_path / "mnt"
     (root / "boot").mkdir(parents=True)
@@ -124,9 +132,29 @@ def test_cli_copies_for_a_manual_install(tmp_path: Path, monkeypatch, capsys) ->
 
 
 def test_cli_fails_on_an_unmounted_boot(tmp_path: Path, monkeypatch, capsys) -> None:
+    _good_boot_order(monkeypatch)
     monkeypatch.setenv("PRE_NIXOS_INSTALLED_BOOT", "rpi4-uboot-extlinux")
     monkeypatch.setenv("PRE_NIXOS_RPI_FIRMWARE", str(_firmware(tmp_path)))
     monkeypatch.setattr(boot_platform, "_is_mount", lambda path: False)
 
     assert boot_platform.main(["--root", str(tmp_path / "mnt")]) == 1
     assert "not a mounted filesystem" in capsys.readouterr().err
+
+
+def test_cli_refuses_a_boot_order_that_boots_the_card_first(tmp_path: Path, monkeypatch, capsys) -> None:
+    """R-B2: exit 2, nothing copied; --ignore-boot-order overrides."""
+
+    source = _firmware(tmp_path)
+    root = tmp_path / "mnt"
+    (root / "boot").mkdir(parents=True)
+    monkeypatch.setenv("PRE_NIXOS_INSTALLED_BOOT", "rpi4-uboot-extlinux")
+    monkeypatch.setenv("PRE_NIXOS_RPI_FIRMWARE", str(source))
+    monkeypatch.setattr(boot_platform, "_is_mount", lambda path: path == root / "boot")
+    monkeypatch.setattr(boot_order, "read_current", lambda: boot_order.Known(0xF41, "test"))
+    monkeypatch.setattr(boot_order, "_disk_of_mount", lambda path: "nvme0n1")
+
+    assert boot_platform.main(["--root", str(root)]) == 2
+    assert "BOOT_ORDER=0xf416" in capsys.readouterr().err
+    assert list((root / "boot").iterdir()) == []
+
+    assert boot_platform.main(["--root", str(root), "--ignore-boot-order"]) == 0

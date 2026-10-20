@@ -127,6 +127,13 @@ _Last updated: 2026-10-18T17-33-41Z_
     - The GC before the 0.18.1 regression deleted the NVMe U-Boot just built, which cost 17 minutes to rebuild.
     - Plan: build experiment inputs with `--out-link` under the scratchpad (GC roots), per AGENTS.md "save a copy".
 
+16. **Show auto-install results in the TUI.** *(gap, 2026-10-20, AArch64 item 9)*
+    - The TUI does not read `/run/pre-nixos/auto-install-status`.
+    - A refusal such as `REASON=boot-order` (with `MESSAGE=…`) reaches only the consoles and the status file.
+
+17. **Report a second installer boot after a successful install (AArch64 item 9b).** *(plan §3.9)*
+    - When the installer boots again on a board that already has an installed system, say on serial and in the TUI that the boot order is the likely cause.
+
 ## Recently Completed
 - 2026-10-20T03-08-58Z - Merged trbarbour/NixOS-boot-image#315 (0.18.1). AArch64 plan items 3 to 8:
   - the SD image is the stock installer variant plus pre-nixos;

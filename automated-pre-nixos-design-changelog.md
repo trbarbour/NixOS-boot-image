@@ -109,3 +109,6 @@
   - the Pi firmware with an NVMe-capable U-Boot and extlinux on the shared FAT `/boot`;
   - the platform is declared by the image.
 - This follows finding E9a: stock U-Boot has no NVMe driver.
+
+### v0.23 — 2026-10-20
+- §7.6.1: added the Raspberry Pi `BOOT_ORDER` check (R-B2). Installation is refused unless NVMe boots before SD; the EEPROM is read only.

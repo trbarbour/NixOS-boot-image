@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Mapping, Optional, Sequence
 
+from . import boot_order
+
 INSTALLED_BOOT_ENV = "PRE_NIXOS_INSTALLED_BOOT"
 RPI_FIRMWARE_ENV = "PRE_NIXOS_RPI_FIRMWARE"
 
@@ -145,9 +147,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         description="Copy the declared boot firmware to ROOT/boot (before nixos-install)."
     )
     parser.add_argument("--root", type=Path, default=Path("/mnt"))
+    parser.add_argument(
+        "--ignore-boot-order",
+        action="store_true",
+        help="copy even if the EEPROM BOOT_ORDER would boot the SD card first (R-B2)",
+    )
     args = parser.parse_args(argv)
     try:
         setup = boot_setup_from_environment()
+        if setup.kind is InstalledBoot.RPI4_UBOOT_EXTLINUX and not args.ignore_boot_order:
+            verdict = boot_order.verify_for_install(args.root)
+            if isinstance(verdict, boot_order.Refused):
+                print(boot_order.describe_refusal(verdict), file=sys.stderr)
+                return 2
         copied = install_boot_files(setup, args.root)
     except (OSError, RuntimeError, ValueError) as exc:
         print(f"pre-nixos-install-boot-files: {exc}", file=sys.stderr)
