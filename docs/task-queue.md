@@ -83,8 +83,11 @@ _Last updated: 2026-10-18T17-33-41Z_
      - Install target: NVMe. Refusing to install on a wrong `BOOT_ORDER` is acceptable.
      - **Next:** implement work items 3 to 9 of the plan in order (not started).
    - 2026-10-19:
-     - Items 3 to 7 are done, and PR trbarbour/NixOS-boot-image#315 is open for them.
-     - Item 8 is in progress, with option (a'): an NVMe-capable U-Boot. Design: `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
+     - Items 3 to 8 are done and merged in trbarbour/NixOS-boot-image#315 (0.18.1, 2026-10-20 03:08Z).
+     - **Next:**
+       - E9b: the user runs our U-Boot on the CM4 and reports `nvme info` / `bootflow scan -l`;
+       - item 9: the `BOOT_ORDER` check;
+       - item 10: hardware acceptance.
 
 10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
@@ -125,6 +128,11 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Plan: build experiment inputs with `--out-link` under the scratchpad (GC roots), per AGENTS.md "save a copy".
 
 ## Recently Completed
+- 2026-10-20T03-08-58Z - Merged trbarbour/NixOS-boot-image#315 (0.18.1). AArch64 plan items 3 to 8:
+  - the SD image is the stock installer variant plus pre-nixos;
+  - VM test on `qemu virt`;
+  - installed-system boot through the Pi firmware, an NVMe-capable U-Boot and extlinux.
+  It also has the Codex review fixes (all-or-nothing ledger appends, fixture cleanup in `finally`, emulation-setup errors, AArch64 SSH). Full VM regression 12/12.
 - 2026-10-19T02-13-57Z - Merged trbarbour/NixOS-boot-image#314 (0.12.1). Added the RAID-1 provisioning VM test. RAID arrays are now created with no write-intent bitmap (reqs §2.2 R-R1; disko patched with `--bitmap=none`). Fixed #313 (HDD-only plans had no `main/slash`; the swap-room check compared bytes with GiB). The harness filters console broadcasts out of command output, and pytest keeps only one session's tmp dirs. Full VM regression 8/8. Details: `notes/2026-10-19T003559Z-raid-spike.md`.
 - 2026-10-19T00-19-13Z - Merged trbarbour/NixOS-boot-image#312 (0.11.1). nixpkgs is now 26.05 (`26f4107e47e3`). Pin updates work over git (`nix_git_inputs.py --update`, and `update_nixos_stable.py` via `git ls-remote`). Fixed #311 (disko could not build offline: `makeBinaryWrapper` added to the image) with the closure test `tests/vm/test_disko_offline_closure.py`. The residue test's `mdadm` is now non-interactive. All VM tests pass. Details: `docs/work-notes/2026-10-18T222729Z-nixpkgs-26.05-pin.md`.
 - 2026-10-18T22-18-16Z - Merged trbarbour/NixOS-boot-image#310 (0.10.9): fixed #309 (the USB boot stick was counted as existing storage; the boot disk resolved to `/dev/dev/sda`). Added the USB-stick VM test, the `run_as_root_checked` echo fix, the AArch64 user answers and the requirements. VM-verified.
