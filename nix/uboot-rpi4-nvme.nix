@@ -8,10 +8,25 @@
 #     is already enabled);
 #   - "nvme" first in boot_targets: with the SD card still inserted, boot the
 #     installed system's extlinux.conf, not the card's (R-B2).
+#
+# Version: v2026.10, not nixpkgs' 2026.04.  On a CM4 (E9b, 2026-10-20) 2026.04
+# found the PCIe link but every NVMe probe timed out ("Failed to probe
+# 'nvme#0': err=-110").  2026.04..2026.10 brings the NVMe inbound-address
+# translation fix (09b1c0f98c), the BCM2711 iBAR rework (585d6cfd9b,
+# df883ec51b) and dma-ranges fixes (a383c96892, 53e9c41847).  Pinned by commit:
+# fetched over git (the GitHub tarball API is not reachable from build
+# sessions), and only when this package is built.
 { ubootRaspberryPi4_64bit }:
 
 ubootRaspberryPi4_64bit.overrideAttrs (old: {
   pname = "uboot-rpi_4-nvme";
+  version = "2026.10";
+  src = builtins.fetchGit {
+    url = "https://github.com/u-boot/u-boot";
+    ref = "refs/tags/v2026.10";
+    rev = "5508406582f6f7120dce0c4b3059819a41788db2";
+    shallow = true;
+  };
   extraConfig = (old.extraConfig or "") + ''
     CONFIG_NVME_PCI=y
   '';

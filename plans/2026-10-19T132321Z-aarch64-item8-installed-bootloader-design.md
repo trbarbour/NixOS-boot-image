@@ -79,8 +79,8 @@ Requirements: R-B1 (the installed system boots from its own disk) and R-B2 (it b
 |---|---|---|---|
 | E9a | Can stock U-Boot see NVMe? | `make rpi_4_defconfig`, then read `.config` and `rpi.env` | **done: no** (12:32Z) |
 | E9 | Is our firmware directory the stock FIRMWARE partition with only `u-boot-rpi4.bin` changed? | extract the stock SD image's FAT with mtools, then diff | **done: yes** (13:41Z). Both have the same 31 files and only `u-boot-rpi4.bin` differs. Ours (sha256 `4adae2cd…281c`, 732152 bytes) contains `boot_targets=nvme mmc usb pxe dhcp` and `nvme_bootdev`; the stock one has neither. The NVMe U-Boot took 17 min to build under emulation (D5: native is acceptable). |
-| E9b | Does our U-Boot see the CM4's NVMe? | **user, hardware:** put our `u-boot-rpi4.bin` on a stock SD card, then at the `U-Boot>` prompt run `pci enum; nvme scan; nvme info; bootflow scan -l` | to do |
-| E9c | Does the EEPROM boot from a GPT disk with a FAT EF00 partition 1? | hardware acceptance (plan item 10) | to do |
+| E9b | Does our U-Boot see the CM4's NVMe? | **user, hardware:** put our `u-boot-rpi4.bin` on a stock SD card, then at the `U-Boot>` prompt run `pci enum; nvme scan; nvme info; bootflow scan -l` | **2026-10-20: no, with 2026.04.** The PCIe link comes up (5.0 Gbps x1), but `Failed to probe 'nvme#0': err=-110`: an admin command timed out. Issue trbarbour/NixOS-boot-image#316; log `docs/test-reports/2026-10-20T031705Z-cm4-e9b-uboot-2026.04-nvme-serial.txt`. **Next: E9b-2 with U-Boot v2026.10.** |
+| E9c | Does the EEPROM boot from a GPT disk with a FAT EF00 partition 1? | hardware acceptance (plan item 10) | **2026-10-20: yes, as far as the firmware search.** From the E9b log, the EEPROM read the NVMe GPT, matched the EF00 GUID `c12a7328-…` as its boot partition and read the FAT32 on it. It looked there for the firmware, which that drive does not have. Booting from it is still for item 10. |
 | E9d | Does the installed system boot through extlinux (kernel, initrd, LVM root)? | VM: U-Boot for `qemu_arm64` with an NVMe disk; extlinux on the target's FAT partition | to do |
 
 ## 4. Unknowns
