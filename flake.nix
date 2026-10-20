@@ -91,27 +91,77 @@
           '';
         };
 
-      preInstallerSystem = "x86_64-linux";
-      preInstallerPackage = makePreNixosPackage preInstallerSystem;
-      preInstallerOverlay = _: _: { pre-nixos = preInstallerPackage; };
+      # One definition for every platform's boot image (reqs §2.9 R-P1;
+      # AArch64 plan §3.2): the platform's stock NixOS image plus pre-nixos.
+      mkPreInstaller = { system, imageModules }:
+        let
+          package = makePreNixosPackage system;
+        in
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            ({ ... }: { nixpkgs.overlays = [ diskoOverlay (_: _: { pre-nixos = package; }) ]; })
+            preNixosModule
+          ] ++ imageModules ++ [
+            ({ ... }: { services.pre-nixos.enable = true; })
+          ];
+        };
 
-      preInstallerConfig = nixpkgs.lib.nixosSystem {
+      preInstallerSystem = "x86_64-linux";
+      preInstallerConfig = mkPreInstaller {
         system = preInstallerSystem;
-        modules = [
-          ({ ... }: { nixpkgs.overlays = [ diskoOverlay preInstallerOverlay ]; })
-          preNixosModule
+        imageModules = [
           "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
           "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-          ({ config, ... }: { services.pre-nixos.enable = true; })
         ];
+      };
+      preInstallerPackage = preInstallerConfig.pkgs.pre-nixos;
+
+      # The stock AArch64 SD image (Raspberry Pi 4 family, e.g. CM4), unchanged
+      # apart from pre-nixos (R-P2): Hydra's sd_image job, i.e. the *installer*
+      # variant (installation-device profile: root/nixos console logins without
+      # a password, as on the x86 ISO).  The bare sd-image-aarch64.nix leaves
+      # root locked (E5 run4, 2026-10-19).  Built on x86_64 under binfmt
+      # emulation (R-T1; scripts/lib/aarch64_emulation.sh).
+      aarch64System = "aarch64-linux";
+      stockSdImageModules = [ "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64-installer.nix" ];
+      aarch64Config = mkPreInstaller {
+        system = aarch64System;
+        imageModules = stockSdImageModules ++ [
+          # The x86 ISO gets this from its CD modules; the SD modules set none.
+          ({ lib, ... }: { system.stateVersion = lib.mkDefault lib.trivial.release; })
+          # The installed system boots from NVMe via the Pi firmware and an
+          # NVMe-capable U-Boot (AArch64 plan item 8; R-B1).
+          ({ config, pkgs, ... }: {
+            services.pre-nixos.installedBoot = "rpi4-uboot-extlinux";
+            services.pre-nixos.rpiFirmware = pkgs.callPackage ./nix/rpi4-nvme-firmware.nix {
+              inherit (config.sdImage) populateFirmwareCommands;
+              ubootRpi4Nvme = pkgs.callPackage ./nix/uboot-rpi4-nvme.nix { };
+            };
+          })
+        ];
+      };
+      stockAarch64Config = nixpkgs.lib.nixosSystem {
+        system = aarch64System;
+        modules = stockSdImageModules;
+      };
+
+      # R-P2: pre-nixos must not change the stock image's boot chain or kernel
+      # console parameters.  Evaluation only (no aarch64 build needed).
+      bootSettings = config: {
+        kernelParams = config.boot.kernelParams;
+        grub = config.boot.loader.grub.enable;
+        extlinux = config.boot.loader.generic-extlinux-compatible.enable;
+        firmware = config.sdImage.populateFirmwareCommands;
+        kernel = config.boot.kernelPackages.kernel.version;
       };
     in
     eachDefaultSystem (system:
       let
         pkgs = pkgsFor system;
         preNixosPackage =
-          if system == preInstallerSystem
-          then preInstallerPackage
+          if system == preInstallerSystem then preInstallerPackage
+          else if system == aarch64System then aarch64Config.pkgs.pre-nixos
           else makePreNixosPackage system;
       in {
         packages =
@@ -119,6 +169,12 @@
             default = preInstallerConfig.config.system.build.isoImage;
             bootImage = preInstallerConfig.config.system.build.isoImage;
             pre-nixos = preNixosPackage;
+          } else if system == aarch64System then {
+            default = preNixosPackage;
+            pre-nixos = preNixosPackage;
+            bootImageSd = aarch64Config.config.system.build.sdImage;
+            ubootRpi4Nvme = aarch64Config.pkgs.callPackage ./nix/uboot-rpi4-nvme.nix { };
+            rpi4NvmeFirmware = aarch64Config.config.services.pre-nixos.rpiFirmware;
           } else {
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
@@ -133,12 +189,24 @@
                   preNixosPackage.propagatedBuildInputs;
               missingTools =
                 pkgs.lib.filter (tool: !(pkgs.lib.elem tool propagatedNames)) requiredToolNames;
-              _ =
-                pkgs.lib.assertMsg
-                  (missingTools == [])
-                  "pre-nixos must propagate required tools: ${builtins.toString missingTools}";
             in
+            # `assert` forces the check; a let-bound assertMsg was never
+            # evaluated (verified 2026-10-19: a literal `false` still passed).
+            assert pkgs.lib.assertMsg
+              (missingTools == [])
+              "pre-nixos must propagate required tools: ${builtins.toString missingTools}";
             pkgs.runCommand "pre-nixos-propagates-required-tools" {} ''
+              touch $out
+            '';
+        } // pkgs.lib.optionalAttrs (system == preInstallerSystem) {
+          stock-aarch64-boot-settings =
+            let
+              ours = bootSettings aarch64Config.config;
+              stock = bootSettings stockAarch64Config.config;
+            in
+            assert pkgs.lib.assertMsg (ours == stock)
+              "pre-nixos changes the stock AArch64 boot settings (R-P2): ours=${builtins.toJSON ours} stock=${builtins.toJSON stock}";
+            pkgs.runCommand "stock-aarch64-boot-settings" {} ''
               touch $out
             '';
         };
@@ -169,5 +237,6 @@
       }) // {
       nixosModules.pre-nixos = preNixosModule;
       nixosConfigurations.pre-installer = preInstallerConfig;
+      nixosConfigurations.pre-installer-aarch64 = aarch64Config;
     };
 }

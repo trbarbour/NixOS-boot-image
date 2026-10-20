@@ -565,3 +565,99 @@ def test_inject_configuration_uses_serial_last_when_serial_is_primary(tmp_path) 
     )
     content = (root / "etc/nixos/configuration.nix").read_text()
     assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content
+
+
+def _fake_install_run(root: Path, commands: list[list[str]]):
+    def fake_run(cmd, check=False):
+        commands.append(cmd)
+
+        class Result:
+            returncode = 0
+
+        if cmd[0] == "nixos-generate-config":
+            config_dir = root / "etc/nixos"
+            config_dir.mkdir(parents=True, exist_ok=True)
+            (config_dir / "configuration.nix").write_text("{\n}\n", encoding="utf-8")
+        if cmd[0] == "nixos-install":
+            # The firmware is on /boot before nixos-install writes extlinux.conf.
+            assert (root / "boot" / "u-boot-rpi4.bin").read_bytes() == b"uboot-nvme"
+        return Result()
+
+    return fake_run
+
+
+def _rpi_environment(tmp_path: Path, monkeypatch) -> Path:
+    firmware = tmp_path / "firmware"
+    firmware.mkdir()
+    for name, data in {
+        "config.txt": b"[pi4]\nkernel=u-boot-rpi4.bin\n",
+        "start4.elf": b"start4",
+        "u-boot-rpi4.bin": b"uboot-nvme",
+    }.items():
+        (firmware / name).write_bytes(data)
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setenv("PRE_NIXOS_INSTALLED_BOOT", "rpi4-uboot-extlinux")
+    monkeypatch.setenv("PRE_NIXOS_RPI_FIRMWARE", str(firmware))
+    monkeypatch.setattr(install, "_request_reboot", lambda: False)
+    return firmware
+
+
+def test_auto_install_rpi_puts_firmware_on_boot_and_enables_extlinux(
+    tmp_path, monkeypatch, broadcast_messages
+):
+    """AArch64 plan item 8 (R-B1): Pi firmware + U-Boot on /boot, extlinux loader."""
+
+    root = tmp_path / "mnt"
+    (root / "boot").mkdir(parents=True)
+    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
+    _rpi_environment(tmp_path, monkeypatch)
+    monkeypatch.setattr(install.boot_platform, "_is_mount", lambda path: path == root / "boot")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands))
+
+    result = install.auto_install(
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+    )
+
+    assert result.status == "success", result
+    assert [cmd[0] for cmd in commands] == ["nixos-generate-config", "nixos-install"]
+    content = (root / "etc/nixos/configuration.nix").read_text()
+    assert "  boot.loader.grub.enable = false;" in content
+    assert "  boot.loader.generic-extlinux-compatible.enable = true;" in content
+    assert "grub.extraConfig" not in content
+
+
+def test_auto_install_rpi_fails_before_nixos_install_without_mounted_boot(
+    tmp_path, monkeypatch, broadcast_messages
+):
+    root = tmp_path / "mnt"
+    (root / "boot").mkdir(parents=True)
+    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
+    _rpi_environment(tmp_path, monkeypatch)
+    monkeypatch.setattr(install.boot_platform, "_is_mount", lambda path: False)
+    commands: list[list[str]] = []
+    monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands))
+
+    result = install.auto_install(
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+    )
+
+    assert (result.status, result.reason) == ("failed", "boot-files")
+    assert [cmd[0] for cmd in commands] == ["nixos-generate-config"]
+
+
+def test_auto_install_rejects_an_unknown_installed_boot(tmp_path, monkeypatch, broadcast_messages):
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setenv("PRE_NIXOS_INSTALLED_BOOT", "uefi-shim")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(install.subprocess, "run", _fake_install_run(tmp_path / "mnt", commands))
+
+    result = install.auto_install(
+        _make_lan(tmp_path),
+        _sample_storage_plan(),
+        root_path=tmp_path / "mnt",
+        status_dir=tmp_path / "status",
+    )
+
+    assert (result.status, result.reason) == ("failed", "installed-boot-config")
+    assert commands == []

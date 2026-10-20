@@ -1,0 +1,77 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/nazs0112fybv7mwadcz0wyb7zf6h6rr9-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/zcmnhf7lnfs2l710lacxs3p68hl573wc-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso/iso/nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso",
+    "nar_hash": "sha256-Ycd1P6CDPNPgXgQdQhCZW/Kq+Pfa94AY3eHJohzlt3c=",
+    "root_key_fingerprint": "256 SHA256:ECzH9KpbakSAvdC+8rGVos7j7fEBEpAIzvdI/c5lXAQ boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/zcmnhf7lnfs2l710lacxs3p68hl573wc-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-10-19T144148Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-10-19T14:41:48.082795+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-10-19T144148Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-10-19T144148Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-serial",
+      "stdio",
+      "-boot",
+      "d",
+      "-cdrom",
+      "/nix/store/zcmnhf7lnfs2l710lacxs3p68hl573wc-nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso/iso/nixos-minimal-26.05.20261015.26f4107-x86_64-linux.iso",
+      "-device",
+      "virtio-scsi-pci,id=scsi0",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-13/boot-image-raid-ssd0/disk.img,if=none,id=scsidisk0,format=raw",
+      "-device",
+      "scsi-hd,bus=scsi0.0,drive=scsidisk0,rotation_rate=1,serial=ssd,scsi-id=0",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-13/boot-image-raid-hdda0/disk.img,if=none,id=scsidisk1,format=raw",
+      "-device",
+      "scsi-hd,bus=scsi0.0,drive=scsidisk1,rotation_rate=7200,serial=hdda,scsi-id=1",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-13/boot-image-raid-hddb0/disk.img,if=none,id=scsidisk2,format=raw",
+      "-device",
+      "scsi-hd,bus=scsi0.0,drive=scsidisk2,rotation_rate=7200,serial=hddb,scsi-id=2",
+      "-qmp",
+      "unix:/tmp/qmp-q9nf8pkh/qmp.sock,server=on,wait=off",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:57559-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": null,
+    "extra_disks": [
+      "/tmp/pytest-of-root/pytest-13/boot-image-raid-ssd0/disk.img",
+      "/tmp/pytest-of-root/pytest-13/boot-image-raid-hdda0/disk.img",
+      "/tmp/pytest-of-root/pytest-13/boot-image-raid-hddb0/disk.img"
+    ],
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 57559
+  },
+  "timings": {
+    "boot_to_login_seconds": 152.068,
+    "build_seconds": 237.56,
+    "end": "2026-10-19T14:47:14.851516+00:00",
+    "start": "2026-10-19T14:41:48.066716+00:00",
+    "total_seconds": 326.764
+  }
+}

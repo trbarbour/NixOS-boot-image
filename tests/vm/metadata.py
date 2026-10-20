@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -229,8 +230,31 @@ def append_run_ledger_entry(
     if not ledger_path.is_absolute():  # pragma: no cover - defensive fallback
         ledger_path = (REPO_ROOT / ledger_path).resolve()
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    with ledger_path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry, sort_keys=True) + "\n")
+    _append_line(ledger_path, json.dumps(entry, sort_keys=True) + "\n")
+
+
+def _append_line(path: Path, line: str) -> None:
+    """Append ``line`` whole, or leave ``path`` as it was and raise.
+
+    A plain buffered append that hits ENOSPC leaves a partial line, and the
+    next entry is then glued onto it: ledger lines 42 and 47 (runs
+    2026-10-19T011942Z and T055002Z, OSError 28 in their harness logs).
+    """
+
+    assert line.endswith("\n") and "\n" not in line[:-1], "one JSONL line"
+    data = line.encode("utf-8")
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+    try:
+        original_size = os.fstat(fd).st_size
+        try:
+            written = 0
+            while written < len(data):
+                written += os.write(fd, data[written:])
+        except BaseException:
+            os.ftruncate(fd, original_size)
+            raise
+    finally:
+        os.close(fd)
 
 
 __all__ = [

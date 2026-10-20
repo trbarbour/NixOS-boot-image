@@ -1,7 +1,7 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.21
-**Date:** 2025-12-13 (UTC)
+**Doc status:** Draft v0.22
+**Date:** 2026-10-19 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
@@ -113,6 +113,17 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 
 ### 7.6 UEFI bootloader
 - Install **systemd-boot** into ESP by default. Fallback to GRUB-UEFI if firmware quirks detected.
+
+### 7.6.1 AArch64 (Raspberry Pi 4 / CM4) installed bootloader [R-B1, R-B2]
+- **Chain:** EEPROM (`BOOT_ORDER`, NVMe first) → stock `start4.elf`/`config.txt` → **NVMe-capable U-Boot** → `bootflow scan` (`nvme` first) → `/boot/extlinux/extlinux.conf` → NixOS kernel/initrd (md + LVM root).
+- **Why a modified U-Boot:** nixpkgs' `ubootRaspberryPi4_64bit` has no NVMe driver and scans `mmc` first, so it would boot the SD card. Ours (`nix/uboot-rpi4-nvme.nix`) adds only `CONFIG_NVME_PCI=y` and puts `nvme` first in `boot_targets`.
+- **Layout:** unchanged from x86. Partition 1 is a 1 GiB vfat (EF00) on `/boot`, and it holds the firmware files beside `extlinux/` and `nixos/`.
+- **Firmware files:** built by `nix/rpi4-nvme-firmware.nix`, which runs the stock `sdImage.populateFirmwareCommands` and then swaps in our U-Boot.
+  - pre-nixos copies them to `/mnt/boot` after disko and before `nixos-install`.
+  - For a manual install, run `pre-nixos-install-boot-files`.
+- **Loader:** the managed block sets `boot.loader.grub.enable = false` and `generic-extlinux-compatible.enable = true`. The GRUB serial lines are x86 only.
+- **Platform input:** declared by the image (`services.pre-nixos.installedBoot`, exported as `PRE_NIXOS_INSTALLED_BOOT`), not detected at run time.
+- **Design debate:** `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
 
 ### 7.7 NIC identification & rename to `lan`
 - Detect interfaces with carrier=1 via `/sys/class/net/*/carrier`.

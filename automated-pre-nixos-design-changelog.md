@@ -103,3 +103,9 @@
 ### v0.21 — 2025-12-13
 - Clarified that storage cleanup now deletes LVM metadata (lvremove/vgremove/
   pvremove) before zeroing md superblocks and wiping residual signatures.
+
+### v0.22 — 2026-10-19
+- Added §7.6.1, the AArch64 (Pi 4 / CM4) installed bootloader:
+  - the Pi firmware with an NVMe-capable U-Boot and extlinux on the shared FAT `/boot`;
+  - the platform is declared by the image.
+- This follows finding E9a: stock U-Boot has no NVMe driver.

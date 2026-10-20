@@ -189,8 +189,8 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
 | E2 | Can this x86_64 host build AArch64? | binfmt + `qemu-aarch64-static` (`F` flag), trivial derivation | **Yes**, 14 s |
 | E3 | How much of the image must be built locally? | `nix build --dry-run` | **44 small derivations; 643 paths substituted** |
 | E4 | Full SD image build time under emulation | build `bootImageSd` once and keep the store path for reuse | to do; not run alongside the VM suite (CPU contention) |
-| E5 | Can `qemu-system-aarch64 -M virt` (TCG) boot the image's system directly, and how fast is boot→login? | spike, then timeout calibration | to do |
-| E6 | What does `nixos-generate-config` emit on a non-EFI AArch64 system? (The installer builds on its output.) | run it inside the E5 VM | to do |
+| E5 | Can `qemu-system-aarch64 -M virt` (TCG) boot the image's system directly, and how fast is boot→login? | spike, then timeout calibration | **Yes**, with a direct kernel boot. Boot to root login takes 234 s; pre-nixos finishes in about 647 s. Needs `systemd.default_device_timeout_sec`, an 8G virtual card and an embedded key. See `notes/2026-10-19T031843Z-aarch64-e5-spike.md`. Along the way it found and fixed: the locked root on the bare SD base, and `mtdblock0` planned as an SSD. |
+| E6 | What does `nixos-generate-config` emit on a non-EFI AArch64 system? (The installer builds on its output.) | run it inside the E5 VM | **Done**: a normal hardware configuration (root `/dev/mapper/main-slash`, `/boot` vfat by UUID, swap, `hostPlatform = aarch64-linux`). In the VM it imports `qemu-guest.nix`. |
 | E7 | CM4 facts: block devices and flags (`lsblk -o NAME,RM,ROTA,TYPE,SIZE,MODEL`), `/proc/cmdline`, which UART is live | **user runs these** on a CM4 booted from the stock image | **Done** (§8.1) |
 | E8 | NIC name on a CM4 (`ip -br link`) | as E7 | **Done**: `end0`, plus `wlan0` (§8.1) |
 | E9 | Can the installer fill a firmware partition reproducibly from `populateFirmwareCommands`? | build a firmware-partition derivation and compare its files with the stock image's FIRMWARE partition | to do |
@@ -207,11 +207,65 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
 1. **Requirements:** apply §2's text to `automated-pre-nixos-reqs.md` once approved, and decide the §2.3 auto-apply anomaly. *(R-P1, R-B1, R-S1, R-S2, R-C1, R-T1)*
 2. **Boot-medium protection (§3.1)**, with unit and VM tests. Platform-independent and safety-critical, so it lands first and also benefits x86. *(R-S1)*
 3. **Partition naming and storage classification (§3.5)**, with unit tests. *(R-S2)*
+   - **2026-10-19: done (0.13.0)** except the typed boot-partition kind, which moves to item 8 because it depends on the §3.7 bootloader design.
+     - New `pre_nixos/block_names.py`. `partition_name()` implements the kernel's rule (`p` when the disk name ends in a digit; `block/partitions/core.c:335-338`). `is_emmc_hardware_area()` recognises `mmcblkNbootM`/`mmcblkNgpM`, which are extra block disks of the same chip (`drivers/mmc/core/block.c:2525-2539, 2637-2638`); RPMB is a character device.
+     - Used by the planner (partition names), `enumerate_disks` (eMMC hardware areas are never candidates) and the existing-storage scan (§2.3: only candidate disks count).
+     - Classification needed no change: the user's CM4 `lsblk` shows `ROTA 0` for `mmcblk0` and `nvme0n1`. The no-SSD case was fixed by #313.
+     - Tests: `tests/test_block_names.py` (16).
 4. **Console parameters (§3.6)**, with unit tests. *(R-C1)*
+   - **2026-10-19: done (0.14.0).** `install._select_console_kernel_params` keeps every booted `console=`, each at its last occurrence, so the booted primary stays primary.
+     - Serial means anything but `tty<N>`, which covers `ttyAMA*`.
+     - Both kinds are always present; a missing one is added in front.
+     - Fixture: the user's real CM4 command line gives `ttyS0, ttyAMA0, tty0`, as booted. Previously `ttyAMA0` was dropped.
+     - Existing x86 behaviour is unchanged (`tests/test_install.py`).
+     - The GRUB serial lines (x86 only) move to item 8.
+     - Tests: `tests/test_console_params.py`.
 5. **Build host support (§3.3):** hook and `dev_packages`; E4. *(R-T1)*
+   - **2026-10-19: done (0.15.0), except E4**, which builds the real SD image after item 6.
+     - New `scripts/lib/aarch64_emulation.sh`, called by the SessionStart hook; a failure only warns.
+     - It mounts `binfmt_misc` if needed and registers the packaged qemu-aarch64 rule pointed at `/usr/bin/qemu-aarch64-static` with flag `F`, replacing a different rule. The packaged `-P` wrapper does not exist inside the Nix sandbox.
+     - It adds `extra-extra-platforms = aarch64-linux` to `/etc/nix/nix.custom.conf`. The doubled `extra-` appends; plain `extra-platforms` replaced Nix's default list (observed).
+     - `qemu-user-static` is added to `DEV_APT_PACKAGES`.
+     - Verified on this host: the rule shows `interpreter /usr/bin/qemu-aarch64-static` and `flags: F`; a `runCommand` for `aarch64-linux` built in 4 s and reported `uname -m` = `aarch64`; a second run changed nothing.
+     - Tests: `tests/test_aarch64_emulation.py` (4), against temporary stand-ins for `/proc/sys/fs/binfmt_misc` and `nix.custom.conf`.
 6. **Flake refactor (§3.2) and platform-conditional module (§3.4)**, with the Nix evaluation check. *(R-P1, R-P2)*
+   - **2026-10-19: done (0.16.0).**
+     - **Correction (0.16.1, E5 run4):** the base must be `sd-image-aarch64-installer.nix`, not `sd-image-aarch64.nix`. The installer variant is Hydra's `sd_image` job (`nixos/release.nix`), i.e. the stock image the user tested, and it adds `profiles/installation-device.nix`. The bare module left root **locked** (`initialHashedPassword = null`), so serial root login, required by reqs §2.7, was impossible. The installer variant gives root and `nixos` empty passwords, as on the x86 ISO. Boot settings are identical in both variants (the R-P2 check derivation is unchanged).
+     - `mkPreInstaller { system, imageModules }` builds both configurations. New outputs: `nixosConfigurations.pre-installer-aarch64` and `packages.aarch64-linux.bootImageSd`. The AArch64 configuration sets `stateVersion` as the x86 installer modules do.
+     - The module's `boot.kernelParams`, GRUB serial lines and memtest86 are now under `lib.mkIf pkgs.stdenv.hostPlatform.isx86`. The x86 values are byte-identical to before (compared by evaluation).
+     - New check `checks.x86_64-linux.stock-aarch64-boot-settings` compares ours with stock: kernel parameters, GRUB and extlinux enablement, firmware commands, kernel version. It passes, and it **fails** when an extra kernel parameter is injected (verified).
+     - Found and fixed: the existing check `pre-nixos-propagates-required-tools` never ran its assertion, because it was let-bound and lazy; a literal `false` still passed. It is now forced with `assert`.
+     - **E4 done:** the SD image built under emulation in 754 s (2026-10-19 02:28:04Z to 02:40:38Z, at 0.15.0): `/nix/store/24ywhnjh…-nixos-image-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst`. (An earlier version of this line guessed the start as "about 02:40Z"; the real start is from `date -u`.)
 7. **AArch64 VM test (§4):** E5 and E6. *(R-S1, §2.6–2.8)*
+   - **2026-10-19: done (0.17.1).** `tests/vm/test_aarch64_boot.py` (3 tests) uses the fixtures in `tests/vm/aarch64_fixtures.py` and the typed `Machine` in `tests/vm/machines.py`.
+     - It does a direct kernel boot of the image's own system closure on `qemu-system-aarch64 -M virt`.
+     - It asserts: the stock kernel parameters (R-P2); auto-applied provisioning with `main/slash` on the target, with the SD card untouched (R-S1); and `lan` with IPv4 (§2.6).
+     - **The full VM regression passes 11 of 11 in one run** (2907 s; ended 2026-10-19 06:58:42Z).
+     - Product faults found and fixed on the way:
+       - root was locked on the bare SD base (fix: the installer variant);
+       - QEMU's `mtdblock0` was planned as an SSD (fix: one non-candidate device list);
+       - the stale `test_multiple_hdd…` expectation and #313 (earlier).
+     - Spike record: `notes/2026-10-19T031843Z-aarch64-e5-spike.md`.
 8. **Installed-system bootloader (§3.7):** once the user has answered §3.7; E9. *(R-B1)*
+   - **2026-10-19: user chose option (a).**
+   - **2026-10-19 12:32Z, finding E9a: the stock U-Boot cannot boot from NVMe.** So option (a) as written cannot work for an NVMe target.
+     - Evidence: nixpkgs builds `ubootRaspberryPi4_64bit` (2026.04) from plain `rpi_4_defconfig` with no `extraConfig`.
+     - Experiment: `make rpi_4_defconfig` on that source tarball gives `# CONFIG_NVME is not set` and `# CONFIG_NVME_PCI is not set`, although `CONFIG_PCI_BRCMSTB=y` is set.
+     - `board/raspberrypi/rpi/rpi.env` sets `boot_targets=mmc usb pxe dhcp`, and the boot command is `bootflow scan`.
+     - Consequences:
+       - stock U-Boot loaded from NVMe would not see the NVMe disk;
+       - with the SD card inserted, it would boot the SD card's `extlinux.conf`, against R-B2.
+     - `boot.loader.raspberryPi` was removed from nixpkgs (rename.nix, PR 241534).
+     - Options put to the user:
+       - **(a') recommended:** (a), but with U-Boot built with `CONFIG_NVME_PCI=y` and `nvme` first in `boot_targets`. This keeps extlinux and boot-time rollback.
+       - **(d):** the Pi firmware boots the kernel directly from the NVMe FAT partition, with our own install hook. This has no boot menu.
+   - **2026-10-19: user chose (a'). Software side done (0.18.1).** Design: `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
+     - **E9 passed:** the firmware files match the stock FIRMWARE partition except `u-boot-rpi4.bin`.
+     - **Full VM regression: 12 of 12** (4066 s; ended 2026-10-19 14:52:04Z). It includes `test_aarch64_image_puts_the_pi_boot_chain_on_the_target` and root SSH on AArch64.
+     - **Still open:**
+       - E9b, U-Boot NVMe on the CM4 (the user has the binary);
+       - E9c, the EEPROM reading GPT (item 10);
+       - E9d, the end-to-end install VM test (task queue item 12).
 9. **Boot-order verification (§3.9):** parse and check `BOOT_ORDER`, refuse or warn before installing, and prevent re-provisioning after install; E10–E15. Automated `BOOT_ORDER` changes only after separate approval. *(R-B2)*
 10. **Hardware acceptance on a CM4** (user), recorded in `docs/test-reports/`. It includes the reboot after installation booting the installed system, with the SD card still inserted. *(all)*
 

@@ -51,6 +51,13 @@ let
   }
   // lib.optionalAttrs (autoInstallFlag != "") {
     PRE_NIXOS_AUTO_INSTALL = autoInstallFlag;
+  }
+  # How the installed system boots (AArch64 plan item 8, design D4; R-B1).
+  // {
+    PRE_NIXOS_INSTALLED_BOOT = cfg.installedBoot;
+  }
+  // lib.optionalAttrs (cfg.rpiFirmware != null) {
+    PRE_NIXOS_RPI_FIRMWARE = "${cfg.rpiFirmware}";
   };
   preNixosServiceEnv = preNixosExecEnv // {
     NIX_PATH = "nixpkgs=${pkgs.path}";
@@ -59,8 +66,27 @@ let
   preNixosServiceScript = import ./pre-nixos/service-script.nix { inherit pkgs; };
 in {
   options.services.pre-nixos.enable = lib.mkEnableOption "run pre-nixos planning tool";
+  options.services.pre-nixos.installedBoot = lib.mkOption {
+    type = lib.types.enum [ "nixos-default" "rpi4-uboot-extlinux" ];
+    default = "nixos-default";
+    description = ''
+      How the installed system boots.  "nixos-default" leaves the loader to
+      nixos-generate-config (the x86 ISO).  "rpi4-uboot-extlinux" puts the Pi
+      firmware and an NVMe-capable U-Boot on the target's FAT /boot and enables
+      generic-extlinux-compatible (Raspberry Pi 4 / CM4; AArch64 plan item 8).
+    '';
+  };
+  options.services.pre-nixos.rpiFirmware = lib.mkOption {
+    type = lib.types.nullOr lib.types.package;
+    default = null;
+    description = "Files copied to the target's /boot for rpi4-uboot-extlinux.";
+  };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf cfg.enable (lib.mkMerge [ {
+    assertions = [ {
+      assertion = (cfg.installedBoot == "rpi4-uboot-extlinux") == (cfg.rpiFirmware != null);
+      message = "services.pre-nixos.rpiFirmware is required by, and only used with, installedBoot = \"rpi4-uboot-extlinux\".";
+    } ];
     environment.systemPackages = [
       pkgs.pre-nixos
       pkgs.disko
@@ -99,13 +125,6 @@ in {
     # stdenvNoCC.  Ship the hook itself (its closure carries the C compiler it
     # needs).  Guarded by tests/vm/test_disko_offline_closure.py.
     system.extraDependencies = [ pkgs.makeBinaryWrapper ];
-    boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
-    boot.loader.grub.memtest86.enable = true;
-    boot.loader.grub.extraConfig = ''
-      serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
-      terminal_input serial console
-      terminal_output serial console
-    '';
     systemd.services.pre-nixos = {
       description = "Pre-NixOS setup";
       wantedBy = [ "multi-user.target" ];
@@ -138,5 +157,18 @@ in {
     systemd.services.sshd.after = [ "pre-nixos.service" ];
     systemd.services.sshd.serviceConfig.ExecStart =
       lib.mkForce "${pkgs.openssh}/bin/sshd -D -e -f /etc/ssh/sshd_config";
-  };
+  }
+  # The ISO's boot chain and console settings.  On AArch64 the stock SD image's
+  # boot chain and kernel console parameters stay untouched (reqs §2.9 R-P2;
+  # AArch64 plan §3.4), checked by the flake check stock-aarch64-boot-settings.
+  (lib.mkIf pkgs.stdenv.hostPlatform.isx86 {
+    boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
+    boot.loader.grub.memtest86.enable = true;
+    boot.loader.grub.extraConfig = ''
+      serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
+      terminal_input serial console
+      terminal_output serial console
+    '';
+  })
+  ]);
 }
