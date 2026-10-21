@@ -199,6 +199,7 @@
               && fails (siteLib.validateSite "t" { rootKey = ./tests/fixtures/no-such.pub; })
               && fails (siteLib.validateSite "t" { autoInstall = "yes"; })
               && fails (formatOf "dvd")
+              && fails (siteLib.readSite ./tests/fixtures)
               && fails (siteLib.resolveSettings { site = siteLib.validateSite "t" { }; env = noEnv // { autoInstall = "maybe"; }; })
               && !(fails (siteLib.validateSite "t" { })))
             "site validation accepted an invalid setting or rejected an empty site";
@@ -251,6 +252,10 @@
           if system == preInstallerSystem then {
             default = preInstallerConfig.config.system.build.isoImage;
             bootImage = preInstallerConfig.config.system.build.isoImage;
+            # The AArch64 image again, so `nix build .#bootImageSd` works on an
+            # x86_64 build host (built under emulation); short attribute names
+            # resolve within the host's own system (PR #319 review).
+            bootImageSd = aarch64Config.config.system.build.sdImage;
             pre-nixos = preNixosPackage;
           } else if system == aarch64System then {
             default = preNixosPackage;

@@ -42,10 +42,13 @@ rec {
     else
       { inherit rootKey autoInstall; };
 
-  # A site directory (the repo's own empty default when it has no file).
+  # A site directory.  Its settings file is required, so a mistyped override
+  # or an incomplete site fails instead of silently building an image with no
+  # key (PR #319 review); the repo's default site has an explicit `{ }`.
   readSite = dir:
     let file = dir + "/${siteFileName}"; in
-    validateSite (toString file) (if builtins.pathExists file then import file else { });
+    if builtins.pathExists file then validateSite (toString file) (import file)
+    else throw "pre-nixos site ${toString dir}: no ${siteFileName} (a site directory must contain it; see README \"Site settings\")";
 
   # Combine a site with the legacy environment variables (design D2c): the
   # environment only fills settings the site leaves unset, and a disagreement
