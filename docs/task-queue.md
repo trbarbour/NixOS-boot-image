@@ -135,6 +135,11 @@ _Last updated: 2026-10-18T17-33-41Z_
 17. **Report a second installer boot after a successful install (AArch64 item 9b).** *(plan §3.9)*
     - When the installer boots again on a board that already has an installed system, say on serial and in the TUI that the boot order is the likely cause.
 
+18. **CI tiers 2 and 3, and the mypy ratchet.** *(user request, 2026-10-21; tier 1 is trbarbour/NixOS-boot-image#318)*
+    - Once #318 and #317 are both merged, add `pre_nixos/boot_order.py` to `[tool.mypy] files`. It passes `--strict`.
+    - Tier 2: x86 VM tests (about 1 h), nightly or on a label.
+    - Tier 3: AArch64 image and VM tests under emulation; needs a binary cache (e.g. Cachix) to fit a 6-hour job.
+
 ## Recently Completed
 - 2026-10-20T03-08-58Z - Merged trbarbour/NixOS-boot-image#315 (0.18.1). AArch64 plan items 3 to 8:
   - the SD image is the stock installer variant plus pre-nixos;
