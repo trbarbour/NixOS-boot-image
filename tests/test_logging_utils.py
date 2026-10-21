@@ -47,3 +47,11 @@ def test_log_event_appends_to_file(tmp_path, capsys, monkeypatch) -> None:
 
     assert file_record == stderr_record
     assert file_record["event"] == "pre_nixos.test.file"
+
+
+def test_tests_do_not_write_the_host_log(monkeypatch) -> None:
+    """Guard for tests/conftest.py: the default log file is never the host's."""
+
+    from pre_nixos import logging_utils
+
+    assert logging_utils._log_file_path() != logging_utils._DEFAULT_LOG_FILE
