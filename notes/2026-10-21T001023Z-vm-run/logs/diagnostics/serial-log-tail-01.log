@@ -1,0 +1,50 @@
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792541827290__%s__UID_MARK__1792541827290__\n' "$(id -u)"
+printf '__UID_MARK__1792541827290__%s__UID_MARK__1792541827290__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1792541827290__0__UID_MARK__1792541827290__
+
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; findmnt -n -o FSTYPE /mnt/boot; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; findmnt -n -o FSTYPE /mnt/boot; printf '\n__EXIT__=%s\n' $?; }
+
+[?2004l
+
+
+__BEGIN__
+
+vfat
+
+
+
+__EXIT__=0
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792541827745__%s__UID_MARK__1792541827745__\n' "$(id -u)"
+printf '__UID_MARK__1792541827745__%s__UID_MARK__1792541827745__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1792541827745__0__UID_MARK__1792541827745__
+
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; pre-nixos-install-boot-files --root /mnt; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; pre-nixos-install-boot-files --root /mnt; printf '\n__EXIT__=%s\n' $?; }
+
+[?2004l
+
+
+__BEGIN__
+
+Refusing to install: vdb: only NVMe install targets are supported on the Raspberry Pi.
+
+
+
+__EXIT__=2
+
+[?2004hPRE-NIXOS> 
