@@ -81,24 +81,28 @@ A **site** is a directory with a `pre-nixos-site.nix` file. It supplies the sett
 
 Unknown settings and wrong types are evaluation errors. Keep the directory outside git: either anywhere on your machine, or as `site/` in your checkout, which `.gitignore` excludes.
 
-**Build any image with it, purely:**
+**Build the one image you need, purely.** Each command builds only the image it names:
 
 ```bash
 mkdir -p site && cp ~/.ssh/id_ed25519.pub site/root_key.pub   # plus pre-nixos-site.nix
-nix build .#bootImage   --override-input site path:./site     # x86_64 ISO
-nix build .#bootImageSd --override-input site path:./site     # AArch64 SD (CM4)
+nix build .#bootImageSd --override-input site path:./site     # only the AArch64 SD image (CM4)
+nix build .#bootImage   --override-input site path:./site     # only the x86_64 ISO
 ```
 
 `path:./site` is resolved against the current directory, and an absolute path always works. The override does not change `flake.lock`, and the repo's default site (`nix/site-default`) embeds no key.
 
-**Or from a flake of your own**, which also pins this repository by commit:
+**Or from a flake of your own**, which also pins this repository by commit. Each `mkBootImage` call is one image, so define only the ones you use:
 
 ```nix
+# ~/cm4-site/flake.nix, next to pre-nixos-site.nix and root_key.pub
 {
   inputs.pre-nixos.url = "github:trbarbour/NixOS-boot-image";
   outputs = { pre-nixos, ... }: {
-    packages.aarch64-linux.default = pre-nixos.lib.mkBootImage { format = "sd"; site = ./.; };
-    packages.x86_64-linux.default  = pre-nixos.lib.mkBootImage { format = "iso"; site = ./.; };
+    # The attribute set is the machine you build on (here x86_64); the image
+    # itself is AArch64. Build it with: nix build .#cm4
+    packages.x86_64-linux.cm4 = pre-nixos.lib.mkBootImage { format = "sd"; site = ./.; };
+    # Add an ISO only if you need one:
+    # packages.x86_64-linux.iso = pre-nixos.lib.mkBootImage { format = "iso"; site = ./.; };
   };
 }
 ```
