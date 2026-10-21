@@ -3,6 +3,9 @@ __pycache__/
 .venv/
 pre_nixos/root_key
 pre_nixos/root_key.pub
+# A checkout-local site (root key, auto-install): pass it with
+# `--override-input site path:./site` (README "Site settings").
+/site/
 *~
 result
 *.egg-info/

@@ -112,3 +112,6 @@
 
 ### v0.23 — 2026-10-20
 - §7.6.1: added the Raspberry Pi `BOOT_ORDER` check (R-B2). Installation is refused unless NVMe boots before SD; the EEPROM is read only.
+
+### v0.24 — 2026-10-21
+- Added §7.8.1, site settings: the root key and auto-install are supplied purely, from a directory outside git, as the flake input `site` or through `lib.mkBootImage`. This covers the ISO and the SD image.

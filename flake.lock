@@ -58,8 +58,21 @@
       "inputs": {
         "disko": "disko",
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "site": "site"
       }
+    },
+    "site": {
+      "flake": false,
+      "locked": {
+        "path": "./nix/site-default",
+        "type": "path"
+      },
+      "original": {
+        "path": "./nix/site-default",
+        "type": "path"
+      },
+      "parent": []
     },
     "systems": {
       "locked": {
