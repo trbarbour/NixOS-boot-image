@@ -1,1 +1,3 @@
 -e .[test]
+# Pinned to the version the strict list in pyproject.toml was verified with.
+mypy==2.3.1
