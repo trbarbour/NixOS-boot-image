@@ -136,7 +136,7 @@ _Last updated: 2026-10-18T17-33-41Z_
     - When the installer boots again on a board that already has an installed system, say on serial and in the TUI that the boot order is the likely cause.
 
 18. **CI tiers 2 and 3, and the mypy ratchet.** *(user request, 2026-10-21; tier 1 is trbarbour/NixOS-boot-image#318)*
-    - Once #318 and #317 are both merged, add `pre_nixos/boot_order.py` to `[tool.mypy] files`. It passes `--strict`.
+    - 2026-10-21: #318 merged; `pre_nixos/boot_order.py` added to `[tool.mypy] files` on #317's branch.
     - Tier 2: x86 VM tests (about 1 h), nightly or on a label.
     - Tier 3: AArch64 image and VM tests under emulation; needs a binary cache (e.g. Cachix) to fit a 6-hour job.
 
