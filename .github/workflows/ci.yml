@@ -1,0 +1,64 @@
+# Tier-1 CI: fast checks on every push to main and every pull request.
+#
+# Tiers 2 (x86 VM tests, about 1 h) and 3 (AArch64 image build and VM tests
+# under emulation, hours) are not run here; see docs/test-plan.md.
+# Actions are pinned by commit (tag in the comment), each at least two weeks
+# old when pinned (2026-10-21).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Unit tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10: the minimum pyproject.toml declares; 3.13: what the boot
+        # image's nixpkgs (26.05) and local runs use.
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        # The same pinned development dependencies as local setups.
+        run: python -m pip install -r requirements-dev.txt
+      - name: Unit tests (no VM)
+        # The VM tests need nix, QEMU and an hour; they are tier 2.
+        run: python -m pytest -m "not vm" tests
+      - name: Strict type check (modules listed in pyproject.toml)
+        # Once is enough: pyproject.toml targets the minimum Python (3.10).
+        if: matrix.python == '3.13'
+        run: mypy
+
+  nix:
+    name: Nix flake check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - name: Flake check
+        # Evaluates the x86 ISO and both NixOS configurations, and builds the
+        # cheap checks, including the stock-AArch64-boot-settings guard
+        # (R-P2).  No image is built.
+        run: nix flake check -L
+      - name: Evaluate the AArch64 SD image
+        # On x86_64, flake check skips aarch64-linux outputs and evaluates
+        # the AArch64 configuration only up to system.build.toplevel, so
+        # evaluate the SD image itself.  Evaluation only; nothing is built.
+        run: nix eval --raw .#packages.aarch64-linux.bootImageSd.drvPath
