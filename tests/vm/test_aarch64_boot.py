@@ -76,7 +76,9 @@ def test_aarch64_image_brings_up_lan_with_root_ssh(
 def test_aarch64_image_puts_the_pi_boot_chain_on_the_target(
     aarch64_boot_image_vm: BootImageVM,
 ) -> None:
-    """Plan item 8 (R-B1): firmware and the NVMe U-Boot reach the target's vfat /boot.
+    """Plan items 8 and 9 (R-B1, R-B2): the boot-order check refuses on this
+    non-NVMe, non-Pi target, and with the override the firmware and NVMe
+    U-Boot reach the target's vfat /boot.
 
     The image declares the boot chain to the service; the manual-install entry
     point (the same code auto-install runs before ``nixos-install``) copies it
@@ -90,7 +92,17 @@ def test_aarch64_image_puts_the_pi_boot_chain_on_the_target(
     assert "PRE_NIXOS_INSTALLED_BOOT=rpi4-uboot-extlinux" in environment, environment
     assert vm.run_as_root_checked("findmnt -n -o FSTYPE /mnt/boot", timeout=120).strip() == "vfat"
 
-    output = vm.run_as_root_checked("pre-nixos-install-boot-files --root /mnt", timeout=300)
+    # Item 9 (R-B2): on qemu virt the target is virtio, not NVMe, and there is
+    # no EEPROM config, so the real image must refuse (fail safe) ...
+    refusal = vm.run_as_root(
+        "pre-nixos-install-boot-files --root /mnt; echo EXIT=$?", timeout=300
+    )
+    assert "Refusing to install" in refusal and "EXIT=2" in refusal, refusal
+    vm.run_as_root_checked("test ! -e /mnt/boot/u-boot-rpi4.bin", timeout=120)
+    # ... and the copy itself is still exercised with the operator override.
+    output = vm.run_as_root_checked(
+        "pre-nixos-install-boot-files --root /mnt --ignore-boot-order", timeout=300
+    )
     assert "rpi4-uboot-extlinux: copied" in output, output
     vm.run_as_root_checked(
         'cmp "$PRE_NIXOS_RPI_FIRMWARE/u-boot-rpi4.bin" /mnt/boot/u-boot-rpi4.bin', timeout=120
