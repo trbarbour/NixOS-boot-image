@@ -1,7 +1,7 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.22
-**Date:** 2026-10-19 (UTC)
+**Doc status:** Draft v0.23
+**Date:** 2026-10-20 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
@@ -124,6 +124,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - **Loader:** the managed block sets `boot.loader.grub.enable = false` and `generic-extlinux-compatible.enable = true`. The GRUB serial lines are x86 only.
 - **Platform input:** declared by the image (`services.pre-nixos.installedBoot`, exported as `PRE_NIXOS_INSTALLED_BOOT`), not detected at run time.
 - **Design debate:** `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
+- **Boot-order check [R-B2]:**
+  - Before installing, pre-nixos reads the running bootloader's configuration through the device tree's `blconfig` nvmem device. It never writes the EEPROM.
+  - It refuses to install (`REASON=boot-order`, broadcast on every console) unless the disk behind `/mnt/boot` is NVMe and NVMe comes before SD in `BOOT_ORDER`. An unreadable or conditional `BOOT_ORDER` is also refused.
+  - The refusal names a value to set. `pre-nixos-install-boot-files` runs the same check, and `--ignore-boot-order` overrides it.
+  - Design: `plans/2026-10-20T031948Z-aarch64-item9-boot-order-check-design.md`.
 
 ### 7.7 NIC identification & rename to `lan`
 - Detect interfaces with carrier=1 via `/sys/class/net/*/carrier`.

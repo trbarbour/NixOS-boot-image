@@ -1,0 +1,91 @@
+Boot mode: NVME (06) order f251
+VID 0x144d MN SAMSUNG MZVLQ512HBLU-00BH1
+NVME on
+MBR: 0x00000001,4294967295 type: 0xee
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+Trying partition: 0
+GPT b4f8895e763fb44caf6ec635129d4c2d 000000001 03b9e12af num-partitions 128 entry-size 128
+GPT partition: 0 c12a7328-f81f-11d2-ba4b-00a0c93ec93b 000000800..0000827ff
+Matched GUID bootable-part-idx 0 want partition 0
+type: 32 lba: 2048 oem: 'MSDOS5.0' volume: ' NO NAME    '
+rsc 7166 fat-sectors 513 c-count 65536 c-size 8
+root dir cluster 2 sectors 0 entries 0
+FAT32 clusters 65536
+Trying partition: 0
+GPT b4f8895e763fb44caf6ec635129d4c2d 000000001 03b9e12af num-partitions 128 entry-size 128
+GPT partition: 0 c12a7328-f81f-11d2-ba4b-00a0c93ec93b 000000800..0000827ff
+Matched GUID bootable-part-idx 0 want partition 0
+type: 32 lba: 2048 oem: 'MSDOS5.0' volume: ' NO NAME    '
+rsc 7166 fat-sectors 513 c-count 65536 c-size 8
+root dir cluster 2 sectors 0 entries 0
+FAT32 clusters 65536
+Firmware not found
+ERROR: 4
+Retry NVME 1
+NVME off
+Timeout 00001000 00a10010 00000000 00000000
+nvme: error 8
+Failed to open device: 'nvme'
+Boot mode: SD (01) order f25
+SD HOST: 200000000 CTL0: 0x00800000 BUS: 400000 Hz actual: 390625 HZ div: 512 (256) status: 0x1fff0000 delay: 276
+SD HOST: 200000000 CTL0: 0x00800f00 BUS: 400000 Hz actual: 390625 HZ div: 512 (256) status: 0x1fff0000 delay: 276
+OCR c0ff8000 [220]
+CID: 001b534d47443253353020e668d0a161
+CSD: 400e0032db790003baff7f800a400000
+SD: bus-width: 4 spec: 2 SCR: 0x02058487 0x00000000
+SD HOST: 200000000 CTL0: 0x00800f04 BUS: 50000000 Hz actual: 50000000 HZ div: 4 (2) status: 0x1fff0000 delay: 2
+MBR: 0x00004000,   61440 type: 0x0b
+MBR: 0x00013000, 7490208 type: 0x83
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+Trying partition: 0
+type: 16 lba: 16384 oem: 'mkfs.fat' volume: '  V       ^ '
+rsc 4 fat-sectors 60 c-count 15321 c-size 4
+root dir cluster 1 sectors 32 entries 512
+FAT16 clusters 15321
+Trying partition: 0
+type: 16 lba: 16384 oem: 'mkfs.fat' volume: '  V       ^ '
+rsc 4 fat-sectors 60 c-count 15321 c-size 4
+root dir cluster 1 sectors 32 entries 512
+FAT16 clusters 15321
+Read config.txt bytes     1008 hnd 0xf1
+Read start4.elf bytes  2263968 hnd 0x6c7
+Read fixup4.dat bytes     5456 hnd 0xf6
+0x00d03140 0x00000000 0x00001fff
+MEM GPU: 76 ARM: 948 TOTAL: 1024
+Firmware: 5560078dcc8591a00f57b9068d13e5544aeef3aa Apr 30 2025 13:33:39
+Starting start4.elf @ 0xfec00200 partition 0
++
+
+
+U-Boot 2026.10 (Jan 01 1980 - 00:00:00 +0000)
+
+DRAM:  7.9 GiB
+RPI Compute Module 4 (0xd03140)
+Core:  215 devices, 17 uclasses, devicetree: board
+MMC:   mmcnr@7e300000: 1, mmc@7e340000: 0
+Unable to read "uboot.env" from mmc0:1...
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+Net:   eth0: ethernet@7d580000
+
+PCIe BRCM: link up, 5.0 Gbps x1 (SSC)
+starting USB...
+No USB controllers found
+       scanning usb for storage devices... 0 Storage Device(s) found
+Hit any key to stop autoboot: 0
+U-Boot> pci enum; nvme scan; nvme info; part list nvme 0
+Device 0: Vendor: 0x144d Rev: HPS1NFAV Prod: S671NJ0T457943
+            Type: Hard Disk
+            Capacity: 488386.3 MB = 476.9 GB (1000215216 x 512)
+## Unknown partition table type 0
+U-Boot> pci enum
+U-Boot> nvme scan
+U-Boot> nvme info
+Device 0: Vendor: 0x144d Rev: HPS1NFAV Prod: S671NJ0T457943
+            Type: Hard Disk
+            Capacity: 488386.3 MB = 476.9 GB (1000215216 x 512)
+U-Boot> 

@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
-from . import boot_platform, network, state
+from . import boot_order, boot_platform, network, state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -1063,6 +1063,23 @@ def auto_install(
             status_dir=status_dir,
             reason="mount-unavailable",
         )
+
+    # R-B2 (AArch64 plan item 9): on a Pi the target must boot before the SD
+    # card, or the board would boot the installer again.  Checked before
+    # anything is installed.
+    if boot_setup.kind is boot_platform.InstalledBoot.RPI4_UBOOT_EXTLINUX:
+        verdict = boot_order.verify_for_install(root_path)
+        log_event("pre_nixos.install.boot_order", verdict=repr(verdict))
+        if isinstance(verdict, boot_order.Refused):
+            message = boot_order.describe_refusal(verdict)
+            print(message)
+            _broadcast_install_message(message)
+            return _record_result(
+                "failed",
+                status_dir=status_dir,
+                reason="boot-order",
+                details={"message": message},
+            )
 
     start_time = datetime.now(timezone.utc)
     start_message = (

@@ -1,0 +1,3 @@
+__BEGIN__
+Refusing to install: vdb: only NVMe install targets are supported on the Raspberry Pi.
+__EXIT__=2

@@ -567,7 +567,7 @@ def test_inject_configuration_uses_serial_last_when_serial_is_primary(tmp_path) 
     assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content
 
 
-def _fake_install_run(root: Path, commands: list[list[str]]):
+def _fake_install_run(root: Path, commands: list[list[str]], *, expect_firmware: bool = True):
     def fake_run(cmd, check=False):
         commands.append(cmd)
 
@@ -578,7 +578,7 @@ def _fake_install_run(root: Path, commands: list[list[str]]):
             config_dir = root / "etc/nixos"
             config_dir.mkdir(parents=True, exist_ok=True)
             (config_dir / "configuration.nix").write_text("{\n}\n", encoding="utf-8")
-        if cmd[0] == "nixos-install":
+        if cmd[0] == "nixos-install" and expect_firmware:
             # The firmware is on /boot before nixos-install writes extlinux.conf.
             assert (root / "boot" / "u-boot-rpi4.bin").read_bytes() == b"uboot-nvme"
         return Result()
@@ -599,6 +599,9 @@ def _rpi_environment(tmp_path: Path, monkeypatch) -> Path:
     monkeypatch.setenv("PRE_NIXOS_INSTALLED_BOOT", "rpi4-uboot-extlinux")
     monkeypatch.setenv("PRE_NIXOS_RPI_FIRMWARE", str(firmware))
     monkeypatch.setattr(install, "_request_reboot", lambda: False)
+    # R-B2: the user's CM4 (NVMe first) with an NVMe target.
+    monkeypatch.setattr(install.boot_order, "read_current", lambda: install.boot_order.Known(0xF2516, "test"))
+    monkeypatch.setattr(install.boot_order, "_disk_of_mount", lambda path: "nvme0n1")
     return firmware
 
 
@@ -661,3 +664,44 @@ def test_auto_install_rejects_an_unknown_installed_boot(tmp_path, monkeypatch, b
 
     assert (result.status, result.reason) == ("failed", "installed-boot-config")
     assert commands == []
+
+
+def test_auto_install_rpi_refuses_when_the_card_boots_first(tmp_path, monkeypatch, broadcast_messages):
+    """R-B2 (AArch64 plan item 9): stop before nixos-generate-config, and say why."""
+
+    root = tmp_path / "mnt"
+    (root / "boot").mkdir(parents=True)
+    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
+    _rpi_environment(tmp_path, monkeypatch)
+    monkeypatch.setattr(install.boot_order, "read_current", lambda: install.boot_order.Known(0xF41, "test"))
+    commands: list[list[str]] = []
+    monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands))
+
+    result = install.auto_install(
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+    )
+
+    assert (result.status, result.reason) == ("failed", "boot-order")
+    assert commands == []
+    assert any("BOOT_ORDER=0xf416" in message for message in broadcast_messages)
+    status = (tmp_path / "status" / "auto-install-status").read_text()
+    assert "REASON=boot-order" in status and "MESSAGE=Refusing to install" in status
+
+
+def test_auto_install_x86_does_not_check_the_boot_order(tmp_path, monkeypatch, broadcast_messages):
+    root = tmp_path / "mnt"
+    (root / "etc").mkdir(parents=True)
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(install, "_request_reboot", lambda: False)
+
+    def must_not_run(*_args, **_kwargs):
+        raise AssertionError("boot order checked on nixos-default")
+
+    monkeypatch.setattr(install.boot_order, "verify_for_install", must_not_run)
+    monkeypatch.setattr(
+        install.subprocess, "run", _fake_install_run(root, [], expect_firmware=False)
+    )
+    result = install.auto_install(
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+    )
+    assert result.status == "success", result
