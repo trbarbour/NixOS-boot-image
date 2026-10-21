@@ -20,22 +20,29 @@ concurrency:
 
 jobs:
   python:
-    name: Unit tests and type check
+    name: Unit tests (Python ${{ matrix.python }})
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10: the minimum pyproject.toml declares; 3.13: what the boot
+        # image's nixpkgs (26.05) and local runs use.
+        python: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          # The version the boot image's nixpkgs (26.05) and local runs use.
-          python-version: "3.13"
+          python-version: ${{ matrix.python }}
       - name: Install
-        # mypy is pinned to the version the strict list was verified with.
-        run: python -m pip install -e '.[test]' mypy==2.3.1
+        # The same pinned development dependencies as local setups.
+        run: python -m pip install -r requirements-dev.txt
       - name: Unit tests (no VM)
         # The VM tests need nix, QEMU and an hour; they are tier 2.
         run: python -m pytest -m "not vm" tests
       - name: Strict type check (modules listed in pyproject.toml)
+        # Once is enough: pyproject.toml targets the minimum Python (3.10).
+        if: matrix.python == '3.13'
         run: mypy
 
   nix:
@@ -46,7 +53,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
       - name: Flake check
-        # Evaluates both boot images (x86 ISO, AArch64 SD) and builds the
+        # Evaluates the x86 ISO and both NixOS configurations, and builds the
         # cheap checks, including the stock-AArch64-boot-settings guard
         # (R-P2).  No image is built.
         run: nix flake check -L
+      - name: Evaluate the AArch64 SD image
+        # On x86_64, flake check skips aarch64-linux outputs and evaluates
+        # the AArch64 configuration only up to system.build.toplevel, so
+        # evaluate the SD image itself.  Evaluation only; nothing is built.
+        run: nix eval --raw .#packages.aarch64-linux.bootImageSd.drvPath

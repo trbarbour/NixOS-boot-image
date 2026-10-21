@@ -111,16 +111,18 @@ Tests run in three tiers, by cost:
 
 | Tier | What | Where | Cost |
 |---|---|---|---|
-| 1 | Unit tests (`pytest -m "not vm"`), strict `mypy` over the modules listed in `pyproject.toml`, and `nix flake check` (evaluates both images, builds the cheap checks) | `.github/workflows/ci.yml`, on every push to `main` and every pull request | minutes |
+| 1 | Unit tests (`pytest -m "not vm"`) on Python 3.10 (the declared minimum) and 3.13 (the image's); strict `mypy` over the modules listed in `pyproject.toml`, targeting 3.10; `nix flake check` (evaluates the x86 ISO and both configurations, builds the cheap checks); and evaluation of the AArch64 SD image | `.github/workflows/ci.yml`, on every push to `main` and every pull request | minutes |
 | 2 | x86 VM tests (`pytest -m vm` without the AArch64 module) | not automated yet | about 1 hour |
 | 3 | AArch64 SD image build and VM tests under emulation | not automated yet; needs a binary cache to fit a 6-hour job | hours |
 
-Run the tier-1 checks locally before pushing:
+Run the tier-1 checks locally before pushing. `mypy` comes from `requirements-dev.txt`, which `scripts/codex-setup.sh` installs into `.venv`; the Nix dev shells do not provide it, because nixpkgs' mypy is a different version.
 
 ```bash
+python -m pip install -r requirements-dev.txt   # once
 python -m pytest -m "not vm" tests
 mypy
 nix flake check -L
+nix eval --raw .#packages.aarch64-linux.bootImageSd.drvPath
 ```
 
 **Strict typing is a ratchet.** When a module becomes clean under `mypy --strict`, add it to `[tool.mypy] files`, and never remove one.
