@@ -41,3 +41,22 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.mypy]
+# Strict type checking, ratcheted: every module listed here must pass
+# `mypy --strict` (CI runs `mypy`).  Add modules as they become clean (task
+# queue item 7 tracks the rest); imported, not-yet-listed modules are analysed
+# for their types but their own errors are not reported.
+strict = true
+follow_imports = "silent"
+files = [
+  "pre_nixos/__init__.py",
+  "pre_nixos/apply.py",
+  "pre_nixos/block_names.py",
+  "pre_nixos/boot_platform.py",
+  "pre_nixos/inventory.py",
+  "pre_nixos/logging_utils.py",
+  "pre_nixos/network.py",
+  "pre_nixos/partition.py",
+  "pre_nixos/storage_detection.py",
+]

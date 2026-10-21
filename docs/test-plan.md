@@ -104,3 +104,23 @@ For additional assurance before releases:
 Record the outcome of each run (command, date, tester, result, and any
 observations) in `docs/test-reports/`.  Link CI job URLs where applicable so the
 history of test executions remains auditable.
+
+## 6. Continuous Integration
+
+Tests run in three tiers, by cost:
+
+| Tier | What | Where | Cost |
+|---|---|---|---|
+| 1 | Unit tests (`pytest -m "not vm"`), strict `mypy` over the modules listed in `pyproject.toml`, and `nix flake check` (evaluates both images, builds the cheap checks) | `.github/workflows/ci.yml`, on every push to `main` and every pull request | minutes |
+| 2 | x86 VM tests (`pytest -m vm` without the AArch64 module) | not automated yet | about 1 hour |
+| 3 | AArch64 SD image build and VM tests under emulation | not automated yet; needs a binary cache to fit a 6-hour job | hours |
+
+Run the tier-1 checks locally before pushing:
+
+```bash
+python -m pytest -m "not vm" tests
+mypy
+nix flake check -L
+```
+
+**Strict typing is a ratchet.** When a module becomes clean under `mypy --strict`, add it to `[tool.mypy] files`, and never remove one.
