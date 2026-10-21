@@ -84,10 +84,11 @@ _Last updated: 2026-10-18T17-33-41Z_
      - **Next:** implement work items 3 to 9 of the plan in order (not started).
    - 2026-10-19:
      - Items 3 to 8 are done and merged in trbarbour/NixOS-boot-image#315 (0.18.1, 2026-10-20 03:08Z).
-     - **Next:**
-       - E9b: the user runs our U-Boot on the CM4 and reports `nvme info` / `bootflow scan -l`;
-       - item 9: the `BOOT_ORDER` check;
-       - item 10: hardware acceptance.
+     - 2026-10-20/21:
+       - E9b to E9b-4 on the CM4 (#316, closed): U-Boot moved to v2026.10, plus a local patch for NVMe read/write DMA translation, which is verified on hardware.
+       - Item 9 (the `BOOT_ORDER` check, 0.19.0) is done.
+       - VM tests at 0.19.1: the full regression had 11 passed and 1 stale test, which was fixed. The AArch64 module then passed 4/4.
+     - **Next:** item 10, hardware acceptance on the CM4 (the user).
 
 10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
