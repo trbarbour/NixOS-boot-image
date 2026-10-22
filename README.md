@@ -89,6 +89,8 @@ nix build .#bootImageSd --override-input site path:./site     # only the AArch64
 nix build .#bootImage   --override-input site path:./site     # only the x86_64 ISO
 ```
 
+The image is named after the pre-nixos version and git commit that built it, followed by nixpkgs' label and the system. For example, `result/sd-image/pre-nixos-0.21.0-g4852185-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst` (or `result/iso/pre-nixos-…-x86_64-linux.iso`). A build from uncommitted changes has `-dirty` after the commit.
+
 `path:./site` is resolved against the current directory, and an absolute path always works. The override does not change `flake.lock`, and the repo's default site (`nix/site-default`) embeds no key.
 
 **Or from a flake of your own**, which also pins this repository by commit. Each `mkBootImage` call is one image, so define only the ones you use:

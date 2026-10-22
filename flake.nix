@@ -20,6 +20,14 @@
       preNixosVersion = lib.strings.removeSuffix "\n" (builtins.readFile ./pre_nixos/VERSION);
 
       siteLib = import ./nix/site.nix { inherit lib; };
+
+      # Image file names say which pre-nixos built them: the version and the
+      # git commit ("-dirty" for uncommitted changes), then nixpkgs' label and
+      # the system, e.g. pre-nixos-0.21.0-g4852185-26.05.20261015.26f4107-aarch64-linux.img.zst.
+      # nixpkgs' default names only carry its own version, so two pre-nixos
+      # images were indistinguishable once copied out of the store.
+      sourceRev = "g" + (self.shortRev or self.dirtyShortRev or "unknown");
+      imageBaseName = { label, system }: "pre-nixos-${preNixosVersion}-${sourceRev}-${label}-${system}";
       # Legacy, impure fallback (design D2c): only read under --impure, and only
       # fills settings the site leaves unset.
       envSettings = {
@@ -95,10 +103,12 @@
             ({ ... }: { nixpkgs.overlays = [ diskoOverlay (_: _: { pre-nixos = package; }) ]; })
             preNixosModule
           ] ++ imageModules ++ [
-            ({ ... }: {
+            ({ config, ... }: {
               services.pre-nixos.enable = true;
               services.pre-nixos.rootKey = settings.rootKey;
               services.pre-nixos.autoInstall = settings.autoInstall;
+              # The ISO and SD modules set image.baseName with normal priority.
+              image.baseName = lib.mkForce (imageBaseName { inherit system; label = config.system.nixos.label; });
             })
           ];
         };
@@ -337,6 +347,25 @@
             in
             assert builtins.all check [ "extlinux" "grub" "efi" ];
             pkgs.runCommand "installed-rpi-boot-loader" {} ''
+              touch $out
+            '';
+          # Both images are named after this pre-nixos (version and commit).
+          image-file-names =
+            let
+              name = format: (mkBootConfiguration { inherit format; }).config.image.fileName;
+              want = format: extension:
+                let c = (mkBootConfiguration { inherit format; }).config; in
+                "pre-nixos-${preNixosVersion}-${sourceRev}-${c.system.nixos.label}-${formats.${format}.system}.${extension}";
+              iso = (mkBootConfiguration { format = "iso"; }).config;
+            in
+            assert pkgs.lib.assertMsg (name "iso" == want "iso" "iso") "ISO file name is ${name "iso"}";
+            assert pkgs.lib.assertMsg (name "sd" == want "sd" "img.zst") "SD file name is ${name "sd"}";
+            assert pkgs.lib.assertMsg (pkgs.lib.hasPrefix "pre-nixos-${preNixosVersion}-g" (name "sd"))
+              "SD file name ${name "sd"} does not start with the pre-nixos version";
+            # The ISO derivation names its file from isoName, not fileName.
+            assert pkgs.lib.assertMsg (iso.isoImage.isoName == name "iso")
+              "isoName ${iso.isoImage.isoName} differs from image.fileName ${name "iso"}";
+            pkgs.runCommand "image-file-names" {} ''
               touch $out
             '';
           stock-aarch64-boot-settings =

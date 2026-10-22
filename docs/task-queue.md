@@ -161,17 +161,30 @@ _Last updated: 2026-10-22T03-33-24Z_
 
 22. **The SD image took 29 minutes to build on the user's N355.** *(anomaly, 2026-10-22)*
     - Find which derivations are built locally rather than substituted (likely the NVMe U-Boot and the firmware). Consider publishing them to a binary cache (see item 18, tier 3).
+    - 2026-10-22 (user): the 0.20.1 rebuild took **8 minutes**, because no AArch64 binaries needed rebuilding. So the first build's cost is one-off AArch64 compilation under emulation on an x86 host. A binary cache remains the remedy for fresh hosts.
 
 23. **Undervoltage warnings on the CM4 (Waveshare CM4-POE-UPS-BOX, PoE from a GS308EPP).** *(anomaly, 2026-10-22, item 10 attempt 1)*
     - `hwmon hwmon1: Undervoltage detected!` appears every few seconds while the installer runs. The user has seen this before on this board, sometimes linked to `config.txt` settings.
     - Unknowns:
       1. Do the warnings also appear with the user's known-good `config.txt`, on the same supply?
       2. Which setting in the image's stock `config.txt` differs, if any?
+    - 2026-10-22: the image's `config.txt` (1008 bytes, matching the boot log) is saved as `docs/test-reports/2026-10-22T025029Z-cm4-item10-sd-config.txt`. It is the stock nixpkgs file. Candidate settings, all unproven:
+      - `arm_boost=1` (`[pi4]`): a higher CPU clock where the board supports it, so more current;
+      - `otg_mode=1` (`[cm4]`): the XHCI host;
+      - `avoid_warnings=1`, which only hides the firmware's on-screen warning.
+      Still needed: the user's known-good `config.txt`.
+    - 2026-10-22 (user):
+      - No USB devices are attached, so `otg_mode=1` is unlikely to matter.
+      - `avoid_warnings=1` is wanted: it stops the firmware's warning from overwriting the framebuffer.
+      - The user also suspects `arm_boost=1`: as they recall, it (or `arm_freq`) may need a matching `over_voltage`. The CM4s have good heatsinks.
+      - Experiment: change one line at a time in the SD card's FIRMWARE `config.txt`, first without `arm_boost=1`, and count the warnings over a fixed period.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
 
 ## Recently Completed
+- 2026-10-22 - (user request) The 0.20.1 SD image had the same file name as 0.20.0, because nixpkgs names images after its own version only. From 0.21.0, both images are named `pre-nixos-<version>-g<commit>[-dirty]-<nixpkgs label>-<system>.<ext>` (the user chose version plus commit). Covered by the flake check `image-file-names`.
+- 2026-10-22T04-04-06Z - Merged trbarbour/NixOS-boot-image#321 (0.20.1): fixed #320 (closed). On the CM4, `nixos-install` failed on a duplicate `boot.loader.grub.enable`. The Pi loader is now a separate module with `mkForce`, tested against real `nixos-generate-config` output (pytest, plus the flake checks `installed-configuration-parses` and `installed-rpi-boot-loader`). CI green, no Codex findings. Item 10: waiting for the user's retest.
 - 2026-10-22T00-38-17Z - Merged trbarbour/NixOS-boot-image#319 (0.20.0): site settings. The root key and auto-install are supplied purely, from a directory outside git (`--override-input site path:<dir>`, or `lib.mkBootImage { format; site; }`), for the ISO or the SD image separately. A missing site file and invalid settings are errors. `.#bootImageSd` works on x86_64 hosts. VM regression 12/12.
 - 2026-10-21T13-23-59Z - Merged trbarbour/NixOS-boot-image#317 (0.19.1): NVMe U-Boot v2026.10 plus the read/write DMA-translation patch (verified on the CM4, #316 closed), and AArch64 item 9 (the `BOOT_ORDER` check). Also merged trbarbour/NixOS-boot-image#318: tier-1 CI (unit tests on 3.10 and 3.13, the strict mypy ratchet, flake check, SD-image evaluation), and tests no longer write to the host's `/var/log`.
 - 2026-10-20T03-08-58Z - Merged trbarbour/NixOS-boot-image#315 (0.18.1). AArch64 plan items 3 to 8:
