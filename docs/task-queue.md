@@ -146,6 +146,7 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Move them to `--override-input site path:<tmp dir>`, then decide whether to drop the fallback.
 
 ## Recently Completed
+- 2026-10-22T00-38-17Z - Merged trbarbour/NixOS-boot-image#319 (0.20.0): site settings. The root key and auto-install are supplied purely, from a directory outside git (`--override-input site path:<dir>`, or `lib.mkBootImage { format; site; }`), for the ISO or the SD image separately. A missing site file and invalid settings are errors. `.#bootImageSd` works on x86_64 hosts. VM regression 12/12.
 - 2026-10-21T13-23-59Z - Merged trbarbour/NixOS-boot-image#317 (0.19.1): NVMe U-Boot v2026.10 plus the read/write DMA-translation patch (verified on the CM4, #316 closed), and AArch64 item 9 (the `BOOT_ORDER` check). Also merged trbarbour/NixOS-boot-image#318: tier-1 CI (unit tests on 3.10 and 3.13, the strict mypy ratchet, flake check, SD-image evaluation), and tests no longer write to the host's `/var/log`.
 - 2026-10-20T03-08-58Z - Merged trbarbour/NixOS-boot-image#315 (0.18.1). AArch64 plan items 3 to 8:
   - the SD image is the stock installer variant plus pre-nixos;
