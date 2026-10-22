@@ -167,6 +167,11 @@ _Last updated: 2026-10-22T03-33-24Z_
     - Unknowns:
       1. Do the warnings also appear with the user's known-good `config.txt`, on the same supply?
       2. Which setting in the image's stock `config.txt` differs, if any?
+    - 2026-10-22: the image's `config.txt` (1008 bytes, matching the boot log) is saved as `docs/test-reports/2026-10-22T025029Z-cm4-item10-sd-config.txt`. It is the stock nixpkgs file. Candidate settings, all unproven:
+      - `arm_boost=1` (`[pi4]`): a higher CPU clock where the board supports it, so more current;
+      - `otg_mode=1` (`[cm4]`): the XHCI host;
+      - `avoid_warnings=1`, which only hides the firmware's on-screen warning.
+      Still needed: the user's known-good `config.txt`.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
