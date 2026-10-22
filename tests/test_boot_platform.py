@@ -60,12 +60,23 @@ def test_nixos_default_keeps_the_grub_serial_lines() -> None:
     assert not any("extlinux" in line for line in lines)
 
 
-def test_rpi_enables_extlinux_and_disables_grub(tmp_path: Path) -> None:
-    lines = boot_platform.loader_config_lines(_rpi(tmp_path))
-    assert lines == [
-        "  boot.loader.grub.enable = false;",
-        "  boot.loader.generic-extlinux-compatible.enable = true;",
-    ]
+def test_rpi_declares_its_loader_in_a_module_not_the_managed_block(tmp_path: Path) -> None:
+    """#320: the generator also sets these, so they cannot be lines in configuration.nix."""
+
+    assert boot_platform.loader_config_lines(_rpi(tmp_path)) == []
+    name = boot_platform.loader_module_template(_rpi(tmp_path))
+    assert name is not None
+    text = (Path(boot_platform.__file__).parent / "templates" / name).read_text()
+    for line in (
+        "boot.loader.grub.enable = lib.mkForce false;",
+        "boot.loader.systemd-boot.enable = lib.mkForce false;",
+        "boot.loader.generic-extlinux-compatible.enable = lib.mkForce true;",
+    ):
+        assert line in text
+
+
+def test_nixos_default_has_no_loader_module() -> None:
+    assert boot_platform.loader_module_template(boot_platform.NIXOS_DEFAULT_SETUP) is None
 
 
 def test_nixos_default_copies_nothing(tmp_path: Path) -> None:

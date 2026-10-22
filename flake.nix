@@ -289,6 +289,56 @@
         } // pkgs.lib.optionalAttrs (system == preInstallerSystem) (
           builtins.mapAttrs (name: passed: assert passed; pkgs.runCommand name { } "touch $out") siteChecks
         ) // pkgs.lib.optionalAttrs (system == preInstallerSystem) {
+          # #320: the configuration pre-nixos writes on the target must parse
+          # when it starts from nixos-generate-config's real output (fixtures
+          # for each loader the generator can pick).
+          installed-configuration-parses =
+            pkgs.runCommand "installed-configuration-parses" {
+              nativeBuildInputs = [ pkgs.python3 pkgs.nix ];
+            } ''
+              export HOME=$TMPDIR NIX_STATE_DIR=$TMPDIR/nix-state NIX_LOG_DIR=$TMPDIR/nix-log
+              export PRE_NIXOS_LOG_FILE=$TMPDIR/pre-nixos.log PYTHONPATH=${./.}
+              for variant in extlinux grub efi; do
+                for kind in rpi4-uboot-extlinux nixos-default; do
+                  root=$TMPDIR/$variant-$kind
+                  python3 ${./tests/nix/render_installed_configuration.py} \
+                    ${./tests/fixtures/nixos-generate-config}/$variant $root $kind
+                  for file in $root/etc/nixos/*.nix; do
+                    nix-instantiate --parse "$file" > /dev/null
+                  done
+                done
+              done
+              touch $out
+            '';
+          # #320, design D3: whichever loader nixos-generate-config picked,
+          # the installed Pi uses extlinux, and the system evaluates.
+          installed-rpi-boot-loader =
+            let
+              check = variant:
+                let
+                  config = (nixpkgs.lib.nixosSystem {
+                    system = aarch64System;
+                    modules = [
+                      (./tests/fixtures/nixos-generate-config + "/${variant}/configuration.nix")
+                      ./pre_nixos/templates/boot-loader-rpi4-uboot-extlinux.nix
+                      { fileSystems."/" = { device = "/dev/main/slash"; fsType = "ext4"; }; }
+                    ];
+                  }).config;
+                  loader = {
+                    grub = config.boot.loader.grub.enable;
+                    systemdBoot = config.boot.loader.systemd-boot.enable;
+                    extlinux = config.boot.loader.generic-extlinux-compatible.enable;
+                  };
+                in
+                assert pkgs.lib.assertMsg
+                  (loader == { grub = false; systemdBoot = false; extlinux = true; })
+                  "${variant}: installed Pi loader is ${builtins.toJSON loader}";
+                builtins.seq config.system.build.toplevel.drvPath true;
+            in
+            assert builtins.all check [ "extlinux" "grub" "efi" ];
+            pkgs.runCommand "installed-rpi-boot-loader" {} ''
+              touch $out
+            '';
           stock-aarch64-boot-settings =
             let
               ours = bootSettings aarch64Config.config;
