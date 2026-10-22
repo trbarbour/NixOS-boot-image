@@ -89,6 +89,7 @@ _Last updated: 2026-10-18T17-33-41Z_
        - Item 9 (the `BOOT_ORDER` check, 0.19.0) is done.
        - VM tests at 0.19.1: the full regression had 11 passed and 1 stale test, which was fixed. The AArch64 module then passed 4/4.
      - **Next:** item 10, hardware acceptance on the CM4 (the user).
+       - 2026-10-21: the first attempt used an image built without a root key, so `end0` was not renamed and SSH failed. That is designed behaviour: `configure_lan` skips when no key is embedded (user confirmed). The user's NVMe holds a Windows GPT, so auto-provisioning will not run (reqs §2.3) unless the user wipes it.
 
 10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
@@ -140,7 +141,12 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Tier 2: x86 VM tests (about 1 h), nightly or on a label.
     - Tier 3: AArch64 image and VM tests under emulation; needs a binary cache (e.g. Cachix) to fit a 6-hour job.
 
+19. **Move the VM fixtures and scripts from PRE_NIXOS_ROOT_KEY/--impure to sites.** *(follow-up, site-settings design D2)*
+    - `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still pass the key through the legacy environment fallback.
+    - Move them to `--override-input site path:<tmp dir>`, then decide whether to drop the fallback.
+
 ## Recently Completed
+- 2026-10-21T13-23-59Z - Merged trbarbour/NixOS-boot-image#317 (0.19.1): NVMe U-Boot v2026.10 plus the read/write DMA-translation patch (verified on the CM4, #316 closed), and AArch64 item 9 (the `BOOT_ORDER` check). Also merged trbarbour/NixOS-boot-image#318: tier-1 CI (unit tests on 3.10 and 3.13, the strict mypy ratchet, flake check, SD-image evaluation), and tests no longer write to the host's `/var/log`.
 - 2026-10-20T03-08-58Z - Merged trbarbour/NixOS-boot-image#315 (0.18.1). AArch64 plan items 3 to 8:
   - the SD image is the stock installer variant plus pre-nixos;
   - VM test on `qemu virt`;

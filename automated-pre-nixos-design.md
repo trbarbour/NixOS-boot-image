@@ -1,7 +1,7 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.23
-**Date:** 2026-10-20 (UTC)
+**Doc status:** Draft v0.24
+**Date:** 2026-10-21 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
@@ -140,6 +140,14 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - Install built-in `authorized_keys` for root and harden `sshd_config` to disable password logins while preserving the root password for console access.
 - The OpenSSH service remains disabled during boot and is started only after this hardening step.
 - Announce IP + fingerprint via log fan-out.
+
+### 7.8.1 Site settings (root key, auto-install) [reqs §2.7]
+- Build-time settings come from a **site**: a directory outside git (anywhere, or the gitignored `site/`) holding `pre-nixos-site.nix` (`{ rootKey = ./root_key.pub; autoInstall = true; }`).
+- It reaches a **pure** build as the flake input `site` (`--override-input site path:<dir>`), or as `lib.mkBootImage { format = "iso" | "sd"; site = <dir>; }` from a flake of the user's own. The same applies to every image.
+- Settings are typed: an unknown name or a wrong type is an evaluation error.
+- One resolved value builds the package (the embedded key) and sets the module options, so the two cannot disagree.
+- The legacy `PRE_NIXOS_ROOT_KEY` / `PRE_NIXOS_AUTO_INSTALL` (with `--impure`) only fill unset settings. A conflict is an error.
+- Design: `plans/2026-10-21T135252Z-site-settings-pure-images-design.md`.
 
 ### 7.9 Outputs
 - `/var/log/pre‑nixos/plan.json` — full machine‑readable plan.

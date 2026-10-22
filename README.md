@@ -4,11 +4,10 @@ This project contains tools to prepare bare-metal machines for a NixOS installat
 
 Storage execution is delegated to [disko](https://github.com/nix-community/disko). The planner emits a `disko.devices` description alongside the traditional RAID/VG/LV view, and the applier writes `/var/log/pre-nixos/disko-config.nix` before inspecting `disko --help`. Newer disko releases expect the combined `--mode destroy,format,mount` entry point (and support `--yes-wipe-all-disks`), while older packages only recognise `--mode disko`. Detecting the available mode at runtime keeps the same boot image compatible with both generations and still leaves an auditable config behind for reuse.
 
-> **Note:** To enable SSH access on the boot image, supply a public key via the
-> `PRE_NIXOS_ROOT_KEY` environment variable before building **and** pass
-> `--impure` to `nix build`. Without `--impure` the environment variable is
-> ignored and the build prints a warning before falling back to the NixOS
-> default of console-only access so automated builds still succeed.
+> **Note:** To enable SSH access or auto-install, give the build a *site*:
+> a directory outside git holding your public key and settings, passed with
+> `--override-input site path:<dir>`. No `--impure` is needed. See
+> [Site settings](#site-settings).
 
 ## Usage
 
@@ -41,7 +40,7 @@ minimal NixOS configuration (firewall enabled with SSH + ping, root key
 authorised, flakes enabled, and the `lan` interface managed by
 systemd-networkd) and runs `nixos-install --no-root-passwd` after the storage
 plan completes. Automatic progression now requires the boot image to have been
-built with `PRE_NIXOS_AUTO_INSTALL=1`; otherwise the CLI leaves installation
+built from a site with `autoInstall = true` ([Site settings](#site-settings)); otherwise the CLI leaves installation
 disabled by default so you can adjust settings first. Toggle auto-install at
 runtime with `--auto-install/--no-auto-install`.
 
@@ -68,24 +67,62 @@ outcome. Press `C` to set static install-time network details, which default to
 the network information assigned via DHCP so you can enter only the host
 portion of the desired static address.
 
-## SSH access
+## Site settings
 
-The boot image permits root login **only** via the supplied public key.
-Generate a key pair and point `PRE_NIXOS_ROOT_KEY` at the public half before
-building the image (the private key remains ignored by git):
+A **site** is a directory with a `pre-nixos-site.nix` file. It supplies the settings an image needs, which are not stored in this repository:
 
-```bash
-ssh-keygen -t ed25519 -N '' -f pre_nixos/root_key
-export PRE_NIXOS_ROOT_KEY=$(pwd)/pre_nixos/root_key.pub
-nix build --impure
+```nix
+# site/pre-nixos-site.nix
+{
+  rootKey = ./root_key.pub;   # your root SSH public key, next to this file
+  autoInstall = true;         # install NixOS unattended (default: false)
+}
 ```
 
-After generating the key pair, keep `PRE_NIXOS_ROOT_KEY` set (or provide an
-absolute path directly in the environment) before running `nix build --impure`
-so that the key is embedded in the image. If `--impure` is omitted, Nix
-evaluates the flake in a pure environment and silently drops
-`PRE_NIXOS_ROOT_KEY`, resulting in a build that now emits a warning and ships
-without the SSH key.
+Unknown settings and wrong types are evaluation errors. Keep the directory outside git: either anywhere on your machine, or as `site/` in your checkout, which `.gitignore` excludes.
+
+**Build the one image you need, purely.** Each command builds only the image it names:
+
+```bash
+mkdir -p site && cp ~/.ssh/id_ed25519.pub site/root_key.pub   # plus pre-nixos-site.nix
+nix build .#bootImageSd --override-input site path:./site     # only the AArch64 SD image (CM4)
+nix build .#bootImage   --override-input site path:./site     # only the x86_64 ISO
+```
+
+`path:./site` is resolved against the current directory, and an absolute path always works. The override does not change `flake.lock`, and the repo's default site (`nix/site-default`) embeds no key.
+
+**Or from a flake of your own**, which also pins this repository by commit. Each `mkBootImage` call is one image, so define only the ones you use:
+
+```nix
+# ~/cm4-site/flake.nix, next to pre-nixos-site.nix and root_key.pub
+{
+  inputs.pre-nixos.url = "github:trbarbour/NixOS-boot-image";
+  outputs = { pre-nixos, ... }: {
+    # The attribute set is the machine you build on (here x86_64); the image
+    # itself is AArch64. Build it with: nix build .#cm4
+    packages.x86_64-linux.cm4 = pre-nixos.lib.mkBootImage { format = "sd"; site = ./.; };
+    # Add an ISO only if you need one:
+    # packages.x86_64-linux.iso = pre-nixos.lib.mkBootImage { format = "iso"; site = ./.; };
+  };
+}
+```
+
+**Formats:** `"iso"` (x86_64-linux) and `"sd"` (aarch64-linux). Building the SD image on x86_64 needs AArch64 emulation (`boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` on NixOS, or `scripts/lib/aarch64_emulation.sh`).
+
+**Legacy:** `PRE_NIXOS_ROOT_KEY` and `PRE_NIXOS_AUTO_INSTALL` still work with `--impure`, but only for settings the site leaves unset. If both set the same thing differently, evaluation fails.
+
+## SSH access
+
+The boot image permits root login **only** via the supplied public key, given as the `rootKey` of a site ([Site settings](#site-settings)). Use an existing key pair, or make one for these machines outside the repository:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/pre-nixos
+mkdir -p site && cp ~/.ssh/pre-nixos.pub site/root_key.pub
+printf '{ rootKey = ./root_key.pub; }\n' > site/pre-nixos-site.nix
+nix build .#bootImage --override-input site path:./site
+```
+
+Without a key, `pre-nixos` leaves networking and SSH at the image's defaults: the NIC is not renamed to `lan`, and no key login is possible.
 
 During the first boot the `pre-nixos` service copies the embedded public key to
 `/root/.ssh/authorized_keys` and rewrites `/etc/ssh/sshd_config` to disable
@@ -99,12 +136,10 @@ reachable only via the authorised key. The generated `configuration.nix` also
 enables flakes so remote tooling such as deploy-rs or NixOps can immediately
 rebuild the machine.
 
-Keep `pre_nixos/root_key` secure and uncommitted; `.gitignore` prevents
-accidental check-in of both halves. Use the generated
-private key to connect once the image boots:
+Keep the private key out of the repository. Connect with it once the image boots:
 
 ```bash
-ssh -i pre_nixos/root_key root@<ip>
+ssh -i ~/.ssh/pre-nixos root@<ip>
 ```
 
 ## Development

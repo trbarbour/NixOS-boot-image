@@ -76,11 +76,11 @@ def test_pre_nixos_scripts_wrap_required_tool_path() -> None:
 
 def test_pre_nixos_installs_root_key_during_post_install() -> None:
     flake_text = Path("flake.nix").read_text(encoding="utf-8")
-    assert "postInstall = pkgs.lib.optionalString (rootPub != null)" in flake_text, (
+    assert "postInstall = pkgs.lib.optionalString (rootKey != null)" in flake_text, (
         "pre-nixos flake must guard postInstall with the embedded key condition"
     )
     install_snippet = (
-        "install -Dm0644 ${rootPub} \"$out/${pkgs.python3.sitePackages}/pre_nixos/root_key.pub\""
+        "install -Dm0644 ${rootKey} \"$out/${pkgs.python3.sitePackages}/pre_nixos/root_key.pub\""
     )
     assert install_snippet in flake_text, (
         "pre-nixos flake must install the embedded root key into site-packages"

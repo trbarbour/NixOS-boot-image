@@ -1,22 +1,11 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.services.pre-nixos;
-  autoInstallFlag = builtins.getEnv "PRE_NIXOS_AUTO_INSTALL";
-  autoInstallEnabled = autoInstallFlag != "";
-  rootKeyEnv = builtins.getEnv "PRE_NIXOS_ROOT_KEY";
-  rootKeyFromEnv =
-    if rootKeyEnv != "" then
-      let candidate = builtins.toString rootKeyEnv; in
-      if builtins.pathExists candidate then candidate else null
-    else
-      null;
-  rootKeyCandidate =
-    if rootKeyFromEnv != null then
-      rootKeyFromEnv
-    else
-      let candidate = ../pre_nixos/root_key.pub; in
-      if builtins.pathExists candidate then candidate else null;
-  rootKeyEmbedded = rootKeyCandidate != null;
+  # Site settings (nix/site.nix): set by the flake's mkBootConfiguration from
+  # one resolved value, which also builds the package with the same key.
+  autoInstallEnabled = cfg.autoInstall;
+  autoInstallFlag = if cfg.autoInstall then "1" else "";
+  rootKeyEmbedded = cfg.rootKey != null;
   autoInstallNotice =
     if autoInstallEnabled then
       "Automatic installation is enabled; pre-nixos will provision NixOS and reboot into the installed system when finished."
@@ -66,6 +55,20 @@ let
   preNixosServiceScript = import ./pre-nixos/service-script.nix { inherit pkgs; };
 in {
   options.services.pre-nixos.enable = lib.mkEnableOption "run pre-nixos planning tool";
+  options.services.pre-nixos.rootKey = lib.mkOption {
+    type = lib.types.nullOr lib.types.path;
+    default = null;
+    description = ''
+      The root SSH public key embedded in the image (reqs §2.7).  Set it
+      through a site (nix/site.nix), not here: the flake builds the pre-nixos
+      package with the same key.
+    '';
+  };
+  options.services.pre-nixos.autoInstall = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
+    description = "Install NixOS automatically once storage and network are ready.";
+  };
   options.services.pre-nixos.installedBoot = lib.mkOption {
     type = lib.types.enum [ "nixos-default" "rpi4-uboot-extlinux" ];
     default = "nixos-default";
