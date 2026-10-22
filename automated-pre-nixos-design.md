@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.24
+**Doc status:** Draft v0.25
 **Date:** 2026-10-21 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -121,7 +121,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - **Firmware files:** built by `nix/rpi4-nvme-firmware.nix`, which runs the stock `sdImage.populateFirmwareCommands` and then swaps in our U-Boot.
   - pre-nixos copies them to `/mnt/boot` after disko and before `nixos-install`.
   - For a manual install, run `pre-nixos-install-boot-files`.
-- **Loader:** the managed block sets `boot.loader.grub.enable = false` and `generic-extlinux-compatible.enable = true`. The GRUB serial lines are x86 only.
+- **Loader:** a separate module, `/etc/nixos/pre-nixos-boot-loader.nix`, imported from `configuration.nix`, forces `boot.loader.grub.enable = false`, `systemd-boot.enable = false` and `generic-extlinux-compatible.enable = true` (`lib.mkForce`). It is not in the managed block, because `nixos-generate-config` sets some of the same attributes in `configuration.nix`, and a second definition in one file is a parse error (#320). The GRUB serial lines are x86 only.
 - **Platform input:** declared by the image (`services.pre-nixos.installedBoot`, exported as `PRE_NIXOS_INSTALLED_BOOT`), not detected at run time.
 - **Design debate:** `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
 - **Boot-order check [R-B2]:**

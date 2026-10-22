@@ -115,3 +115,6 @@
 
 ### v0.24 — 2026-10-21
 - Added §7.8.1, site settings: the root key and auto-install are supplied purely, from a directory outside git, as the flake input `site` or through `lib.mkBootImage`. This covers the ISO and the SD image.
+
+### v0.25 — 2026-10-22
+- §7.6.1: the Pi's loader settings moved from the managed block to a separate, imported module with `mkForce`. In the managed block they duplicated `nixos-generate-config`'s lines, which is a parse error (#320, found by CM4 acceptance).

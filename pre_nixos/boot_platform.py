@@ -77,8 +77,16 @@ def boot_setup_from_environment(env: Mapping[str, str] = os.environ) -> BootSetu
     return BootSetup(kind, Path(firmware) if firmware else None)
 
 
+# Where the loader module goes, beside configuration.nix (which imports it).
+LOADER_MODULE_FILE = "pre-nixos-boot-loader.nix"
+
+
 def loader_config_lines(setup: BootSetup) -> list[str]:
-    """Return the loader lines for the managed ``configuration.nix`` block."""
+    """Return the loader lines for the managed ``configuration.nix`` block.
+
+    Only settings nixos-generate-config never writes may go here: an attribute
+    defined twice in one file is a Nix parse error (#320).
+    """
 
     if setup.kind is InstalledBoot.NIXOS_DEFAULT:
         return [
@@ -88,12 +96,22 @@ def loader_config_lines(setup: BootSetup) -> list[str]:
             "    terminal_output serial console",
             "  '';",
         ]
-    # Design D3: say so explicitly instead of relying on nixos-generate-config
-    # having seen /boot/extlinux on the running SD image.
-    return [
-        "  boot.loader.grub.enable = false;",
-        "  boot.loader.generic-extlinux-compatible.enable = true;",
-    ]
+    return []
+
+
+def loader_module_template(setup: BootSetup) -> Optional[str]:
+    """The packaged template (under ``pre_nixos/templates``) to install as
+    ``LOADER_MODULE_FILE``, or ``None`` when nixos-generate-config's choice stands.
+
+    Design D3: the Pi's loader is declared explicitly, not left to
+    nixos-generate-config having seen /boot/extlinux on the running SD image.
+    It is a separate module so that its definitions merge with the generator's
+    instead of clashing with them (trbarbour/NixOS-boot-image#320).
+    """
+
+    if setup.kind is InstalledBoot.RPI4_UBOOT_EXTLINUX:
+        return "boot-loader-rpi4-uboot-extlinux.nix"
+    return None
 
 
 def install_boot_files(

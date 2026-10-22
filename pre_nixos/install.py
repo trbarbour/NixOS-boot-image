@@ -501,18 +501,22 @@ def _load_ip_announcement_script() -> list[str]:
     return content.strip("\n").splitlines()
 
 
-def _load_auto_install_module_template() -> str:
-    """Return the NixOS module used for IP announcement and diagnostics."""
+def _load_template(name: str) -> str:
+    """Return the NixOS module template ``name`` packaged under ``templates/``."""
 
     try:
-        template_path = resources.files(__package__).joinpath(
-            "templates/auto-install-ip.nix"
-        )
+        template_path = resources.files(__package__).joinpath(f"templates/{name}")
         return template_path.read_text(encoding="utf-8")
     except (FileNotFoundError, OSError) as error:  # pragma: no cover - packaging issue
         raise FileNotFoundError(
-            "Missing auto-install IP module template packaged with pre_nixos"
+            f"Missing NixOS module template {name} packaged with pre_nixos"
         ) from error
+
+
+def _load_auto_install_module_template() -> str:
+    """Return the NixOS module used for IP announcement and diagnostics."""
+
+    return _load_template("auto-install-ip.nix")
 
 
 def _write_auto_install_module(root_path: Path) -> Path:
@@ -537,10 +541,9 @@ def _write_auto_install_module(root_path: Path) -> Path:
     return module_path
 
 
-def _ensure_auto_install_import(lines: list[str]) -> list[str]:
-    """Ensure ``configuration.nix`` imports the auto-install helper module."""
+def _ensure_import(lines: list[str], target: str) -> list[str]:
+    """Ensure ``configuration.nix`` imports the module ``target`` (``./name.nix``)."""
 
-    target = _AUTO_INSTALL_MODULE
     in_imports = False
     open_index: int | None = None
     close_index: int | None = None
@@ -613,7 +616,13 @@ def _inject_configuration(
         filtered.append(line)
 
     _write_auto_install_module(root_path)
-    filtered = _ensure_auto_install_import(filtered)
+    filtered = _ensure_import(filtered, _AUTO_INSTALL_MODULE)
+    loader_template = boot_platform.loader_module_template(boot_setup)
+    if loader_template is not None:
+        (config_dir / boot_platform.LOADER_MODULE_FILE).write_text(
+            _load_template(loader_template), encoding="utf-8"
+        )
+        filtered = _ensure_import(filtered, f"./{boot_platform.LOADER_MODULE_FILE}")
 
     filesystems, swaps = _collect_storage_definitions(storage_plan)
     effective_console_kernel_params = list(

@@ -1,5 +1,6 @@
 """Tests for the automated installation helper."""
 
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -567,7 +568,19 @@ def test_inject_configuration_uses_serial_last_when_serial_is_primary(tmp_path) 
     assert 'boot.kernelParams = [ "console=tty0" "console=ttyS0,115200n8" ];' in content
 
 
-def _fake_install_run(root: Path, commands: list[list[str]], *, expect_firmware: bool = True):
+_GENERATE_CONFIG_FIXTURES = Path(__file__).parent / "fixtures" / "nixos-generate-config"
+
+
+def _fake_install_run(
+    root: Path,
+    commands: list[list[str]],
+    *,
+    expect_firmware: bool = True,
+    generated: str | None = None,
+):
+    """``generated``: a variant under ``fixtures/nixos-generate-config`` whose real
+    output the fake ``nixos-generate-config`` writes (default: an empty set)."""
+
     def fake_run(cmd, check=False):
         commands.append(cmd)
 
@@ -577,7 +590,12 @@ def _fake_install_run(root: Path, commands: list[list[str]], *, expect_firmware:
         if cmd[0] == "nixos-generate-config":
             config_dir = root / "etc/nixos"
             config_dir.mkdir(parents=True, exist_ok=True)
-            (config_dir / "configuration.nix").write_text("{\n}\n", encoding="utf-8")
+            if generated is None:
+                (config_dir / "configuration.nix").write_text("{\n}\n", encoding="utf-8")
+            else:
+                for name in ("configuration.nix", "hardware-configuration.nix"):
+                    source = _GENERATE_CONFIG_FIXTURES / generated / name
+                    (config_dir / name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
         if cmd[0] == "nixos-install" and expect_firmware:
             # The firmware is on /boot before nixos-install writes extlinux.conf.
             assert (root / "boot" / "u-boot-rpi4.bin").read_bytes() == b"uboot-nvme"
@@ -625,9 +643,54 @@ def test_auto_install_rpi_puts_firmware_on_boot_and_enables_extlinux(
     assert result.status == "success", result
     assert [cmd[0] for cmd in commands] == ["nixos-generate-config", "nixos-install"]
     content = (root / "etc/nixos/configuration.nix").read_text()
-    assert "  boot.loader.grub.enable = false;" in content
-    assert "  boot.loader.generic-extlinux-compatible.enable = true;" in content
-    assert "grub.extraConfig" not in content
+    assert "boot.loader" not in content  # in pre-nixos-boot-loader.nix (#320)
+    assert "./pre-nixos-boot-loader.nix" in content
+    module = (root / "etc/nixos/pre-nixos-boot-loader.nix").read_text()
+    assert "boot.loader.generic-extlinux-compatible.enable = lib.mkForce true;" in module
+
+
+_TOP_LEVEL_ASSIGNMENT = re.compile(r"^  (?P<path>[A-Za-z0-9_.\"-]+)\s*=")
+
+
+def _top_level_paths(text: str) -> list[str]:
+    """Attribute paths assigned at the top level of a generated NixOS module
+    (two-space indentation, as nixos-generate-config and the managed block use)."""
+
+    return [m.group("path") for m in map(_TOP_LEVEL_ASSIGNMENT.match, text.splitlines()) if m]
+
+
+@pytest.mark.parametrize("generated", ["extlinux", "grub", "efi"])
+def test_auto_install_rpi_config_defines_no_attribute_twice(
+    tmp_path, monkeypatch, broadcast_messages, generated
+):
+    """trbarbour/NixOS-boot-image#320: on the CM4, nixos-generate-config itself
+    writes boot.loader.grub.enable (the SD image has /boot/extlinux), and a
+    second definition in the same file is a Nix parse error."""
+
+    root = tmp_path / "mnt"
+    (root / "boot").mkdir(parents=True)
+    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
+    _rpi_environment(tmp_path, monkeypatch)
+    monkeypatch.setattr(install.boot_platform, "_is_mount", lambda path: path == root / "boot")
+    commands: list[list[str]] = []
+    monkeypatch.setattr(
+        install.subprocess, "run", _fake_install_run(root, commands, generated=generated)
+    )
+
+    result = install.auto_install(
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+    )
+
+    assert result.status == "success", result
+    config_dir = root / "etc/nixos"
+    paths = _top_level_paths((config_dir / "configuration.nix").read_text())
+    duplicates = sorted({path for path in paths if paths.count(path) > 1})
+    assert duplicates == []
+    # The loader is declared in its own module, imported from configuration.nix.
+    module = config_dir / "pre-nixos-boot-loader.nix"
+    template = Path(install.__file__).parent / "templates" / "boot-loader-rpi4-uboot-extlinux.nix"
+    assert module.read_text() == template.read_text()
+    assert "./pre-nixos-boot-loader.nix" in (config_dir / "configuration.nix").read_text()
 
 
 def test_auto_install_rpi_fails_before_nixos_install_without_mounted_boot(

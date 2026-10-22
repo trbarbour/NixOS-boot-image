@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-10-18T17-33-41Z_
+_Last updated: 2026-10-22T03-33-24Z_
 
 ## Active Tasks
 
@@ -90,6 +90,11 @@ _Last updated: 2026-10-18T17-33-41Z_
        - VM tests at 0.19.1: the full regression had 11 passed and 1 stale test, which was fixed. The AArch64 module then passed 4/4.
      - **Next:** item 10, hardware acceptance on the CM4 (the user).
        - 2026-10-21: the first attempt used an image built without a root key, so `end0` was not renamed and SSH failed. That is designed behaviour: `configure_lan` skips when no key is embedded (user confirmed). The user's NVMe holds a Windows GPT, so auto-provisioning will not run (reqs §2.3) unless the user wipes it.
+       - 2026-10-22: attempt 1 with 0.20.0 and a site key (`docs/test-reports/2026-10-22T025029Z-cm4-item10-acceptance-1.md`).
+         - Worked: LAN renamed with DHCP, the BOOT_ORDER check passed, disko provisioned the NVMe.
+         - Failed: `nixos-install` stopped on a duplicate `boot.loader.grub.enable` (#320).
+         - Fixed in 0.20.1: the Pi loader is now a separate module with `mkForce`, tested against real `nixos-generate-config` output.
+         - **Next:** the user rebuilds from 0.20.1, wipes the NVMe, and repeats the test.
 
 10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
@@ -113,6 +118,7 @@ _Last updated: 2026-10-18T17-33-41Z_
     - Related (2026-10-19, AArch64 E5 run5): a solid-state device too small for `slash` still becomes `main`. The planner postcondition (#313) then stops pre-nixos, which is safe but leaves no plan at all. Seen with QEMU virt's 128M flash (`mtdblock0`); that device is now excluded as a non-candidate. Design question: choose `main` only where `slash` fits.
 
 12. **End-to-end install VM test (E9d).** *(gap, 2026-10-19)*
+    - 2026-10-22: #320 (duplicate loader attribute) reached hardware because of this gap; the flake checks added for it now cover the parse and evaluation part.
     - No VM test runs `nixos-install` and then boots the installed system, on either x86 or AArch64. Images are built without `PRE_NIXOS_AUTO_INSTALL`.
     - For AArch64: boot the installed NVMe disk with U-Boot for `qemu_arm64` and extlinux. That checks the extlinux, initrd and LVM-root part of plan item 8 (design §3, E9d).
     - Unknowns: `nixos-install` builds the generated configuration, so it needs substitutes or network inside the VM, and it is slow under TCG.
@@ -144,6 +150,17 @@ _Last updated: 2026-10-18T17-33-41Z_
 19. **Move the VM fixtures and scripts from PRE_NIXOS_ROOT_KEY/--impure to sites.** *(follow-up, site-settings design D2)*
     - `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still pass the key through the legacy environment fallback.
     - Move them to `--override-input site path:<tmp dir>`, then decide whether to drop the fallback.
+
+20. **CMA pool exhausted on the CM4 during provisioning.** *(anomaly, 2026-10-22, item 10 attempt 1)*
+    - `cma: __cma_alloc: linux,cma: alloc failed, req-size: 256 pages` (also 512 pages), with 176 of 16384 pages free.
+    - Hypothesis, unproven: the NVMe host memory buffer (64 MiB, `allocated 64 MiB host memory buffer`) fills the 64 MiB CMA pool.
+    - To do: find who requests the failed allocations, and whether the installed system is affected. Candidate remedies: a larger `cma=`, or `nvme.max_host_mem_size_mb`.
+
+21. **Duplicate "Starting automatic NixOS installation" line after a failure.** *(anomaly, 2026-10-22)*
+    - The journal shows it again after `Auto-install failed: nixos-install`, at the same second, apparently a buffered message replayed. Reproduce in a unit test, then root-cause.
+
+22. **The SD image took 29 minutes to build on the user's N355.** *(anomaly, 2026-10-22)*
+    - Find which derivations are built locally rather than substituted (likely the NVMe U-Boot and the firmware). Consider publishing them to a binary cache (see item 18, tier 3).
 
 ## Recently Completed
 - 2026-10-22T00-38-17Z - Merged trbarbour/NixOS-boot-image#319 (0.20.0): site settings. The root key and auto-install are supplied purely, from a directory outside git (`--override-input site path:<dir>`, or `lib.mkBootImage { format; site; }`), for the ISO or the SD image separately. A missing site file and invalid settings are errors. `.#bootImageSd` works on x86_64 hosts. VM regression 12/12.

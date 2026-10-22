@@ -56,6 +56,18 @@ Requirements: R-B1 (the installed system boots from its own disk) and R-B2 (it b
 - That is a side effect of the host, not a statement of intent. pre-nixos's managed block therefore sets both **explicitly**. Equal boolean definitions merge, so the two do not conflict.
 - The GRUB serial `extraConfig` lines stay x86 only. That moves item 4's leftover here.
 
+**Correction (2026-10-22, trbarbour/NixOS-boot-image#320).** On the CM4, `nixos-install` failed with ``attribute 'boot.loader.grub.enable' already defined``.
+- The claim above was wrong for *one file*: two definitions of the same attribute in one attribute-set literal are a Nix **parse** error, even when the values are equal. Equal definitions merge only across modules. The claim had not been checked by experiment.
+- The tests missed it because their fake `nixos-generate-config` wrote `{ }`.
+- **Debate:**
+  - **(a)** Strip the generator's loader lines: this parses generated text, and breaks when the template changes.
+  - **(b)** Drop ours and rely on the generator: this is the implicit dependence D3 rejects.
+  - **(c)** A separate module: **chosen**.
+- **(c) as built:** pre-nixos writes `/etc/nixos/pre-nixos-boot-loader.nix` (template `pre_nixos/templates/boot-loader-rpi4-uboot-extlinux.nix`) and imports it from `configuration.nix`. In it, `lib.mkForce` sets `grub.enable = false`, `systemd-boot.enable = false` and `generic-extlinux-compatible.enable = true`, so the image's declaration wins whichever loader the generator guessed (GRUB, extlinux or systemd-boot).
+- **Tests:**
+  - The generator's real output for the three cases is in `tests/fixtures/nixos-generate-config/`.
+  - It is used by pytest (no attribute assigned twice) and by the flake checks `installed-configuration-parses` and `installed-rpi-boot-loader`.
+
 ### D4. How pre-nixos knows the platform
 
 - **Runtime detection (`platform.machine()`, `/proc/device-tree/model`):** implicit, and a VM test on `-M virt` would take a different path from the CM4.
