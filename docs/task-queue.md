@@ -161,6 +161,7 @@ _Last updated: 2026-10-22T03-33-24Z_
 
 22. **The SD image took 29 minutes to build on the user's N355.** *(anomaly, 2026-10-22)*
     - Find which derivations are built locally rather than substituted (likely the NVMe U-Boot and the firmware). Consider publishing them to a binary cache (see item 18, tier 3).
+    - 2026-10-22 (user): the 0.20.1 rebuild took **8 minutes**, because no AArch64 binaries needed rebuilding. So the first build's cost is one-off AArch64 compilation under emulation on an x86 host. A binary cache remains the remedy for fresh hosts.
 
 23. **Undervoltage warnings on the CM4 (Waveshare CM4-POE-UPS-BOX, PoE from a GS308EPP).** *(anomaly, 2026-10-22, item 10 attempt 1)*
     - `hwmon hwmon1: Undervoltage detected!` appears every few seconds while the installer runs. The user has seen this before on this board, sometimes linked to `config.txt` settings.
@@ -172,6 +173,11 @@ _Last updated: 2026-10-22T03-33-24Z_
       - `otg_mode=1` (`[cm4]`): the XHCI host;
       - `avoid_warnings=1`, which only hides the firmware's on-screen warning.
       Still needed: the user's known-good `config.txt`.
+    - 2026-10-22 (user):
+      - No USB devices are attached, so `otg_mode=1` is unlikely to matter.
+      - `avoid_warnings=1` is wanted: it stops the firmware's warning from overwriting the framebuffer.
+      - The user also suspects `arm_boost=1`: as they recall, it (or `arm_freq`) may need a matching `over_voltage`. The CM4s have good heatsinks.
+      - Experiment: change one line at a time in the SD card's FIRMWARE `config.txt`, first without `arm_boost=1`, and count the warnings over a fixed period.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
