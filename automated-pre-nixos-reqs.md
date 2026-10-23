@@ -112,8 +112,8 @@ The system must automate the hardware setup process on new servers prior to NixO
 - **x86_64 UEFI** machines boot an ISO; **AArch64 Raspberry Pi 4-family**
   machines (CM4, Pi 4) boot a microSD image. [R-P1]
 - The AArch64 image is the stock NixOS AArch64 SD image plus pre-nixos.
-  pre-nixos must **not change the stock image's boot chain or kernel console
-  parameters**. [R-P2]
+  pre-nixos must **not change the stock image's boot chain or its set of
+  kernel consoles**. Their order follows R-C2. [R-P2]
 - Every platform's image builds from this repository on an x86_64 build host,
   including a Claude Code cloud session. [R-T1]
 
@@ -133,6 +133,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 - The setup process must be **fully non-interactive** until remote access is available.
 - Setup must proceed from **bootable removable media** (e.g., USB stick) with **serial console output**. This includes providing serial access to the **bootloader** and a login prompt on the serial console. The system must still work if a serial console is absent or disconnected. The installed system keeps every serial console the boot image was booted with (`ttyS*`, `ttyAMA*`, …) and the same primary console. [R-C1]
+- Each boot image's **primary console** (serial or display) is a build-time choice: most headless machines have only a serial console, and some mini-PCs have none. Defaults: **serial on AArch64**, **display on x86_64**. The installed system keeps the image's primary console (R-C1). [R-C2]
 - Setup must be **repeatable**, **deterministic**, and suitable for a **team-managed fleet**, though all installations will be performed by a single operator.
 
 ---

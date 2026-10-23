@@ -20,7 +20,7 @@ pre_nixos = [
     "default_log_file_path.txt",
     "scripts/announce-lan-ip.sh",
     "templates/auto-install-ip.nix",
-    "templates/boot-loader-rpi4-uboot-extlinux.nix",
+    "templates/boot-rpi4-uboot-extlinux.nix",
 ]
 
 [project.optional-dependencies]

@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.25
+**Doc status:** Draft v0.26
 **Date:** 2026-10-21 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -121,7 +121,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - **Firmware files:** built by `nix/rpi4-nvme-firmware.nix`, which runs the stock `sdImage.populateFirmwareCommands` and then swaps in our U-Boot.
   - pre-nixos copies them to `/mnt/boot` after disko and before `nixos-install`.
   - For a manual install, run `pre-nixos-install-boot-files`.
-- **Loader:** a separate module, `/etc/nixos/pre-nixos-boot-loader.nix`, imported from `configuration.nix`, forces `boot.loader.grub.enable = false`, `systemd-boot.enable = false` and `generic-extlinux-compatible.enable = true` (`lib.mkForce`). It is not in the managed block, because `nixos-generate-config` sets some of the same attributes in `configuration.nix`, and a second definition in one file is a parse error (#320). The GRUB serial lines are x86 only.
+- **Loader and initrd:** a separate module, `/etc/nixos/pre-nixos-boot.nix`, imported from `configuration.nix`, forces `boot.loader.grub.enable = false`, `systemd-boot.enable = false` and `generic-extlinux-compatible.enable = true` (`lib.mkForce`). It is not in the managed block, because `nixos-generate-config` sets some of the same attributes in `configuration.nix`, and a second definition in one file is a parse error (#320). The same module adds `pcie-brcmstb` and `nvme` to the initrd: the root is behind the BCM2711's PCIe bridge, whose driver is a module that `nixos-generate-config` cannot detect (#323). The GRUB serial lines are x86 only.
 - **Platform input:** declared by the image (`services.pre-nixos.installedBoot`, exported as `PRE_NIXOS_INSTALLED_BOOT`), not detected at run time.
 - **Design debate:** `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
 - **Boot-order check [R-B2]:**
@@ -172,6 +172,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ## 8) State Machine / Flow
 1. **Early boot:**
    - GRUB and the kernel are configured with `console=ttyS0,115200n8 console=tty0` so serial output is available with a local fallback.
+   - **Primary console [R-C2]:**
+     - Set by the site setting `primaryConsole = "serial" | "display"`. The default is serial on the SD image and display on the ISO.
+     - Serial primary appends `console=ttyS0,115200n8` once more, because the kernel prefers a repeated `console=` (verified in QEMU).
+     - The installed system inherits it through R-C1.
+     - Design: `plans/2026-10-23T022949Z-primary-console-design.md`.
    - Parse kernel args; detect available consoles from `/proc/consoles` and `/proc/cmdline`.
    - Start a `getty` on the primary serial console to allow logins.
    - Establish **non-blocking log fan-out**: log to journald, append to `/var/log/pre-nixos/actions.log`, send to `dmesg`, and write to the kernel console (e.g., `printf ... > /dev/console` with timeouts).

@@ -71,6 +71,8 @@ def test_rpi_declares_its_loader_in_a_module_not_the_managed_block(tmp_path: Pat
         "boot.loader.grub.enable = lib.mkForce false;",
         "boot.loader.systemd-boot.enable = lib.mkForce false;",
         "boot.loader.generic-extlinux-compatible.enable = lib.mkForce true;",
+        # #323: the NVMe root is behind the PCIe bridge, a module.
+        'boot.initrd.availableKernelModules = [ "pcie-brcmstb" "nvme" ];',
     ):
         assert line in text
 

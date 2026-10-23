@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-10-22T03-33-24Z_
+_Last updated: 2026-10-23T01-03-50Z_
 
 ## Active Tasks
 
@@ -95,6 +95,14 @@ _Last updated: 2026-10-22T03-33-24Z_
          - Failed: `nixos-install` stopped on a duplicate `boot.loader.grub.enable` (#320).
          - Fixed in 0.20.1: the Pi loader is now a separate module with `mkForce`, tested against real `nixos-generate-config` output.
          - **Next:** the user rebuilds from 0.20.1, wipes the NVMe, and repeats the test.
+       - 2026-10-22: attempt 2 with 0.21.0 (`docs/test-reports/2026-10-22T154500Z-cm4-item10-acceptance-2.md`).
+         - Worked: the install, then firmware → U-Boot 2026.10 → extlinux from NVMe, as far as `Starting kernel ...`.
+         - Failed:
+           - the installed initrd lacks `pcie-brcmstb`, so the system hung with no serial output and no DHCP (#323);
+           - the installer's sshd waited for the whole auto-install (#324).
+         - Both fixed in 0.21.1.
+         - **Next:** the user rebuilds 0.21.1, wipes the NVMe, and retests. Open question: make serial the installed Pi's primary console?
+       - 2026-10-23 (user decision): the primary console is a site setting (`primaryConsole`), serial by default on AArch64 and display on x86. It applies to the image and is inherited by the installed system. Implemented in 0.22.0 (`plans/2026-10-23T022949Z-primary-console-design.md`).
 
 10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
@@ -182,8 +190,20 @@ _Last updated: 2026-10-22T03-33-24Z_
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
 
+24. **The auto-install start time is logged from an unsynced clock.** *(anomaly, 2026-10-22, CM4 attempt 2)*
+    - `Starting automatic NixOS installation at 2026-03-17 19:56:48Z`: the CM4 has no RTC, and timesyncd had not synced yet.
+    - Options: wait for `time-sync.target` (bounded) before stamping, or mark the time as unsynchronised.
+
+25. **The installed system's label is `26.05pre-git`.** *(anomaly, 2026-10-22, CM4 attempt 2)*
+    - The image's label is `26.05.20261015.26f4107`. The channel that `nixos-install` copies seems to lack nixpkgs' `.version`/`.git-revision` files.
+    - Reproduce by evaluating `system.nixos.label` against the copied channel, then root-cause.
+
+26. **The installed U-Boot 2026.10 prints `ERROR: reserving fdt memory region failed (addr=0 size=1000 flags=4): -17`.** *(anomaly, 2026-10-22, CM4 attempt 2)*
+    - Not printed by the stock U-Boot 2026.04 on the SD card. -17 is EEXIST (already reserved), so it is probably harmless.
+    - Find its source in `boot/image-fdt.c`, then decide.
+
 ## Recently Completed
-- 2026-10-22 - (user request) The 0.20.1 SD image had the same file name as 0.20.0, because nixpkgs names images after its own version only. From 0.21.0, both images are named `pre-nixos-<version>-g<commit>[-dirty]-<nixpkgs label>-<system>.<ext>` (the user chose version plus commit). Covered by the flake check `image-file-names`.
+- 2026-10-22T13-30-56Z - Merged trbarbour/NixOS-boot-image#322 (0.21.0). (user request) The 0.20.1 SD image had the same file name as 0.20.0, because nixpkgs names images after its own version only. From 0.21.0, both images are named `pre-nixos-<version>-g<commit>[-dirty]-<nixpkgs label>-<system>.<ext>` (the user chose version plus commit). Covered by the flake check `image-file-names`.
 - 2026-10-22T04-04-06Z - Merged trbarbour/NixOS-boot-image#321 (0.20.1): fixed #320 (closed). On the CM4, `nixos-install` failed on a duplicate `boot.loader.grub.enable`. The Pi loader is now a separate module with `mkForce`, tested against real `nixos-generate-config` output (pytest, plus the flake checks `installed-configuration-parses` and `installed-rpi-boot-loader`). CI green, no Codex findings. Item 10: waiting for the user's retest.
 - 2026-10-22T00-38-17Z - Merged trbarbour/NixOS-boot-image#319 (0.20.0): site settings. The root key and auto-install are supplied purely, from a directory outside git (`--override-input site path:<dir>`, or `lib.mkBootImage { format; site; }`), for the ISO or the SD image separately. A missing site file and invalid settings are errors. `.#bootImageSd` works on x86_64 hosts. VM regression 12/12.
 - 2026-10-21T13-23-59Z - Merged trbarbour/NixOS-boot-image#317 (0.19.1): NVMe U-Boot v2026.10 plus the read/write DMA-translation patch (verified on the CM4, #316 closed), and AArch64 item 9 (the `BOOT_ORDER` check). Also merged trbarbour/NixOS-boot-image#318: tier-1 CI (unit tests on 3.10 and 3.13, the strict mypy ratchet, flake check, SD-image evaluation), and tests no longer write to the host's `/var/log`.

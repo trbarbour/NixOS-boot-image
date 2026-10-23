@@ -93,7 +93,7 @@
       # `settings` (nix/site.nix resolveSettings) is the one source of both the
       # key embedded in the package and the module's options, so the image's
       # login notice and its behaviour cannot disagree (design D4).
-      mkPreInstaller = { system, imageModules, settings }:
+      mkPreInstaller = { system, imageModules, settings, console }:
         let
           package = makePreNixosPackage { inherit system; inherit (settings) rootKey; };
         in
@@ -107,6 +107,9 @@
               services.pre-nixos.enable = true;
               services.pre-nixos.rootKey = settings.rootKey;
               services.pre-nixos.autoInstall = settings.autoInstall;
+              # R-C2, chosen per format by mkBootConfigurationWith.
+              services.pre-nixos.primaryConsole = console.primary;
+              services.pre-nixos.serialConsole = console.serial;
               # The ISO and SD modules set image.baseName with normal priority.
               image.baseName = lib.mkForce (imageBaseName { inherit system; label = config.system.nixos.label; });
             })
@@ -134,6 +137,9 @@
             "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
           ];
           image = config: config.system.build.isoImage;
+          # R-C2.  The ISO lists one serial console, which is the one used.
+          primaryConsole = "display";
+          serialConsole = null;
         };
         sd = {
           system = aarch64System;
@@ -151,8 +157,29 @@
             })
           ];
           image = config: config.system.build.sdImage;
+          # R-C2.  The stock SD image lists two serial consoles, for different
+          # boards (nixpkgs: ttyS0 "for Tegra", ttyAMA0 "for QEMU's -machine
+          # virt"), and the kernel prefers only one; if it is absent,
+          # /dev/console falls back to the display (design F6).  R-P1's Pi 4
+          # family uses the mini UART, ttyS0: on the CM4 it carries the console,
+          # and there is no ttyAMA0 (design §5).
+          primaryConsole = "serial";
+          serialConsole = "ttyS0,115200n8";
         };
       };
+
+      # R-C2: the serial console to make primary, taken from the format's own
+      # console list (design §5).  A format names one when the list has
+      # several; a name outside the list is an error.
+      consolesOf = params: map (lib.removePrefix "console=") (builtins.filter (lib.hasPrefix "console=") params);
+      isSerialConsole = console: builtins.match "tty[0-9]+(,.*)?" console == null;
+      serialConsoleFor = { format, consoles, named }:
+        let serials = lib.unique (builtins.filter isSerialConsole consoles); in
+        if named != null then
+          (if builtins.elem named serials then named
+           else throw "pre-nixos: format ${format} names serial console ${builtins.toJSON named}, which is not among its consoles ${builtins.toJSON serials}")
+        else if builtins.length serials == 1 then builtins.head serials
+        else throw "pre-nixos: format ${format} has serial consoles ${builtins.toJSON serials}; name one in formats.${format}.serialConsole";
 
       formatOf = format:
         formats.${format} or (throw "pre-nixos: unknown boot-image format ${builtins.toJSON format}; supported: ${lib.concatStringsSep ", " (builtins.attrNames formats)}");
@@ -160,8 +187,16 @@
       # A boot image's NixOS configuration from a format and a site directory
       # (default: the flake input `site`).  Exported as lib.mkBootConfiguration.
       mkBootConfigurationWith = { format, settings }:
-        let f = formatOf format; in
-        mkPreInstaller { inherit (f) system imageModules; inherit settings; };
+        let
+          f = formatOf format;
+          build = console: mkPreInstaller { inherit (f) system imageModules; inherit settings console; };
+          # The format's own consoles: the image with nothing appended.
+          consoles = consolesOf (build { primary = "display"; serial = null; }).config.boot.kernelParams;
+        in
+        build {
+          primary = if settings.primaryConsole != null then settings.primaryConsole else f.primaryConsole;
+          serial = serialConsoleFor { inherit format consoles; named = f.serialConsole; };
+        };
       mkBootConfiguration = { format, site ? null }:
         mkBootConfigurationWith {
           inherit format;
@@ -196,7 +231,7 @@
             c = mkBootConfigurationWith { format = "iso"; inherit settings; };
           in
           assert lib.assertMsg
-            (settings == { rootKey = null; autoInstall = false; }
+            (settings == { rootKey = null; autoInstall = false; primaryConsole = null; }
               && c.pkgs.pre-nixos.rootKey == null
               && !(c.config.systemd.services.pre-nixos.environment ? PRE_NIXOS_AUTO_INSTALL))
             "the default site must embed no key and leave auto-install off";
@@ -208,11 +243,58 @@
               && fails (siteLib.validateSite "t" { rootKey = "/etc/ssh/key.pub"; })
               && fails (siteLib.validateSite "t" { rootKey = ./tests/fixtures/no-such.pub; })
               && fails (siteLib.validateSite "t" { autoInstall = "yes"; })
+              && fails (siteLib.validateSite "t" { primaryConsole = "hdmi"; })
               && fails (formatOf "dvd")
               && fails (siteLib.readSite ./tests/fixtures)
               && fails (siteLib.resolveSettings { site = siteLib.validateSite "t" { }; env = noEnv // { autoInstall = "maybe"; }; })
               && !(fails (siteLib.validateSite "t" { })))
             "site validation accepted an invalid setting or rejected an empty site";
+          true;
+        # R-C2: the last console= is the primary one (design F1/F2): serial by
+        # default on the SD image, display on the ISO, and either on request.
+        primary-console =
+          let
+            lastConsole = format: primaryConsole:
+              let
+                c = mkBootConfigurationWith {
+                  inherit format;
+                  settings = { rootKey = null; autoInstall = false; inherit primaryConsole; };
+                };
+              in
+              lib.last (builtins.filter (lib.hasPrefix "console=") c.config.boot.kernelParams);
+            serial = "console=ttyS0,115200n8";
+            display = "console=tty0";
+            got = lib.genAttrs [ "iso" "sd" ] (format: {
+              default = lastConsole format null;
+              serial = lastConsole format "serial";
+              display = lastConsole format "display";
+            });
+            want = {
+              iso = { default = display; inherit serial display; };
+              sd = { default = serial; inherit serial display; };
+            };
+          in
+          assert lib.assertMsg (got == want) "primary consoles: ${builtins.toJSON got}";
+          true;
+        # R-C2 (design §5): the serial console comes from the format's own list:
+        # the only one, or the one the format names; never one outside it.
+        serial-console-choice =
+          let
+            chosen = format: (mkBootConfigurationWith {
+              inherit format;
+              settings = { rootKey = null; autoInstall = false; primaryConsole = null; };
+            }).config.services.pre-nixos.serialConsole;
+            stockSd = consolesOf stockAarch64Config.config.boot.kernelParams;
+          in
+          assert lib.assertMsg
+            (chosen "iso" == "ttyS0,115200n8"
+              && chosen "sd" == "ttyS0,115200n8"
+              && builtins.elem (chosen "sd") stockSd
+              && serialConsoleFor { format = "t"; consoles = [ "ttyAMA0" "tty0" ]; named = null; } == "ttyAMA0"
+              && fails (serialConsoleFor { format = "t"; consoles = stockSd; named = null; })
+              && fails (serialConsoleFor { format = "t"; consoles = stockSd; named = "ttyS1,115200n8"; })
+              && fails (serialConsoleFor { format = "t"; consoles = [ "tty0" ]; named = null; }))
+            "serial console choice: iso=${chosen "iso"} sd=${chosen "sd"} stock=${builtins.toJSON stockSd}";
           true;
         # The legacy environment only fills unset settings; disagreement is an error.
         site-env-conflict =
@@ -330,7 +412,7 @@
                     system = aarch64System;
                     modules = [
                       (./tests/fixtures/nixos-generate-config + "/${variant}/configuration.nix")
-                      ./pre_nixos/templates/boot-loader-rpi4-uboot-extlinux.nix
+                      ./pre_nixos/templates/boot-rpi4-uboot-extlinux.nix
                       { fileSystems."/" = { device = "/dev/main/slash"; fsType = "ext4"; }; }
                     ];
                   }).config;
@@ -368,13 +450,64 @@
             pkgs.runCommand "image-file-names" {} ''
               touch $out
             '';
+          # #323: the installed Pi's root is LVM on NVMe behind the BCM2711's
+          # PCIe bridge, whose driver is a module that nixos-generate-config
+          # cannot detect (it scans PCI devices, not the platform bridge).  The
+          # hardware configuration below is what the generator gives the CM4:
+          # `nvme` from the PCI scan.
+          installed-rpi-initrd-storage =
+            let
+              config = (nixpkgs.lib.nixosSystem {
+                system = aarch64System;
+                modules = [
+                  ./tests/fixtures/nixos-generate-config/extlinux/configuration.nix
+                  ./pre_nixos/templates/boot-rpi4-uboot-extlinux.nix
+                  {
+                    boot.initrd.availableKernelModules = [ "nvme" ];
+                    fileSystems."/" = { device = "/dev/main/slash"; fsType = "ext4"; };
+                  }
+                ];
+              }).config;
+              initrd = config.boot.initrd.availableKernelModules ++ config.boot.initrd.kernelModules;
+              missing = builtins.filter (m: !(builtins.elem m initrd)) [ "pcie-brcmstb" "nvme" ];
+            in
+            assert pkgs.lib.assertMsg (missing == [ ])
+              "installed Pi initrd lacks ${builtins.toString missing}";
+            pkgs.runCommand "installed-rpi-initrd-storage" {} ''
+              touch $out
+            '';
+          # #324: on the installer, sshd starts once secure_ssh has hardened it,
+          # not when pre-nixos.service (which runs the whole auto-install) ends;
+          # and nothing starts it at boot (reqs §2.7).
+          installer-sshd-start =
+            let
+              check = format:
+                let
+                  sshd = (mkBootConfiguration { inherit format; }).config.systemd.services.sshd;
+                  ok = !(builtins.elem "pre-nixos.service" sshd.after)
+                    && sshd.wantedBy == [ ] && sshd.requiredBy == [ ];
+                in
+                pkgs.lib.assertMsg ok
+                  "${format}: sshd after=${builtins.toJSON sshd.after} wantedBy=${builtins.toJSON sshd.wantedBy}";
+            in
+            assert check "iso" && check "sd";
+            pkgs.runCommand "installer-sshd-start" {} ''
+              touch $out
+            '';
+          # R-P2 (amended for R-C2): the stock boot chain and set of consoles;
+          # serial primary only appends the serial console once more.
           stock-aarch64-boot-settings =
             let
-              ours = bootSettings aarch64Config.config;
               stock = bootSettings stockAarch64Config.config;
+              withConsole = primaryConsole: bootSettings (mkBootConfigurationWith {
+                format = "sd";
+                settings = { rootKey = null; autoInstall = false; inherit primaryConsole; };
+              }).config;
+              serialStock = stock // { kernelParams = stock.kernelParams ++ [ "console=${aarch64Config.config.services.pre-nixos.serialConsole}" ]; };
+              ours = bootSettings aarch64Config.config;
             in
-            assert pkgs.lib.assertMsg (ours == stock)
-              "pre-nixos changes the stock AArch64 boot settings (R-P2): ours=${builtins.toJSON ours} stock=${builtins.toJSON stock}";
+            assert pkgs.lib.assertMsg (withConsole "display" == stock && withConsole "serial" == serialStock && ours == serialStock)
+              "pre-nixos changes the stock AArch64 boot settings beyond R-C2 (R-P2): ours=${builtins.toJSON ours} stock=${builtins.toJSON stock}";
             pkgs.runCommand "stock-aarch64-boot-settings" {} ''
               touch $out
             '';

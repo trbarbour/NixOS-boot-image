@@ -69,6 +69,28 @@ in {
     default = false;
     description = "Install NixOS automatically once storage and network are ready.";
   };
+  options.services.pre-nixos.primaryConsole = lib.mkOption {
+    type = lib.types.enum [ "serial" "display" ];
+    default = "display";
+    description = ''
+      The image's primary console (/dev/console: systemd status, emergency
+      shells), which the installed system keeps (reqs R-C2, R-C1).  "serial"
+      appends serialConsole once more, since the kernel prefers a repeated
+      console= (design plans/2026-10-23T022949Z-primary-console-design.md);
+      "display" keeps the stock order, which ends with tty0.  The flake's
+      image formats set it (serial for the SD image).
+    '';
+  };
+  options.services.pre-nixos.serialConsole = lib.mkOption {
+    type = lib.types.nullOr lib.types.str;
+    default = null;
+    example = "ttyS0,115200n8";
+    description = ''
+      The serial console made primary when primaryConsole is "serial": one of
+      the image's own console= entries (without "console=").  The flake
+      chooses it from the image's stock console list.
+    '';
+  };
   options.services.pre-nixos.installedBoot = lib.mkOption {
     type = lib.types.enum [ "nixos-default" "rpi4-uboot-extlinux" ];
     default = "nixos-default";
@@ -155,15 +177,17 @@ in {
     # Keep OpenSSH disabled until secure_ssh hardens the configuration.
     # ``wantedBy = []`` ensures no other units pull ``sshd`` in automatically,
     # so only ``secure_ssh`` queues the non-blocking restart once the config is safe.
+    # No ordering after pre-nixos.service: that unit runs the whole
+    # auto-install, so the queued start would wait for it (#324).
     services.openssh.enable = true;
     systemd.services.sshd.wantedBy = lib.mkForce [ ];
-    systemd.services.sshd.after = [ "pre-nixos.service" ];
     systemd.services.sshd.serviceConfig.ExecStart =
       lib.mkForce "${pkgs.openssh}/bin/sshd -D -e -f /etc/ssh/sshd_config";
   }
   # The ISO's boot chain and console settings.  On AArch64 the stock SD image's
-  # boot chain and kernel console parameters stay untouched (reqs §2.9 R-P2;
-  # AArch64 plan §3.4), checked by the flake check stock-aarch64-boot-settings.
+  # boot chain and set of kernel consoles stay untouched (reqs §2.9 R-P2;
+  # AArch64 plan §3.4), checked by the flake check stock-aarch64-boot-settings;
+  # only their order follows primaryConsole (below).
   (lib.mkIf pkgs.stdenv.hostPlatform.isx86 {
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
     boot.loader.grub.memtest86.enable = true;
@@ -172,6 +196,15 @@ in {
       terminal_input serial console
       terminal_output serial console
     '';
+  })
+  # R-C2: the chosen serial console becomes primary by appearing again last;
+  # the kernel prefers a repeated console= (design F1/F2).
+  (lib.mkIf (cfg.primaryConsole == "serial") {
+    assertions = [ {
+      assertion = cfg.serialConsole != null;
+      message = "services.pre-nixos.primaryConsole = \"serial\" needs services.pre-nixos.serialConsole";
+    } ];
+    boot.kernelParams = lib.mkIf (cfg.serialConsole != null) (lib.mkAfter [ "console=${cfg.serialConsole}" ]);
   })
   ]);
 }
