@@ -68,6 +68,14 @@ Requirements: R-B1 (the installed system boots from its own disk) and R-B2 (it b
   - The generator's real output for the three cases is in `tests/fixtures/nixos-generate-config/`.
   - It is used by pytest (no attribute assigned twice) and by the flake checks `installed-configuration-parses` and `installed-rpi-boot-loader`.
 
+**Addendum (2026-10-23, trbarbour/NixOS-boot-image#323).** CM4 attempt 2 booted the installed kernel from NVMe, then hung: the initrd had no `pcie-brcmstb`, so it could not reach the NVMe root.
+- The SD installer gets that module only from `all-hardware.nix`, and `nixos-generate-config` cannot detect a platform PCIe bridge.
+- The module is renamed `pre-nixos-boot.nix` (template `boot-rpi4-uboot-extlinux.nix`), and now also sets `boot.initrd.availableKernelModules = [ "pcie-brcmstb" "nvme" ]`.
+- **Debate:**
+  - Importing `all-hardware.nix` into the installed system would match the installer exactly, but bloats the initrd with drivers for other boards.
+  - An explicit list traces to R-B1. **Chosen.**
+- **Test:** the flake check `installed-rpi-initrd-storage`.
+
 ### D4. How pre-nixos knows the platform
 
 - **Runtime detection (`platform.machine()`, `/proc/device-tree/model`):** implicit, and a VM test on `-M virt` would take a different path from the CM4.

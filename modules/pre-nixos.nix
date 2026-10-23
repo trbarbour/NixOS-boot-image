@@ -155,9 +155,10 @@ in {
     # Keep OpenSSH disabled until secure_ssh hardens the configuration.
     # ``wantedBy = []`` ensures no other units pull ``sshd`` in automatically,
     # so only ``secure_ssh`` queues the non-blocking restart once the config is safe.
+    # No ordering after pre-nixos.service: that unit runs the whole
+    # auto-install, so the queued start would wait for it (#324).
     services.openssh.enable = true;
     systemd.services.sshd.wantedBy = lib.mkForce [ ];
-    systemd.services.sshd.after = [ "pre-nixos.service" ];
     systemd.services.sshd.serviceConfig.ExecStart =
       lib.mkForce "${pkgs.openssh}/bin/sshd -D -e -f /etc/ssh/sshd_config";
   }

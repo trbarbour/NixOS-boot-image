@@ -330,7 +330,7 @@
                     system = aarch64System;
                     modules = [
                       (./tests/fixtures/nixos-generate-config + "/${variant}/configuration.nix")
-                      ./pre_nixos/templates/boot-loader-rpi4-uboot-extlinux.nix
+                      ./pre_nixos/templates/boot-rpi4-uboot-extlinux.nix
                       { fileSystems."/" = { device = "/dev/main/slash"; fsType = "ext4"; }; }
                     ];
                   }).config;
@@ -366,6 +366,50 @@
             assert pkgs.lib.assertMsg (iso.isoImage.isoName == name "iso")
               "isoName ${iso.isoImage.isoName} differs from image.fileName ${name "iso"}";
             pkgs.runCommand "image-file-names" {} ''
+              touch $out
+            '';
+          # #323: the installed Pi's root is LVM on NVMe behind the BCM2711's
+          # PCIe bridge, whose driver is a module that nixos-generate-config
+          # cannot detect (it scans PCI devices, not the platform bridge).  The
+          # hardware configuration below is what the generator gives the CM4:
+          # `nvme` from the PCI scan.
+          installed-rpi-initrd-storage =
+            let
+              config = (nixpkgs.lib.nixosSystem {
+                system = aarch64System;
+                modules = [
+                  ./tests/fixtures/nixos-generate-config/extlinux/configuration.nix
+                  ./pre_nixos/templates/boot-rpi4-uboot-extlinux.nix
+                  {
+                    boot.initrd.availableKernelModules = [ "nvme" ];
+                    fileSystems."/" = { device = "/dev/main/slash"; fsType = "ext4"; };
+                  }
+                ];
+              }).config;
+              initrd = config.boot.initrd.availableKernelModules ++ config.boot.initrd.kernelModules;
+              missing = builtins.filter (m: !(builtins.elem m initrd)) [ "pcie-brcmstb" "nvme" ];
+            in
+            assert pkgs.lib.assertMsg (missing == [ ])
+              "installed Pi initrd lacks ${builtins.toString missing}";
+            pkgs.runCommand "installed-rpi-initrd-storage" {} ''
+              touch $out
+            '';
+          # #324: on the installer, sshd starts once secure_ssh has hardened it,
+          # not when pre-nixos.service (which runs the whole auto-install) ends;
+          # and nothing starts it at boot (reqs §2.7).
+          installer-sshd-start =
+            let
+              check = format:
+                let
+                  sshd = (mkBootConfiguration { inherit format; }).config.systemd.services.sshd;
+                  ok = !(builtins.elem "pre-nixos.service" sshd.after)
+                    && sshd.wantedBy == [ ] && sshd.requiredBy == [ ];
+                in
+                pkgs.lib.assertMsg ok
+                  "${format}: sshd after=${builtins.toJSON sshd.after} wantedBy=${builtins.toJSON sshd.wantedBy}";
+            in
+            assert check "iso" && check "sd";
+            pkgs.runCommand "installer-sshd-start" {} ''
               touch $out
             '';
           stock-aarch64-boot-settings =

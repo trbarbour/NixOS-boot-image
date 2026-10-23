@@ -121,7 +121,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - **Firmware files:** built by `nix/rpi4-nvme-firmware.nix`, which runs the stock `sdImage.populateFirmwareCommands` and then swaps in our U-Boot.
   - pre-nixos copies them to `/mnt/boot` after disko and before `nixos-install`.
   - For a manual install, run `pre-nixos-install-boot-files`.
-- **Loader:** a separate module, `/etc/nixos/pre-nixos-boot-loader.nix`, imported from `configuration.nix`, forces `boot.loader.grub.enable = false`, `systemd-boot.enable = false` and `generic-extlinux-compatible.enable = true` (`lib.mkForce`). It is not in the managed block, because `nixos-generate-config` sets some of the same attributes in `configuration.nix`, and a second definition in one file is a parse error (#320). The GRUB serial lines are x86 only.
+- **Loader and initrd:** a separate module, `/etc/nixos/pre-nixos-boot.nix`, imported from `configuration.nix`, forces `boot.loader.grub.enable = false`, `systemd-boot.enable = false` and `generic-extlinux-compatible.enable = true` (`lib.mkForce`). It is not in the managed block, because `nixos-generate-config` sets some of the same attributes in `configuration.nix`, and a second definition in one file is a parse error (#320). The same module adds `pcie-brcmstb` and `nvme` to the initrd: the root is behind the BCM2711's PCIe bridge, whose driver is a module that `nixos-generate-config` cannot detect (#323). The GRUB serial lines are x86 only.
 - **Platform input:** declared by the image (`services.pre-nixos.installedBoot`, exported as `PRE_NIXOS_INSTALLED_BOOT`), not detected at run time.
 - **Design debate:** `plans/2026-10-19T132321Z-aarch64-item8-installed-bootloader-design.md`.
 - **Boot-order check [R-B2]:**

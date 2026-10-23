@@ -78,7 +78,7 @@ def boot_setup_from_environment(env: Mapping[str, str] = os.environ) -> BootSetu
 
 
 # Where the loader module goes, beside configuration.nix (which imports it).
-LOADER_MODULE_FILE = "pre-nixos-boot-loader.nix"
+LOADER_MODULE_FILE = "pre-nixos-boot.nix"
 
 
 def loader_config_lines(setup: BootSetup) -> list[str]:
@@ -110,7 +110,7 @@ def loader_module_template(setup: BootSetup) -> Optional[str]:
     """
 
     if setup.kind is InstalledBoot.RPI4_UBOOT_EXTLINUX:
-        return "boot-loader-rpi4-uboot-extlinux.nix"
+        return "boot-rpi4-uboot-extlinux.nix"
     return None
 
 

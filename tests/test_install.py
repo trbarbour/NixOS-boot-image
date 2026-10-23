@@ -643,9 +643,9 @@ def test_auto_install_rpi_puts_firmware_on_boot_and_enables_extlinux(
     assert result.status == "success", result
     assert [cmd[0] for cmd in commands] == ["nixos-generate-config", "nixos-install"]
     content = (root / "etc/nixos/configuration.nix").read_text()
-    assert "boot.loader" not in content  # in pre-nixos-boot-loader.nix (#320)
-    assert "./pre-nixos-boot-loader.nix" in content
-    module = (root / "etc/nixos/pre-nixos-boot-loader.nix").read_text()
+    assert "boot.loader" not in content  # in pre-nixos-boot.nix (#320)
+    assert "./pre-nixos-boot.nix" in content
+    module = (root / "etc/nixos/pre-nixos-boot.nix").read_text()
     assert "boot.loader.generic-extlinux-compatible.enable = lib.mkForce true;" in module
 
 
@@ -687,10 +687,10 @@ def test_auto_install_rpi_config_defines_no_attribute_twice(
     duplicates = sorted({path for path in paths if paths.count(path) > 1})
     assert duplicates == []
     # The loader is declared in its own module, imported from configuration.nix.
-    module = config_dir / "pre-nixos-boot-loader.nix"
-    template = Path(install.__file__).parent / "templates" / "boot-loader-rpi4-uboot-extlinux.nix"
+    module = config_dir / "pre-nixos-boot.nix"
+    template = Path(install.__file__).parent / "templates" / "boot-rpi4-uboot-extlinux.nix"
     assert module.read_text() == template.read_text()
-    assert "./pre-nixos-boot-loader.nix" in (config_dir / "configuration.nix").read_text()
+    assert "./pre-nixos-boot.nix" in (config_dir / "configuration.nix").read_text()
 
 
 def test_auto_install_rpi_fails_before_nixos_install_without_mounted_boot(
