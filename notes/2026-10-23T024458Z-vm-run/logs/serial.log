@@ -1,0 +1,799 @@
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[    0.000000] Linux version 6.18.56 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT Sun Oct 11 13:26:12 UTC 2026
+[    0.000000] KASLR enabled
+[    0.000000] random: crng init done
+[    0.000000] Machine model: linux,dummy-virt
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] NUMA: Faking a node at [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0xbfa06500-0xbfa09c7f]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000]   DMA32    empty
+[    0.000000]   Normal   empty
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x00000000bfffffff]
+[    0.000000] cma: Reserved 32 MiB at 0x00000000bb800000
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.1 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: Trusted OS migration not required
+[    0.000000] psci: SMC Calling Convention v1.0
+[    0.000000] percpu: Embedded 76 pages/cpu s186520 r8192 d116584 u311296
+[    0.000000] Detected PIPT I-cache on CPU0
+[    0.000000] CPU features: detected: Spectre-v2
+[    0.000000] CPU features: detected: Spectre-v3a
+[    0.000000] CPU features: detected: Spectre-v4
+[    0.000000] CPU features: detected: Spectre-BHB
+[    0.000000] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000] CPU features: detected: ARM erratum 1742098
+[    0.000000] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Kernel command line: console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf console=ttyS0,115200n8 init=/nix/store/p85xvglm4fy8lxhnnvq1cmks5qq2hp5h-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init systemd.default_device_timeout_sec=900
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.000000] software IO TLB: SWIOTLB bounce buffer size adjusted to 2MB
+[    0.000000] software IO TLB: area num 2.
+[    0.000000] software IO TLB: mapped [mem 0x00000000bb400000-0x00000000bb600000] (2MB)
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 524288
+[    0.000000] Policy zone: DMA
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] allocated 4194304 bytes of page_ext
+[    0.000000] ftrace: allocating 74856 entries in 294 pages
+[    0.000000] ftrace: allocated 294 pages with 4 groups
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=2.
+[    0.000000] 	Trampoline variant of Tasks RCU enabled.
+[    0.000000] 	Rude variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[    0.000000] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] arch_timer: cp15 timer running at 62.50MHz (virt).
+[    0.000000] clocksource: arch_sys_counter: mask: 0x1ffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[    0.000069] sched_clock: 57 bits at 63MHz, resolution 16ns, wraps every 4398046511096ns
+[    0.007208] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)
+[    0.016196] Console: colour dummy device 80x25
+[    0.016789] printk: legacy console [tty0] enabled
+[    0.023351] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=250000)
+[    0.023717] pid_max: default: 32768 minimum: 301
+[    0.027467] LSM: initializing lsm=capability,landlock,yama,bpf,ima
+[    0.029295] landlock: Up and running.
+[    0.029384] Yama: becoming mindful.
+[    0.033621] LSM support for eBPF active
+[    0.036321] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.036431] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.138171] rcu: Hierarchical SRCU implementation.
+[    0.138318] rcu: 	Max phase no-delay instances is 1000.
+[    0.140698] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.149519] EFI services will not be available.
+[    0.152105] smp: Bringing up secondary CPUs ...
+[    0.175110] Detected PIPT I-cache on CPU1
+[    0.176245] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[    0.183193] smp: Brought up 1 node, 2 CPUs
+[    0.183295] SMP: Total of 2 processors activated.
+[    0.183334] CPU: All CPU(s) started at EL1
+[    0.183627] CPU features: detected: 32-bit EL0 Support
+[    0.183658] CPU features: detected: 32-bit EL1 Support
+[    0.183724] CPU features: detected: CRC32 instructions
+[    0.183929] CPU features: detected: PMUv3
+[    0.193884] alternatives: applying system-wide alternatives
+[    0.243111] Memory: 1914956K/2097152K available (24384K kernel code, 7090K rwdata, 26576K rodata, 4736K init, 1103K bss, 138112K reserved, 32768K cma-reserved)
+[    0.284550] devtmpfs: initialized
+[    0.333763] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    0.334166] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).
+[    0.338807] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.338945] 0 pages in range for non-PLT usage
+[    0.339004] 508256 pages in range for PLT usage
+[    0.343060] pinctrl core: initialized pinctrl subsystem
+[    0.354761] DMI not present or invalid.
+[    0.407764] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.431947] DMA: preallocated 256 KiB GFP_KERNEL pool for atomic allocations
+[    0.434278] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.436384] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.436932] audit: initializing netlink subsys (disabled)
+[    0.447290] audit: type=2000 audit(0.336:1): state=initialized audit_enabled=0 res=1
+[    0.454642] thermal_sys: Registered thermal governor 'fair_share'
+[    0.454703] thermal_sys: Registered thermal governor 'bang_bang'
+[    0.454751] thermal_sys: Registered thermal governor 'step_wise'
+[    0.454770] thermal_sys: Registered thermal governor 'user_space'
+[    0.454784] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.455604] cpuidle: using governor ladder
+[    0.456159] cpuidle: using governor menu
+[    0.458236] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.459234] ASID allocator initialised with 32768 entries
+[    0.466269] Serial: AMBA PL011 UART driver
+[    0.541469] 9000000.pl011: ttyAMA0 at MMIO 0x9000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[    0.544793] printk: console [ttyAMA0] enabled
+[    0.616457] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.616736] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.616780] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.616801] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.616818] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.616833] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.616885] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.616909] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.649003] fbcon: Taking over console
+[    0.649731] ACPI: Interpreter disabled.
+[    0.664832] iommu: Default domain type: Translated
+[    0.665061] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.677117] SCSI subsystem initialized
+[    0.687428] usbcore: registered new interface driver usbfs
+[    0.688116] usbcore: registered new interface driver hub
+[    0.688471] usbcore: registered new device driver usb
+[    0.695283] pps_core: LinuxPPS API ver. 1 registered
+[    0.695396] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.695624] PTP clock support registered
+[    0.696274] EDAC MC: Ver: 3.0.0
+[    0.702186] scmi_core: SCMI protocol bus registered
+[    0.729520] FPGA manager framework
+[    0.754329] vgaarb: loaded
+[    0.761460] clocksource: Switched to clocksource arch_sys_counter
+[    0.775700] VFS: Disk quotas dquot_6.6.0
+[    0.776017] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.779407] netfs: FS-Cache loaded
+[    0.782734] pnp: PnP ACPI: disabled
+[    0.908295] NET: Registered PF_INET protocol family
+[    0.919826] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    1.050663] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[    1.051012] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    1.051197] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    1.051803] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)
+[    1.052130] TCP: Hash tables configured (established 16384 bind 16384)
+[    1.056098] MPTCP token hash table entries: 2048 (order: 4, 49152 bytes, linear)
+[    1.056634] UDP hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[    1.057611] UDP-Lite hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[    1.060611] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    1.061687] NET: Registered PF_XDP protocol family
+[    1.061982] PCI: CLS 0 bytes, default 64
+[    1.066357] kvm [1]: HYP mode not available
+[    1.068768] Trying to unpack rootfs image as initramfs...
+[    1.299645] Initialise system trusted keyrings
+[    1.304110] workingset: timestamp_bits=42 max_order=19 bucket_order=0
+[    1.320039] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    1.322207] 9p: Installing v9fs 9p2000 file system support
+[    1.374076] Key type asymmetric registered
+[    1.374312] Asymmetric key parser 'x509' registered
+[    1.374838] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 242)
+[    1.376246] io scheduler mq-deadline registered
+[    1.376389] io scheduler kyber registered
+[    1.421843] pl061_gpio 9030000.pl061: PL061 GPIO chip registered
+[    1.433231] ledtrig-cpu: registered to indicate activity on CPUs
+[    1.446654] pci-host-generic 4010000000.pcie: host bridge /pcie@10000000 ranges:
+[    1.447403] pci-host-generic 4010000000.pcie:       IO 0x003eff0000..0x003effffff -> 0x0000000000
+[    1.448032] pci-host-generic 4010000000.pcie:      MEM 0x0010000000..0x003efeffff -> 0x0010000000
+[    1.448159] pci-host-generic 4010000000.pcie:      MEM 0x8000000000..0xffffffffff -> 0x8000000000
+[    1.448901] pci-host-generic 4010000000.pcie: Memory resource size exceeds max for 32 bits
+[    1.449826] pci-host-generic 4010000000.pcie: ECAM at [mem 0x4010000000-0x401fffffff] for [bus 00-ff]
+[    1.451821] pci-host-generic 4010000000.pcie: PCI host bridge to bus 0000:00
+[    1.452244] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    1.452414] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    1.452751] pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
+[    1.452882] pci_bus 0000:00: root bus resource [mem 0x8000000000-0xffffffffff]
+[    1.456119] pci 0000:00:00.0: [1b36:0008] type 00 class 0x060000 conventional PCI endpoint
+[    1.461515] pci 0000:00:01.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint
+[    1.461862] pci 0000:00:01.0: BAR 0 [io  0x0000-0x001f]
+[    1.461943] pci 0000:00:01.0: BAR 1 [mem 0x00000000-0x00000fff]
+[    1.461994] pci 0000:00:01.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[    1.462628] pci 0000:00:02.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+[    1.462716] pci 0000:00:02.0: BAR 0 [io  0x0000-0x001f]
+[    1.462747] pci 0000:00:02.0: BAR 1 [mem 0x00000000-0x00000fff]
+[    1.462772] pci 0000:00:02.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[    1.462822] pci 0000:00:02.0: ROM [mem 0x00000000-0x0007ffff pref]
+[    1.463243] pci 0000:00:03.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[    1.463638] pci 0000:00:03.0: BAR 0 [io  0x0000-0x007f]
+[    1.463682] pci 0000:00:03.0: BAR 1 [mem 0x00000000-0x00000fff]
+[    1.463711] pci 0000:00:03.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[    1.464483] pci 0000:00:04.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[    1.464660] pci 0000:00:04.0: BAR 0 [io  0x0000-0x007f]
+[    1.464705] pci 0000:00:04.0: BAR 1 [mem 0x00000000-0x00000fff]
+[    1.464748] pci 0000:00:04.0: BAR 4 [mem 0x00000000-0x00003fff 64bit pref]
+[    1.468900] pci 0000:00:02.0: ROM [mem 0x10000000-0x1007ffff pref]: assigned
+[    1.469289] pci 0000:00:01.0: BAR 4 [mem 0x8000000000-0x8000003fff 64bit pref]: assigned
+[    1.470248] pci 0000:00:02.0: BAR 4 [mem 0x8000004000-0x8000007fff 64bit pref]: assigned
+[    1.470350] pci 0000:00:03.0: BAR 4 [mem 0x8000008000-0x800000bfff 64bit pref]: assigned
+[    1.470548] pci 0000:00:04.0: BAR 4 [mem 0x800000c000-0x800000ffff 64bit pref]: assigned
+[    1.471376] pci 0000:00:01.0: BAR 1 [mem 0x10080000-0x10080fff]: assigned
+[    1.472328] pci 0000:00:02.0: BAR 1 [mem 0x10081000-0x10081fff]: assigned
+[    1.472555] pci 0000:00:03.0: BAR 1 [mem 0x10082000-0x10082fff]: assigned
+[    1.472672] pci 0000:00:04.0: BAR 1 [mem 0x10083000-0x10083fff]: assigned
+[    1.472795] pci 0000:00:03.0: BAR 0 [io  0x1000-0x107f]: assigned
+[    1.473505] pci 0000:00:04.0: BAR 0 [io  0x1080-0x10ff]: assigned
+[    1.473684] pci 0000:00:01.0: BAR 0 [io  0x1100-0x111f]: assigned
+[    1.474185] pci 0000:00:02.0: BAR 0 [io  0x1120-0x113f]: assigned
+[    1.474887] pci_bus 0000:00: resource 4 [io  0x0000-0xffff]
+[    1.474974] pci_bus 0000:00: resource 5 [mem 0x10000000-0x3efeffff]
+[    1.475003] pci_bus 0000:00: resource 6 [mem 0x8000000000-0xffffffffff]
+[    1.526459] virtio-pci 0000:00:01.0: enabling device (0000 -> 0003)
+[    1.531033] virtio-pci 0000:00:02.0: enabling device (0000 -> 0003)
+[    1.532645] virtio-pci 0000:00:03.0: enabling device (0000 -> 0003)
+[    1.536678] virtio-pci 0000:00:04.0: enabling device (0000 -> 0003)
+[    1.569718] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    1.590434] msm_serial: driver initialized
+[    1.591359] SuperH (H)SCI(F) driver initialized
+[    1.591776] STM32 USART driver initialized
+[    1.655274] loop: module loaded
+[    1.656381] virtio_blk virtio2: 2/0/0 default/read/poll queues
+[    1.672782] virtio_blk virtio2: [vda] 16777216 512-byte logical blocks (8.59 GB/8.00 GiB)
+[    1.696467]  vda: vda1 vda2
+[    1.699414] virtio_blk virtio3: 2/0/0 default/read/poll queues
+[    1.702162] virtio_blk virtio3: [vdb] 8388608 512-byte logical blocks (4.29 GB/4.00 GiB)
+[    1.709435] megasas: 07.734.00.00-rc1
+[    1.715330] physmap-flash 0.flash: physmap platform flash device: [mem 0x00000000-0x03ffffff]
+[    1.720225] 0.flash: Found 2 x16 devices at 0x0 in 32-bit bank. Manufacturer ID 0x000000 Chip ID 0x000000
+[    1.720797] Intel/Sharp Extended Query Table at 0x0031
+[    1.725856] Using buffer write method
+[    1.726785] physmap-flash 0.flash: physmap platform flash device: [mem 0x04000000-0x07ffffff]
+[    1.730768] 0.flash: Found 2 x16 devices at 0x0 in 32-bit bank. Manufacturer ID 0x000000 Chip ID 0x000000
+[    1.730933] Intel/Sharp Extended Query Table at 0x0031
+[    1.731735] Using buffer write method
+[    1.732078] Concatenating MTD devices:
+[    1.732236] (0): "0.flash"
+[    1.732416] (1): "0.flash"
+[    1.733026] into device "0.flash"
+[    2.574992] Freeing initrd memory: 27872K
+[    2.848472] tun: Universal TUN/TAP device driver, 1.6
+[    2.869663] thunder_xcv, ver 1.0
+[    2.869857] thunder_bgx, ver 1.0
+[    2.869994] nicpf, ver 1.0
+[    2.872431] e1000: Intel(R) PRO/1000 Network Driver
+[    2.872482] e1000: Copyright (c) 1999-2006 Intel Corporation.
+[    2.872684] e1000e: Intel(R) PRO/1000 Network Driver
+[    2.872709] e1000e: Copyright(c) 1999 - 2015 Intel Corporation.
+[    2.872806] igb: Intel(R) Gigabit Ethernet Network Driver
+[    2.872829] igb: Copyright (c) 2007-2014 Intel Corporation.
+[    2.872980] igbvf: Intel(R) Gigabit Virtual Function Network Driver
+[    2.873067] igbvf: Copyright (c) 2009 - 2012 Intel Corporation.
+[    2.874189] sky2: driver version 1.30
+[    2.882147] usbcore: registered new interface driver usb-storage
+[    2.882660] usbcore: registered new interface driver usbserial_generic
+[    2.882972] usbserial: USB Serial support registered for generic
+[    2.885585] hv_vmbus: registering driver hyperv_keyboard
+[    2.892481] rtc-pl031 9010000.pl031: registered as rtc0
+[    2.893568] rtc-pl031 9010000.pl031: setting system clock to 2026-10-23T02:45:05 UTC (1792723505)
+[    2.895148] i2c_dev: i2c /dev entries driver
+[    2.911635] sdhci: Secure Digital Host Controller Interface driver
+[    2.911703] sdhci: Copyright(c) Pierre Ossman
+[    2.914053] Synopsys Designware Multimedia Card Interface Driver
+[    2.915791] sdhci-pltfm: SDHCI platform and OF driver helper
+[    2.923859] hid: raw HID events driver (C) Jiri Kosina
+[    2.926442] usbcore: registered new interface driver usbhid
+[    2.926513] usbhid: USB HID core driver
+[    2.936960] hw perfevents: enabled with armv8_pmuv3 PMU driver, 7 (0,8000003f) counters available
+[    2.946032] drop_monitor: Initializing network drop monitor service
+[    2.947517] NET: Registered PF_INET6 protocol family
+[    2.972357] Segment Routing with IPv6
+[    2.973069] In-situ OAM (IOAM) with IPv6
+[    2.974813] NET: Registered PF_PACKET protocol family
+[    2.976400] 9pnet: Installing 9P2000 support
+[    2.977044] Key type dns_resolver registered
+[    3.009547] registered taskstats version 1
+[    3.011785] Loading compiled-in X.509 certificates
+[    3.059838] Demotion targets for Node 0: null
+[    3.061670] Key type .fscrypt registered
+[    3.061759] Key type fscrypt-provisioning registered
+[    3.065641] ima: No TPM chip found, activating TPM-bypass!
+[    3.065825] ima: Allocated hash algorithm: sha1
+[    3.071867] ima: No architecture policies found
+[    3.092043] input: gpio-keys as /devices/platform/gpio-keys/input/input0
+[    3.168292] clk: Disabling unused clocks
+[    3.168699] PM: genpd: Disabling unused power domains
+[    3.254054] Freeing unused kernel memory: 4736K
+[    3.255826] Run /init as init process
+[    3.697657] systemd[1]: Successfully made /usr/ read-only.
+[    4.068392] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[    4.069354] systemd[1]: Detected virtualization qemu.
+[    4.070624] systemd[1]: Detected architecture arm64.
+[    4.071215] systemd[1]: Running in initrd.
+[    4.098494] systemd[1]: Initializing machine ID from random generator.
+[    4.104795] systemd[1]: Hostname set to <nixos>.
+[    5.600941] systemd[1]: Queued start job for default target Initrd Default Target.
+[    5.704196] systemd[1]: Created slice Slice /system/modprobe.
+[    5.715198] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[    5.718842] systemd[1]: Expecting device /dev/disk/by-label/NIXOS_SD...
+[    5.720837] systemd[1]: Reached target Path Units.
+[    5.723622] systemd[1]: Reached target Slice Units.
+[    5.725554] systemd[1]: Reached target Swaps.
+[    5.727923] systemd[1]: Reached target Timer Units.
+[    5.735040] systemd[1]: Listening on D-Bus System Message Bus Socket.
+[    5.740206] systemd[1]: Listening on Journal Socket (/dev/log).
+[    5.745968] systemd[1]: Listening on Journal Sockets.
+[    5.750129] systemd[1]: Listening on udev Control Socket.
+[    5.753040] systemd[1]: Listening on udev Kernel Socket.
+[    5.754995] systemd[1]: Reached target Socket Units.
+[    5.796176] systemd[1]: Starting Create List of Static Device Nodes...
+[    5.799610] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[    5.826776] systemd[1]: Mounting Kernel Configuration File System...
+[    5.930813] systemd[1]: Starting Journal Service...
+[    6.006120] systemd[1]: Starting Load Kernel Modules...
+[    6.007827] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[    6.067237] systemd[1]: Starting Coldplug All udev Devices...
+[    6.364791] systemd[1]: Finished Create List of Static Device Nodes.
+[    6.455317] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[    6.692984] systemd[1]: Mounted Kernel Configuration File System.
+[    7.395679] systemd[1]: Finished Create Static Device Nodes in /dev gracefully.
+[    7.416122] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+[    7.430476] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[    7.473975] systemd[1]: Starting Create Static Device Nodes in /dev...
+[    7.551744] systemd[1]: Finished Load Kernel Modules.
+[    7.608577] systemd-journald[78]: Collecting audit messages is disabled.
+[    7.671289] systemd[1]: Starting Apply Kernel Variables...
+[    8.516606] systemd[1]: Finished Apply Kernel Variables.
+[    8.644199] systemd[1]: Finished Create Static Device Nodes in /dev.
+[    8.655931] systemd[1]: Reached target Preparation for Local File Systems.
+[    8.662094] systemd[1]: Reached target Local File Systems.
+[    8.707041] systemd[1]: Starting Rule-based Manager for Device Events and Files...
+[    9.125957] systemd[1]: Started Journal Service.
+[   31.607955] virtio_net virtio1 enp0s2: renamed from eth0
+[   36.316648] EXT4-fs (vda2): mounted filesystem 44444444-4444-4444-8888-888888888888 r/w with ordered data mode. Quota mode: none.
+[   53.515111] systemd-journald[78]: Received SIGTERM from PID 1 (systemd).
+[   55.342099] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[   55.342596] systemd[1]: Detected virtualization qemu.
+[   55.343192] systemd[1]: Detected architecture arm64.
+[   55.344399] systemd[1]: Detected first boot.
+[   55.372846] systemd[1]: Initializing machine ID from random generator.
+[   57.039147] systemd[1]: bpf-restrict-fs: LSM BPF program attached
+[   58.566999] NET: Registered PF_VSOCK protocol family
+[   58.602795] Guest personality initialized and is inactive
+[   58.604293] VMCI host device registered (name=vmci, major=10, minor=261)
+[   58.604396] Initialized host personality
+[   58.801471] systemd[1]: Applying preset policy.
+[   64.432256] systemd[1]: Populated /etc with preset unit settings.
+[   68.400446] systemd[1]: initrd-switch-root.service: Deactivated successfully.
+[   68.407195] systemd[1]: Stopped initrd-switch-root.service.
+[   68.447942] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 1.
+[   68.475642] systemd[1]: Created slice Slice /system/getty.
+[   68.494843] systemd[1]: Created slice Slice /system/serial-getty.
+[   68.512639] systemd[1]: Created slice User and Session Slice.
+[   68.527211] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[   68.532297] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[   68.536094] systemd[1]: Expecting device /dev/ttyAMA0...
+[   68.538415] systemd[1]: Reached target Local Encrypted Volumes.
+[   68.540448] systemd[1]: Stopped target initrd-fs.target.
+[   68.544234] systemd[1]: Stopped target initrd-root-fs.target.
+[   68.546785] systemd[1]: Stopped target initrd-switch-root.target.
+[   68.548776] systemd[1]: Reached target Virtual Machines and Containers.
+[   68.551267] systemd[1]: Reached target Path Units.
+[   68.553668] systemd[1]: Reached target Remote File Systems.
+[   68.555480] systemd[1]: Reached target Slice Units.
+[   68.558811] systemd[1]: Reached target Swaps.
+[   68.560520] systemd[1]: Reached target ZFS pool import target.
+[   68.589874] systemd[1]: Listening on Process Core Dump Socket.
+[   68.609719] systemd[1]: Listening on Credential Encryption/Decryption.
+[   68.658944] systemd[1]: Starting Journal Log Access Socket...
+[   68.678052] systemd[1]: Listening on Journal Audit Socket.
+[   68.688817] systemd[1]: Listening on Network Management Metrics Varlink Socket.
+[   68.701918] systemd[1]: Listening on Network Management Netlink Socket.
+[   68.713937] systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[   68.718142] systemd[1]: Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[   68.724823] systemd[1]: Listening on udev Control Socket.
+[   68.780091] systemd[1]: Mounting Huge Pages File System...
+[   68.836284] systemd[1]: Mounting POSIX Message Queue File System...
+[   68.929754] systemd[1]: Mounting Kernel Debug File System...
+[   69.014304] systemd[1]: Mounting Kernel Trace File System...
+[   69.215973] systemd[1]: Starting Create List of Static Device Nodes...
+[   69.248175] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[   69.451235] systemd[1]: Mounting Kernel Configuration File System...
+[   69.470571] systemd[1]: Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[   69.472043] systemd[1]: Load Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore
+[   69.675054] systemd[1]: Starting Load Kernel Module fuse...
+[   69.691075] systemd[1]: Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[   69.891404] systemd[1]: Starting Journal Service...
+[   70.079482] systemd[1]: Starting Load Kernel Modules...
+[   70.334381] systemd[1]: Starting Userspace Out-Of-Memory (OOM) Killer...
+[   70.456610] systemd[1]: Starting Remount Root and Kernel File Systems...
+[   70.467367] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[   70.530390] fuse: init (API version 7.45)
+[   70.575005] systemd[1]: Starting Coldplug All udev Devices...
+[   70.888384] systemd[1]: Listening on Journal Log Access Socket.
+[   70.930308] systemd[1]: Mounted Huge Pages File System.
+[   70.950798] systemd[1]: Mounted POSIX Message Queue File System.
+[   70.974028] systemd[1]: Mounted Kernel Debug File System.
+[   70.988136] systemd[1]: Mounted Kernel Trace File System.
+[   71.031408] systemd[1]: Finished Create List of Static Device Nodes.
+[   71.074742] systemd[1]: Mounted Kernel Configuration File System.
+[   71.108375] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[   71.146441] systemd[1]: Finished Load Kernel Module fuse.
+[   71.192898] spl: loading out-of-tree module taints kernel.
+[   71.355677] systemd[1]: Mounting FUSE Control File System...
+[   71.640510] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[   72.147811] systemd-journald[298]: Collecting audit messages is enabled.
+[   72.407073] EXT4-fs (vda2): re-mounted 44444444-4444-4444-8888-888888888888.
+[   72.638287] systemd[1]: Finished Remount Root and Kernel File Systems.
+[   72.656825] systemd[1]: Platform Persistent Storage Archival skipped, unmet condition check ConditionDirectoryNotEmpty=/sys/fs/pstore
+[   72.899729] systemd[1]: Starting Load/Save OS Random Seed...
+[   73.259516] systemd[1]: Starting Network Time Synchronization...
+[   73.290450] systemd[1]: TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[   73.585292] systemd[1]: Started Journal Service.
+[   74.932070] zfs: module license 'CDDL' taints kernel.
+[   74.932269] Disabling lock debugging due to kernel taint
+[   74.932427] zfs: module license taints kernel.
+[   76.326743] ZFS: Loaded module v2.4.4-1, ZFS pool version 5000, ZFS filesystem version 5
+[   76.730766] systemd-journald[298]: Received client request to flush runtime journal.
+[   90.237612] EXT4-fs (vda2): resizing filesystem from 1060618 to 2087424 blocks
+[   91.232720] EXT4-fs (vda2): resized filesystem to 2087424
+[  108.119312] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[  108.444225] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[  108.446581] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+pre-nixos boot image version 0.22.0
+[  141.752835] virtio_net virtio1 lan: renamed from enp0s2
+LAN IPv4 address: 10.0.2.15
+[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;start=900c8373b4e142438002e00db402df43;user=root;hostname=nixos;machineid=4f9c65d133c8465d9ba5e7ee1af20ca9;bootid=34fc8ef7366040eb9f69ba7d5893a3f7;pid=1107;pidfdid=1108;comm=(agetty);servicename=serial-getty@ttyAMA0.service;invocationid=c7f20550f2814a9c9c4512d1600dbb86;type=service\P+q6E616D65\
+<<< Welcome to the pre-nixos auto-install boot image (sd-card-26.05.20261015.26f4107, aarch64) - ttyAMA0 >>>
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+(PRE_NIXOS_AUTO_INSTALL=)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723693003__\n'
+
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723693003__\n'
+]3008;start=67afc051f7e0410f98fed6b416278f5b;user=root;hostname=nixos;machineid=4f9c65d133c8465d9ba5e7ee1af20ca9;bootid=34fc8ef7366040eb9f69ba7d5893a3f7;pid=1107;pidfdid=1108;comm=login;targetuser=nixos;sessionid=3;type=session\pre-nixos boot image version 0.22.0
+LAN IPv4 address: 10.0.2.15
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723693003__\n'
+
+[?2004l__PROMPT_READY__1792723693003__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792723695195__%s__UID_MARK__1792723695195__\n' "$(id -u)"
+
+[?2004l[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723695297__\n'
+printf '__UID_MARK__1792723695195__%s__UID_MARK__1792723695195__\n' "$(id -u)"
+[?2004lexport PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723695297__\n'
+__UID_MARK__1792723695195__1000__UID_MARK__1792723695195__
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723695297__\n'
+[?2004l__PROMPT_READY__1792723695297__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1792723695195__%s__UID_MARK__1792723695195__\n' "$(id -u)"
+sudo -i
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723695195__%s__UID_MARK__1792723695195__\n' "$(id -u)"
+[?2004lsudo -i
+__UID_MARK__1792723695195__1000__UID_MARK__1792723695195__
+[?2004hPRE-NIXOS> sudo -i
+[?2004lpre-nixos boot image version 0.22.0
+LAN IPv4 address: 10.0.2.15
+[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723697587__\n'
+m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1792723697587__\n'
+[?2004l__PROMPT_READY__1792723697587__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723697678__%s__UID_MARK__1792723697678__\n' "$(id -u)"
+printf '__UID_MARK__1792723697678__%s__UID_MARK__1792723697678__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723697678__0__UID_MARK__1792723697678__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723697940__%s__UID_MARK__1792723697940__\n' "$(id -u)"
+printf '__UID_MARK__1792723697940__%s__UID_MARK__1792723697940__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723697940__0__UID_MARK__1792723697940__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; uname -m; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; uname -m; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+aarch64
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723698321__%s__UID_MARK__1792723698321__\n' "$(id -u)"
+printf '__UID_MARK__1792723698321__%s__UID_MARK__1792723698321__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723698321__0__UID_MARK__1792723698321__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; cat /proc/cmdline; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; cat /proc/cmdline; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf console=ttyS0,115200n8 init=/nix/store/p85xvglm4fy8lxhnnvq1cmks5qq2hp5h-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init systemd.default_device_timeout_sec=900
+
+__EXIT__=0
+[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[  287.660602]  vdb:
+[  288.902477]  vdb: vdb1
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[  297.307748]  vdb: vdb1 vdb2
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+[  316.823762] EXT4-fs (dm-0): mounted filesystem f0a01505-aceb-4bae-830f-c24e48c55f2a r/w with ordered data mode. Quota mode: none.
+[  317.872009] Adding 4092k swap on /dev/mapper/main-swap.  Priority:-2 extents:1 across:4092k 
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004lSTATE=applied
+DETAIL=auto-applied
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disabled
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723823858__%s__UID_MARK__1792723823858__\n' "$(id -u)"
+printf '__UID_MARK__1792723823858__%s__UID_MARK__1792723823858__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723823858__0__UID_MARK__1792723823858__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; lsblk -nrpo NAME /dev/vda; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; lsblk -nrpo NAME /dev/vda; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+/dev/vda
+/dev/vda1
+/dev/vda2
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723824335__%s__UID_MARK__1792723824335__\n' "$(id -u)"
+printf '__UID_MARK__1792723824335__%s__UID_MARK__1792723824335__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723824335__0__UID_MARK__1792723824335__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; findmnt -n -o SOURCE /; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; findmnt -n -o SOURCE /; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+LAN IPv4 address: 10.0.2.15
+/dev/vda2
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723824791__%s__UID_MARK__1792723824791__\n' "$(id -u)"
+printf '__UID_MARK__1792723824791__%s__UID_MARK__1792723824791__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723824791__0__UID_MARK__1792723824791__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; pvs --noheadings -o pv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; pvs --noheadings -o pv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+  /dev/vdb2  main
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723825410__%s__UID_MARK__1792723825410__\n' "$(id -u)"
+printf '__UID_MARK__1792723825410__%s__UID_MARK__1792723825410__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723825410__0__UID_MARK__1792723825410__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+  slash main
+  swap  main
+
+__EXIT__=0
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004linactive
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> ip -o -4 addr show dev lan 2>/dev/null || true
+ip -o -4 addr show dev lan 2>/dev/null || true
+[?2004l2: lan    inet [1;35m10.0.2.15[0m/24 metric 1024 brd [1;35m10.0.2.255 [0mscope global dynamic lan\       valid_lft 86245sec preferred_lft 86245sec
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> systemctl is-active pre-nixos 2>/dev/null || true
+systemctl is-active pre-nixos 2>/dev/null || true
+[?2004linactive
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723834950__%s__UID_MARK__1792723834950__\n' "$(id -u)"
+printf '__UID_MARK__1792723834950__%s__UID_MARK__1792723834950__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723834950__0__UID_MARK__1792723834950__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; systemctl show -p Environment pre-nixos; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; systemctl show -p Environment pre-nixos; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+Environment=LOCALE_ARCHIVE=/nix/store/8jshcyc9g3g9ay40zn9hr5as6iz4h20g-glibc-locales-2.42-100/lib/locale/locale-archive NIX_PATH=nixpkgs=/nix/store/cycqggfbs0ba7ip3xkj4hmv1bg7lshps-c7w4dnzdyg31wrnx56y17wihi5zaibsl-source PATH=/nix/store/3l7ygqcc6v0rbi9d4j1m6phi6sz86j98-coreutils-9.11/bin:/nix/store/gawz8bs9vj3yk0m0jf6y2yhh8sfcf5jm-disko/bin:/nix/store/p7z3klwc6849r0na63a7vk046bp97win-dosfstools-4.2/bin:/nix/store/dk5xi478qwk043ll9viflw8mkbpcsp2a-e2fsprogs-1.47.4-bin/bin:/nix/store/brkyh7qvzk8gv3wz88nkvsjifc45nx53-ethtool-7.0/bin:/nix/store/213nvgir100ljr3fhxzhif2hjyvgf9c6-gptfdisk-1.0.10/bin:/nix/store/a0zrpir7c9mbxm4qdw50dapqzjfskwf5-iproute2-7.0.0/bin:/nix/store/b2ikp4rcaai08kpcn4965a337ryb4z51-lvm2-2.03.39-bin/bin:/nix/store/zx03ah76yag1dkddrjlwz5jwd8711zjl-mdadm-4.4/bin:/nix/store/mp8438hl9361avyv0dp64wdc3wqkhn9p-nix-2.34.9/bin:/nix/store/ii8aywgn5zk9sm8wz1xkcf98jxfx78xr-nixos-install-tools-26.05pre-git/bin:/nix/store/83brwmrf8bb73xx1a8jkk7dl9x9b67qq-parted-3.7/bin:/nix/store/jnsrd8c9vfdwv114xnkryg2ng2nsrcn0-systemd-260.5/bin:/nix/store/q79fswy2zcxram83gmrbxgpn8whpsdk7-util-linux-2.42.3-bin/bin:/nix/store/3l7ygqcc6v0rbi9d4j1m6phi6sz86j98-coreutils-9.11/bin:/nix/store/p3ilr8gsbrz2nkhdki2z7fy1i8ihp6ah-findutils-4.10.0/bin:/nix/store/4p048fld0hrm516ylm1nyc0sjdlz09zn-gnugrep-3.12/bin:/nix/store/mvzw762m85ncpk4wc9v8nrj41kdjfh5n-gnused-4.10/bin:/nix/store/jnsrd8c9vfdwv114xnkryg2ng2nsrcn0-systemd-260.5/bin:/nix/store/3l7ygqcc6v0rbi9d4j1m6phi6sz86j98-coreutils-9.11/sbin:/nix/store/gawz8bs9vj3yk0m0jf6y2yhh8sfcf5jm-disko/sbin:/nix/store/p7z3klwc6849r0na63a7vk046bp97win-dosfstools-4.2/sbin:/nix/store/dk5xi478qwk043ll9viflw8mkbpcsp2a-e2fsprogs-1.47.4-bin/sbin:/nix/store/brkyh7qvzk8gv3wz88nkvsjifc45nx53-ethtool-7.0/sbin:/nix/store/213nvgir100ljr3fhxzhif2hjyvgf9c6-gptfdisk-1.0.10/sbin:/nix/store/a0zrpir7c9mbxm4qdw50dapqzjfskwf5-iproute2-7.0.0/sbin:/nix/store/b2ikp4rcaai08kpcn4965a337ryb4z51-lvm2-2.03.39-bin/sbin:/nix/store/zx03ah76yag1dkddrjlwz5jwd8711zjl-mdadm-4.4/sbin:/nix/store/mp8438hl9361avyv0dp64wdc3wqkhn9p-nix-2.34.9/sbin:/nix/store/ii8aywgn5zk9sm8wz1xkcf98jxfx78xr-nixos-install-tools-26.05pre-git/sbin:/nix/store/83brwmrf8bb73xx1a8jkk7dl9x9b67qq-parted-3.7/sbin:/nix/store/jnsrd8c9vfdwv114xnkryg2ng2nsrcn0-systemd-260.5/sbin:/nix/store/q79fswy2zcxram83gmrbxgpn8whpsdk7-util-linux-2.42.3-bin/sbin:/nix/store/3l7ygqcc6v0rbi9d4j1m6phi6sz86j98-coreutils-9.11/sbin:/nix/store/p3ilr8gsbrz2nkhdki2z7fy1i8ihp6ah-findutils-4.10.0/sbin:/nix/store/4p048fld0hrm516ylm1nyc0sjdlz09zn-gnugrep-3.12/sbin:/nix/store/mvzw762m85ncpk4wc9v8nrj41kdjfh5n-gnused-4.10/sbin:/nix/store/jnsrd8c9vfdwv114xnkryg2ng2nsrcn0-systemd-260.5/sbin PRE_NIXOS_EXEC=1 PRE_NIXOS_INSTALLED_BOOT=rpi4-uboot-extlinux PRE_NIXOS_NIXPKGS=/nix/store/cycqggfbs0ba7ip3xkj4hmv1bg7lshps-c7w4dnzdyg31wrnx56y17wihi5zaibsl-source PRE_NIXOS_RPI_FIRMWARE=/nix/store/krh3x6fn2nranymlmcask25g15yqji2f-rpi4-nvme-firmware PRE_NIXOS_STATE_DIR=/run/pre-nixos PRE_NIXOS_VERSION=0.22.0 TZDIR=/nix/store/nrn7sd1wq912xbix247lbvg96mks4vis-tzdata-2026c/share/zoneinfo
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723835562__%s__UID_MARK__1792723835562__\n' "$(id -u)"
+printf '__UID_MARK__1792723835562__%s__UID_MARK__1792723835562__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723835562__0__UID_MARK__1792723835562__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; findmnt -n -o FSTYPE /mnt/boot; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; findmnt -n -o FSTYPE /mnt/boot; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+vfat
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723835961__%s__UID_MARK__1792723835961__\n' "$(id -u)"
+printf '__UID_MARK__1792723835961__%s__UID_MARK__1792723835961__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723835961__0__UID_MARK__1792723835961__
+[?2004hPRE-NIXOS> pre-nixos-install-boot-files --root /mnt; echo EXIT=$?
+pre-nixos-install-boot-files --root /mnt; echo EXIT=$?
+[?2004lRefusing to install: vdb: only NVMe install targets are supported on the Raspberry Pi.
+EXIT=2
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723838603__%s__UID_MARK__1792723838603__\n' "$(id -u)"
+printf '__UID_MARK__1792723838603__%s__UID_MARK__1792723838603__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723838603__0__UID_MARK__1792723838603__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; test ! -e /mnt/boot/u-boot-rpi4.bin; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; test ! -e /mnt/boot/u-boot-rpi4.bin; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723838906__%s__UID_MARK__1792723838906__\n' "$(id -u)"
+printf '__UID_MARK__1792723838906__%s__UID_MARK__1792723838906__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723838906__0__UID_MARK__1792723838906__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; pre-nixos-install-boot-files --root /mnt --ignore-boot-order; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; pre-nixos-install-boot-files --root /mnt --ignore-boot-order; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+rpi4-uboot-extlinux: copied 31 files to /mnt/boot
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723842248__%s__UID_MARK__1792723842248__\n' "$(id -u)"
+printf '__UID_MARK__1792723842248__%s__UID_MARK__1792723842248__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723842248__0__UID_MARK__1792723842248__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; cmp "$PRE_NIXOS_RPI_FIRMWARE/u-boot-rpi4.bin" /mnt/boot/u-boot-rpi4.bin; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; cmp "$PRE_NIXOS_RPI_FIRMWARE/u-boot-rpi4.bin" /mnt/boot/u-boot-rpi4.bin; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723842618__%s__UID_MARK__1792723842618__\n' "$(id -u)"
+printf '__UID_MARK__1792723842618__%s__UID_MARK__1792723842618__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723842618__0__UID_MARK__1792723842618__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; grep -qx kernel=u-boot-rpi4.bin /mnt/boot/config.txt; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; grep -qx kernel=u-boot-rpi4.bin /mnt/boot/config.txt; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1792723843034__%s__UID_MARK__1792723843034__\n' "$(id -u)"
+printf '__UID_MARK__1792723843034__%s__UID_MARK__1792723843034__\n' "$(id -u)"
+[?2004l__UID_MARK__1792723843034__0__UID_MARK__1792723843034__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; test -f /mnt/boot/start4.elf; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; test -f /mnt/boot/start4.elf; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> poweroff
+poweroff
+[?2004l[?2004hPRE-NIXOS> [!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;end=900c8373b4e142438002e00db402df43\[  349.006671] EXT4-fs (dm-0): unmounting filesystem f0a01505-aceb-4bae-830f-c24e48c55f2a.
+[  349.830659] systemd-shutdown[1]: Syncing filesystems and block devices.
+[  349.890016] systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+[  350.038677] systemd-journald[298]: Received SIGTERM from PID 1 (systemd-shutdow).
+[  350.208283] systemd-shutdown[1]: Sending SIGKILL to remaining processes...
+[  350.325701] systemd-shutdown[1]: Unmounting file systems.
+[  350.377353] (sd-umount)[1898]: Unmounting '/run/credentials/systemd-journald.service'.
+[  350.391374] (sd-remount)[1899]: Remounting '/nix/store' read-only with options ''.
+[  350.445699] EXT4-fs (vda2): re-mounted 44444444-4444-4444-8888-888888888888 ro.
+[  350.531931] (sd-remount)[1900]: Remounting '/' read-only with options ''.
+[  350.541647] EXT4-fs (vda2): re-mounted 44444444-4444-4444-8888-888888888888.
+[  350.548681] systemd-shutdown[1]: All filesystems unmounted.
+[  350.549053] systemd-shutdown[1]: Deactivating swaps.
+[  350.551659] systemd-shutdown[1]: All swaps deactivated.
+[  350.551978] systemd-shutdown[1]: Detaching loop devices.
+[  350.678169] systemd-shutdown[1]: All loop devices detached.
+[  350.678455] systemd-shutdown[1]: Stopping MD devices.
+[  350.680706] systemd-shutdown[1]: All MD devices stopped.
+[  350.681397] systemd-shutdown[1]: Detaching DM devices.
+[  350.704088] systemd-shutdown[1]: Detaching DM /dev/dm-1 (253:1).
+[  350.709778] systemd-shutdown[1]: Syncing /dev/dm-1.
+[  350.739194] systemd-shutdown[1]: Detaching DM /dev/dm-0 (253:0).
+[  350.746054] systemd-shutdown[1]: Syncing /dev/dm-0.
+[  350.841658] systemd-shutdown[1]: All DM devices detached.
+[  350.842042] systemd-shutdown[1]: All filesystems, swaps, loop devices, MD devices and DM devices detached.
+[  351.421394] systemd-shutdown[1]: Successfully changed into root pivot.
+[  351.421826] systemd-shutdown[1]: Entering exitrd...
+[  351.549822] shutdown[1]: Syncing filesystems and block devices.
+[  351.564336] shutdown[1]: Sending SIGTERM to remaining processes...
+[  351.675328] shutdown[1]: Sending SIGKILL to remaining processes...
+[  351.788315] shutdown[1]: Unmounting file systems.
+[  351.819505] (sd-umoun[1907]: Unmounting '/run/credentials'.
+[  351.831221] (sd-umoun[1908]: Unmounting '/oldroot/sys/fs/fuse/connections'.
+[  351.842501] (sd-umoun[1909]: Unmounting '/oldroot/sys/kernel/config'.
+[  351.855193] (sd-umoun[1910]: Unmounting '/oldroot/sys/kernel/tracing'.
+[  351.867976] (sd-umoun[1911]: Unmounting '/oldroot/dev/hugepages'.
+[  351.880042] (sd-umoun[1912]: Unmounting '/oldroot/sys/kernel/debug'.
+[  351.892303] (sd-umoun[1913]: Unmounting '/oldroot/dev/mqueue'.
+[  351.905024] (sd-umoun[1914]: Unmounting '/oldroot/sys/fs/bpf'.
+[  351.917718] (sd-umoun[1915]: Unmounting '/oldroot/sys/fs/pstore'.
+[  351.930086] (sd-umoun[1916]: Unmounting '/oldroot/sys/fs/cgroup'.
+[  351.942626] (sd-umoun[1917]: Unmounting '/oldroot/sys/kernel/security'.
+[  351.955481] (sd-umoun[1918]: Unmounting '/oldroot/nix/store'.
+[  351.967722] (sd-umoun[1919]: Unmounting '/oldroot/sys'.
+[  351.979790] (sd-umoun[1920]: Unmounting '/oldroot/proc'.
+[  351.990910] (sd-umoun[1921]: Unmounting '/oldroot/dev/shm'.
+[  352.002644] (sd-umoun[1922]: Unmounting '/oldroot/dev/pts'.
+[  352.014387] (sd-umoun[1923]: Unmounting '/oldroot/dev'.
+[  352.026307] (sd-umoun[1924]: Unmounting '/oldroot/run'.
+[  352.038845] (sd-umoun[1925]: Unmounting '/oldroot'.
+[  352.460268] EXT4-fs (vda2): unmounting filesystem 44444444-4444-4444-8888-888888888888.
+[  352.478470] shutdown[1]: All filesystems unmounted.
+[  352.478758] shutdown[1]: Deactivating swaps.
+[  352.479986] shutdown[1]: All swaps deactivated.
+[  352.480231] shutdown[1]: Detaching loop devices.
+[  352.566986] shutdown[1]: All loop devices detached.
+[  352.567249] shutdown[1]: Stopping MD devices.
+[  352.571319] shutdown[1]: All MD devices stopped.
+[  352.571542] shutdown[1]: Detaching DM devices.
+[  352.575732] shutdown[1]: All DM devices detached.
+[  352.575969] shutdown[1]: All filesystems, swaps, loop devices, MD devices and DM devices detached.
+[  352.872062] shutdown[1]: Syncing filesystems and block devices.
+[  352.882833] shutdown[1]: Powering off.
+[  352.887654] Flash device refused suspend due to active operation (state 20)
+[  352.887871] Flash device refused suspend due to active operation (state 20)
+[  352.891707] reboot: Power down
