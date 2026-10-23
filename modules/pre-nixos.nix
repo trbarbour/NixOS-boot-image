@@ -71,13 +71,24 @@ in {
   };
   options.services.pre-nixos.primaryConsole = lib.mkOption {
     type = lib.types.enum [ "serial" "display" ];
-    default = if pkgs.stdenv.hostPlatform.isAarch64 then "serial" else "display";
+    default = "display";
     description = ''
       The image's primary console (/dev/console: systemd status, emergency
       shells), which the installed system keeps (reqs R-C2, R-C1).  "serial"
-      appends the serial console once more, since the kernel prefers a
-      repeated console= (design plans/2026-10-23T022949Z-primary-console-design.md);
-      "display" keeps the stock order, which ends with tty0.
+      appends serialConsole once more, since the kernel prefers a repeated
+      console= (design plans/2026-10-23T022949Z-primary-console-design.md);
+      "display" keeps the stock order, which ends with tty0.  The flake's
+      image formats set it (serial for the SD image).
+    '';
+  };
+  options.services.pre-nixos.serialConsole = lib.mkOption {
+    type = lib.types.nullOr lib.types.str;
+    default = null;
+    example = "ttyS0,115200n8";
+    description = ''
+      The serial console made primary when primaryConsole is "serial": one of
+      the image's own console= entries (without "console=").  The flake
+      chooses it from the image's stock console list.
     '';
   };
   options.services.pre-nixos.installedBoot = lib.mkOption {
@@ -186,10 +197,14 @@ in {
       terminal_output serial console
     '';
   })
-  # R-C2: the serial console (COM1 on x86, the Pi's mini UART) becomes primary
-  # by appearing again last; the kernel prefers a repeated console= (design F1/F2).
+  # R-C2: the chosen serial console becomes primary by appearing again last;
+  # the kernel prefers a repeated console= (design F1/F2).
   (lib.mkIf (cfg.primaryConsole == "serial") {
-    boot.kernelParams = lib.mkAfter [ "console=ttyS0,115200n8" ];
+    assertions = [ {
+      assertion = cfg.serialConsole != null;
+      message = "services.pre-nixos.primaryConsole = \"serial\" needs services.pre-nixos.serialConsole";
+    } ];
+    boot.kernelParams = lib.mkIf (cfg.serialConsole != null) (lib.mkAfter [ "console=${cfg.serialConsole}" ]);
   })
   ]);
 }

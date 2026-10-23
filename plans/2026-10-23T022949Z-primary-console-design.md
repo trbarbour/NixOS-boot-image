@@ -83,3 +83,25 @@ In those cases the preferred console names an absent device. Which console then 
 **Stock lists:**
 - The ISO lists one serial console, `ttyS0`.
 - The SD image lists two. nixpkgs' comment says `ttyS0` is "for Tegra (Jetson TX1)" and `ttyAMA0` "for QEMU's -machine virt". On the CM4, `ttyS0` is the mini UART, and no `ttyAMA0` exists (§5).
+
+## 6. Decision: the serial console comes from the format's own list (user, 2026-10-23)
+
+**User:** don't hard-code `ttyS0`; use the serial device the stock kernel command line already contains. Overlays and other device changes happen on installed systems, whose owners adjust the command line themselves.
+
+**Supersedes D4.** The kernel has no "the board's serial console" name. It offers `tty<n>`, named ports, `<DEVNAME>:<n>.<n>` and `uart8250,…` (kernel-parameters.txt). DT `stdout-path` is used only when there is no `console=` at all (`drivers/of/base.c:2002`).
+
+**Rule (`flake.nix`: `serialConsoleFor`):**
+- A format's **consoles** are the `console=` entries of the image evaluated with display primary, so nothing is appended.
+- Its **serial consoles** are the entries that are not `tty<n>`.
+- If the format names one (`formats.<f>.serialConsole`), it must be in that list; otherwise evaluation fails.
+- If it names none, the list must hold exactly one serial console, which is used; otherwise evaluation fails.
+
+**Per format:**
+- **ISO:** names none. The only serial console is `ttyS0,115200n8`.
+- **SD:** names `ttyS0,115200n8`. The stock list has `ttyS0` and `ttyAMA0` (F6), and R-P1's Pi 4 family uses `ttyS0` (§5).
+
+**Defaults:** `primaryConsole` defaults are now per format too (ISO `display`, SD `serial`). The module on its own defaults to `display`, which keeps the stock order.
+
+**Tests:**
+- The flake check `serial-console-choice` covers both formats and the rule's error cases.
+- Evaluating the SD image with `serialConsole = "ttyS1,…"` fails: "not among its consoles". Evaluating it with none named fails: "name one".
