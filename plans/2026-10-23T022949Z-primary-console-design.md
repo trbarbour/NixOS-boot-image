@@ -54,3 +54,4 @@
 On `qemu virt` (the AArch64 VM tests), the serial port is `ttyAMA0` and there is no `ttyS0`, so the preferred console never registers.
 - Expected: the AArch64 VM tests are unaffected, because their getty and login use `ttyAMA0`, which stays registered.
 - To check: run the AArch64 VM test after the change.
+- **Resolved (2026-10-23 02:51Z):** `tests/vm/test_aarch64_boot.py` passed 4/4 at 0.22.0, commit b73f41e (17 min). The cmdline ends with the appended `ttyS0`, and login and SSH work on `qemu virt`.
