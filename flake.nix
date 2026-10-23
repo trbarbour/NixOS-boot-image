@@ -107,6 +107,9 @@
               services.pre-nixos.enable = true;
               services.pre-nixos.rootKey = settings.rootKey;
               services.pre-nixos.autoInstall = settings.autoInstall;
+              # null: the module's per-platform default (serial on AArch64).
+              services.pre-nixos.primaryConsole =
+                lib.mkIf (settings.primaryConsole != null) settings.primaryConsole;
               # The ISO and SD modules set image.baseName with normal priority.
               image.baseName = lib.mkForce (imageBaseName { inherit system; label = config.system.nixos.label; });
             })
@@ -196,7 +199,7 @@
             c = mkBootConfigurationWith { format = "iso"; inherit settings; };
           in
           assert lib.assertMsg
-            (settings == { rootKey = null; autoInstall = false; }
+            (settings == { rootKey = null; autoInstall = false; primaryConsole = null; }
               && c.pkgs.pre-nixos.rootKey == null
               && !(c.config.systemd.services.pre-nixos.environment ? PRE_NIXOS_AUTO_INSTALL))
             "the default site must embed no key and leave auto-install off";
@@ -208,11 +211,38 @@
               && fails (siteLib.validateSite "t" { rootKey = "/etc/ssh/key.pub"; })
               && fails (siteLib.validateSite "t" { rootKey = ./tests/fixtures/no-such.pub; })
               && fails (siteLib.validateSite "t" { autoInstall = "yes"; })
+              && fails (siteLib.validateSite "t" { primaryConsole = "hdmi"; })
               && fails (formatOf "dvd")
               && fails (siteLib.readSite ./tests/fixtures)
               && fails (siteLib.resolveSettings { site = siteLib.validateSite "t" { }; env = noEnv // { autoInstall = "maybe"; }; })
               && !(fails (siteLib.validateSite "t" { })))
             "site validation accepted an invalid setting or rejected an empty site";
+          true;
+        # R-C2: the last console= is the primary one (design F1/F2): serial by
+        # default on the SD image, display on the ISO, and either on request.
+        primary-console =
+          let
+            lastConsole = format: primaryConsole:
+              let
+                c = mkBootConfigurationWith {
+                  inherit format;
+                  settings = { rootKey = null; autoInstall = false; inherit primaryConsole; };
+                };
+              in
+              lib.last (builtins.filter (lib.hasPrefix "console=") c.config.boot.kernelParams);
+            serial = "console=ttyS0,115200n8";
+            display = "console=tty0";
+            got = lib.genAttrs [ "iso" "sd" ] (format: {
+              default = lastConsole format null;
+              serial = lastConsole format "serial";
+              display = lastConsole format "display";
+            });
+            want = {
+              iso = { default = display; inherit serial display; };
+              sd = { default = serial; inherit serial display; };
+            };
+          in
+          assert lib.assertMsg (got == want) "primary consoles: ${builtins.toJSON got}";
           true;
         # The legacy environment only fills unset settings; disagreement is an error.
         site-env-conflict =
@@ -412,13 +442,20 @@
             pkgs.runCommand "installer-sshd-start" {} ''
               touch $out
             '';
+          # R-P2 (amended for R-C2): the stock boot chain and set of consoles;
+          # serial primary only appends the serial console once more.
           stock-aarch64-boot-settings =
             let
-              ours = bootSettings aarch64Config.config;
               stock = bootSettings stockAarch64Config.config;
+              withConsole = primaryConsole: bootSettings (mkBootConfigurationWith {
+                format = "sd";
+                settings = { rootKey = null; autoInstall = false; inherit primaryConsole; };
+              }).config;
+              serialStock = stock // { kernelParams = stock.kernelParams ++ [ "console=ttyS0,115200n8" ]; };
+              ours = bootSettings aarch64Config.config;
             in
-            assert pkgs.lib.assertMsg (ours == stock)
-              "pre-nixos changes the stock AArch64 boot settings (R-P2): ours=${builtins.toJSON ours} stock=${builtins.toJSON stock}";
+            assert pkgs.lib.assertMsg (withConsole "display" == stock && withConsole "serial" == serialStock && ours == serialStock)
+              "pre-nixos changes the stock AArch64 boot settings beyond R-C2 (R-P2): ours=${builtins.toJSON ours} stock=${builtins.toJSON stock}";
             pkgs.runCommand "stock-aarch64-boot-settings" {} ''
               touch $out
             '';

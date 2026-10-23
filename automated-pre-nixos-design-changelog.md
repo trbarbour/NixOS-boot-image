@@ -118,3 +118,7 @@
 
 ### v0.25 — 2026-10-22
 - §7.6.1: the Pi's loader settings moved from the managed block to a separate, imported module with `mkForce`. In the managed block they duplicated `nixos-generate-config`'s lines, which is a parse error (#320, found by CM4 acceptance).
+
+### v0.26 — 2026-10-23
+- Added the primary console (R-C2): the site setting `primaryConsole`, serial by default on AArch64 and display on x86. Serial primary appends the serial console once more. R-P2 is amended so that the order of the SD image's consoles may change, but not their set.
+- §7.6.1: the Pi boot module also puts `pcie-brcmstb` and `nvme` in the installed initrd (#323).

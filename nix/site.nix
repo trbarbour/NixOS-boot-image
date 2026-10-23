@@ -9,7 +9,8 @@
 { lib }:
 
 let
-  settingNames = [ "rootKey" "autoInstall" ];
+  settingNames = [ "rootKey" "autoInstall" "primaryConsole" ];
+  consoles = [ "serial" "display" ];
 
   # PRE_NIXOS_AUTO_INSTALL as pre_nixos.py reads it; anything else is an error
   # rather than a silent "off".
@@ -28,6 +29,7 @@ rec {
       unknown = lib.filter (name: !(lib.elem name settingNames)) (builtins.attrNames raw);
       rootKey = raw.rootKey or null;
       autoInstall = raw.autoInstall or null;
+      primaryConsole = raw.primaryConsole or null;
     in
     if !builtins.isAttrs raw then
       throw "pre-nixos site ${where}: expected an attribute set"
@@ -39,8 +41,10 @@ rec {
       throw "pre-nixos site ${where}: rootKey ${toString rootKey} does not exist"
     else if !(autoInstall == null || builtins.isBool autoInstall) then
       throw "pre-nixos site ${where}: autoInstall must be true or false, not ${builtins.typeOf autoInstall}"
+    else if !(primaryConsole == null || lib.elem primaryConsole consoles) then
+      throw "pre-nixos site ${where}: primaryConsole must be one of ${lib.concatStringsSep ", " (map builtins.toJSON consoles)}, not ${builtins.toJSON primaryConsole}"
     else
-      { inherit rootKey autoInstall; };
+      { inherit rootKey autoInstall primaryConsole; };
 
   # A site directory.  Its settings file is required, so a mistyped override
   # or an incomplete site fails instead of silently building an image with no
@@ -54,7 +58,9 @@ rec {
   # environment only fills settings the site leaves unset, and a disagreement
   # is an error.  `env` is { rootKey = string; autoInstall = string; }, the raw
   # PRE_NIXOS_ROOT_KEY / PRE_NIXOS_AUTO_INSTALL values ("" when unset or when
-  # evaluating purely).  Result: { rootKey = path | null; autoInstall = bool; }.
+  # evaluating purely).  Result: { rootKey = path | null; autoInstall = bool;
+  # primaryConsole = "serial" | "display" | null }, null meaning the format's
+  # default (design plans/2026-10-23T022949Z-primary-console-design.md).
   resolveSettings = { site, env }:
     let
       envKey =
@@ -74,5 +80,5 @@ rec {
           throw "pre-nixos: the site's autoInstall and PRE_NIXOS_AUTO_INSTALL differ; set only one"
         else site.autoInstall;
     in
-    { inherit rootKey autoInstall; };
+    { inherit rootKey autoInstall; inherit (site) primaryConsole; };
 }

@@ -69,6 +69,17 @@ in {
     default = false;
     description = "Install NixOS automatically once storage and network are ready.";
   };
+  options.services.pre-nixos.primaryConsole = lib.mkOption {
+    type = lib.types.enum [ "serial" "display" ];
+    default = if pkgs.stdenv.hostPlatform.isAarch64 then "serial" else "display";
+    description = ''
+      The image's primary console (/dev/console: systemd status, emergency
+      shells), which the installed system keeps (reqs R-C2, R-C1).  "serial"
+      appends the serial console once more, since the kernel prefers a
+      repeated console= (design plans/2026-10-23T022949Z-primary-console-design.md);
+      "display" keeps the stock order, which ends with tty0.
+    '';
+  };
   options.services.pre-nixos.installedBoot = lib.mkOption {
     type = lib.types.enum [ "nixos-default" "rpi4-uboot-extlinux" ];
     default = "nixos-default";
@@ -163,8 +174,9 @@ in {
       lib.mkForce "${pkgs.openssh}/bin/sshd -D -e -f /etc/ssh/sshd_config";
   }
   # The ISO's boot chain and console settings.  On AArch64 the stock SD image's
-  # boot chain and kernel console parameters stay untouched (reqs §2.9 R-P2;
-  # AArch64 plan §3.4), checked by the flake check stock-aarch64-boot-settings.
+  # boot chain and set of kernel consoles stay untouched (reqs §2.9 R-P2;
+  # AArch64 plan §3.4), checked by the flake check stock-aarch64-boot-settings;
+  # only their order follows primaryConsole (below).
   (lib.mkIf pkgs.stdenv.hostPlatform.isx86 {
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
     boot.loader.grub.memtest86.enable = true;
@@ -173,6 +185,11 @@ in {
       terminal_input serial console
       terminal_output serial console
     '';
+  })
+  # R-C2: the serial console (COM1 on x86, the Pi's mini UART) becomes primary
+  # by appearing again last; the kernel prefers a repeated console= (design F1/F2).
+  (lib.mkIf (cfg.primaryConsole == "serial") {
+    boot.kernelParams = lib.mkAfter [ "console=ttyS0,115200n8" ];
   })
   ]);
 }

@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.25
+**Doc status:** Draft v0.26
 **Date:** 2026-10-21 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -172,6 +172,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ## 8) State Machine / Flow
 1. **Early boot:**
    - GRUB and the kernel are configured with `console=ttyS0,115200n8 console=tty0` so serial output is available with a local fallback.
+   - **Primary console [R-C2]:**
+     - Set by the site setting `primaryConsole = "serial" | "display"`. The default is serial on the SD image and display on the ISO.
+     - Serial primary appends `console=ttyS0,115200n8` once more, because the kernel prefers a repeated `console=` (verified in QEMU).
+     - The installed system inherits it through R-C1.
+     - Design: `plans/2026-10-23T022949Z-primary-console-design.md`.
    - Parse kernel args; detect available consoles from `/proc/consoles` and `/proc/cmdline`.
    - Start a `getty` on the primary serial console to allow logins.
    - Establish **non-blocking log fan-out**: log to journald, append to `/var/log/pre-nixos/actions.log`, send to `dmesg`, and write to the kernel console (e.g., `printf ... > /dev/console` with timeouts).

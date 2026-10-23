@@ -24,6 +24,19 @@ def test_aarch64_stock_consoles_are_all_kept_in_order() -> None:
     ]
 
 
+def test_aarch64_serial_primary_image_gives_a_serial_primary_installed_system() -> None:
+    """R-C2: the SD image defaults to serial primary by appending ttyS0 once
+    more (plans/2026-10-23T022949Z-primary-console-design.md); the installed
+    system keeps it primary (R-C1)."""
+
+    tokens = CM4_STOCK_CMDLINE + ["console=ttyS0,115200n8"]
+    assert install._select_console_kernel_params(tokens) == [
+        "console=ttyAMA0,115200n8",
+        "console=tty0",
+        "console=ttyS0,115200n8",
+    ]
+
+
 def test_last_occurrence_decides_order_so_primary_is_kept() -> None:
     tokens = ("console=ttyAMA0,115200n8", "console=tty0", "console=ttyAMA0,115200n8")
     assert install._select_console_kernel_params(tokens) == [
