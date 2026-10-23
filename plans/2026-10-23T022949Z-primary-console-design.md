@@ -74,3 +74,12 @@ The appended device is **fixed per format** (D4), not detected.
 - an x86 machine with the port on COM2 (`ttyS1`), on a PCIe card or AMT serial-over-LAN (often `ttyS4`), or on USB.
 
 In those cases the preferred console names an absent device. Which console then becomes `/dev/console` has not been determined (the `qemu virt` VM test passed, but did not check `/proc/consoles`).
+
+**F6 (experiment, 2026-10-23): a preferred console that the machine lacks.** Same QEMU set-up as F2 (an x86 machine, so no `ttyAMA0`).
+- `console=ttyS0,115200n8 console=tty0 console=ttyAMA0,115200n8`: init's output did **not** reach serial. `/dev/console` fell back to `tty0` (the first registered console becomes the head, `printk.c:4139–4142`), although `ttyS0` was listed.
+- The same with `ttyS0` last: `ttyS0 (EC …)`.
+- So the kernel does not fall back to another listed serial console. Appending every stock serial console would give the display on any board that lacks the last one.
+
+**Stock lists:**
+- The ISO lists one serial console, `ttyS0`.
+- The SD image lists two. nixpkgs' comment says `ttyS0` is "for Tegra (Jetson TX1)" and `ttyAMA0` "for QEMU's -machine virt". On the CM4, `ttyS0` is the mini UART, and no `ttyAMA0` exists (§5).
