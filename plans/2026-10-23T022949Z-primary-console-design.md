@@ -55,3 +55,22 @@ On `qemu virt` (the AArch64 VM tests), the serial port is `ttyAMA0` and there is
 - Expected: the AArch64 VM tests are unaffected, because their getty and login use `ttyAMA0`, which stays registered.
 - To check: run the AArch64 VM test after the change.
 - **Resolved (2026-10-23 02:51Z):** `tests/vm/test_aarch64_boot.py` passed 4/4 at 0.22.0, commit b73f41e (17 min). The cmdline ends with the appended `ttyS0`, and login and SSH work on `qemu virt`.
+
+## 5. Limitation: which serial device (user question, 2026-10-23)
+
+The appended device is **fixed per format** (D4), not detected.
+
+**Evidence for `ttyS0` on the CM4**, from the attempt-2 serial log `docs/test-reports/2026-10-22T154500Z-cm4-item10-attempt2-serial.txt`:
+- `fe215040.serial: ttyS0 … is a 16550` (`bcm2835-aux-uart`, the mini UART on GPIO 14/15, enabled by `enable_uart=1`) prints the kernel log;
+- `serial-getty@ttyS0` and `<<< Welcome … - ttyS0 >>>` appear in the user's serial capture;
+- the PL011 is `ttyAMA1` (`fe201000.serial`), owned by Bluetooth (`serial serial0: tty port ttyAMA1 registered`, `hci_uart_bcm serial0-0`);
+- **no `ttyAMA0` exists**, so the stock `console=ttyAMA0` names no device on this board.
+
+**Evidence for `ttyS0` on x86:** it is COM1 by convention, and the ISO already used it. There is no hardware evidence from the user's mini-PCs.
+
+**Where the guess is wrong:**
+- a Pi with `dtoverlay=disable-bt` or `miniuart-bt`: the GPIO UART becomes the PL011, `ttyAMA0`;
+- a Pi 5: `ttyAMA10`;
+- an x86 machine with the port on COM2 (`ttyS1`), on a PCIe card or AMT serial-over-LAN (often `ttyS4`), or on USB.
+
+In those cases the preferred console names an absent device. Which console then becomes `/dev/console` has not been determined (the `qemu virt` VM test passed, but did not check `/proc/consoles`).
