@@ -202,6 +202,16 @@ _Last updated: 2026-10-23T01-03-50Z_
     - Not printed by the stock U-Boot 2026.04 on the SD card. -17 is EEXIST (already reserved), so it is probably harmless.
     - Find its source in `boot/image-fdt.c`, then decide.
 
+27. **Stale signatures inside old partition areas can resurface when disko recreates the same layout.** *(hazard, 2026-10-23, hypothesis)*
+    - What happened: the user removed only the CM4 NVMe's partitions and its first 16 MiB.
+    - Detection (`wipefs -n` on the disk) still found signatures, probably the backup GPT at the end of the disk.
+    - The hazard: if only disk-level signatures are cleared, the old LVM PV label (at sector 2099201, partition 2's sector 1) and the LVs' ext4 superblocks survive. disko recreates partitions at the same offsets, and guards its `pvcreate` and `mkfs` with `blkid … | grep -q TYPE=` (seen in the attempt-1 journal). It could then reuse stale metadata instead of creating it.
+    - Reproduce in a VM: provision, delete the partitions, wipe only the disk-level signatures, provision again, and see whether `pvcreate`/`mkfs` are skipped. Then root-cause and decide, for example: discard or zero the partition starts before disko, or wipe signatures on the new partitions before creating them.
+
+28. **The NVMe U-Boot cannot choose a boot device without editing its environment.** *(gap, 2026-10-23)*
+    - Without `CONFIG_BOOTSTD_FULL`, `bootflow scan` takes no flags or label. To boot the SD card when NVMe holds a system, the user had to run `setenv boot_targets mmc0; bootflow scan`.
+    - Consider enabling `CONFIG_BOOTSTD_FULL` in `nix/uboot-rpi4-nvme.nix` (size and boot-time cost to check), and document the recovery path.
+
 ## Recently Completed
 - 2026-10-23T03-50-16Z - Merged trbarbour/NixOS-boot-image#325 (0.22.0). Fixed #323: the installed Pi's initrd now has `pcie-brcmstb` and `nvme`. Fixed #324: the installer's sshd no longer waits for the auto-install. Added the `primaryConsole` site setting (R-C2): serial by default on the SD image, display on the ISO; the serial device comes from the format's own console list. VM tests: x86 3/3, AArch64 4/4. Item 10: waiting for the user's retest.
 - 2026-10-22T13-30-56Z - Merged trbarbour/NixOS-boot-image#322 (0.21.0). (user request) The 0.20.1 SD image had the same file name as 0.20.0, because nixpkgs names images after its own version only. From 0.21.0, both images are named `pre-nixos-<version>-g<commit>[-dirty]-<nixpkgs label>-<system>.<ext>` (the user chose version plus commit). Covered by the flake check `image-file-names`.
