@@ -221,6 +221,17 @@ _Last updated: 2026-10-23T01-03-50Z_
     - `pre-nixos-auto-install-ip` has `StandardOutput = "journal+console"`, and `announce-lan-ip.sh` also writes to `/dev/console`, because `pre-nixos-console` is absent on the installed system.
     - Reproduce, then decide on one path to the console, e.g. `StandardOutput = "journal"`.
 
+30. **`uptime` reports about 220 days on the installer and on the first boot of the installed system; `date -u` is right.** *(anomaly, 2026-10-24, user)*
+    - 220 days is the time from systemd's built-in clock epoch (2026-03-17, seen in attempt 1) to now.
+    - coreutils 9.11's `uptime` computes now minus a boot time taken from the utmp `BOOT_TIME` entry. Without that entry, it falls back to the mtime of `/var/lib/systemd/random-seed` (gnulib `boot-time-aux.h`); only after that does it use the kernel's counter.
+    - **Hypothesis:** both are written early in boot, before NTP corrects the clock. On a first boot (the installer always; a fresh install, which has no `/var/lib/systemd/timesync/clock`), the clock still holds the epoch at that moment. A later boot restores the clock saved at shutdown, so the error should be small.
+    - To confirm, on the CM4:
+      - `cat /proc/uptime` should be right;
+      - `who -b` should show 2026-03-17;
+      - `stat -c %y /var/lib/systemd/random-seed` should show its mtime;
+      - after a reboot, `uptime` should be about right.
+    - Not caused by pre-nixos; it comes from the board having no RTC (item 23's board). To decide: document it, or keep it out of pre-nixos's own logs.
+
 ## Recently Completed
 - 2026-10-24T14-05-00Z - **AArch64 plan item 10 passed** (CM4 attempt 4, 0.22.1, user: "LGTM"; `docs/test-reports/2026-10-24T135908Z-cm4-item10-acceptance-4.md`). The SD installer auto-installed NixOS to NVMe, and the installed system boots firmware → U-Boot → extlinux → LVM root, with serial primary, one DHCP lease and SSH. Closes #326 and #327 on hardware. Attempts 1–3 found #320, #323, #324, #326 and #327, all fixed.
 - 2026-10-24T03-00-28Z - Merged trbarbour/NixOS-boot-image#328 (0.22.1). Fixed #326: NetworkManager is forced off on installed systems, so networkd is the only DHCP client on `lan`. Fixed #327: console broadcasts no longer appear twice on the primary console. CI green, no Codex findings. Item 10: waiting for the user's attempt 4.
