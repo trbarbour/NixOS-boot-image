@@ -225,12 +225,25 @@ _Last updated: 2026-10-23T01-03-50Z_
     - 220 days is the time from systemd's built-in clock epoch (2026-03-17, seen in attempt 1) to now.
     - coreutils 9.11's `uptime` computes now minus a boot time taken from the utmp `BOOT_TIME` entry. Without that entry, it falls back to the mtime of `/var/lib/systemd/random-seed` (gnulib `boot-time-aux.h`); only after that does it use the kernel's counter.
     - **Hypothesis:** both are written early in boot, before NTP corrects the clock. On a first boot (the installer always; a fresh install, which has no `/var/lib/systemd/timesync/clock`), the clock still holds the epoch at that moment. A later boot restores the clock saved at shutdown, so the error should be small.
+    - **2026-10-24, confirmed (user): `who -b` shows 2026-03-17 and `/proc/uptime` is right.** So the utmp boot record was written before the clock was corrected.
     - To confirm, on the CM4:
       - `cat /proc/uptime` should be right;
       - `who -b` should show 2026-03-17;
       - `stat -c %y /var/lib/systemd/random-seed` should show its mtime;
       - after a reboot, `uptime` should be about right.
     - Not caused by pre-nixos; it comes from the board having no RTC (item 23's board). To decide: document it, or keep it out of pre-nixos's own logs.
+
+31. **Use the Waveshare CM4-POE-UPS-BOX's battery-backed RTC.** *(user request, 2026-10-24; fixes item 30 at the source)*
+    - **Facts (verified here):**
+      - Kernel 6.18.56 sets the clock from `rtc0` when it registers, even for a module driver (`drivers/rtc/class.c:433–435`).
+      - `CONFIG_RTC_HCTOSYS=y` and `CONFIG_RTC_SYSTOHC=y` (written back after NTP sync).
+      - `rtc-pcf85063`, `i2c-bcm2835` and `i2c-mux-pinctrl` are modules.
+      - Linux gets the **firmware's** device tree: U-Boot's `fdtdir` lookup fails ("Skipping fdtdir"), and the `blconfig` alias, which is only in the firmware's DT, is readable. So `config.txt` overlays apply.
+      - **But the stock firmware set (`sd-image-aarch64.nix` `populateFirmwareCommands`, reused by `nix/rpi4-nvme-firmware.nix`) copies no `overlays/` directory, so `dtoverlay=` cannot work today.**
+    - **Unverified:** the board's RTC chip and bus. Waveshare's CM4 PoE Board wiki (found by search; the UPS-BOX page was unreachable from here) says: PCF85063A on i2c-10, address 0x51, `dtparam=i2c_vc=on` and `dtoverlay=i2c-rtc,pcf85063a,i2c_csi_dsi`.
+    - **Plan:**
+      1. A manual experiment on the installed CM4: copy `i2c-rtc.dtbo` into `/boot/overlays/`, add the lines, reboot, check `/dev/rtc0`, set the RTC, reboot, and check that `who -b` is right.
+      2. Then a design debate: ship `overlays/` in the firmware set, and how a site adds `config.txt` lines (a new site setting?), traced to this request.
 
 ## Recently Completed
 - 2026-10-24T14-05-00Z - **AArch64 plan item 10 passed** (CM4 attempt 4, 0.22.1, user: "LGTM"; `docs/test-reports/2026-10-24T135908Z-cm4-item10-acceptance-4.md`). The SD installer auto-installed NixOS to NVMe, and the installed system boots firmware → U-Boot → extlinux → LVM root, with serial primary, one DHCP lease and SSH. Closes #326 and #327 on hardware. Attempts 1–3 found #320, #323, #324, #326 and #327, all fixed.
