@@ -23,6 +23,9 @@ _AUTO_STATUS_FILENAME = "auto-install-status"
 _BLOCK_START = "# pre-nixos auto-install start"
 _BLOCK_END = "# pre-nixos auto-install end"
 _AUTO_INSTALL_MODULE = "./pre-nixos-auto-install-ip.nix"
+# Disables NetworkManager, which nixos-generate-config enables (#326).
+_NETWORK_MODULE = "./pre-nixos-network.nix"
+_NETWORK_MODULE_TEMPLATE = "network-networkd.nix"
 _SERIAL_CONSOLE_PARAM = "console=ttyS0,115200n8"
 _VGA_CONSOLE_PARAM = "console=tty0"
 
@@ -617,6 +620,10 @@ def _inject_configuration(
 
     _write_auto_install_module(root_path)
     filtered = _ensure_import(filtered, _AUTO_INSTALL_MODULE)
+    (config_dir / Path(_NETWORK_MODULE).name).write_text(
+        _load_template(_NETWORK_MODULE_TEMPLATE), encoding="utf-8"
+    )
+    filtered = _ensure_import(filtered, _NETWORK_MODULE)
     loader_template = boot_platform.loader_module_template(boot_setup)
     if loader_template is not None:
         (config_dir / boot_platform.LOADER_MODULE_FILE).write_text(
