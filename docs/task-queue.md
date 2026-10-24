@@ -203,6 +203,7 @@ _Last updated: 2026-10-23T01-03-50Z_
           2. Measure the 5 V rail at the CM4 (GPIO header 5 V to GND), with a DMM at idle and ideally a scope for dips below about 4.63 V. This decides between "the rail sags" and "the reading is wrong".
           3. ~~Remove the UPS battery~~: the board has **no 18650 cells fitted** (user, 2026-10-24), so battery charging is ruled out. The UPS power-path circuitry is still in the 5 V path.
           4. Reseat the CM4 (contacts).
+        - 2026-10-24 (user, DMM): 5 V rail at idle = **5.132 V**. Not low at idle, so look for transient dips under load (scope).
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
