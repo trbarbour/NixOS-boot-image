@@ -214,6 +214,13 @@ _Last updated: 2026-10-23T01-03-50Z_
         - **Hypothesis:** the trigger is the installer's **SD-card** activity, not CPU or NVMe load.
           - Next test: `dd if=/dev/mmcblk0 of=/dev/null bs=1M iflag=direct` on the installed system, with the card inserted, while watching `journalctl -kf`.
           - If that triggers warnings: scope the 5 V rail and the card's 3.3 V supply, and try another card. If not: SD reads plus NVMe writes together, and Wi-Fi/Bluetooth bring-up.
+        - 2026-10-24 (user):
+          - SD reads alone give 5.089 V. SD and NVMe reads with the CPU load give 5.088 V. **No warnings at all.**
+          - **The SD-read hypothesis is refuted.**
+        - Remaining installer-only activity:
+          1. **NVMe writes:** mkfs and the store copy. Warnings ran from about 60 s, the formatting, to the end of the install. Not yet tested.
+          2. **Early boot, 20–40 s:** Ethernet link down/up during the rename, and Wi-Fi/Bluetooth bring-up. The installed system's few warnings are also in its first minute.
+          - Next test: `dd … oflag=direct` writes, then writes with the CPU and SD loads, with the scope on 5 V and the M.2 slot's 3.3 V.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
