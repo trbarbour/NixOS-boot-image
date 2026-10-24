@@ -191,6 +191,10 @@ _Last updated: 2026-10-23T01-03-50Z_
       - `avoid_warnings=1` is wanted: it stops the firmware's warning from overwriting the framebuffer.
       - The user also suspects `arm_boost=1`: as they recall, it (or `arm_freq`) may need a matching `over_voltage`. The CM4s have good heatsinks.
       - Experiment: change one line at a time in the SD card's FIRMWARE `config.txt`, first without `arm_boost=1`, and count the warnings over a fixed period.
+    - 2026-10-24 (user), on the installed CM4 with the stock `config.txt` (`arm_boost=1` present): `cpufreq/policy0/cpuinfo_max_freq` = 1500000, `cpufreq/boost` = 0.
+      - So `arm_boost` does not raise this CM4 above 1.5 GHz, and removing it should not change the undervoltage. Suspect eliminated by measurement, unless the reading was taken without the line (to confirm with the user).
+      - Warnings also appear at idle (from 20 s after boot), so the supply is marginal even at low load.
+      - Next split: the power path. Run on a bench 5 V supply instead of PoE. Check the GS308EPP's per-port power reading, class and limit. Check whether the UPS battery charging shares the PoE budget.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
