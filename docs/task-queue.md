@@ -201,7 +201,7 @@ _Last updated: 2026-10-23T01-03-50Z_
         - **Plan (half-split, one change at a time, same idle period, warnings counted with `journalctl -k -b | grep -c 'Undervoltage detected'`):**
           1. Bench supply at 12 V: note the current, and whether the count changes (this rules the wall-wart in or out).
           2. Measure the 5 V rail at the CM4 (GPIO header 5 V to GND), with a DMM at idle and ideally a scope for dips below about 4.63 V. This decides between "the rail sags" and "the reading is wrong".
-          3. Remove the UPS battery, if that is safe (the UPS power path).
+          3. ~~Remove the UPS battery~~: the board has **no 18650 cells fitted** (user, 2026-10-24), so battery charging is ruled out. The UPS power-path circuitry is still in the 5 V path.
           4. Reseat the CM4 (contacts).
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
