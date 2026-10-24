@@ -195,6 +195,14 @@ _Last updated: 2026-10-23T01-03-50Z_
       - So `arm_boost` does not raise this CM4 above 1.5 GHz, and removing it should not change the undervoltage. Suspect eliminated by measurement, unless the reading was taken without the line (to confirm with the user).
       - Warnings also appear at idle (from 20 s after boot), so the supply is marginal even at low load.
       - Next split: the power path. Run on a bench 5 V supply instead of PoE. Check the GS308EPP's per-port power reading, class and limit. Check whether the UPS battery charging shares the PoE budget.
+      - 2026-10-24 (user): the reading **was** taken with `arm_boost=1` present, so `arm_boost` is eliminated.
+        - **Correction:** this CM4 is not on PoE. It is powered through the barrel jack (7–36 V DC) from the board's own 12 V wall-wart (3–4 A, to be checked), which is barely warm. So the input supply (about 36–48 W) is far above the load.
+        - The suspect is the board's 5 V rail to the CM4: its regulator, the UPS power path, or the contacts. A web search found one user report of undervoltage with this UPS board; another poster suggested dirty contacts, unconfirmed (community.home-assistant.io/t/ups-for-rpi-4/503505).
+        - **Plan (half-split, one change at a time, same idle period, warnings counted with `journalctl -k -b | grep -c 'Undervoltage detected'`):**
+          1. Bench supply at 12 V: note the current, and whether the count changes (this rules the wall-wart in or out).
+          2. Measure the 5 V rail at the CM4 (GPIO header 5 V to GND), with a DMM at idle and ideally a scope for dips below about 4.63 V. This decides between "the rail sags" and "the reading is wrong".
+          3. Remove the UPS battery, if that is safe (the UPS power path).
+          4. Reseat the CM4 (contacts).
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
