@@ -204,6 +204,16 @@ _Last updated: 2026-10-23T01-03-50Z_
           3. ~~Remove the UPS battery~~: the board has **no 18650 cells fitted** (user, 2026-10-24), so battery charging is ruled out. The UPS power-path circuitry is still in the 5 V path.
           4. Reseat the CM4 (contacts).
         - 2026-10-24 (user, DMM): 5 V rail at idle = **5.132 V**. Not low at idle, so look for transient dips under load (scope).
+        - 2026-10-24 (user, DMM):
+          - The 4-core CPU load drops the rail to 5.096 V; adding NVMe reads at 389 MB/s takes off another 1–2 mV.
+          - Neither load triggered warnings. The installed system gives about 1–2 warnings per hour.
+        - **Attempt-4 log, warnings by phase:**
+          - installer: 36 in about 6.5 min, one every 4–6 s, starting at 20 s, before the install;
+          - installed system: 3 in the first minute, then one at 909 s and one at 2473 s.
+        - Note: the driver polls every 2 s and clears the firmware's sticky flag (`raspberrypi-hwmon.c`), so the counts are episodes, not dips.
+        - **Hypothesis:** the trigger is the installer's **SD-card** activity, not CPU or NVMe load.
+          - Next test: `dd if=/dev/mmcblk0 of=/dev/null bs=1M iflag=direct` on the installed system, with the card inserted, while watching `journalctl -kf`.
+          - If that triggers warnings: scope the 5 V rail and the card's 3.3 V supply, and try another card. If not: SD reads plus NVMe writes together, and Wi-Fi/Bluetooth bring-up.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
