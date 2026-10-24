@@ -221,6 +221,13 @@ _Last updated: 2026-10-23T01-03-50Z_
           1. **NVMe writes:** mkfs and the store copy. Warnings ran from about 60 s, the formatting, to the end of the install. Not yet tested.
           2. **Early boot, 20–40 s:** Ethernet link down/up during the rename, and Wi-Fi/Bluetooth bring-up. The installed system's few warnings are also in its first minute.
           - Next test: `dd … oflag=direct` writes, then writes with the CPU and SD loads, with the scope on 5 V and the M.2 slot's 3.3 V.
+        - 2026-10-24 (user): NVMe writes alone give 5.091 V and **no warnings**, with a slight whine (probably coil whine).
+        - Wi-Fi ruled out:
+          - attempt 3's installed system ran `wpa_supplicant` and had 8 warnings over about 12 min of log, against attempt 4's 5;
+          - but the installer, with the most warnings, runs no Wi-Fi client (`networking.wireless.enable` and `networkmanager.enable` both evaluate to false).
+        - Next splits:
+          1. NVMe writes plus SD reads plus the CPU load, imitating the install.
+          2. **The installer idle for 10 min** (SD boot; the NVMe is non-empty, so no install), counting warnings. This separates the installer environment from the install's load.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
