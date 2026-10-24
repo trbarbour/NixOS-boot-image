@@ -239,6 +239,13 @@ _Last updated: 2026-10-23T01-03-50Z_
             - Warnings under `schedutil` only: frequency/voltage (DVFS) transitions.
             - Under both: the regulator's response to load steps.
           - Scope: single-shot, falling edge at about 4.75 V on 5 V, armed before the load stops.
+        - 2026-10-24 (user): 30 s/30 s load cycling under `schedutil` for 18 min: **one warning, at the start** (when commands were typed). Under `performance` for 5 min: the same.
+          - **Load steps and DVFS are not the trigger.**
+          - User's hypothesis: **network activity**, since the tests were run over two SSH sessions. It fits every observation so far: the idle SSH during the 4 h load; typing at load removal; the installer's link changes and DHCP; possible cache downloads during the install; a quiet installed system.
+          - Tests:
+            1. Watch from the **serial console** with no SSH sessions.
+            2. Bulk Ethernet traffic with no disk I/O: `iperf3`, both directions, or `curl -o /dev/null`.
+            3. If it triggers: force the link to 100 Mbit/s with `ethtool -s lan speed 100` and repeat.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
