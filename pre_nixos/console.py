@@ -32,8 +32,10 @@ def get_console_paths(
         extra_paths: Optional iterable of additional console paths to include.
 
     Returns:
-        List of distinct console device paths.  The ``/dev/console`` fallback is
-        appended when not already present.
+        List of distinct console device paths, or ``[/dev/console]`` when none
+        is known.  ``/dev/console`` is the primary console, which the active
+        list already names, so adding it too would write every message twice
+        on the primary (trbarbour/NixOS-boot-image#327).
     """
 
     paths: list[Path] = []
@@ -56,7 +58,7 @@ def get_console_paths(
             if normalized not in paths:
                 paths.append(normalized)
 
-    if _DEFAULT_FALLBACK not in paths:
+    if not paths:
         paths.append(_DEFAULT_FALLBACK)
 
     return paths

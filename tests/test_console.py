@@ -4,16 +4,30 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from pre_nixos.console import broadcast_line, get_console_paths
 
 
 def test_get_console_paths_reads_active_file(tmp_path: Path) -> None:
+    """#327: /dev/console is the primary console, already listed, so adding it
+    wrote every broadcast twice on the primary (seen on the CM4's serial)."""
+
     active = tmp_path / "active"
     active.write_text("ttyS0 tty0\n")
 
     paths = get_console_paths(active_path=active)
 
-    assert paths == [Path("/dev/ttyS0"), Path("/dev/tty0"), Path("/dev/console")]
+    assert paths == [Path("/dev/ttyS0"), Path("/dev/tty0")]
+
+
+@pytest.mark.parametrize("contents", [None, "", "\n"])
+def test_get_console_paths_falls_back_to_dev_console(tmp_path: Path, contents: str | None) -> None:
+    active = tmp_path / "active"
+    if contents is not None:
+        active.write_text(contents)
+
+    assert get_console_paths(active_path=active) == [Path("/dev/console")]
 
 
 def test_get_console_paths_deduplicates_and_adds_extra(tmp_path: Path) -> None:
@@ -27,7 +41,6 @@ def test_get_console_paths_deduplicates_and_adds_extra(tmp_path: Path) -> None:
         Path("/dev/ttyS0"),
         tmp_path / "custom",
         Path("/dev/ttyS1"),
-        Path("/dev/console"),
     ]
 
 

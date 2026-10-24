@@ -476,6 +476,38 @@
             pkgs.runCommand "installed-rpi-initrd-storage" {} ''
               touch $out
             '';
+          # #326: the installed system has one DHCP client on lan, systemd-networkd
+          # (which the managed block enables), although nixos-generate-config
+          # enables NetworkManager in every configuration.nix it writes.
+          installed-network-single-dhcp-client =
+            let
+              check = variant:
+                let
+                  config = (nixpkgs.lib.nixosSystem {
+                    system = aarch64System;
+                    modules = [
+                      (./tests/fixtures/nixos-generate-config + "/${variant}/configuration.nix")
+                      ./pre_nixos/templates/network-networkd.nix
+                      # What the managed block sets (pre_nixos/install.py).
+                      {
+                        networking.useNetworkd = true;
+                        systemd.network.enable = true;
+                        fileSystems."/" = { device = "/dev/main/slash"; fsType = "ext4"; };
+                      }
+                    ];
+                  }).config;
+                  clients = {
+                    networkmanager = config.networking.networkmanager.enable;
+                    networkd = config.systemd.network.enable;
+                  };
+                in
+                pkgs.lib.assertMsg (clients == { networkmanager = false; networkd = true; })
+                  "${variant}: installed DHCP clients ${builtins.toJSON clients}";
+            in
+            assert builtins.all check [ "extlinux" "grub" "efi" ];
+            pkgs.runCommand "installed-network-single-dhcp-client" {} ''
+              touch $out
+            '';
           # #324: on the installer, sshd starts once secure_ssh has hardened it,
           # not when pre-nixos.service (which runs the whole auto-install) ends;
           # and nothing starts it at boot (reqs §2.7).

@@ -21,6 +21,7 @@ pre_nixos = [
     "scripts/announce-lan-ip.sh",
     "templates/auto-install-ip.nix",
     "templates/boot-rpi4-uboot-extlinux.nix",
+    "templates/network-networkd.nix",
 ]
 
 [project.optional-dependencies]

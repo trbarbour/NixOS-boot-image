@@ -103,6 +103,11 @@ _Last updated: 2026-10-23T01-03-50Z_
          - Both fixed in 0.21.1.
          - **Next:** the user rebuilds 0.21.1, wipes the NVMe, and retests. Open question: make serial the installed Pi's primary console?
        - 2026-10-23 (user decision): the primary console is a site setting (`primaryConsole`), serial by default on AArch64 and display on x86. It applies to the image and is inherited by the installed system. Implemented in 0.22.0 (`plans/2026-10-23T022949Z-primary-console-design.md`).
+       - 2026-10-23: attempt 3 with 0.22.0 (`docs/test-reports/2026-10-23T142031Z-cm4-item10-acceptance-3.md`).
+         - The installed system boots from NVMe with serial login and SSH. #323 and #324 are confirmed on hardware, and serial primary works.
+         - Failed: `lan` holds two DHCP leases, because NetworkManager runs beside networkd (#326). Also, each broadcast appears twice on serial (#327).
+         - Both fixed in 0.22.1.
+         - **Next:** the user rebuilds 0.22.1 and retests. Expected: one lease, single broadcasts.
 
 10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
     - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.

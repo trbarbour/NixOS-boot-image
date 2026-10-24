@@ -691,6 +691,13 @@ def test_auto_install_rpi_config_defines_no_attribute_twice(
     template = Path(install.__file__).parent / "templates" / "boot-rpi4-uboot-extlinux.nix"
     assert module.read_text() == template.read_text()
     assert "./pre-nixos-boot.nix" in (config_dir / "configuration.nix").read_text()
+    # #326: NetworkManager (enabled by the generator) is switched off in a
+    # module of its own, so networkd is the only DHCP client on lan.
+    network = config_dir / "pre-nixos-network.nix"
+    network_template = Path(install.__file__).parent / "templates" / "network-networkd.nix"
+    assert network.read_text() == network_template.read_text()
+    assert "networking.networkmanager.enable = lib.mkForce false;" in network.read_text()
+    assert "./pre-nixos-network.nix" in (config_dir / "configuration.nix").read_text()
 
 
 def test_auto_install_rpi_fails_before_nixos_install_without_mounted_boot(
