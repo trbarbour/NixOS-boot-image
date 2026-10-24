@@ -217,7 +217,12 @@ _Last updated: 2026-10-23T01-03-50Z_
     - Without `CONFIG_BOOTSTD_FULL`, `bootflow scan` takes no flags or label. To boot the SD card when NVMe holds a system, the user had to run `setenv boot_targets mmc0; bootflow scan`.
     - Consider enabling `CONFIG_BOOTSTD_FULL` in `nix/uboot-rpi4-nvme.nix` (size and boot-time cost to check), and document the recovery path.
 
+29. **The installed system shows its LAN announcement twice.** *(anomaly, 2026-10-23; second source in #327)*
+    - `pre-nixos-auto-install-ip` has `StandardOutput = "journal+console"`, and `announce-lan-ip.sh` also writes to `/dev/console`, because `pre-nixos-console` is absent on the installed system.
+    - Reproduce, then decide on one path to the console, e.g. `StandardOutput = "journal"`.
+
 ## Recently Completed
+- 2026-10-24T14-05-00Z - **AArch64 plan item 10 passed** (CM4 attempt 4, 0.22.1, user: "LGTM"; `docs/test-reports/2026-10-24T135908Z-cm4-item10-acceptance-4.md`). The SD installer auto-installed NixOS to NVMe, and the installed system boots firmware → U-Boot → extlinux → LVM root, with serial primary, one DHCP lease and SSH. Closes #326 and #327 on hardware. Attempts 1–3 found #320, #323, #324, #326 and #327, all fixed.
 - 2026-10-24T03-00-28Z - Merged trbarbour/NixOS-boot-image#328 (0.22.1). Fixed #326: NetworkManager is forced off on installed systems, so networkd is the only DHCP client on `lan`. Fixed #327: console broadcasts no longer appear twice on the primary console. CI green, no Codex findings. Item 10: waiting for the user's attempt 4.
 - 2026-10-23T03-50-16Z - Merged trbarbour/NixOS-boot-image#325 (0.22.0). Fixed #323: the installed Pi's initrd now has `pcie-brcmstb` and `nvme`. Fixed #324: the installer's sshd no longer waits for the auto-install. Added the `primaryConsole` site setting (R-C2): serial by default on the SD image, display on the ISO; the serial device comes from the format's own console list. VM tests: x86 3/3, AArch64 4/4. Item 10: waiting for the user's retest.
 - 2026-10-22T13-30-56Z - Merged trbarbour/NixOS-boot-image#322 (0.21.0). (user request) The 0.20.1 SD image had the same file name as 0.20.0, because nixpkgs names images after its own version only. From 0.21.0, both images are named `pre-nixos-<version>-g<commit>[-dirty]-<nixpkgs label>-<system>.<ext>` (the user chose version plus commit). Covered by the flake check `image-file-names`.

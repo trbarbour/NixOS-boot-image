@@ -268,6 +268,7 @@ The user's point (2026-10-18): on a Pi-family board, which device boots is decid
        - E9d, the end-to-end install VM test (task queue item 12).
 9. **Boot-order verification (§3.9):** parse and check `BOOT_ORDER`, refuse or warn before installing, and prevent re-provisioning after install; E10–E15. Automated `BOOT_ORDER` changes only after separate approval. *(R-B2)*
 10. **Hardware acceptance on a CM4** (user), recorded in `docs/test-reports/`. It includes the reboot after installation booting the installed system, with the SD card still inserted. *(all)*
+    - **Status (2026-10-24): passed** on attempt 4, at 0.22.1 (`docs/test-reports/2026-10-24T135908Z-cm4-item10-acceptance-4.md`). E9c is confirmed: the EEPROM read the NVMe's GPT and booted its FAT `/boot`, with the SD card inserted. Attempts 1–3 found #320, #323, #324, #326 and #327.
 
 Version policy: each feature is a minor bump and each fix a patch bump (AGENTS.md).
 
