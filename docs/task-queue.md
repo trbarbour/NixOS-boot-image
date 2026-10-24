@@ -228,6 +228,11 @@ _Last updated: 2026-10-23T01-03-50Z_
         - Next splits:
           1. NVMe writes plus SD reads plus the CPU load, imitating the install.
           2. **The installer idle for 10 min** (SD boot; the NVMe is non-empty, so no install), counting warnings. This separates the installer environment from the install's load.
+        - User's hypothesis: the installer runs the CPU faster. Evidence against it (evaluated):
+          - the same `config.txt` on the SD card and the NVMe `/boot`;
+          - neither system sets `powerManagement.cpuFreqGovernor` (the installer's evaluates to null, and the generator writes none), so both use the kernel default `schedutil`.
+          - To confirm on the installer: `cpuinfo_max_freq`, `scaling_governor`, `scaling_cur_freq`.
+        - New hypothesis: **frequency/voltage transitions**, not the frequency itself. Test a bursty load (`timeout 0.2 yes; sleep 0.3` in a loop) under `schedutil`, against the same under `performance`.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
