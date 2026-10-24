@@ -246,6 +246,11 @@ _Last updated: 2026-10-23T01-03-50Z_
             1. Watch from the **serial console** with no SSH sessions.
             2. Bulk Ethernet traffic with no disk I/O: `iperf3`, both directions, or `curl -o /dev/null`.
             3. If it triggers: force the link to 100 Mbit/s with `ethtool -s lan speed 100` and repeat.
+        - 2026-10-24 (user): a third SSH login was followed, after a few seconds, by **4 episodes in about 20 s**, then quiet for 3 min.
+          - The delay is not the journal (`-f` is sub-second). The driver polls every 2 s, and the login itself takes seconds: key exchange, a logind session, and the first login's `user@.service`.
+          - Next:
+            - correlate with `journalctl -o short-precise`;
+            - split a serial-console login (no network) from bulk traffic with no login.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
