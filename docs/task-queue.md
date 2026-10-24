@@ -233,6 +233,12 @@ _Last updated: 2026-10-23T01-03-50Z_
           - neither system sets `powerManagement.cpuFreqGovernor` (the installer's evaluates to null, and the generator writes none), so both use the kernel default `schedutil`.
           - To confirm on the installer: `cpuinfo_max_freq`, `scaling_governor`, `scaling_cur_freq`.
         - New hypothesis: **frequency/voltage transitions**, not the frequency itself. Test a bursty load (`timeout 0.2 yes; sleep 0.3` in a loop) under `schedutil`, against the same under `performance`.
+        - 2026-10-24 (user): **4 h of steady 4-core load: no warnings. Removing the load: a burst of about 9 warnings in 2 min.**
+          - Warnings follow load *changes*, which supports the transition hypothesis.
+          - Next split: load on/off cycles (30 s/30 s) under `schedutil` against `performance`.
+            - Warnings under `schedutil` only: frequency/voltage (DVFS) transitions.
+            - Under both: the regulator's response to load steps.
+          - Scope: single-shot, falling edge at about 4.75 V on 5 V, armed before the load stops.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
