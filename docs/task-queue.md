@@ -251,6 +251,10 @@ _Last updated: 2026-10-23T01-03-50Z_
           - Next:
             - correlate with `journalctl -o short-precise`;
             - split a serial-console login (no network) from bulk traffic with no login.
+        - 2026-10-29 (user):
+          - The CM4 idle, installed system, for **5 days: no episodes at all.**
+          - The later SSH logout and a new login gave none, so the earlier SSH-login burst does not reproduce.
+          - Planned: a marked run (`logger MARK …`), with the journal exported for correlation, covering bulk Ethernet traffic and the installer left idle.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
