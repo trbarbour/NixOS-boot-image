@@ -255,6 +255,12 @@ _Last updated: 2026-10-23T01-03-50Z_
           - The CM4 idle, installed system, for **5 days: no episodes at all.**
           - The later SSH logout and a new login gave none, so the earlier SSH-login burst does not reproduce.
           - Planned: a marked run (`logger MARK …`), with the journal exported for correlation, covering bulk Ethernet traffic and the installer left idle.
+        - 2026-10-30 (user): a bulk download (`curl -o /dev/null` of a Linux kernel tarball, about 150 MB, limited by the WAN speed): **no episodes.**
+          - Ethernet receive at WAN speed is ruled out. Gigabit-rate traffic and transmit are untested.
+          - Remaining:
+            1. the link bounce (`ip link set lan down/up`), the installer's early-boot pattern;
+            2. gigabit transmit and receive on the LAN (`iperf3` and `-R`);
+            3. the installer left idle.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
