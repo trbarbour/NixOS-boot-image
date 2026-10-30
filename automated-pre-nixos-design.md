@@ -1,7 +1,7 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.26
-**Date:** 2026-10-21 (UTC)
+**Doc status:** Draft v0.27
+**Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
 
@@ -51,7 +51,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ---
 
 ## 5) Definitions
-- **ESP:** EFI System Partition (FAT32), default 1 GiB.
+- **ESP:** EFI System Partition (FAT32), mounted on `/boot`. Sized at 3% of its disk, clamped to [1 GiB, 4 GiB] (§7.3, R-B3).
 - **main / swap / large:** LVM **Volume Groups**. `main` on SSD tier; `swap` on HDD RAID1 (if present); `large` on HDD RAID5/6 or single-HDD PV (if present). When multiple SSD or HDD buckets exist, only the largest uses the base name (`main`/`large`); smaller buckets receive numeric suffixes (e.g., `main_1`) and are left unmounted.
 - **swap (policy):** A dedicated **VG `swap`** on **HDD RAID1** when possible; **fallback** is a swap LV on **VG `large`** (HDD-backed). When no rotating storage is available, use **VG `main`** (SSD/NVMe) if it has enough capacity for the configured swap size; otherwise skip swap entirely.
 - **Careful mode:** Safety-biased decisions (e.g., SSD pair as RAID1, `discard` off by default, conservative `mkfs` options).
@@ -92,7 +92,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - **Fallbacks:** If insufficient HDDs for a swap mirror, create VG `large` from available HDDs and put the swap LV there. With no rotating tier available, place the swap LV on `main` provided it can accommodate the configured size; otherwise skip swap.
 
 ### 7.3 Partitioning scheme (GPT)
-- **Per-disk layout:** every participating disk receives a GPT with a single data partition sized to the available capacity. When the disk underpins VG `main`, an additional 1 GiB EFI System Partition (label `ESP`, FAT32) is created before the data slice.
+- **Per-disk layout:** every participating disk receives a GPT with a single data partition sized to the available capacity. When the disk underpins VG `main`, an EFI System Partition (FAT32, label `EFI`, or `EFI2`, `EFI3`, … on further members) is created before the data slice.
+- **ESP size [R-B3]:** 3% of the disk, MiB-aligned, at least 1 GiB and at most 4 GiB (`planner.efi_partition_size`). Disks of 33 GiB or less get 1 GiB; disks of about 133 GiB or more get 4 GiB. Each generation on `/boot` takes about 200 MB, so 4 GiB holds about 20, extlinux's default `configurationLimit`. systemd-boot has no default limit, so on x86 a full ESP is still possible (`docs/task-queue.md` item 32).
+  - When `main` is an array, every member's ESP has the same size, taken from the smallest member, so the ESPs stay interchangeable copies.
+  - The planner records the size on each `efi` partition of the plan, and the disko layout takes it from there; an ESP without a size is an error, not a default.
+  - Design debate: `plans/2026-10-30T123513Z-esp-size-design.md`.
 - **Partition types:** data partitions destined for md arrays are flagged `linux-raid`; others are marked `lvm`. The final partition on each disk feeds either a RAID array or an LVM PV directly.
 - **Fallbacks:** if no rotating mirror exists for swap, the HDD capacity is assigned to VG `large` and swap falls back to that VG; with no rotating tier, swap may be placed on `main` when free space permits.
 
@@ -117,7 +121,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ### 7.6.1 AArch64 (Raspberry Pi 4 / CM4) installed bootloader [R-B1, R-B2]
 - **Chain:** EEPROM (`BOOT_ORDER`, NVMe first) → stock `start4.elf`/`config.txt` → **NVMe-capable U-Boot** → `bootflow scan` (`nvme` first) → `/boot/extlinux/extlinux.conf` → NixOS kernel/initrd (md + LVM root).
 - **Why a modified U-Boot:** nixpkgs' `ubootRaspberryPi4_64bit` has no NVMe driver and scans `mmc` first, so it would boot the SD card. Ours (`nix/uboot-rpi4-nvme.nix`) adds only `CONFIG_NVME_PCI=y` and puts `nvme` first in `boot_targets`.
-- **Layout:** unchanged from x86. Partition 1 is a 1 GiB vfat (EF00) on `/boot`, and it holds the firmware files beside `extlinux/` and `nixos/`.
+- **Layout:** unchanged from x86. Partition 1 is a vfat (EF00) on `/boot`, sized as in §7.3 (R-B3), and it holds the firmware files beside `extlinux/` and `nixos/`.
 - **Firmware files:** built by `nix/rpi4-nvme-firmware.nix`, which runs the stock `sdImage.populateFirmwareCommands` and then swaps in our U-Boot.
   - pre-nixos copies them to `/mnt/boot` after disko and before `nixos-install`.
   - For a manual install, run `pre-nixos-install-boot-files`.

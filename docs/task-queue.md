@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-10-23T01-03-50Z_
+_Last updated: 2026-10-30T12-35-13Z_
 
 ## Active Tasks
 
@@ -315,7 +315,12 @@ _Last updated: 2026-10-23T01-03-50Z_
       1. A manual experiment on the installed CM4: copy `i2c-rtc.dtbo` into `/boot/overlays/`, add the lines, reboot, check `/dev/rtc0`, set the RTC, reboot, and check that `who -b` is right.
       2. Then a design debate: ship `overlays/` in the firmware set, and how a site adds `config.txt` lines (a new site setting?), traced to this request.
 
+32. **The installed system's generation limit does not follow its ESP size.** *(gap, 2026-10-30, found while doing R-B3)*
+    - The ESP is now 1 to 4 GiB (R-B3), at about 200 MB per generation. extlinux keeps 20 generations by default, which overflows a 1 GiB ESP; systemd-boot (x86) has no default limit at all. A full `/boot` makes `nixos-rebuild switch` fail.
+    - Consider writing `boot.loader.{systemd-boot,generic-extlinux-compatible}.configurationLimit` into the generated configuration, derived from the planned ESP size. Needs a design debate (fixed headroom per generation vs. measured closure; what happens when a kernel grows).
+
 ## Recently Completed
+- 2026-10-30T12-35-13Z - (user request) 0.23.0: the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB], instead of a fixed 1 GiB (R-B3). Array members share one size, from the smallest. The SD image is unchanged: its FAT partition holds only firmware. Design: `plans/2026-10-30T123513Z-esp-size-design.md`. Follow-up: item 32.
 - 2026-10-24T14-05-00Z - **AArch64 plan item 10 passed** (CM4 attempt 4, 0.22.1, user: "LGTM"; `docs/test-reports/2026-10-24T135908Z-cm4-item10-acceptance-4.md`). The SD installer auto-installed NixOS to NVMe, and the installed system boots firmware → U-Boot → extlinux → LVM root, with serial primary, one DHCP lease and SSH. Closes #326 and #327 on hardware. Attempts 1–3 found #320, #323, #324, #326 and #327, all fixed.
 - 2026-10-24T03-00-28Z - Merged trbarbour/NixOS-boot-image#328 (0.22.1). Fixed #326: NetworkManager is forced off on installed systems, so networkd is the only DHCP client on `lan`. Fixed #327: console broadcasts no longer appear twice on the primary console. CI green, no Codex findings. Item 10: waiting for the user's attempt 4.
 - 2026-10-23T03-50-16Z - Merged trbarbour/NixOS-boot-image#325 (0.22.0). Fixed #323: the installed Pi's initrd now has `pcie-brcmstb` and `nvme`. Fixed #324: the installer's sshd no longer waits for the auto-install. Added the `primaryConsole` site setting (R-C2): serial by default on the SD image, display on the ISO; the serial device comes from the format's own console list. VM tests: x86 3/3, AArch64 4/4. Item 10: waiting for the user's retest.

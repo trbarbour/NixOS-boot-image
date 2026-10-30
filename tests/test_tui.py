@@ -71,7 +71,7 @@ def sample_plan() -> dict:
     return {
         "partitions": {
             "nvme0n1": [
-                {"name": "nvme0n1p1", "type": "efi"},
+                {"name": "nvme0n1p1", "type": "efi", "size": "1G"},
                 {"name": "nvme0n1p2", "type": "lvm"},
             ],
             "sda": [
@@ -132,11 +132,11 @@ def test_plan_renderer_deduplicates_array_vgs():
     plan = {
         "partitions": {
             "nvme0n1": [
-                {"name": "nvme0n1p1", "type": "efi"},
+                {"name": "nvme0n1p1", "type": "efi", "size": "1G"},
                 {"name": "nvme0n1p2", "type": "lvm"},
             ],
             "nvme1n1": [
-                {"name": "nvme1n1p1", "type": "efi"},
+                {"name": "nvme1n1p1", "type": "efi", "size": "1G"},
                 {"name": "nvme1n1p2", "type": "lvm"},
             ],
         },

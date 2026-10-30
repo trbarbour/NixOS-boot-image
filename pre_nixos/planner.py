@@ -48,9 +48,32 @@ def _format_size(size: int) -> str:
     return str(size)
 
 
-EFI_PARTITION_SIZE = _parse_size("1G")
 MI_BYTE = 1024 ** 2
 LVM_EXTENT_BYTES = 4 * MI_BYTE
+
+# EFI System Partition size (reqs §2.3, R-B3): 3% of the disk, but at least
+# 1 GiB and at most 4 GiB.  Each generation kept on /boot costs about 200 MB
+# (kernel + initrd), so 4 GiB holds about 20, extlinux's default limit; 1 GiB
+# stays the floor for small disks.
+EFI_PARTITION_MIN_SIZE = _parse_size("1G")
+EFI_PARTITION_MAX_SIZE = _parse_size("4G")
+EFI_PARTITION_PERCENT = 3
+
+
+def efi_partition_size(disk_size: int) -> int:
+    """Return the ESP size in bytes for a disk of ``disk_size`` bytes (R-B3).
+
+    The result is MiB-aligned and lies in
+    [``EFI_PARTITION_MIN_SIZE``, ``EFI_PARTITION_MAX_SIZE``].
+    """
+
+    assert disk_size >= 0, f"negative disk size {disk_size}"
+    share = disk_size * EFI_PARTITION_PERCENT // 100
+    share -= share % MI_BYTE
+    size = min(max(share, EFI_PARTITION_MIN_SIZE), EFI_PARTITION_MAX_SIZE)
+    assert EFI_PARTITION_MIN_SIZE <= size <= EFI_PARTITION_MAX_SIZE
+    assert size % MI_BYTE == 0
+    return size
 
 
 def _normalise_volume_label(name: str, max_length: int) -> str:
@@ -199,12 +222,25 @@ def plan_storage(
         """
 
         devices: List[str] = []
+        # One ESP size for the whole set, from its smallest disk, so that the
+        # ESPs on the members of an array are interchangeable copies (R-B3).
+        efi_size = (
+            efi_partition_size(min(_to_bytes(d.size) for d in ds))
+            if with_efi and ds
+            else 0
+        )
         for d in ds:
             if d.name not in plan["partitions"]:
                 parts: List[Dict[str, str]] = []
                 idx = 1
                 if with_efi:
-                    parts.append({"name": _part_name(d.name, idx), "type": "efi"})
+                    parts.append(
+                        {
+                            "name": _part_name(d.name, idx),
+                            "type": "efi",
+                            "size": _format_size(efi_size),
+                        }
+                    )
                     idx += 1
                 ptype = "linux-raid" if raid else "lvm"
                 part_name = _part_name(d.name, idx)
@@ -212,7 +248,7 @@ def plan_storage(
                 plan["partitions"][d.name] = parts
                 capacity = _to_bytes(d.size)
                 if with_efi:
-                    capacity = max(capacity - EFI_PARTITION_SIZE, 0)
+                    capacity = max(capacity - efi_size, 0)
                 if capacity > 0:
                     capacity -= capacity % MI_BYTE
                 device_sizes[part_name] = capacity
@@ -512,6 +548,8 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
             if not name:
                 continue
             if ptype == "efi":
+                # The planner sizes every ESP (R-B3); there is no default.
+                assert part.get("size"), f"EFI partition {name} has no size"
                 label = "EFI" if efi_count == 0 else f"EFI{efi_count + 1}"
                 efi_count += 1
                 content: Dict[str, Any] = {
@@ -524,7 +562,7 @@ def _plan_to_disko_devices(plan: Dict[str, Any]) -> Dict[str, Any]:
                     content["mountpointPermissions"] = DEFAULT_MOUNTPOINT_PERMISSIONS
                     content["mountOptions"] = ["umask=0077"]
                 partitions[name] = {
-                    "size": "1G",
+                    "size": part["size"],
                     "type": "EF00",
                     "content": content,
                 }
