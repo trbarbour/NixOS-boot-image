@@ -122,3 +122,7 @@
 ### v0.26 — 2026-10-23
 - Added the primary console (R-C2): the site setting `primaryConsole`, serial by default on AArch64 and display on x86. Serial primary appends the serial console once more. R-P2 is amended so that the order of the SD image's consoles may change, but not their set.
 - §7.6.1: the Pi boot module also puts `pcie-brcmstb` and `nvme` in the installed initrd (#323).
+
+### v0.27 — 2026-10-30
+- §5, §7.3, §7.6.1: the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB], instead of a fixed 1 GiB (R-B3). Array members share one size, from the smallest member. The boot image's SD layout is unchanged (R-P2); its FAT partition holds no generations.
+- §7.3: the ESP labels are `EFI`, `EFI2`, …, as the planner has always made them (the text said `ESP`).

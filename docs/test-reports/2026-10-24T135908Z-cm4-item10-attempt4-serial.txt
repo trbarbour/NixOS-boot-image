@@ -1,0 +1,1469 @@
+
+RPi: BOOTLOADER release VERSION:febe323f DATE: 2022/11/04 TIME: 15:19:15 BOOTMODE: 0x00000006 part: 0 BUILD_TIMESTAMP=1667575155 0x1e6d64e3 0x00d03140 0x00074182
+PM_RSTS: 0x00001000
+part 00000000 reset_info 00000000
+uSD voltage 3.3V
+Initialising SDRAM 'Micron' 32Gb x2 total-size: 64 Gbit 3200
+DDR 3200 1 0 64 152
+
+Boot mode: NVME (06) order f251
+VID 0x144d MN SAMSUNG MZVLQ512HBLU-00BH1
+NVME on
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+Trying partition: 0
+Unable to read partition as FAT
+type: 32 lba: 0 oem: '' volume: '            '
+rsc 0 fat-sectors 0 c-count 0 c-size 0
+root dir cluster 0 sectors 0 entries 0
+Trying partition: 0
+Unable to read partition as FAT
+type: 32 lba: 0 oem: '' volume: '            '
+rsc 0 fat-sectors 0 c-count 0 c-size 0
+root dir cluster 0 sectors 0 entries 0
+Retry NVME 1
+NVME off
+Timeout 00001000 00a10020 00000000 00000000
+nvme: error 8
+Failed to open device: 'nvme'
+Boot mode: SD (01) order f25
+SD HOST: 200000000 CTL0: 0x00800000 BUS: 400000 Hz actual: 390625 HZ div: 512 (256) status: 0x1fff0000 delay: 276
+SD HOST: 200000000 CTL0: 0x00800f00 BUS: 400000 Hz actual: 390625 HZ div: 512 (256) status: 0x1fff0000 delay: 276
+OCR c0ff8000 [300]
+CID: 001b534d47443253353020e668d0a161
+CSD: 400e0032db790003baff7f800a400000
+SD: bus-width: 4 spec: 2 SCR: 0x02058487 0x00000000
+SD HOST: 200000000 CTL0: 0x00800f04 BUS: 50000000 Hz actual: 50000000 HZ div: 4 (2) status: 0x1fff0000 delay: 2
+MBR: 0x00004000,   61440 type: 0x0b
+MBR: 0x00013000, 8484944 type: 0x83
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+Trying partition: 0
+type: 16 lba: 16384 oem: 'mkfs.fat' volume: '  V       ^ '
+rsc 4 fat-sectors 60 c-count 15321 c-size 4
+root dir cluster 1 sectors 32 entries 512
+FAT16 clusters 15321
+Trying partition: 0
+type: 16 lba: 16384 oem: 'mkfs.fat' volume: '  V       ^ '
+rsc 4 fat-sectors 60 c-count 15321 c-size 4
+root dir cluster 1 sectors 32 entries 512
+FAT16 clusters 15321
+Read config.txt bytes     1008 hnd 0xf1
+Read start4.elf bytes  2263968 hnd 0x6c7
+Read fixup4.dat bytes     5456 hnd 0xf6
+0x00d03140 0x00000000 0x00001fff
+MEM GPU: 76 ARM: 948 TOTAL: 1024
+Firmware: 5560078dcc8591a00f57b9068d13e5544aeef3aa Apr 30 2025 13:33:39
+Starting start4.elf @ 0xfec00200 partition 0
++
+
+
+U-Boot 2026.04 (Apr 06 2026 - 17:59:18 +0000)
+
+DRAM:  7.9 GiB
+RPI Compute Module 4 (0xd03140)
+Core:  215 devices, 17 uclasses, devicetree: board
+MMC:   mmcnr@7e300000: 1, mmc@7e340000: 0
+Loading Environment from FAT... Unable to read "uboot.env" from mmc0:1...
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+Net:   eth0: ethernet@7d580000
+
+PCIe BRCM: link up, 5.0 Gbps x1 (SSC)
+starting USB...
+No USB controllers found
+       scanning usb for storage devices... 0 Storage Device(s) found
+Hit any key to stop autoboot: 0
+Card did not respond to voltage select! : -110
+Cannot persist EFI variables without system partition
+** Booting bootflow '<NULL>' with efi_mgr
+Loading Boot0000 'mmc 0' failed
+EFI boot manager: Cannot load any image
+Boot failed (err=-14)
+Card did not respond to voltage select! : -110
+Card did not respond to voltage select! : -110
+Card did not respond to voltage select! : -110
+Card did not respond to voltage select! : -110
+** Booting bootflow 'mmc@7e340000.bootdev.part_2' with extlinux
+------------------------------------------------------------
+1:      NixOS - Default
+Enter choice: 1:        NixOS - Default
+Retrieving file: /boot/extlinux/../nixos/64r9zcv60sm5x793q310afb1dhwgca49-linux-6.18.56-Image
+Retrieving file: /boot/extlinux/../nixos/k3mbabm8rg9hhp0qn7d59zmhhcnah9hn-initrd-linux-6.18.56-initrd
+append: init=/nix/store/scq3a73w5zngx5yfl5v9d3v2h7xs4ki1-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf console=ttyS0,115200n8
+Retrieving file: /boot/extlinux/../nixos/64r9zcv60sm5x793q310afb1dhwgca49-linux-6.18.56-dtbs/broadcom/bcm2711-rpi-cm4.dtb
+Skipping fdtdir ../nixos/64r9zcv60sm5x793q310afb1dhwgca49-linux-6.18.56-dtbs for failure retrieving dts
+Moving Image from 0x80000 to 0x200000, end=0x40a0000
+## Flattened Device Tree blob at 3af32b70
+   Booting using the fdt blob at 0x3af32b70
+Working FDT set to 3af32b70
+   Loading Ramdisk to 1e4c7000, end 1ffffd14 ... OK
+   Loading Device Tree to 000000001e4b5000, end 000000001e4c625a ... OK
+Working FDT set to 1e4b5000
+
+Starting kernel ...
+
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x410fd083]
+[    0.000000] Linux version 6.18.56 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT Sun Oct 11 13:26:12 UTC 2026
+[    0.000000] KASLR enabled
+[    0.000000] random: crng init done
+[    0.000000] Machine model: Raspberry Pi Compute Module 4 Rev 1.0
+[    0.000000] efi: UEFI not found.
+[    0.000000] Reserved memory: created CMA memory pool at 0x000000002c000000, size 64 MiB
+[    0.000000] OF: reserved mem: initialized node linux,cma, compatible id shared-dma-pool
+[    0.000000] OF: reserved mem: 0x000000002c000000..0x000000002fffffff (65536 KiB) map reusable linux,cma
+[    0.000000] OF: reserved mem: 0x000000003ef667e0..0x000000003ef669e2 (0 KiB) nomap non-reusable nvram@0
+[    0.000000] OF: reserved mem: 0x000000003ef663a0..0x000000003ef6679f (1 KiB) nomap non-reusable nvram@1
+[    0.000000] NUMA: Faking a node at [mem 0x0000000000000000-0x00000001ffffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x1fee04080-0x1fee077ff]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000000000000-0x000000003fffffff]
+[    0.000000]   DMA32    [mem 0x0000000040000000-0x00000000ffffffff]
+[    0.000000]   Normal   [mem 0x0000000100000000-0x00000001ffffffff]
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000000000-0x000000003b3fffff]
+[    0.000000]   node   0: [mem 0x0000000040000000-0x00000000fbffffff]
+[    0.000000]   node   0: [mem 0x0000000100000000-0x00000001ffffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000000000000-0x00000001ffffffff]
+[    0.000000] On node 0, zone DMA32: 19456 pages in unavailable ranges
+[    0.000000] On node 0, zone Normal: 16384 pages in unavailable ranges
+[    0.000000] percpu: Embedded 76 pages/cpu s186520 r8192 d116584 u311296
+[    0.000000] Detected PIPT I-cache on CPU0
+[    0.000000] CPU features: detected: Spectre-v2
+[    0.000000] CPU features: detected: Spectre-v3a
+[    0.000000] CPU features: detected: Spectre-v4
+[    0.000000] CPU features: detected: Spectre-BHB
+[    0.000000] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000] CPU features: detected: ARM erratum 1742098
+[    0.000000] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Kernel command line: init=/nix/store/scq3a73w5zngx5yfl5v9d3v2h7xs4ki1-nixos-system-nixos-sd-card-26.05.20261015.26f4107/init console=ttyS0,115200n8 console=ttyAMA0,115200n8 console=tty0 nohibernate root=fstab loglevel=7 lsm=landlock,yama,bpf console=ttyS0,115200n8
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.000000] software IO TLB: area num 4.
+[    0.000000] software IO TLB: mapped [mem 0x0000000037400000-0x000000003b400000] (64MB)
+[    0.000000] Fallback order for Node 0: 0
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 2061312
+[    0.000000] Policy zone: Normal
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    0.000000] allocated 16777216 bytes of page_ext
+[    0.000000] ftrace: allocating 74856 entries in 294 pages
+[    0.000000] ftrace: allocated 294 pages with 4 groups
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu:     RCU event tracing is enabled.
+[    0.000000] rcu:     RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=4.
+[    0.000000]  Trampoline variant of Tasks RCU enabled.
+[    0.000000]  Rude variant of Tasks RCU enabled.
+[    0.000000]  Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[    0.000000] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000] RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000] RCU Tasks Trace: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GIC: Using split EOI/Deactivate mode
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.000000] arch_timer: cp15 timer running at 54.00MHz (phys).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0xc743ce346, max_idle_ns: 440795203123 ns
+[    0.000000] sched_clock: 56 bits at 54MHz, resolution 18ns, wraps every 4398046511102ns
+[    0.000444] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)
+[    0.000669] Console: colour dummy device 80x25
+[    0.000679] printk: legacy console [tty0] enabled
+[    0.001034] Calibrating delay loop (skipped), value calculated using timer frequency.. 108.00 BogoMIPS (lpj=216000)
+[    0.001049] pid_max: default: 32768 minimum: 301
+[    0.001215] LSM: initializing lsm=capability,landlock,yama,bpf,ima
+[    0.001385] landlock: Up and running.
+[    0.001392] Yama: becoming mindful.
+[    0.001651] LSM support for eBPF active
+[    0.001830] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.001888] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.004265] rcu: Hierarchical SRCU implementation.
+[    0.004289] rcu:     Max phase no-delay instances is 1000.
+[    0.004491] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.007187] EFI services will not be available.
+[    0.007531] smp: Bringing up secondary CPUs ...
+[    0.007933] Detected PIPT I-cache on CPU1
+[    0.008038] CPU1: Booted secondary processor 0x0000000001 [0x410fd083]
+[    0.008574] Detected PIPT I-cache on CPU2
+[    0.008650] CPU2: Booted secondary processor 0x0000000002 [0x410fd083]
+[    0.009118] Detected PIPT I-cache on CPU3
+[    0.009195] CPU3: Booted secondary processor 0x0000000003 [0x410fd083]
+[    0.009302] smp: Brought up 1 node, 4 CPUs
+[    0.009337] SMP: Total of 4 processors activated.
+[    0.009344] CPU: All CPU(s) started at EL2
+[    0.009359] CPU features: detected: 32-bit EL0 Support
+[    0.009365] CPU features: detected: 32-bit EL1 Support
+[    0.009373] CPU features: detected: CRC32 instructions
+[    0.009383] CPU features: detected: PMUv3
+[    0.009420] alternatives: applying system-wide alternatives
+[    0.010442] Memory: 7833084K/8245248K available (24384K kernel code, 7090K rwdata, 26576K rodata, 4736K init, 1103K bss, 321816K reserved, 65536K cma-reserved)
+[    0.011685] devtmpfs: initialized
+[    0.021498] posixtimers hash table entries: 2048 (order: 3, 32768 bytes, linear)
+[    0.021636] futex hash table entries: 1024 (65536 bytes on 1 NUMA nodes, total 64 KiB, linear).
+[    0.022619] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.022650] 0 pages in range for non-PLT usage
+[    0.022653] 508256 pages in range for PLT usage
+[    0.023191] pinctrl core: initialized pinctrl subsystem
+[    0.025106] DMI not present or invalid.
+[    0.028175] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.029742] DMA: preallocated 1024 KiB GFP_KERNEL pool for atomic allocations
+[    0.030217] DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.031172] DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.031238] audit: initializing netlink subsys (disabled)
+[    0.031464] audit: type=2000 audit(0.028:1): state=initialized audit_enabled=0 res=1
+[    0.032876] thermal_sys: Registered thermal governor 'fair_share'
+[    0.032885] thermal_sys: Registered thermal governor 'bang_bang'
+[    0.032897] thermal_sys: Registered thermal governor 'step_wise'
+[    0.032904] thermal_sys: Registered thermal governor 'user_space'
+[    0.032910] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.032977] cpuidle: using governor ladder
+[    0.033003] cpuidle: using governor menu
+[    0.033270] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.033351] ASID allocator initialised with 32768 entries
+[    0.035221] Serial: AMBA PL011 UART driver
+[    0.038597] /soc/interrupt-controller@40041000: Fixed dependency cycle(s) with /soc/interrupt-controller@40041000
+[    0.046965] /scb/pcie@7d500000: Fixed dependency cycle(s) with /scb/pcie@7d500000
+[    0.047305] /scb/pcie@7d500000: Fixed dependency cycle(s) with /scb/pcie@7d500000
+[    0.051891] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.051915] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.051923] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.051930] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.051937] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.051944] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.051951] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.051958] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.053949] fbcon: Taking over console
+[    0.053985] ACPI: Interpreter disabled.
+[    0.056513] iommu: Default domain type: Translated
+[    0.056533] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.064845] SCSI subsystem initialized
+[    0.065310] usbcore: registered new interface driver usbfs
+[    0.065390] usbcore: registered new interface driver hub
+[    0.065418] usbcore: registered new device driver usb
+[    0.065605] usb_phy_generic phy: dummy supplies not allowed for exclusive requests (id=vbus)
+[    0.066268] pps_core: LinuxPPS API ver. 1 registered
+[    0.066277] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.066293] PTP clock support registered
+[    0.066374] EDAC MC: Ver: 3.0.0
+[    0.066820] scmi_core: SCMI protocol bus registered
+[    0.067587] FPGA manager framework
+[    0.068645] vgaarb: loaded
+[    0.069073] clocksource: Switched to clocksource arch_sys_counter
+[    0.107748] VFS: Disk quotas dquot_6.6.0
+[    0.107813] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.108276] netfs: FS-Cache loaded
+[    0.108471] pnp: PnP ACPI: disabled
+[    0.114130] NET: Registered PF_INET protocol family
+[    0.114620] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.159686] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.159823] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.160032] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.160935] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.163083] TCP: Hash tables configured (established 65536 bind 65536)
+[    0.163509] MPTCP token hash table entries: 8192 (order: 6, 196608 bytes, linear)
+[    0.163903] UDP hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.164421] UDP-Lite hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.165063] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.165251] NET: Registered PF_XDP protocol family
+[    0.165277] PCI: CLS 0 bytes, default 64
+[    0.165548] Trying to unpack rootfs image as initramfs...
+[    0.177143] kvm [1]: nv: 568 coarse grained trap handlers
+[    0.177849] kvm [1]: nv: 664 fine grained trap handlers
+[    0.178179] kvm [1]: IPA Size Limit: 44 bits
+[    0.181190] kvm [1]: vgic interrupt IRQ9
+[    0.181251] kvm [1]: Hyp nVHE mode initialized successfully
+[    0.298499] Initialise system trusted keyrings
+[    0.298771] workingset: timestamp_bits=42 max_order=21 bucket_order=0
+[    0.299865] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.300070] 9p: Installing v9fs 9p2000 file system support
+[    0.330543] Key type asymmetric registered
+[    0.330574] Asymmetric key parser 'x509' registered
+[    0.330729] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 242)
+[    0.331082] io scheduler mq-deadline registered
+[    0.331104] io scheduler kyber registered
+[    0.339965] pinctrl-bcm2835 fe200000.gpio: GPIO_OUT persistence: no
+[    0.848390] Freeing initrd memory: 27872K
+[    0.852130] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.877494] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.879097] bcm2835-aux-uart fe215040.serial: there is not valid maps for state default
+[    0.879404] printk: legacy console [ttyS0] disabled
+[    0.879672] fe215040.serial: ttyS0 at MMIO 0xfe215040 (irq = 23, base_baud = 62499999) is a 16550
+[    0.879703] printk: legacy console [ttyS0] enabled
+[    2.056886] msm_serial: driver initialized
+[    2.060796] SuperH (H)SCI(F) driver initialized
+[    2.065185] STM32 USART driver initialized
+[    2.070512] iproc-rng200 fe104000.rng: hwrng registered
+[    2.081340] loop: module loaded
+[    2.085746] bcm2835-power bcm2835-power: Broadcom BCM2835 power domains driver
+[    2.093441] megasas: 07.734.00.00-rc1
+[    2.101260] tun: Universal TUN/TAP device driver, 1.6
+[    2.106597] thunder_xcv, ver 1.0
+[    2.109331] thunder_bgx, ver 1.0
+[    2.112562] nicpf, ver 1.0
+[    2.116275] e1000: Intel(R) PRO/1000 Network Driver
+[    2.120648] e1000: Copyright (c) 1999-2006 Intel Corporation.
+[    2.126481] e1000e: Intel(R) PRO/1000 Network Driver
+[    2.131478] e1000e: Copyright(c) 1999 - 2015 Intel Corporation.
+[    2.137506] igb: Intel(R) Gigabit Ethernet Network Driver
+[    2.142935] igb: Copyright (c) 2007-2014 Intel Corporation.
+[    2.148600] igbvf: Intel(R) Gigabit Virtual Function Network Driver
+[    2.154920] igbvf: Copyright (c) 2009 - 2012 Intel Corporation.
+[    2.161178] sky2: driver version 1.30
+[    2.167636] usbcore: registered new interface driver usb-storage
+[    2.173275] usbcore: registered new interface driver usbserial_generic
+[    2.179770] usbserial: USB Serial support registered for generic
+[    2.186979] hv_vmbus: registering driver hyperv_keyboard
+[    2.192904] i2c_dev: i2c /dev entries driver
+[    2.200519] bcm2835-wdt bcm2835-wdt: Broadcom BCM2835 watchdog timer
+[    2.208382] sdhci: Secure Digital Host Controller Interface driver
+[    2.214091] sdhci: Copyright(c) Pierre Ossman
+[    2.219076] Synopsys Designware Multimedia Card Interface Driver
+[    2.225333] sdhci-pltfm: SDHCI platform and OF driver helper
+[    2.233536] hid: raw HID events driver (C) Jiri Kosina
+[    2.238667] usbcore: registered new interface driver usbhid
+[    2.243819] usbhid: USB HID core driver
+[    2.248256] bcm2835-mbox fe00b880.mailbox: mailbox enabled
+[    2.255421] hw perfevents: enabled with armv8_cortex_a72 PMU driver, 7 (0,8000003f) counters available
+[    2.263789] mmc1: SDHCI controller on fe300000.mmcnr [fe300000.mmcnr] using PIO
+[    2.267472] drop_monitor: Initializing network drop monitor service
+[    2.278327] NET: Registered PF_INET6 protocol family
+[    2.283812] Segment Routing with IPv6
+[    2.286986] In-situ OAM (IOAM) with IPv6
+[    2.290964] NET: Registered PF_PACKET protocol family
+[    2.296148] 9pnet: Installing 9P2000 support
+[    2.300404] Key type dns_resolver registered
+[    2.315069] registered taskstats version 1
+[    2.319020] Loading compiled-in X.509 certificates
+[    2.340217] Demotion targets for Node 0: null
+[    2.344416] Key type .fscrypt registered
+[    2.348110] Key type fscrypt-provisioning registered
+[    2.352764] mmc1: new high speed SDIO card at address 0001
+[    2.353382] ima: No TPM chip found, activating TPM-bypass!
+[    2.364183] ima: Allocated hash algorithm: sha1
+[    2.368829] ima: No architecture policies found
+[    2.376368] uart-pl011 fe201000.serial: there is not valid maps for state default
+[    2.383962] fe201000.serial: ttyAMA1 at MMIO 0xfe201000 (irq = 30, base_baud = 0) is a PL011 rev3
+[    2.392721] serial serial0: tty port ttyAMA1 registered
+[    2.403025] raspberrypi-firmware soc:firmware: Attached to firmware from 2025-04-30T13:33:39
+[    2.438213] xhci-hcd fe9c0000.xhci: xHCI Host Controller
+[    2.443063] xhci-hcd fe9c0000.xhci: new USB bus registered, assigned bus number 1
+[    2.450746] xhci-hcd fe9c0000.xhci: USB3 root hub has no ports
+[    2.456517] xhci-hcd fe9c0000.xhci: hcc params 0x0220fe65 hci version 0x110 quirks 0x0000000000000010
+[    2.465885] xhci-hcd fe9c0000.xhci: irq 31, io mem 0xfe9c0000
+[    2.472319] hub 1-0:1.0: USB hub found
+[    2.475582] hub 1-0:1.0: 1 port detected
+[    2.525646] mmc0: SDHCI controller on fe340000.mmc [fe340000.mmc] using ADMA
+[    2.568062] clk: Disabling unused clocks
+[    2.575471] PM: genpd: Disabling unused power domai[    2.589272] Freeing unused kernel memory: 4736K
+[    2.593629] Run /init as init process
+[    2.609927] systemd[1]: System time advanced to built-in epoch: Tue 2026-03-17 19:55:52 UTC
+[    2.638496] mmc0: new UHS-I speed DDR50 SDXC card at address 59b4
+[    2.733088] usb 1-1: new high-speed USB device number 2 using xhci-hcd
+[    2.919917] hub 1-1:1.0: USB hub found
+[    2.923183] hub 1-1:1.0: 4 ports detected
+[    2.981502] systemd[1]: Successfully made /usr/ read-only.
+[    3.333152] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[    3.364690] systemd[1]: Detected architecture arm64.
+[    3.369612] systemd[1]: Running in initrd.
+Booting initrd of NixOS 26.05 (Yarara) (Initrd).
+[    3.389397] systemd[1]: Initializing machine ID from random generator.
+[    3.395695] systemd[1]: Hostname set to <nixos>.
+[    3.561912] systemd[1]: Queued start job for default target Initrd Default Target.
+[    3.592179] systemd[1]: Created slice Slice /system/modprobe.
+[  OK  ] Created slice Slice /system/modprobe.
+[    3.609361] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[  OK  ] Started Dispatch Password Requests to Console Directory Watch.
+[    3.633172] systemd[1]: Expecting device /dev/disk/by-label/NIXOS_SD...
+         Expecting device /dev/disk/by-label/NIXOS_SD...
+[    3.653163] systemd[1]: Reached target Path Units.
+[  OK  ] Reached target Path Units.
+[    3.669157] systemd[1]: Reached target Slice Units.
+[  OK  ] Reached target Slice Units.
+[    3.685155] systemd[1]: Reached target Swaps.
+[  OK  ] Reached target Swaps.
+[    3.701148] systemd[1]: Reached target Timer Units.
+[  OK  ] Reached target Timer Units.
+[    3.717426] systemd[1]: Listening on D-Bus System Message Bus Socket.
+[  OK  ] Listening on D-Bus System Message Bus Socket.
+[    3.737409] systemd[1]: Listening on Journal Socket (/dev/log).
+[  OK  ] Listening on Journal Socket (/dev/log).
+[    3.757405] systemd[1]: Listening on Journal Sockets.
+[  OK  ] Listening on Journal Sockets.
+[    3.773373] systemd[1]: Listening on udev Control Socket.
+[  OK  ] Listening on udev Control Socket.
+[    3.789313] systemd[1]: Listening on udev Kernel Socket.
+[  OK  ] Listening on udev Kernel Socket.
+[    3.805183] systemd[1]: Reached target Socket Units.
+[  OK  ] Reached target Socket Units.
+[    3.823599] systemd[1]: Starting Create List of Static Device Nodes...
+         Starting Create List of Static Device Nodes...
+[    3.841341] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[    3.854364] systemd[1]: Mounting Kernel Configuration File System...
+         Mounting Kernel Configuration File System...
+[    3.886442] systemd[1]: Starting Journal Service...
+         Starting Journal Service...
+[    3.907901] systemd[1]: Starting Load Kernel Modules...
+         Starting Load Kernel Modules...
+[    3.929342] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[    3.941286] systemd[1]: Starting Coldplug All udev Devices...
+         Starting     3.950853] systemd-journald[102]: Collecting audit messages is disabled.
+39mColdplug All udev Devices...
+[    3.976083] systemd[1]: Finished Create List of Static Device Nodes.
+[  OK  ] Fini[    3.984234] systemd[1]: Mounted Kernel Configuration File System.
+[    3.985238] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+[    4.002947] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+shed Create List of Static Device Nodes.
+[  OK  ] Mounted Kernel Configuration File System.
+[    4.037707] systemd[1]: Started Journal Service.
+[  OK  ] Started Journal Service.
+[  OK  ] Finished Load Kernel Modules.
+         Starting Apply Kernel Variables...
+         Starting Create Static Device Nodes in /dev gracefully...
+[  OK  ] Finished Apply Kernel Variables.
+[  OK  ] Finished Create Static Device Nodes in /dev gracefully.
+         Starting Create Static Device Nodes in /dev...
+[  OK  ] Finished Create Static Device Nodes in /dev.
+[  OK  ] Reached target Preparation for Local File Systems.
+[  OK  ] Reached target Local File Systems.
+         Starting Create System Files and Directories...
+         Starting Rule-based Manager for Device Events and Files...
+[  OK  ] Finished Create System Files and Directories.
+[  OK  ] Started Rule-based Manager for Device Events and Files.
+[  OK  ] Finished Coldplug All udev Devices.
+[  OK  ] Reached target System Initialization.
+[  OK  ] Reached target Basic System.
+[    6.408722] brcm-pcie fd500000.pcie: host bridge /scb/pcie@7d500000 ranges:
+[    6.418612] brcm-pcie fd500000.pcie:      MEM 0x0600000000..0x063fffffff -> 0x00c0000000
+[    6.425739] mmcblk0: mmc0:59b4 GD2S5 119 GiB
+[    6.433964] brcm-pcie fd500000.pcie:   IB MEM 0x0000000000..0x01ffffffff -> 0x0400000000
+[    6.443068] brcm-pcie fd500000.pcie: PCI host bridge to bus 0000:00
+[    6.450684] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    6.451482]  mmcblk0: p1 p2
+[    6.455717] pci_bus 0000:00: root bus resource [mem 0x600000000-0x63fffffff] (bus address [0xc0000000-0xffffffff])
+[    6.469160] pci 0000:00:00.0: [14e4:2711] type 01 class 0x060400 PCIe Root Port
+[    6.476437] pci 0000:00:00.0: PCI bridge to [bus 01]
+[    6.481467] pci 0000:00:00.0:   bridge window [mem 0x600000000-0x6000fffff]
+[    6.488545] pci 0000:00:00.0: PME# supported from D0 D3hot
+[    6.513307] pci_bus 0000:01: supply vpcie3v3 not found, using dummy regulator
+[    6.524987] pci_bus 0000:01: supply vpcie3v3aux not found, using dummy regulator
+[    6.534692] pci_bus 0000:01: supply vpcie12v not found, using dummy regulator
+         Starting Virtual Console Setup...
+[    6.649165] brcm-pcie fd500000.pcie: clkreq-mode set to default
+[    6.658082] brcm-pcie fd500000.pcie: link up, 5.0 GT/s PCIe x1 (SSC)
+[    6.665167] pci 0000:01:00.0: [144d:a809] type 00 class 0x010802 PCIe Endpoint
+[    6.672035] pci 0000:01:00.0: BAR 0 [mem 0x00000000-0x00003fff 64bit]
+[    6.678672] pci 0000:01:00.0: 4.000 Gb/s available PCIe bandwidth, limited by 5.0 GT/s PCIe x1 link at 0000:00:00.0 (capable of 31.504 Gb/s with 8.0 GT/s PCIe x4 link)
+[    6.693948] pci 0000:00:00.0: bridge window [mem 0x600000000-0x6000fffff]: assigned
+[    6.701515] pci 0000:01:00.0: BAR 0 [mem 0x600000000-0x600003fff 64bit]: assigned
+[    6.708964] pci 0000:00:00.0: PCI bridge to [bus 01]
+[    6.713974] pci 0000:00:00.0:   bridge window [mem 0x600000000-0x6000fffff]
+[    6.721027] pci_bus 0000:00: resource 4 [mem 0x600000000-0x63fffffff]
+[    6.727541] pci_bus 0000:01: resource 1 [mem 0x600000000-0x6000fffff]
+[    6.727750] pcieport 0000:00:00.0: enabling device (0000 -> 0002)
+[    6.740388] pcieport 0000:00:00.0: PME: Signaling with IRQ 33
+[    6.746467] pcieport 0000:00:00.0: AER: enabled with IRQ 33
+[  OK  ] Found device /dev/disk/by-label/NIXOS_SD.
+[    6.765878] Key type psk registered
+[  OK  ] Finished Virtual Console Setup.
+[  OK  ] Reached target Initrd Root Device.
+[    6.796211] nvme nvme0: pci function 0000:01:00.0
+[    6.800453] nvme 0000:01:00.0: enabling device (0000 -> 0002)
+[    6.810337] nvme nvme0: D3 entry latency set to 8 seconds
+         Starting File System C[    6.830834] hwmon hwmon0: temp1_input not attached to any thermal zone
+[    6.837393] hwmon hwmon0: temp2_input not attached to any thermal zone
+heck on /dev/disk/by-label/NIXOS_SD...
+[    6.881266] nvme nvme0: allocated 64 MiB host memory buffer (16 segments).
+[  OK  ] Finished File System Check on /dev/disk/by-label/NIXOS_SD.
+         Mounting /sysroot...
+[    7.093277] EXT4-fs (mmcblk0p2): mounted filesystem 44444444-4444-4444-8888-888888888888 r/w with ordered data mode. Quota mode: none.
+[  OK  ] Mounted /sysroot.
+[  OK  ] Reached target Initrd Root File System.
+         Starting Find NixOS closure...
+         Starting Mountpoints Configured in the Real Root...
+[    7.216590] nvme nvme0: 4/0/0 default/read/poll queues
+[  OK  ] Finished Find NixOS closure.
+[  OK  ] Finished Mountpoints Configured in the Real Root.
+         Mounting /sysroot/run...
+[  OK  ] Mounted /sysroot/run.
+[  OK  ] Reached target Initrd File Systems.
+         Starting Create Volatile Files and Directories in the Real Root...
+[  OK  ] Finished Create Volatile Files and Directories in the Real Root.
+[  OK  ] Reached target Initrd Default Target.
+         Starting Cleaning Up and Shutting Down Daemons...
+[  OK  ] Stopped target Initrd Default Target.
+[  OK  ] Stopped target Basic System.
+[  OK  ] Stopped target Initrd Root Device.
+[  OK  ] Stopped target Path Units.
+[  OK  ] Stopped Dispatch Password Requests to Console Directory Watch.
+[  OK  ] Stopped target Slice Units.
+[  OK  ] Stopped target Socket Units.
+[  OK  ] Stopped target System Initialization.
+[  OK  ] Stopped target Swaps.
+[  OK  ] Stopped target Timer Units.
+[  OK  ] Closed D-Bus System Message Bus Socket.
+[  OK  ] Stopped Find NixOS closure.
+[  OK  ] Stopped Apply Kernel Variables.
+[  OK  ] Stopped Load Kernel Modules.
+[  OK  ] Stopped Create Volatile Files and Directories in the Real Root.
+[  OK  ] Stopped Create System Files and Directories.
+[  OK  ] Stopped target Local File Systems.
+[  OK  ] Stopped target Preparation for Local File Systems.
+[  OK  ] Stopped Coldplug All udev Devices.
+         Stopping Rule-based Manager for Device Events and Files...
+[  OK  ] Stopped Virtual Console Setup.
+[  OK  ] Stopped Rule-based Manager for Device Events and Files.
+[  OK  ] Finished Cleaning Up and Shutting Down Daemons.
+[  OK  ] Closed udev Control Socket.
+         Starting Cleanup udev Database...
+[  OK  ] Stopped Create Static Device Nodes in /dev.
+[  OK  ] Stopped Create Static Device Nodes in /dev gracefully.
+[  OK  ] Stopped Create List of Static Device Nodes.
+[  OK  ] Finished Cleanup udev Database.
+[  OK  ] Reached target Switch Root.
+         Starting NixOS Activation...
+[  OK  ] Finished NixOS Activation.
+         Starting Switch Root...
+[   10.954733] systemd-journald[102]: Received SIGTERM from PID 1 (systemd).
+[   12.237171] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[   12.268689] systemd[1]: Detected architecture arm64.
+[   12.273731] systemd[1]: Detected first boot.
+
+Welcome to NixOS 26.05 (Yarara)!
+
+[   12.304987] systemd[1]: Initializing machine ID from random generator.
+[   12.702984] systemd[1]: bpf-restrict-fs: LSM BPF program attached
+[   12.880800] systemd[1]: Applying preset policy.
+[   13.347106] systemd[1]: Populated /etc with preset unit settings.
+[   13.792990] systemd[1]: initrd-switch-root.service: Deactivated successfully.
+[   13.800151] systemd[1]: Stopped initrd-switch-root.service.
+[  OK  ] Stopped initrd-switch-root.service.
+[   13.819678] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 1.
+[   13.830869] systemd[1]: Created slice Slice /system/getty.
+[  OK  ] Created slice Slice /system/getty.
+[   13.851026] systemd[1]: Created slice Slice /system/serial-getty.
+[  OK  ] Created slice Slice /system/serial-getty.
+[   13.870779] systemd[1]: Created slice User and Session Slice.
+[  OK  ] Created slice User and Session Slice.
+[   13.889398] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[  OK  ] Started Dispatch Password Requests to Console Directory Watch.
+[   13.913315] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[  OK  ] Started Forward Password Requests to Wall Directory Watch.
+[   13.933188] systemd[1]: Expecting device /dev/ttyS0...
+         Expecting device /dev/ttyS0...
+[   13.949154] systemd[1]: Reached target Local Encrypted Volumes.
+[  OK  ] Reached target Local Encrypted Volumes.
+[   13.969159] systemd[1]: Stopped target initrd-fs.target.
+[  OK  ] Stopped target initrd-fs.target.
+[   13.985142] systemd[1]: Stopped target initrd-root-fs.target.
+[  OK  ] Stopped target initrd-root-fs.target.
+[   14.005133] systemd[1]: Stopped target initrd-switch-root.target.
+[  OK  ] Stopped target initrd-switch-root.target.
+[   14.025174] systemd[1]: Reached target Virtual Machines and Containers.
+[  OK  ] Reached target Virtual Machines and Containers.
+[   14.045193] systemd[1]: Reached target Path Units.
+[  OK  ] Reached target Path Units.
+[   14.061148] systemd[1]: Reached target Remote File Systems.
+[  OK  ] Reached target Remote File Systems.
+[   14.077143] systemd[1]: Reached target Slice Units.
+[  OK  ] Reached target Slice Units.
+[   14.093157] systemd[1]: Reached target Swaps.
+[  OK  ] Reached target Swaps.
+[   14.109170] systemd[1]: Reached target ZFS pool import target.
+[  OK  ] Reached target ZFS pool import target.
+[   14.132853] systemd[1]: Listening on Process Core Dump Socket.
+[  OK  ] Listening on Process Core Dump Socket.
+[   14.151760] systemd[1]: Listening on Credential Encryption/Decryption.
+[  OK  ] Listening on Credential Encryption/Decryption.
+[   14.178472] systemd[1]: Starting Journal Log Access Socket...
+         Starting Journal Log Access Socket...
+[   14.198010] systemd[1]: Listening on Journal Audit Socket.
+[  OK  ] Listening on Journal Audit Socket.
+[   14.217793] systemd[1]: Listening on Network Management Metrics Varlink Socket.
+[  OK  ] Listening on Network Management Metrics Varlink Socket.
+[   14.241556] systemd[1]: Listening on Network Management Netlink Socket.
+[  OK  ] Listening on Network Management Netlink Socket.
+[   14.261575] systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[  OK  ] Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[   14.281186] systemd[1]: Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[   14.290578] systemd[1]: Listening on udev Control Socket.
+[  OK  ] Listening on udev Control Socket.
+[   14.313525] systemd[1]: Mounting Huge Pages File System...
+         Mounting Huge Pages File System...
+[   14.354626] systemd[1]: Mounting POSIX Message Queue File System...
+         Mounting POSIX Message Queue File System...
+[   14.386857] systemd[1]: Mounting Kernel Debug File System...
+         Mounting Kernel Debug File System...
+[   14.408870] systemd[1]: Mounting Kernel Trace File System...
+         Mounting Kernel Trace File System...
+[   14.432574] systemd[1]: Starting Create List of Static Device Nodes...
+         Starting Create List of Static Device Nodes...
+[   14.449350] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[   14.462955] systemd[1]: Mounting Kernel Configuration File System...
+        [   14.473499] systemd[1]: Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[   14.483743] systemd[1]: Load Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore
+ Mounting Kernel Configuration File System.[   14.500143] systemd[1]: Starting Load Kernel Module fuse...
+..
+        [   14.517530] systemd[1]: Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+ Starting Load Kernel Module fuse...
+[   14.542328] systemd[1]: Starting Journal Service...
+         Starting Journal Service...
+[   14.565235] systemd[1]: Starting Load Kernel Modules...
+         Starting Load Kernel Modules...
+[   14.593272] fuse: init (API version 7.45)
+[   14.593908] systemd[1]: Starting Userspace Out-Of-Memory (OOM) Killer...
+         Starting Userspace Out-Of-Memory (OOM) Killer...
+[   14.622617] systemd[1]: Starting Remount Root and Kernel File Systems...
+         Starting Remount Root and Kernel File Systems systemd-journald[296]: Collecting audit messages is enabled.
+[   14.640687] spl: loading out-of-tree module taints kernel.
+[0m...
+[   14.653524] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[   14.666304] systemd[1]: Starting Coldplug All udev Devices...
+         Starting Coldplug All udev Devices...
+[   14.697906] systemd[1]: Started Journal Service.
+[  OK  ] Started Journal Service.
+[  OK  ] Listening on Journal Log Access Socket.
+[  OK  ] Started Use[   14.741340] EXT4-fs (mmcblk0p2): re-mounted 44444444-4444-4444-8888-888888888888.
+rspace Out-Of-Memory (OOM) Killer.
+[  OK  ] Mounted Huge Pages File System.
+[  OK  ] Mounted POSIX Message Queue File System.
+[  OK  ] Mounted Kernel Debug File System.
+[  OK  ] Mounted Kernel Trace File System.
+[  OK  ] Finished Create List of Static Device Nodes.
+[  OK  ] Mounted Kernel Configuration File System.
+[  OK  ] Finished Load Kernel Module fuse.
+[  OK  ] Finished Remount Root and Kernel File Systems.
+[   14.893131] zfs: module license 'CDDL' taints kernel.
+[   14.897691] Disabling lock debugging due to kernel taint
+[   14.903147] zfs: module license taints kernel.
+         Mounting FUSE Control File System...
+         Starting Flush Journal to Persistent Storage...
+         Starting Load/Save OS Random Seed...
+[   15.025313] systemd-journald[296]: Received client request to flush runtime journal.
+         Starting Network Time Synchronization...
+         Starting Create Static Device Nodes in /dev gracefully...
+[  OK  ] Mounted FUSE Control File System.
+[  OK  ] Finished Load/Save OS Random Seed.
+[  OK  ] Finished Flush Journal to Persistent Storage.
+[  OK  ] Reached target First Boot Complete.
+[  OK  ] Finished Create Static Devi[   15.153342] ZFS: Loaded module v2.4.4-1, ZFS pool version 5000, ZFS filesystem version 5
+ce Nodes in /dev gracefully.
+[  OK  ] Finished Load Kernel Modules.
+         Starting Firewall...
+         Starting Apply Kernel Variables...
+         Starting Create Static Device Nodes in /dev...
+         Starting Mount ZFS filesystems...
+[  OK  ] Finished Create Static Device Nodes in /dev.
+[  OK  ] Reached target Preparation for Local File Systems.
+         Mounting /run/wrappers...
+         Starting Rule-based Manager for Device Events and Files...
+[  OK  ] Started Network Time Synchronization.
+[  OK  ] Finished Apply Kernel Variables.
+[  OK  ] Mounted /run/wrappers.
+[  OK  ] Reached target System Time Set.
+         Starting Create SUID/SGID Wrappers...
+         Starting Network Name Resolution...
+[  OK  ] Finished Mount ZFS filesystems.
+[  OK  ] Reached target Local File Systems.
+[  OK  ] Listening on Boot Loader Control Service Socket.
+         Starting Grow the root partition and filesystem to fill the SD card...
+         Starting Save Transient machine-id to Disk...
+         Starting Create System Files and Directories...
+[  OK  ] Started Rule-based Manager for Device Events and Files.
+[  OK  ] Finished Create System Files and Directories.
+         Starting Rebuild Journal Catalog...
+         Starting Record System Boot/Shutdown in UTMP...
+[  OK  ] Started Network Name Resolution.
+[  OK  ] Finished Record System Boot/Shutdown in UTMP.
+[  OK  ] Finished Coldplug All udev Devices.
+[  OK  ] Finished Save Transient machine-id to Disk.
+[  OK  ] Finished Rebuild Journal Catalog.
+         Starting Update is Completed...
+[  OK  ] Finished Create SUID/SGID Wrappers.
+[  OK  ] Finished Update is Completed.
+[  OK  ] Finished Firewall.
+[  OK  ] Reached target Preparation for Network.
+         Starting Network Management...
+[   16.932332] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[   16.950491] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[   16.955666] EXT4-fs (mmcblk0p2): resizing filesystem from 1060618 to 31283712 blocks
+[   16.964484] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[  OK  ] Started Network Management.
+[  OK  ] Reached target Network.
+         Starting Enable Persistent Storage in systemd-networkd...
+[  OK  ] Finished Enable Persistent Storage in systemd-networkd.
+[   18.003642] bcmgenet fd580000.ethernet: GENET 5.0 EPHY: 0x0000
+[   18.167803] Bluetooth: Core ver 2.22
+[   18.174269] NET: Registered PF_BLUETOOTH protocol family
+[   18.179424] Bluetooth: HCI device and connection manager initialized
+[   18.185864] Bluetooth: HCI socket layer initialized
+[   18.190749] Bluetooth: L2CAP socket layer initialized
+[   18.196229] Bluetooth: SCO socket layer initialized
+[  OK  ] Listening on Load/Save RF Kill Switch Status /dev/rfkill Watch.
+         Starting Virtual Console Setup...
+[   18.324680] Bluetooth: HCI UART driver ver 2.3
+[   18.328815] Bluetooth: HCI UART protocol H4 registered
+[   18.333938] Bluetooth: HCI UART protocol BCSP registered
+[   18.334085] Bluetooth: HCI UART protocol LL registered
+[   18.344838] Bluetooth: HCI UART protocol Broadcom registered
+[   18.350308] Bluetooth: HCI UART protocol QCA registered
+[   18.355498] hci_uart_bcm serial0-0: supply vbat not found, using dummy regulator
+[   18.355681] hci_uart_bcm serial0-0: supply vddio not found, using dummy regulator
+[   18.363043] Bluetooth: HCI UART protocol Marvell registered
+[   18.381494] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac43455-sdio for chip BCM4345/6
+[   18.390100] usbcore: registered new interface driver brcmfmac
+[   18.395739] unimac-mdio unimac-mdio.-19: Broadcom UniMAC MDIO bus
+[  OK  ] Finished Virtual Console Setup.
+         Starting Load/Save RF Kill Switch Status...
+[   18.680024] brcmfmac: brcmf_c_process_txcap_blob: no txcap_blob available (err=-2)
+[   18.687777] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4345/6 wl0: Aug 29 2023 01:47:08 version 7.45.265 (28bca26 CY) FWID 01-b677b91b
+[   18.698329] bcmgenet fd580000.ethernet end0: renamed from eth0
+[  OK  ] Started Load/Save RF Kill Switch Status.
+[  OK  ] Reached target Bluetooth Support.
+[   18.733824] Bluetooth: hci0: BCM: chip id 107
+[   18.738401] Bluetooth: hci0: BCM: features 0x2f
+[   18.743646] Bluetooth: hci0: BCM4345C0
+[   18.746997] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0000
+[   18.756159] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.hcd' Patch
+[   18.985180] EXT4-fs (mmcblk0p2): resized filesystem to 31283712
+[   19.433762] Bluetooth: hci0: BCM: features 0x2f
+[   19.439059] Bluetooth: hci0: BCM43455 37.4MHz Raspberry Pi 3+-0190
+[   19.444778] Bluetooth: hci0: BCM4345C0 (003.001.025) build 0382
+[  OK  ] Finished Grow the root partition and filesystem to fill the SD card.
+         Starting Register Nix Store Paths...
+[   20.125556] hwmon hwmon2: Undervoltage detected!
+[  OK  ] Finished Register Nix Store Paths.
+         Starting Initialize NixOS Channel...
+[  OK  ] Finished Initialize NixOS Channel.
+[  OK  ] Reached target System Initialization.
+[  OK  ] Started Discard unused filesystem blocks once a week.
+[  OK  ] Started logrotate.timer.
+[  OK  ] Started Daily Cleanup of Temporary Directories.
+[  OK  ] Started zpool-trim.timer.
+[  OK  ] Reached target Timer Units.
+[  OK  ] Listening on D-Bus System Message Bus Socket.
+[  OK  ] Listening on Nix Daemon Socket.
+[  OK  ] Listening on Authorization Manager Agent Helper.
+[  OK  ] Listening on OpenSSH Server Socket (systemd-ssh-generator, AF_UNIX Local).
+[  OK  ] Listening on Hostname Service Socket.
+[  OK  ] Reached target Socket Units.
+[  OK  ] Reached target Basic System.
+         Starting Import lastlog data into lastlog2 database...
+         Starting Logrotate configuration check...
+         Starting Name Service Cache Daemon (nsncd)...
+         Starting Post-Boot Actions...
+         Starting Pre-NixOS setup...
+[  OK  ] Started Reset console on configuration changes.
+         Starting SSH Host Keys Generation...
+         Starting ZFS file system shares...
+[  OK  ] Started ZFS Event Daemon (zed).
+[  OK  ] Started Name Service Cache Daemon (nsncd).
+[  OK  ] Finished Logrotate configuration check.
+[  OK  ] Finished Post-Boot Actions.
+[  OK  ] Finished ZFS file system shares.
+[  OK  ] Finished Import lastlog data into lastlog2 database.
+[  OK  ] Reached target Host and Network Name Lookups.
+[  OK  ] Reached target User and Group Name Lookups.
+[  OK  ] Reached target ZFS startup target.
+         Starting D-Bus System Message Bus...
+         Starting User Login Management...
+         Starting Permit User Sessions...
+[  OK  ] Finished Permit User Sessions.
+[  OK  ] Started Getty on tty1.
+[  OK  ] Started Serial Getty on ttyS0.
+[  OK  ] Reached target Login Prompts.
+[  OK  ] Started User Login Management.
+         Starting linger-users.service...
+[   22.141442] hwmon hwmon2: Voltage normalised
+[  OK  ] Finished linger-users.service.
+[  OK  ] Started D-Bus System Message Bus.
+pre-nixos boot image version 0.22.1
+[   24.161197] hwmon hwmon2: Undervoltage detected!
+[   24.481645] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[   24.546040] bcmgenet fd580000.ethernet end0: Link is Down
+[  OK  ] Finished SSH Host Keys Generation.
+
+<<< Welcome to the pre-nixos auto-install boot image (sd-card-26.05.20261015.26f4107, aarch64) - ttyS0 >>>
+Automatic installation is enabled; pre-nixos will provision NixOS and reboot into the installed system when finished.
+(PRE_NIXOS_AUTO_INSTALL=1)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)
+
+pre-nixos boot image version 0.22.1
+
+[nixos@nixos:~]$ [   28.637297] bcmgenet fd580000.ethernet end0: Link is Up - 1Gbps/Full - flow control rx/tx
+[   30.205225] hwmon hwmon2: Voltage normalised
+[   30.655568] bcmgenet fd580000.ethernet end0: Link is Down
+[   30.882447] bcmgenet fd580000.ethernet lan: renamed from end0
+[   30.953404] bcmgenet fd580000.ethernet: configuring instance for external RGMII (RX delay)
+[   31.018403] bcmgenet fd580000.ethernet lan: Link is Down
+[   35.101279] bcmgenet fd580000.ethernet lan: Link is Up - 1Gbps/Full - flow control rx/tx
+LAN IPv4 address: 10.137.1.232
+[   40.287065] hwmon hwmon2: Undervoltage detected!
+[   44.317155] hwmon hwmon2: Voltage normalised
+[   58.600338]  nvme0n1:
+[   59.705131]  nvme0n1: p1
+[   61.009719]  nvme0n1: p1 p2
+[   62.468679] hwmon hwmon2: Undervoltage detected!
+[   62.589655] cma: __cma_alloc: linux,cma: alloc failed, req-size: 256 pages, ret: -16
+[   62.597027] cma: number of available pages:
+[   62.597036] cma: range 0: +176@16208
+[   62.601263] cma:
+[   62.606805] => 176 free of 16384 total pages
+[   62.716328] cma: __cma_alloc: linux,cma: alloc failed, req-size: 512 pages, ret: -16
+[   62.723725] cma: number of available pages:
+[   62.723731] cma: range 0: +176@16208
+[   62.727992] cma:
+[   62.733524] => 176 free of 16384 total pages
+[   63.920264] EXT4-fs (dm-1): mounted filesystem b062d687-195f-48fa-98ed-96745790fc48 r/w with ordered data mode. Quota mode: none.
+[   64.005717] Adding 16777212k swap on /dev/mapper/main-swap.  Priority:-2 extents:1 across:16777212k SS
+[   64.036932] EXT4-fs (dm-0): mounted filesystem 960da678-b486-4b20-ab9e-edb60c7ce575 r/w with ordered data mode. Quota mode: none.
+Starting automatic NixOS installation at 2026-10-24 13:59:08Z UTC.
+[   64.478341] hwmon hwmon2: Voltage normalised
+[   68.509209] hwmon hwmon2: Undervoltage detected!
+[   76.573006] hwmon hwmon2: Voltage normalised
+[   78.590641] hwmon hwmon2: Undervoltage detected!
+[   80.604894] hwmon hwmon2: Voltage normalised
+[   82.624758] hwmon hwmon2: Undervoltage detected!
+[   92.700627] hwmon hwmon2: Voltage normalised
+[   94.717473] hwmon hwmon2: Undervoltage detected!
+[   96.732910] hwmon hwmon2: Voltage normalised
+[  106.812515] hwmon hwmon2: Undervoltage detected!
+[  108.828763] hwmon hwmon2: Voltage normalised
+[  110.844470] hwmon hwmon2: Undervoltage detected!
+[  114.876480] hwmon hwmon2: Voltage normalised
+[  116.892482] hwmon hwmon2: Undervoltage detected!
+[  118.908458] hwmon hwmon2: Voltage normalised
+[  120.924423] hwmon hwmon2: Undervoltage detected!
+[  122.940491] hwmon hwmon2: Voltage normalised
+[  126.972426] hwmon hwmon2: Undervoltage detected!
+[  128.988449] hwmon hwmon2: Voltage normalised
+[  131.005487] hwmon hwmon2: Undervoltage detected!
+[  133.020405] hwmon hwmon2: Voltage normalised
+[  137.052366] hwmon hwmon2: Undervoltage detected!
+[  139.068140] hwmon hwmon2: Voltage normalised
+[  141.083971] hwmon hwmon2: Undervoltage detected!
+[  145.115414] hwmon hwmon2: Voltage normalised
+[  147.131286] hwmon hwmon2: Undervoltage detected!
+[  161.242106] hwmon hwmon2: Voltage normalised
+[  163.258016] hwmon hwmon2: Undervoltage detected!
+[  167.289673] hwmon hwmon2: Voltage normalised
+[  169.309598] hwmon hwmon2: Undervoltage detected!
+[  171.321546] hwmon hwmon2: Voltage normalised
+[  173.337418] hwmon hwmon2: Undervoltage detected!
+[  181.400977] hwmon hwmon2: Voltage normalised
+[  183.416896] hwmon hwmon2: Undervoltage detected!
+[  189.464650] hwmon hwmon2: Voltage normalised
+[  191.482709] hwmon hwmon2: Undervoltage detected!
+[  205.592094] hwmon hwmon2: Voltage normalised
+[  207.608048] hwmon hwmon2: Undervoltage detected!
+[  241.879400] hwmon hwmon2: Voltage normalised
+[  243.903329] hwmon hwmon2: Undervoltage detected!
+[  270.102859] hwmon hwmon2: Voltage normalised
+[  274.142806] hwmon hwmon2: Undervoltage detected!
+[  340.661764] hwmon hwmon2: Voltage normalised
+[  342.681756] hwmon hwmon2: Undervoltage detected!
+[  344.693710] hwmon hwmon2: Voltage normalised
+[  346.709754] hwmon hwmon2: Undervoltage detected!
+[  350.745630] hwmon hwmon2: Voltage normalised
+[  352.761570] hwmon hwmon2: Undervoltage detected!
+[  354.773603] hwmon hwmon2: Voltage normalised
+[  356.793586] hwmon hwmon2: Undervoltage detected!
+[  360.821494] hwmon hwmon2: Voltage normalised
+[  362.841424] hwmon hwmon2: Undervoltage detected!
+[  364.861352] hwmon hwmon2: Voltage normalised
+[  366.869438] hwmon hwmon2: Undervoltage detected!
+[  370.901341] hwmon hwmon2: Voltage normalised
+[  372.921311] hwmon hwmon2: Undervoltage detected!
+[  374.933296] hwmon hwmon2: Voltage normalised
+[  376.953242] hwmon hwmon2: Undervoltage detected!
+[  380.989180] hwmon hwmon2: Voltage normalised
+[  383.001140] hwmon hwmon2: Undervoltage detected!
+[  391.063263] hwmon hwmon2: Voltage normalised
+[  393.077011] hwmon hwmon2: Undervoltage detected!
+Automatic NixOS installation completed at 2026-10-24 14:05:00Z UTC.
+
+Broadcast message from root@nixos (Sat 2026-10-24 14:05:00 UTC):
+
+The system will reboot now!
+
+         Stopping Session 1 of User         Stopping Session 3 of User nixos...
+         Stopping Session 4 of User root...
+[  OK  ] Removed slice Slice /system/modprobe.
+[  OK  ] Stopped target Bluetooth Support.
+[  OK  ] Stopped target Login Prompts.
+[  OK  ] Stopped target Virtual Machines and Containers.
+[  OK  ] Stopped target Host and Network Name Lookups.
+[  OK  ] Stopped target Timer Units.
+[  OK  ] Stopped Discard unused filesystem blocks once a week.
+[  OK  ] Stopped logrotate.timer.
+[  OK  ] Stopped Daily Cleanup of Temporary Directories.
+[  OK  ] Stopped zpool-trim.timer.
+[  OK  ] Stopped target System Time Set.
+[  OK  ] Stopped target ZFS startup target.
+[  OK  ] Closed Load/Save RF Kill Switch Status /dev/rfkill Watch.
+         Mounting /run/initramfs...
+         Stopping Getty on tty1...
+[  OK  ] Stopped Import lastlog data into lastlog2 database.
+[  OK  ] Stopped Logrotate configuration check.
+         Stopping Authorization Manager...
+         Stopping Post-Boot Actions...
+[  OK  ] Stopped Reset console on configuration changes.
+         Stopping Serial Getty on ttyS0...
+         Stopping SSH Daemon...
+[  OK  ] Stopped Save Transient machine-id to Disk.
+[  OK  ] Stopped target First Boot Complete.
+         Stopping Enable Persistent Storage in systemd-networkd...
+         Stopping Load/Save OS Random Seed...
+[  OK  ] Stopped ZFS file system shares.
+         Stopping ZFS Event Daemon (zed)...
+[  OK  ] Stopped Pre-NixOS setup.
+[  OK  ] Stopped ZFS Event Daemon (zed).
+[  OK  ] Stopped Getty on tty1.
+[  OK  ] Stopped Serial Getty on ttyS0.
+
+[  OK  ] Stopped Authorization Manager.
+[  OK  ] Mounted /run/initramfs.
+[  OK  ] Stopped Post-Boot Actions.
+[  417.281070] hwmon hwmon2: Voltage normalised
+[  OK  ] Stopped Load/Save OS Random Seed.
+[  OK  ] Stopped Session 3 of User nixos.
+[  OK  ] Stopped Session 1 of User nixos.
+[  OK  ] Removed slice Slice /system/getty.
+[  OK  ] Removed slice Slice /system/serial-getty.
+         Starting Generate shutdown ramfs...
+         Stopping User Manager for UID 1000...
+[  OK  ] Stopped Enable Persistent Storage in systemd-networkd.
+[  OK  ] Stopped User Manager for UID 1000.
+         Stopping User Runtime Directory /run/user/1000...
+[  OK  ] Stopped Session 4 of User root.
+[  OK  ] Unmounted /run/user/1000.
+[  OK  ] Stopped User Runtime Directory /run/user/1000.
+[  OK  ] Removed slice Slice /user/1000.
+         Stopping Permit User Sessions...
+         Stopping User Manager for UID 0...
+[  OK  ] Stopped User Manager for UID 0.
+[  OK  ] Stopped Permit User Sessions.
+[  OK  ] Stopped target Network.
+[  OK  ] Stopped target Remote File Systems.
+         Stopping Network Management...
+         Stopping Userspace Out-Of-Memory (OOM) Killer...
+         Stopping User Runtime Directory /run/user/0...
+[  OK  ] Stopped Userspace Out-Of-Memory (OOM) Killer.
+[  OK  ] Stopped Network Management.
+[  OK  ] Unmounted /run/user/0.
+[  OK  ] Finished Generate shutdown ramfs.
+[  OK  ] Stopped User Runtime Directory /run/user/0.
+[  OK  ] Removed slice Slice /user/0.
+[  OK  ] Stopped target Preparation for Network.
+         Stopping Firewall...
+         Stopping User Login Management...
+[  OK  ] Stopped User Login Management.
+[  OK  ] Stopped target User and Group Name Lookups.
+         Stopping Name Service Cache Daemon (nsncd)...
+[  OK  ] Stopped Name Service Cache Daemon (nsncd).
+[  OK  ] Stopped target Basic System.
+[  OK  ] Stopped target Path Units.
+[  OK  ] Stopped target Slice Units.
+[  OK  ] Removed slice User and Session Slice.
+[  OK  ] Stopped target Socket Units.
+[  OK  ] Closed Nix Daemon Socket.
+[  OK  ] Closed Authorization Manager Agent Helper.
+[  OK  ] Closed OpenSSH Server Socket (systemd-ssh-generator, AF_UNIX Local).
+[  OK  ] Closed Hostname Service Socket.
+[  OK  ] Closed Network Management Metrics Varlink Socket.
+[  OK  ] Closed Network Management Netlink Socket.
+[  OK  ] Closed Userspace Out-Of-Memory (OOM) Killer Socket.
+         Stopping D-Bus System Message Bus...
+[  OK  ] Stopped Firewall.
+[  OK  ] Stopped D-Bus System Message Bus.
+[  OK  ] Closed D-Bus System Message Bus Socket.
+[  OK  ] Stopped target System Initialization.
+[  OK  ] Stopped target Local Encrypted Volumes.
+[  OK  ] Stopped Dispatch Password Requests to Console Directory Watch.
+[  OK  ] Stopped Forward Password Requests to Wall Directory Watch.
+[  OK  ] Stopped Initialize NixOS Channel.
+[  OK  ] Stopped Register Nix Store Paths.
+[  OK  ] Stopped Grow the root partition and filesystem to fill the SD card.
+         Stopping Network Name Resolution...
+         Stopping Network Time Synchronization...
+[  OK  ] Stopped Update is Completed.
+[  OK  ] Stopped Rebuild Journal Catalog.
+         Stopping Record System Boot/Shutdown in UTMP...
+[  OK  ] Stopped Network Time Synchronization.
+[  OK  ] Stopped Network Name Resolution.
+[  OK  ] Stopped Record System Boot/Shutdown in UTMP.
+[  OK  ] Stopped Apply Kernel Variables.
+[  OK  ] Closed Process Core Dump Socket.
+[  OK  ] Stopped Create System Files and Directories.
+[  OK  ] Stopped target Local File Systems.
+         Unmounting /mnt/boot...
+         Unmounting /mnt/home...
+         Unmounting /run/keys...
+         Unmounting /run/wrappers...
+[  418.868316] EXT4-fs (dm-0): unmounting filesystem 960da678-b486-4b20-ab9e-edb60c7ce575.
+[  OK  ] Stopped Mount ZFS filesystems.
+[  OK  ] Stopped target ZFS pool import target.
+[  OK  ] Stopped Load Kernel Modules.
+[  OK  ] Unmounted /mnt/home.
+[  OK  ] Unmounted /run/keys.
+[  OK  ] Unmounted /run/wrappers.
+[  OK  ] Stopped target Swaps.
+         Deactivating swap /dev/disk/by-diskseq/13...
+[  OK  ] Deactivated swap /dev/disk/by-label/swap.
+[  OK  ] Deactivated swap /dev/main/swap.
+[  OK  ] Deactivated swap /dev/disk/by-id/dm-name-main-swap.
+[  OK  ] Deactivated swap /dev/disk/by-diskseq/13.
+[  OK  ] Deactivated swap /dev/mapper/main-swap.
+[  OK  ] Deactivated swap /dev/disk/by-id/dm-uuid-LVM-sHSpzScdNC8tOaSeEymRV8vZlAbHOWcKK0r9W1sm8o8VQrT2CFbpvDJA6xa99BFn.
+[  OK  ] Deactivated swap /dev/disk/by-uuid/7a517565-c3e8-482c-9de0-7414eafc8751.
+[  OK  ] Deactivated swap /dev/dm-2.
+[  419.316620] hwmon hwmon2: Undervoltage detected!
+[  OK  ] Unmounted /mnt/boot.
+         Unmounting /mnt...
+[ ***  ] A stop job is running for /mnt (5s / 1min 32s)
+[  OK  ] Unmounted /mnt.
+[  OK  ] Stopped target Preparation for Local File Systems.
+[  OK  ] Reached target Unmount All Filesystems.
+[  OK  ] Stopped Remount Root and Kernel File Systems.
+[  OK  ] Stopped File System Check on Root Device.
+[  OK  ] Stopped Create Static Device Nodes in /dev.
+[  OK  ] Stopped Create Static Device Nodes in /dev gracefully.
+[  OK  ] Reached target System Shutdown.
+[  OK  ] Reached target Late Shutdown Services.
+[  OK  ] Finished System Reboot.
+[  OK  ] Reached target System Reboot.
+[  422.569020] watchdog: watchdog0: watchdog did not stop!
+[  422.598844] systemd-shutdown[1]: Using hardware watchdog /dev/watchdog0: 'Broadcom BCM2835 Watchdog timer', version 0.
+[  422.609327] systemd-shutdown[1]: Watchdog running with a hardware timeout of 10min.
+[  422.626761] systemd-shutdown[1]: Syncing filesystems and block devices.
+[  422.791122] systemd-shutdown[1]: Sending SIGTERM to remaining processes...
+[  422.812509] systemd-journald[296]: Received SIGTERM from PID 1 (systemd-shutdow).
+[  422.928137] systemd-shutdown[1]: Sending SIGKILL to remaining processes...
+[  422.955308] systemd-shutdown[1]: Unmounting file systems.
+[  422.965679] (sd-umount)[11519]: Unmounting '/run/credentials/systemd-journald.service'.
+[  422.975301] (sd-remount)[11520]: Remounting '/nix/store' read-only with options ''.
+[  423.316597] EXT4-fs (mmcblk0p2): re-mounted 44444444-4444-4444-8888-888888888888 ro.
+[  423.429123] (sd-remount)[11523]: Remounting '/' read-only with options ''.
+[  423.448512] EXT4-fs (mmcblk0p2): re-mounted 44444444-4444-4444-8888-888888888888.
+[  423.457068] systemd-shutdown[1]: All filesystems unmounted.
+[  423.462265] systemd-shutdown[1]: Deactivating swaps.
+[  423.467330] systemd-shutdown[1]: All swaps deactivated.
+[  423.472527] systemd-shutdown[1]: Detaching loop devices.
+[  423.493939] systemd-shutdown[1]: All loop devices detached.
+[  423.499125] systemd-shutdown[1]: Stopping MD devices.
+[  423.504697] systemd-shutdown[1]: All MD devices stopped.
+[  423.509595] systemd-shutdown[1]: Detaching DM devices.
+[  423.518923] systemd-shutdown[1]: Detaching DM /dev/dm-2 (253:2).
+[  423.525650] systemd-shutdown[1]: Syncing /dev/dm-2.
+[  423.553451] systemd-shutdown[1]: Detaching DM /dev/dm-1 (253:1).
+[  423.560090] systemd-shutdown[1]: Syncing /dev/dm-1.
+[  423.580799] systemd-shutdown[1]: Detaching DM /dev/dm-0 (253:0).
+[  423.587537] systemd-shutdown[1]: Syncing /dev/dm-0.
+[  423.673488] systemd-shutdown[1]: All DM devices detached.
+[  423.678496] systemd-shutdown[1]: All filesystems, swaps, loop devices, MD devices and DM devices detached.
+[  423.688273] watchdog: watchdog0: watchdog did not stop!
+
+[  424.084112] systemd-shutdown[1]: Entering exitrd...
+[  424.115794] shutdown[1]: Using hardware watchdog /dev/watchdog0: 'Broadcom BCM2835 Watchdog timer', version 0.
+[  424.125519] shutdown[1]: Watchdog running with a hardware timeout of 10min.
+[  424.147019] shutdown[1]: Syncing filesystems and block devices.
+[  424.152722] shutdown[1]: Sending SIGTERM to remaining processes...
+[  424.169010] shutdown[1]: Sending SIGKILL to remaining processes...
+[  424.183513] shutdown[1]: Unmounting file systems.
+[  424.191512] (sd-umoun[11531]: Unmounting '/run/credentials'.
+[  424.198392] (sd-umoun[11532]: Unmounting '/oldroot/sys/fs/fuse/connections'.
+[  424.207032] (sd-umoun[11533]: Unmounting '/oldroot/sys/kernel/config'.
+[  424.215098] (sd-umoun[11534]: Unmounting '/oldroot/sys/kernel/tracing'.
+[  424.223291] (sd-umoun[11535]: Unmounting '/oldroot/sys/kernel/debug'.
+[  424.231276] (sd-umoun[11536]: Unmounting '/oldroot/dev/mqueue'.
+[  424.238920] (sd-umoun[11537]: Unmounting '/oldroot/dev/hugepages'.
+[  424.246847] (sd-umoun[11538]: Unmounting '/oldroot/sys/fs/bpf'.
+[  424.254435] (sd-umoun[11539]: Unmounting '/oldroot/sys/fs/pstore'.
+[  424.262348] (sd-umoun[11540]: Unmounting '/oldroot/sys/fs/cgroup'.
+[  424.270199] (sd-umoun[11541]: Unmounting '/oldroot/sys/kernel/security'.
+[  424.278480] (sd-umoun[11542]: Unmounting '/oldroot/nix/store'.
+[  424.286116] (sd-umoun[11543]: Unmounting '/oldroot/sys'.
+[  424.292999] (sd-umoun[11544]: Unmounting '/oldroot/proc'.
+[  424.300029] (sd-umoun[11545]: Unmounting '/oldroot/dev/shm'.
+[  424.307197] (sd-umoun[11546]: Unmounting '/oldroot/dev/pts'.
+[  424.314546] (sd-umoun[11547]: Unmounting '/oldroot/dev'.
+[  424.321614] (sd-umoun[11548]: Unmounting '/oldroot/run'.
+[  424.328545] (sd-umoun[11549]: Unmounting '/oldroot'.
+[  425.364548] hwmon hwmon2: Voltage normalised
+[  425.629781] EXT4-fs (mmcblk0p2): unmounting filesystem 44444444-4444-4444-8888-888888888888.
+[  425.644752] shutdown[1]: All filesystems unmounted.
+[  425.649255] shutdown[1]: Deactivating swaps.
+[  425.653677] shutdown[1]: All swaps deactivated.
+[  425.658097] shutdown[1]: Detaching loop devices.
+[  425.671749] shutdown[1]: All loop devices detached.
+[  425.676234] shutdown[1]: Stopping MD devices.
+[  425.681120] shutdown[1]: All MD devices stopped.
+[  425.685306] shutdown[1]: Detaching DM devices.
+[  425.690233] shutdown[1]: All DM devices detached.
+[  425.694539] shutdown[1]: All filesystems, swaps, loop devices, MD devices and DM devices detached.
+[  425.703627] watchdog: watchdog0: watchdog did not stop!
+[  425.742203] shutdown[1]: Syncing filesystems and block devices.
+[  425.747850] shutdown[1]: Rebooting.
+[  425.863369] bcmgenet fd580000.ethernet lan: Link is Down
+[  426.005372] kvm: exiting hardware virtualization
+[  426.009545] reboot: Restarting sys�
+RPi: BOOTLOADER release VERSION:febe323f DATE: 2022/11/04 TIME: 15:19:15 BOOTMODE: 0x00000006 part: 0 BUILD_TIMESTAMP=1667575155 0x1e6d64e3 0x00d03140 0x00073afd
+PM_RSTS: 0x00001020
+part 00000000 reset_info 00000000
+uSD voltage 3.3V
+Initialising SDRAM 'Micron' 32Gb x2 total-size: 64 Gbit 3200
+DDR 3200 1 0 64 152
+
+Boot mode: NVME (06) order f251
+VID 0x144d MN SAMSUNG MZVLQ512HBLU-00BH1
+NVME on
+MBR: 0x00000001,1000215215 type: 0xee
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+MBR: 0x00000000,       0 type: 0x00
+Trying partition: 0
+GPT 90c89fbd532199408570fbf6857959c6 000000001 03b9e12af num-partitions 128 entry-size 128
+GPT partition: 0 c12a7328-f81f-11d2-ba4b-00a0c93ec93b 000000800..0002007ff
+Matched GUID bootable-part-idx 0 want partition 0
+type: 32 lba: 2048 oem: 'mkfs.fat' volume: ' EFI        '
+rsc 32 fat-sectors 2048 c-count 261628 c-size 8
+root dir cluster 2 sectors 0 entries 0
+FAT32 clusters 261628
+Trying partition: 0
+GPT 90c89fbd532199408570fbf6857959c6 000000001 03b9e12af num-partitions 128 entry-size 128
+GPT partition: 0 c12a7328-f81f-11d2-ba4b-00a0c93ec93b 000000800..0002007ff
+Matched GUID bootable-part-idx 0 want partition 0
+type: 32 lba: 2048 oem: 'mkfs.fat' volume: ' EFI        '
+rsc 32 fat-sectors 2048 c-count 261628 c-size 8
+root dir cluster 2 sectors 0 entries 0
+FAT32 clusters 261628
+Read config.txt bytes     1008 hnd 0x7d
+Read start4.elf bytes  2263968 hnd 0x36a
+Read fixup4.dat bytes     5456 hnd 0x80
+0x00d03140 0x00000000 0x00001fff
+MEM GPU: 76 ARM: 948 TOTAL: 1024
+Firmware: 5560078dcc8591a00f57b9068d13e5544aeef3aa Apr 30 2025 13:33:39
+Starting start4.elf @ 0xfec00200 partition 0
+NVME off
++
+
+
+U-Boot 2026.10 (Jan 01 1980 - 00:00:00 +0000)
+
+DRAM:  7.9 GiB
+RPI Compute Module 4 (0xd03140)
+Core:  215 devices, 17 uclasses, devicetree: board
+MMC:   mmcnr@7e300000: 1, mmc@7e340000: 0
+Unable to read "uboot.env" from mmc0:1...
+In:    serial,usbkbd
+Out:   serial,vidconsole
+Err:   serial,vidconsole
+Net:   eth0: ethernet@7d580000
+
+PCIe BRCM: link up, 5.0 Gbps x1 (SSC)
+starting USB...
+No USB controllers found
+       scanning usb for storage devices... 0 Storage Device(s) found
+Hit any key to stop autoboot: 0
+Card did not respond to voltage select! : -110
+Cannot persist EFI variables without system partition
+** Booting bootflow '<NULL>' with efi_mgr
+Loading Boot0000 'mmc 0' failed
+EFI boot manager: Cannot load any image
+Boot failed (err=-14)
+** Booting bootflow 'nvme#0.blk#1.bootdev.part_1' with extlinux
+------------------------------------------------------------
+1:      NixOS - Default
+2:      NixOS - Configuration 1-default (2026-10-24 14:04 - 26.05pre-git)
+Enter choice: 1:        NixOS - Default
+Retrieving file: /extlinux/../nixos/64r9zcv60sm5x793q310afb1dhwgca49-linux-6.18.56-Image
+Retrieving file: /extlinux/../nixos/sjyinbr5ijhk4ancmylh0rqb51463dj8-initrd-linux-6.18.56-initrd
+append: init=/nix/store/3ff85i43m938aadzmq2swyzf6rrslj29-nixos-system-nixos-26.05pre-git/init console=ttyAMA0,115200n8 console=tty0 console=ttyS0,115200n8 root=fstab loglevel=4 lsm=landlock,yama,bpf
+Retrieving file: /extlinux/../nixos/64r9zcv60sm5x793q310afb1dhwgca49-linux-6.18.56-dtbs/broadcom/bcm2711-rpi-cm4.dtb
+Skipping fdtdir ../nixos/64r9zcv60sm5x793q310afb1dhwgca49-linux-6.18.56-dtbs for failure retrieving dts
+Moving Image from 0x80000 to 0x200000, end=0x40a0000
+## Flattened Device Tree blob at 3af2eb70
+   Booting using the fdt blob at 0x3af2eb70
+Working FDT set to 3af2eb70
+   Loading Ramdisk to 1e69e000, end 1fffff30 ... OK
+ERROR: reserving fdt memory region failed (addr=0 size=1000 flags=4): -17
+   Loading Device Tree to 000000001e68c000, end 000000001e69d25a ... OK
+Working FDT set to 1e68c000
+
+Starting kernel ...
+
+Booting initrd of NixOS 26.05 (Yarara) (Initrd).
+[  OK  ] Created slice Slice /system/modprobe.
+[  OK  ] Created slice Slice /system/systemd-fsck.
+[  OK  ] Started Dispatch Password Requests to Console Directory Watch.
+         Expecting device /dev/disk/by-label/EFI...
+         Expecting device /dev/disk/by-label/slash...
+[  OK  ] Reached target Path Units.
+[  OK  ] Reached target Slice Units.
+[  OK  ] Reached target Swaps.
+[  OK  ] Reached target Timer Units.
+[  OK  ] Listening on D-Bus System Message Bus Socket.
+[  OK  ] Listening on Journal Socket (/dev/log).
+[  OK  ] Listening on Journal Sockets.
+[  OK  ] Listening on udev Control Socket.
+[  OK  ] Listening on udev Kernel Socket.
+[  OK  ] Reached target Socket Units.
+         Starting Create List of Static Device Nodes...
+         Mounting Kernel Configuration File System...
+         Starting Journal Service...
+         Starting Load Kernel Modules...
+         Starting Coldplug All udev Devices...
+[  OK  ] Finished Create List of Static Device Nodes.
+[  OK  ] Mounted Kernel Configuration File System.
+         Starting Create Static Device Nodes in /dev gracefully...
+[  OK  ] Finished Load Kernel Modules.
+         Starting Apply Kernel Variables...
+[  OK  ] Started Journal Service.
+[  OK  ] Finished Create Static Device Nodes in /dev gracefully.
+[  OK  ] Finished Apply Kernel Variables.
+         Starting Create Static Device Nodes in /dev...
+[  OK  ] Finished Create Static Device Nodes in /dev.
+[  OK  ] Reached target Preparation for Local File Systems.
+[  OK  ] Reached target Local File Systems.
+         Starting Create System Files and Directories...
+         Starting Rule-based Manager for Device Events and Files...
+[  OK  ] Finished Create System Files and Directories.
+[  OK  ] Started Rule-based Manager for Device Events and Files.
+[  OK  ] Finished Coldplug All udev Devices.
+[  OK  ] Reached target System Initialization.
+[  OK  ] Reached target Basic System.
+         Starting Virtual Console Setup...
+[  OK  ] Finished Virtual Console Setup.
+[  OK  ] Found device SAMSUNG MZVLQ512HBLU-00BH1 EFI.
+[  OK  ] Started [systemd-run] /nix/store/b2ikp4rcaai08kpcn4965a337ryb4z51-lvm2-2.03.39-bin/bin/lvm vgchange -aay --autoactivation event main.
+[  OK  ] Found device /dev/disk/by-label/slash.
+[  OK  ] Reached target Initrd Root Device.
+         Starting File System Check on /dev/disk/by-label/slash...
+[  OK  ] Finished File System Check on /dev/disk/by-label/slash.
+         Mounting /sysroot...
+         Starting File System Check on /dev/disk/by-label/EFI...
+[  OK  ] Mounted /sysroot.
+[  OK  ] Reached target Initrd Root File System.
+         Starting Find NixOS closure...
+         Starting Mountpoints Configured in the Real Root...
+[  OK  ] Finished File System Check on /dev/disk/by-label/EFI.
+[  OK  ] Finished Find NixOS closure.
+[  OK  ] Finished Mountpoints Configured in the Real Root.
+         Mounting /sysroot/boot...
+         Mounting /sysroot/run...
+[  OK  ] Mounted /sysroot/boot.
+[  OK  ] Mounted /sysroot/run.
+[  OK  ] Reached target Initrd File Systems.
+         Starting Create Volatile Files and Directories in the Real Root...
+[  OK  ] Finished Create Volatile Files and Directories in the Real Root.
+[  OK  ] Reached target Initrd Default Target.
+         Starting Cleaning Up and Shutting Down Daemons...
+[  OK  ] Stopped target Initrd Default Target.
+[  OK  ] Stopped target Basic System.
+[  OK  ] Stopped target Initrd Root Device.
+[  OK  ] Stopped target Path Units.
+[  OK  ] Stopped Dispatch Password Requests to Console Directory Watch.
+[  OK  ] Stopped target Slice Units.
+[  OK  ] Stopped target Socket Units.
+[  OK  ] Stopped target System Initialization.
+[  OK  ] Stopped target Swaps.
+[  OK  ] Stopped target Timer Units.
+[  OK  ] Closed D-Bus System Message Bus Socket.
+[  OK  ] Stopped Find NixOS closure.
+[  OK  ] Stopped Apply Kernel Variables.
+[  OK  ] Stopped Load Kernel Modules.
+[  OK  ] Stopped Create Volatile Files and Directories in the Real Root.
+[  OK  ] Stopped Create System Files and Directories.
+[  OK  ] Stopped target Local File Systems.
+[  OK  ] Stopped target Preparation for Local File Systems.
+[  OK  ] Stopped Coldplug All udev Devices.
+         Stopping Rule-based Manager for Device Events and Files...
+[  OK  ] Stopped Virtual Console Setup.
+[  OK  ] Stopped Rule-based Manager for Device Events and Files.
+[  OK  ] Finished Cleaning Up and Shutting Down Daemons.
+[  OK  ] Closed udev Control Socket.
+         Starting Cleanup udev Database...
+[  OK  ] Stopped Create Static Device Nodes in /dev.
+[  OK  ] Stopped Create Static Device Nodes in /dev gracefully.
+[  OK  ] Stopped Create List of Static Device Nodes.
+[  OK  ] Finished Cleanup udev Database.
+[  OK  ] Reached target Switch Root.
+         Starting NixOS Activation...
+[  OK  ] Finished NixOS Activation.
+         Starting Switch Root...
+
+Welcome to NixOS 26.05 (Yarara)!
+
+[  OK  ] Stopped initrd-switch-root.service.
+[  OK  ] Created slice Slice /system/getty.
+[  OK  ] Created slice Slice /system/serial-getty.
+[  OK  ] Created slice User and Session Slice.
+[  OK  ] Started Dispatch Password Requests to Console Directory Watch.
+[  OK  ] Started Forward Password Requests to Wall Directory Watch.
+         Expecting device /dev/ttyS0...
+[  OK  ] Reached target Local Encrypted Volumes.
+[  OK  ] Stopped target initrd-fs.target.
+[  OK  ] Stopped target initrd-root-fs.target.
+[  OK  ] Stopped target initrd-switch-root.target.
+[  OK  ] Reached target Virtual Machines and Containers.
+[  OK  ] Reached target Path Units.
+[  OK  ] Reached target Remote File Systems.
+[  OK  ] Reached target Slice Units.
+[  OK  ] Listening on Process Core Dump Socket.
+[  OK  ] Listening on Credential Encryption/Decryption.
+         Starting Journal Log Access Socket...
+[  OK  ] Listening on Journal Audit Socket.
+[  OK  ] Listening on Network Management Metrics Varlink Socket.
+[  OK  ] Listening on Network Management Netlink Socket.
+[  OK  ] Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[  OK  ] Listening on udev Control Socket.
+         Activating swap /dev/disk/by-label/swap...
+         Mounting Huge Pages File System...
+         Mounting POSIX Message Queue File System...
+         Mounting Kernel Debug File System...
+         Mounting Kernel Trace File System...
+         Starting Create List of Static Device Nodes...
+         Mounting Kernel Configuration File System...
+         Starting Load Kernel Module fuse...
+         Starting Journal Service...
+         Starting Load Kernel Modules...
+         Starting Remount Root and Kernel File Systems...
+         Starting Coldplug All udev Devices...
+[  OK  ] Activated swap /dev/disk/by-label/swap.
+[  OK  ] Started Journal Service.
+[  OK  ] Listening on Journal Log Access Socket.
+[  OK  ] Mounted Huge Pages File System.
+[  OK  ] Mounted POSIX Message Queue File System.
+[  OK  ] Mounted Kernel Debug File System.
+[  OK  ] Mounted Kernel Trace File System.
+[  OK  ] Finished Create List of Static Device Nodes.
+[  OK  ] Mounted Kernel Configuration File System.
+[  OK  ] Finished Load Kernel Module fuse.
+[  OK  ] Finished Load Kernel Modules.
+[  OK  ] Finished Remount Root and Kernel File Systems.
+[  OK  ] Reached target Swaps.
+         Mounting FUSE Control File System...
+         Starting Firewall...
+         Starting Flush Journal to Persistent Storage...
+         Starting Userspace Out-Of-Memory (OOM) Killer...
+         Starting Load/Save OS Random Seed...
+         Starting Apply Kernel Variables...
+[   12.887510] cma: __cma_alloc: linux,cma: alloc failed, req-size: 256 pages, ret: -16
+         Starting Network Time Synchronization...
+         Starting Create Static Device Nodes in /dev gracefully...
+[  OK  ] Mounted FUSE Control File System.
+[  OK  ] Finished Flush Journal to Persistent Storage.
+[  OK  ] Finished Load/Save OS Random Seed.
+[  OK  ] Finished Apply Kernel Variables.
+[  OK  ] Reached target First Boot Complete.
+         Starting Network Name Resolution...
+[  OK  ] Started Userspace Out-Of-Memory (OOM) Killer.
+[  OK  ] Finished Create Static Device Nodes in /dev gracefully.
+         Starting Create Static Device Nodes in /dev...
+[  OK  ] Finished Create Static Device Nodes in /dev.
+[  OK  ] Started Network Time Synchronization.
+[  OK  ] Reached target Preparation for Local File Systems.
+[  OK  ] Reached target System Time Set.
+         Starting File System Check on /dev/disk/by-label/home...
+         Starting Rule-based Manager for Device Events and Files...
+[  OK  ] Finished File System Check on /dev/disk/by-label/home.
+[  OK  ] Started Network Name Resolution.
+[  OK  ] Started Rule-based Manager for Device Events and Files.
+         Mounting /home...
+         Mounting /run/wrappers...
+[  OK  ] Mounted /run/wrappers.
+[  OK  ] Mounted /home.
+[  OK  ] Reached target Local File Systems.
+[  OK  ] Listening on Boot Loader Control Service Socket.
+         Starting Create SUID/SGID Wrappers...
+         Starting Save Transient machine-id to Disk...
+         Starting Create System Files and Directories...
+[  OK  ] Finished Firewall.
+[  OK  ] Finished Save Transient machine-id to Disk.
+[  OK  ] Reached target Preparation for Network.
+         Starting Network Management...
+[  OK  ] Finished Create System Files and Directories.
+         Starting Rebuild Journal Catalog...
+         Starting Record System Boot/Shutdown in UTMP...
+[  OK  ] Finished Record System Boot/Shutdown in UTMP.
+[  OK  ] Finished Rebuild Journal Catalog.
+         Starting Update is Completed...
+[  OK  ] Listening on Load/Save RF Kill Switch Status /dev/rfkill Watch.
+[  OK  ] Finished Update is Completed.
+[  OK  ] Finished Create SUID/SGID Wrappers.
+[  OK  ] Started Network Management.
+[  OK  ] Reached target Network.
+         Starting Enable Persistent Storage in systemd-networkd...
+         Starting Wait for Network to be Online...
+[  OK  ] Finished Enable Persistent Storage in systemd-networkd.
+[  OK  ] Finished Coldplug All udev Devices.
+[  OK  ] Reached target System Initialization.
+[  OK  ] Started Discard unused filesystem blocks once a week.
+[  OK  ] Started logrotate.timer.
+[  OK  ] Started Daily Cleanup of Temporary Directories.
+[  OK  ] Reached target Timer Units.
+[  OK  ] Listening on D-Bus System Message Bus Socket.
+[  OK  ] Listening on Nix Daemon Socket.
+[  OK  ] Listening on OpenSSH Server Socket (systemd-ssh-generator, AF_UNIX Local).
+[  OK  ] Listening on Hostname Service Socket.
+[  OK  ] Reached target Socket Units.
+[  OK  ] Reached target Basic System.
+         Starting Import lastlog data into lastlog2 database...
+         Starting Logrotate configuration check...
+         Starting Name Service Cache Daemon (nsncd)...
+         Starting Post-Boot Actions...
+[  OK  ] Started Reset console on configuration changes.
+         Starting SSH Host Keys Generation...
+[  OK  ] Finished Logrotate configuration check.
+[  OK  ] Started Name Service Cache Daemon (nsncd).
+[  OK  ] Finished Post-Boot Actions.
+[  OK  ] Finished Import lastlog data into lastlog2 database.
+[  OK  ] Reached target Host and Network Name Lookups.
+[  OK  ] Reached target User and Group Name Lookups.
+         Starting D-Bus System Message Bus...
+         Starting User Login Management...
+         Starting Permit User Sessions...
+[  OK  ] Finished Permit User Sessions.
+[  OK  ] Started Getty on tty1.
+[  OK  ] Started D-Bus System Message Bus.
+[  OK  ] Started User Login Management.
+         Starting linger-users.service...
+[  OK  ] Finished linger-users.service.
+[  OK  ] Started Serial Getty on ttyS0.
+[  OK  ] Reached target Login Prompts.
+         Starting Virtual Console Setup...
+         Starting Load/Save RF Kill Switch Status...
+[  OK  ] Reached target Bluetooth Support.
+[  OK  ] Started Load/Save RF Kill Switch Status.
+[  OK  ] Finished Virtual Console Setup.
+[   22.012868] hwmon hwmon1: Undervoltage detected!
+
+
+<<< Welcome to NixOS 26.05pre-git (aarch64) - ttyS0 >>>
+
+Run 'nixos-help' for the NixOS manual.
+
+nixos login: [   28.381977] pre-nixos-auto-install-ip-start[704]: LAN IPv4 address: 10.137.1.232
+LAN IPv4 address: 10.137.1.232
+[   60.316831] hwmon hwmon1: Undervoltage detected!
+[  909.060533] hwmon hwmon1: Undervoltage detected!
+[ 2473.489388] hwmon hwmon1: Undervoltage detected!

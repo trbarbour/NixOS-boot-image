@@ -1,0 +1,61 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/f6qcd3lxwf8gmz31gg5qa7qwfrwrghsb-pre-nixos-0.23.0-gunknown-26.05.20261015.26f4107-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/1dnmdy03c6dkw19cx8djr0brkb8lcy84-pre-nixos-0.23.0-gunknown-26.05.20261015.26f4107-x86_64-linux.iso/iso/pre-nixos-0.23.0-gunknown-26.05.20261015.26f4107-x86_64-linux.iso",
+    "nar_hash": "sha256-6mh/kGwCV3QmRW/AS3m63S4D5VQJhPc2jeEttDhaYBo=",
+    "root_key_fingerprint": "256 SHA256:euyzaa0HkgPr9eA/XpIqyyGbL02Ey2eB0oN/1CKaFUE boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/1dnmdy03c6dkw19cx8djr0brkb8lcy84-pre-nixos-0.23.0-gunknown-26.05.20261015.26f4107-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-10-30T130845Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-10-30T13:08:46.496170+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-10-30T130845Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-10-30T130845Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-serial",
+      "stdio",
+      "-boot",
+      "d",
+      "-cdrom",
+      "/nix/store/1dnmdy03c6dkw19cx8djr0brkb8lcy84-pre-nixos-0.23.0-gunknown-26.05.20261015.26f4107-x86_64-linux.iso/iso/pre-nixos-0.23.0-gunknown-26.05.20261015.26f4107-x86_64-linux.iso",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-57/boot-image-disk-primary0/disk.img,if=virtio,format=raw",
+      "-qmp",
+      "unix:/tmp/qmp-kd7fa2k8/qmp.sock,server=on,wait=off",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:40233-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/pytest-of-root/pytest-57/boot-image-disk-primary0/disk.img",
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 40233
+  },
+  "timings": {
+    "boot_to_login_seconds": 140.781,
+    "boot_to_ssh_seconds": 230.454,
+    "build_seconds": 512.362,
+    "end": "2026-10-30T13:12:44.319130+00:00",
+    "start": "2026-10-30T13:08:45.240894+00:00",
+    "total_seconds": 237.818
+  }
+}

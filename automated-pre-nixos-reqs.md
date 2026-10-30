@@ -61,6 +61,13 @@ The system must automate the hardware setup process on new servers prior to NixO
   - **x86_64:** UEFI booting with an EFI System Partition is mandatory.
   - **AArch64 Raspberry Pi:** the installed system boots through the Raspberry
     Pi firmware, U-Boot and extlinux, as the stock NixOS SD image does.
+- The installed system's boot partition (the EFI System Partition, which also
+  holds the kernels and initrds of every generation kept) is sized at **3% of
+  its disk, but at least 1 GiB and at most 4 GiB**. Each generation takes
+  about 200 MB, so 1 GiB holds too few on a disk that can spare more. The
+  boot image's own layout is unchanged (R-P2): its FAT partition holds only
+  firmware, and its generations live on its root filesystem. [R-B3]
+  (User decision, 2026-10-30.)
 
 ### 2.4 LVM Configuration
 

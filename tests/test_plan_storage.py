@@ -4,7 +4,7 @@ from pre_nixos.inventory import Disk
 from pre_nixos.planner import (
     plan_storage,
     ROOT_LV_SIZE,
-    EFI_PARTITION_SIZE,
+    efi_partition_size,
     _parse_size,
     _format_size,
     MI_BYTE,
@@ -43,7 +43,7 @@ def test_home_lv_uses_quarter_or_less_of_remaining_space() -> None:
     home_lv = next(lv for lv in plan["lvs"] if lv["name"] == "home")
     slash_lv = next(lv for lv in plan["lvs"] if lv["name"] == "slash")
 
-    capacity = _parse_size("60G") - EFI_PARTITION_SIZE
+    capacity = _parse_size("60G") - efi_partition_size(_parse_size("60G"))
     capacity -= capacity % MI_BYTE
     free_after_slash = max(capacity - _parse_size(slash_lv["size"]), 0)
     free_after_slash -= free_after_slash % LVM_EXTENT_BYTES
@@ -307,8 +307,9 @@ def test_swap_lv_accounts_for_efi_partition() -> None:
     swap_lv = next(lv for lv in plan["lvs"] if lv["name"] == "swap")
     home_lv = next((lv for lv in plan["lvs"] if lv["name"] == "home"), None)
 
-    # Capacity available to LVM is the disk size minus the 1G EFI partition.
-    efi = _parse_size("1G")
+    # Capacity available to LVM is the disk size minus the EFI partition
+    # (3% of 500 GB exceeds the cap, so 4 GiB; R-B3).
+    efi = _parse_size("4G")
     capacity = disk_size - efi
     # Align down to the nearest MiB to match planner rounding.
     capacity -= capacity % (1024 ** 2)

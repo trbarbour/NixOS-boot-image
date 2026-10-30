@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-10-23T01-03-50Z_
+_Last updated: 2026-10-30T12-35-13Z_
 
 ## Active Tasks
 
@@ -191,6 +191,76 @@ _Last updated: 2026-10-23T01-03-50Z_
       - `avoid_warnings=1` is wanted: it stops the firmware's warning from overwriting the framebuffer.
       - The user also suspects `arm_boost=1`: as they recall, it (or `arm_freq`) may need a matching `over_voltage`. The CM4s have good heatsinks.
       - Experiment: change one line at a time in the SD card's FIRMWARE `config.txt`, first without `arm_boost=1`, and count the warnings over a fixed period.
+    - 2026-10-24 (user), on the installed CM4 with the stock `config.txt` (`arm_boost=1` present): `cpufreq/policy0/cpuinfo_max_freq` = 1500000, `cpufreq/boost` = 0.
+      - So `arm_boost` does not raise this CM4 above 1.5 GHz, and removing it should not change the undervoltage. Suspect eliminated by measurement, unless the reading was taken without the line (to confirm with the user).
+      - Warnings also appear at idle (from 20 s after boot), so the supply is marginal even at low load.
+      - Next split: the power path. Run on a bench 5 V supply instead of PoE. Check the GS308EPP's per-port power reading, class and limit. Check whether the UPS battery charging shares the PoE budget.
+      - 2026-10-24 (user): the reading **was** taken with `arm_boost=1` present, so `arm_boost` is eliminated.
+        - **Correction:** this CM4 is not on PoE. It is powered through the barrel jack (7–36 V DC) from the board's own 12 V wall-wart (3–4 A, to be checked), which is barely warm. So the input supply (about 36–48 W) is far above the load.
+        - The suspect is the board's 5 V rail to the CM4: its regulator, the UPS power path, or the contacts. A web search found one user report of undervoltage with this UPS board; another poster suggested dirty contacts, unconfirmed (community.home-assistant.io/t/ups-for-rpi-4/503505).
+        - **Plan (half-split, one change at a time, same idle period, warnings counted with `journalctl -k -b | grep -c 'Undervoltage detected'`):**
+          1. Bench supply at 12 V: note the current, and whether the count changes (this rules the wall-wart in or out).
+          2. Measure the 5 V rail at the CM4 (GPIO header 5 V to GND), with a DMM at idle and ideally a scope for dips below about 4.63 V. This decides between "the rail sags" and "the reading is wrong".
+          3. ~~Remove the UPS battery~~: the board has **no 18650 cells fitted** (user, 2026-10-24), so battery charging is ruled out. The UPS power-path circuitry is still in the 5 V path.
+          4. Reseat the CM4 (contacts).
+        - 2026-10-24 (user, DMM): 5 V rail at idle = **5.132 V**. Not low at idle, so look for transient dips under load (scope).
+        - 2026-10-24 (user, DMM):
+          - The 4-core CPU load drops the rail to 5.096 V; adding NVMe reads at 389 MB/s takes off another 1–2 mV.
+          - Neither load triggered warnings. The installed system gives about 1–2 warnings per hour.
+        - **Attempt-4 log, warnings by phase:**
+          - installer: 36 in about 6.5 min, one every 4–6 s, starting at 20 s, before the install;
+          - installed system: 3 in the first minute, then one at 909 s and one at 2473 s.
+        - Note: the driver polls every 2 s and clears the firmware's sticky flag (`raspberrypi-hwmon.c`), so the counts are episodes, not dips.
+        - **Hypothesis:** the trigger is the installer's **SD-card** activity, not CPU or NVMe load.
+          - Next test: `dd if=/dev/mmcblk0 of=/dev/null bs=1M iflag=direct` on the installed system, with the card inserted, while watching `journalctl -kf`.
+          - If that triggers warnings: scope the 5 V rail and the card's 3.3 V supply, and try another card. If not: SD reads plus NVMe writes together, and Wi-Fi/Bluetooth bring-up.
+        - 2026-10-24 (user):
+          - SD reads alone give 5.089 V. SD and NVMe reads with the CPU load give 5.088 V. **No warnings at all.**
+          - **The SD-read hypothesis is refuted.**
+        - Remaining installer-only activity:
+          1. **NVMe writes:** mkfs and the store copy. Warnings ran from about 60 s, the formatting, to the end of the install. Not yet tested.
+          2. **Early boot, 20–40 s:** Ethernet link down/up during the rename, and Wi-Fi/Bluetooth bring-up. The installed system's few warnings are also in its first minute.
+          - Next test: `dd … oflag=direct` writes, then writes with the CPU and SD loads, with the scope on 5 V and the M.2 slot's 3.3 V.
+        - 2026-10-24 (user): NVMe writes alone give 5.091 V and **no warnings**, with a slight whine (probably coil whine).
+        - Wi-Fi ruled out:
+          - attempt 3's installed system ran `wpa_supplicant` and had 8 warnings over about 12 min of log, against attempt 4's 5;
+          - but the installer, with the most warnings, runs no Wi-Fi client (`networking.wireless.enable` and `networkmanager.enable` both evaluate to false).
+        - Next splits:
+          1. NVMe writes plus SD reads plus the CPU load, imitating the install.
+          2. **The installer idle for 10 min** (SD boot; the NVMe is non-empty, so no install), counting warnings. This separates the installer environment from the install's load.
+        - User's hypothesis: the installer runs the CPU faster. Evidence against it (evaluated):
+          - the same `config.txt` on the SD card and the NVMe `/boot`;
+          - neither system sets `powerManagement.cpuFreqGovernor` (the installer's evaluates to null, and the generator writes none), so both use the kernel default `schedutil`.
+          - To confirm on the installer: `cpuinfo_max_freq`, `scaling_governor`, `scaling_cur_freq`.
+        - New hypothesis: **frequency/voltage transitions**, not the frequency itself. Test a bursty load (`timeout 0.2 yes; sleep 0.3` in a loop) under `schedutil`, against the same under `performance`.
+        - 2026-10-24 (user): **4 h of steady 4-core load: no warnings. Removing the load: a burst of about 9 warnings in 2 min.**
+          - Warnings follow load *changes*, which supports the transition hypothesis.
+          - Next split: load on/off cycles (30 s/30 s) under `schedutil` against `performance`.
+            - Warnings under `schedutil` only: frequency/voltage (DVFS) transitions.
+            - Under both: the regulator's response to load steps.
+          - Scope: single-shot, falling edge at about 4.75 V on 5 V, armed before the load stops.
+        - 2026-10-24 (user): 30 s/30 s load cycling under `schedutil` for 18 min: **one warning, at the start** (when commands were typed). Under `performance` for 5 min: the same.
+          - **Load steps and DVFS are not the trigger.**
+          - User's hypothesis: **network activity**, since the tests were run over two SSH sessions. It fits every observation so far: the idle SSH during the 4 h load; typing at load removal; the installer's link changes and DHCP; possible cache downloads during the install; a quiet installed system.
+          - Tests:
+            1. Watch from the **serial console** with no SSH sessions.
+            2. Bulk Ethernet traffic with no disk I/O: `iperf3`, both directions, or `curl -o /dev/null`.
+            3. If it triggers: force the link to 100 Mbit/s with `ethtool -s lan speed 100` and repeat.
+        - 2026-10-24 (user): a third SSH login was followed, after a few seconds, by **4 episodes in about 20 s**, then quiet for 3 min.
+          - The delay is not the journal (`-f` is sub-second). The driver polls every 2 s, and the login itself takes seconds: key exchange, a logind session, and the first login's `user@.service`.
+          - Next:
+            - correlate with `journalctl -o short-precise`;
+            - split a serial-console login (no network) from bulk traffic with no login.
+        - 2026-10-29 (user):
+          - The CM4 idle, installed system, for **5 days: no episodes at all.**
+          - The later SSH logout and a new login gave none, so the earlier SSH-login burst does not reproduce.
+          - Planned: a marked run (`logger MARK …`), with the journal exported for correlation, covering bulk Ethernet traffic and the installer left idle.
+        - 2026-10-30 (user): a bulk download (`curl -o /dev/null` of a Linux kernel tarball, about 150 MB, limited by the WAN speed): **no episodes.**
+          - Ethernet receive at WAN speed is ruled out. Gigabit-rate traffic and transmit are untested.
+          - Remaining:
+            1. the link bounce (`ip link set lan down/up`), the installer's early-boot pattern;
+            2. gigabit transmit and receive on the LAN (`iperf3` and `-R`);
+            3. the installer left idle.
     - Plan:
       - Get the user's earlier `config.txt` and the `vcgencmd get_throttled` readings, then half-split the differences.
       - If a setting is needed, add it to the installer image and to the installed `/boot`. The image's config.txt is shared with the installed system via `nix/rpi4-nvme-firmware.nix`.
@@ -217,7 +287,42 @@ _Last updated: 2026-10-23T01-03-50Z_
     - Without `CONFIG_BOOTSTD_FULL`, `bootflow scan` takes no flags or label. To boot the SD card when NVMe holds a system, the user had to run `setenv boot_targets mmc0; bootflow scan`.
     - Consider enabling `CONFIG_BOOTSTD_FULL` in `nix/uboot-rpi4-nvme.nix` (size and boot-time cost to check), and document the recovery path.
 
+29. **The installed system shows its LAN announcement twice.** *(anomaly, 2026-10-23; second source in #327)*
+    - `pre-nixos-auto-install-ip` has `StandardOutput = "journal+console"`, and `announce-lan-ip.sh` also writes to `/dev/console`, because `pre-nixos-console` is absent on the installed system.
+    - Reproduce, then decide on one path to the console, e.g. `StandardOutput = "journal"`.
+
+30. **`uptime` reports about 220 days on the installer and on the first boot of the installed system; `date -u` is right.** *(anomaly, 2026-10-24, user)*
+    - 220 days is the time from systemd's built-in clock epoch (2026-03-17, seen in attempt 1) to now.
+    - coreutils 9.11's `uptime` computes now minus a boot time taken from the utmp `BOOT_TIME` entry. Without that entry, it falls back to the mtime of `/var/lib/systemd/random-seed` (gnulib `boot-time-aux.h`); only after that does it use the kernel's counter.
+    - **Hypothesis:** both are written early in boot, before NTP corrects the clock. On a first boot (the installer always; a fresh install, which has no `/var/lib/systemd/timesync/clock`), the clock still holds the epoch at that moment. A later boot restores the clock saved at shutdown, so the error should be small.
+    - **2026-10-24, confirmed (user): `who -b` shows 2026-03-17 and `/proc/uptime` is right.** So the utmp boot record was written before the clock was corrected.
+    - To confirm, on the CM4:
+      - `cat /proc/uptime` should be right;
+      - `who -b` should show 2026-03-17;
+      - `stat -c %y /var/lib/systemd/random-seed` should show its mtime;
+      - after a reboot, `uptime` should be about right.
+    - Not caused by pre-nixos; it comes from the board having no RTC (item 23's board). To decide: document it, or keep it out of pre-nixos's own logs.
+
+31. **Use the Waveshare CM4-POE-UPS-BOX's battery-backed RTC.** *(user request, 2026-10-24; fixes item 30 at the source)*
+    - **Facts (verified here):**
+      - Kernel 6.18.56 sets the clock from `rtc0` when it registers, even for a module driver (`drivers/rtc/class.c:433–435`).
+      - `CONFIG_RTC_HCTOSYS=y` and `CONFIG_RTC_SYSTOHC=y` (written back after NTP sync).
+      - `rtc-pcf85063`, `i2c-bcm2835` and `i2c-mux-pinctrl` are modules.
+      - Linux gets the **firmware's** device tree: U-Boot's `fdtdir` lookup fails ("Skipping fdtdir"), and the `blconfig` alias, which is only in the firmware's DT, is readable. So `config.txt` overlays apply.
+      - **But the stock firmware set (`sd-image-aarch64.nix` `populateFirmwareCommands`, reused by `nix/rpi4-nvme-firmware.nix`) copies no `overlays/` directory, so `dtoverlay=` cannot work today.**
+    - **Unverified:** the board's RTC chip and bus. Waveshare's CM4 PoE Board wiki (found by search; the UPS-BOX page was unreachable from here) says: PCF85063A on i2c-10, address 0x51, `dtparam=i2c_vc=on` and `dtoverlay=i2c-rtc,pcf85063a,i2c_csi_dsi`.
+    - **Plan:**
+      1. A manual experiment on the installed CM4: copy `i2c-rtc.dtbo` into `/boot/overlays/`, add the lines, reboot, check `/dev/rtc0`, set the RTC, reboot, and check that `who -b` is right.
+      2. Then a design debate: ship `overlays/` in the firmware set, and how a site adds `config.txt` lines (a new site setting?), traced to this request.
+
+32. **The installed system's generation limit does not follow its ESP size.** *(gap, 2026-10-30, found while doing R-B3)*
+    - The ESP is now 1 to 4 GiB (R-B3), at about 200 MB per generation. extlinux keeps 20 generations by default, which overflows a 1 GiB ESP; systemd-boot (x86) has no default limit at all. A full `/boot` makes `nixos-rebuild switch` fail.
+    - Consider writing `boot.loader.{systemd-boot,generic-extlinux-compatible}.configurationLimit` into the generated configuration, derived from the planned ESP size. Needs a design debate (fixed headroom per generation vs. measured closure; what happens when a kernel grows).
+
 ## Recently Completed
+- 2026-10-30T12-35-13Z - (user request) 0.23.0: the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB], instead of a fixed 1 GiB (R-B3). Array members share one size, from the smallest. The SD image is unchanged: its FAT partition holds only firmware. Design: `plans/2026-10-30T123513Z-esp-size-design.md`. Follow-up: item 32.
+- 2026-10-24T14-05-00Z - **AArch64 plan item 10 passed** (CM4 attempt 4, 0.22.1, user: "LGTM"; `docs/test-reports/2026-10-24T135908Z-cm4-item10-acceptance-4.md`). The SD installer auto-installed NixOS to NVMe, and the installed system boots firmware → U-Boot → extlinux → LVM root, with serial primary, one DHCP lease and SSH. Closes #326 and #327 on hardware. Attempts 1–3 found #320, #323, #324, #326 and #327, all fixed.
+- 2026-10-24T03-00-28Z - Merged trbarbour/NixOS-boot-image#328 (0.22.1). Fixed #326: NetworkManager is forced off on installed systems, so networkd is the only DHCP client on `lan`. Fixed #327: console broadcasts no longer appear twice on the primary console. CI green, no Codex findings. Item 10: waiting for the user's attempt 4.
 - 2026-10-23T03-50-16Z - Merged trbarbour/NixOS-boot-image#325 (0.22.0). Fixed #323: the installed Pi's initrd now has `pcie-brcmstb` and `nvme`. Fixed #324: the installer's sshd no longer waits for the auto-install. Added the `primaryConsole` site setting (R-C2): serial by default on the SD image, display on the ISO; the serial device comes from the format's own console list. VM tests: x86 3/3, AArch64 4/4. Item 10: waiting for the user's retest.
 - 2026-10-22T13-30-56Z - Merged trbarbour/NixOS-boot-image#322 (0.21.0). (user request) The 0.20.1 SD image had the same file name as 0.20.0, because nixpkgs names images after its own version only. From 0.21.0, both images are named `pre-nixos-<version>-g<commit>[-dirty]-<nixpkgs label>-<system>.<ext>` (the user chose version plus commit). Covered by the flake check `image-file-names`.
 - 2026-10-22T04-04-06Z - Merged trbarbour/NixOS-boot-image#321 (0.20.1): fixed #320 (closed). On the CM4, `nixos-install` failed on a duplicate `boot.loader.grub.enable`. The Pi loader is now a separate module with `mkForce`, tested against real `nixos-generate-config` output (pytest, plus the flake checks `installed-configuration-parses` and `installed-rpi-boot-loader`). CI green, no Codex findings. Item 10: waiting for the user's retest.
