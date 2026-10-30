@@ -98,3 +98,11 @@ ask for a site setting, so none is added.
 `docs/task-queue.md` item 32: the boot loaders' `configurationLimit` does not
 follow the ESP size. extlinux's 20 generations overflow a 1 GiB ESP, and
 systemd-boot has no limit.
+
+## 6. Verification (2026-10-30, applied on `claude/gallant-dijkstra-n9lqn1` as c13665e)
+
+- **Unit tests:** 441 passed, including the 15 new tests. mypy is clean, `nix flake check` passes, and the SD image evaluates.
+- **disko** (`disko --dry-run`) renders the planned sizes as sgdisk arguments: `--new=1:0:+1966M` for a 64 GiB disk, and `+3G` on both members of a RAID-1 pair of 100 GiB SSDs.
+- **sgdisk** on a sparse 64 GiB image creates partition 1 at sectors 2048–4028415, exactly 1966 MiB.
+- **VM tests:** `tests/vm/test_pre_nixos_vm.py` and `tests/vm/test_raid_provisioning.py` passed 4/4 (17 min 39 s). Their disks are small, so they exercise the 1 GiB floor and RAID provisioning end to end.
+- **Not run:** a VM with a disk above 33 GiB. The sizes above the floor are covered by the disko and sgdisk checks instead.
