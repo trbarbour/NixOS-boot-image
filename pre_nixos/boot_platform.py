@@ -33,6 +33,10 @@ def _is_mount(path: Path) -> bool:
     return os.path.ismount(path)
 
 
+# Present only when the running kernel was started by UEFI firmware.
+_SYSFS_EFI = Path("/sys/firmware/efi")
+
+
 class InstalledBoot(enum.Enum):
     """The installed system's boot chain."""
 
@@ -112,6 +116,25 @@ def loader_module_template(setup: BootSetup) -> Optional[str]:
     if setup.kind is InstalledBoot.RPI4_UBOOT_EXTLINUX:
         return "boot-rpi4-uboot-extlinux.nix"
     return None
+
+
+def legacy_bios_refusal(setup: BootSetup) -> Optional[str]:
+    """Why an install on this machine must be refused, or ``None``.
+
+    x86 installs boot with UEFI only (reqs R-B1).  The ISO also boots in legacy
+    BIOS mode, but there nixos-generate-config enables GRUB without a target
+    disk and the layout has no BIOS boot partition, so nixos-install would fail
+    after the disks were provisioned (task queue item 33).  The Pi boots
+    through its own firmware and has no EFI, so the check is for x86 only.
+    """
+
+    if setup.kind is not InstalledBoot.NIXOS_DEFAULT or _SYSFS_EFI.is_dir():
+        return None
+    return (
+        "Refusing to install: this machine booted in legacy BIOS mode, and "
+        "pre-nixos installs x86 systems for UEFI only. Reboot the installer in "
+        "UEFI mode (firmware setup: disable CSM/legacy boot)."
+    )
 
 
 def install_boot_files(

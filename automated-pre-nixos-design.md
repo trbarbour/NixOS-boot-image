@@ -118,6 +118,12 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ### 7.6 UEFI bootloader
 - Install **systemd-boot** into ESP by default. Fallback to GRUB-UEFI if firmware quirks detected.
 
+### 7.6.0 x86 firmware mode [R-B1]
+- The ISO boots under UEFI and under legacy BIOS. Installs are for UEFI only.
+- On a machine without `/sys/firmware/efi` (legacy BIOS), an **auto-install is refused before any storage is provisioned for it**: `REASON=bios-unsupported`, announced on every console. `--install-now` is refused the same way.
+- Why: `nixos-generate-config` would enable GRUB with no target disk, and the layout has no BIOS boot partition, so `nixos-install` would fail after the disks were wiped (task queue item 33).
+- Provisioning without auto-install is unchanged; it only touches empty disks, and the x86 VM tests run it under SeaBIOS.
+
 ### 7.6.1 AArch64 (Raspberry Pi 4 / CM4) installed bootloader [R-B1, R-B2]
 - **Chain:** EEPROM (`BOOT_ORDER`, NVMe first) → stock `start4.elf`/`config.txt` → **NVMe-capable U-Boot** → `bootflow scan` (`nvme` first) → `/boot/extlinux/extlinux.conf` → NixOS kernel/initrd (md + LVM root).
 - **Why a modified U-Boot:** nixpkgs' `ubootRaspberryPi4_64bit` has no NVMe driver and scans `mmc` first, so it would boot the SD card. Ours (`nix/uboot-rpi4-nvme.nix`) adds only `CONFIG_NVME_PCI=y` and puts `nvme` first in `boot_targets`.

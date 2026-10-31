@@ -330,6 +330,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       - add a 1 MiB EF02 BIOS boot partition on the `main` disks;
       - a GRUB module with `grub.devices` set to the `main` disks' by-id paths;
       - tests: a flake check on the GRUB fixture, and the item-12 end-to-end install VM test under SeaBIOS.
+    - 2026-10-31: **the guard is done in 0.23.1** (user request; `boot_platform.legacy_bios_refusal`, `install.legacy_bios_preflight`). Full support is being planned next (user: "I have a couple of old machines to install").
 
 ## Recently Completed
 - 2026-10-30T23-57-39Z - Merged trbarbour/NixOS-boot-image#329 (0.23.0): the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB] (R-B3; patch from another session, applied and verified here: unit tests, a disko dry run, sgdisk on a sparse image, and x86 VM tests 4/4). The PR also carried the CM4 item-10 acceptance records and the undervoltage notes. CI green, no Codex findings.

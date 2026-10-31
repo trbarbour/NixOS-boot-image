@@ -425,6 +425,14 @@ def main(argv: list[str] | None = None) -> None:
                 console.write(console_output)
                 console.flush()
 
+        # Task queue item 33: an auto-install that cannot boot (legacy BIOS on
+        # x86, R-B1) is refused before any disk is touched for it.
+        if auto_install_enabled and not args.plan_only and not args.dry_run:
+            refused = install.legacy_bios_preflight()
+            if refused is not None:
+                print(f"Auto-install failed: {refused.reason}", file=sys.stderr)
+                sys.exit(1)
+
         forced_cleanup_action = _forced_cleanup_action()
         will_modify_storage = (
             not args.dry_run

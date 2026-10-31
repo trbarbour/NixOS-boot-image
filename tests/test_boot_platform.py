@@ -171,3 +171,28 @@ def test_cli_refuses_a_boot_order_that_boots_the_card_first(tmp_path: Path, monk
     assert list((root / "boot").iterdir()) == []
 
     assert boot_platform.main(["--root", str(root), "--ignore-boot-order"]) == 0
+
+
+def _bios(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(boot_platform, "_SYSFS_EFI", tmp_path / "no-efi")
+
+
+def test_x86_booted_in_bios_mode_is_refused(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Task queue item 33 (R-B1: x86 installs need UEFI): refuse rather than
+    provision disks that nixos-install cannot then make bootable."""
+
+    _bios(monkeypatch, tmp_path)
+    message = boot_platform.legacy_bios_refusal(boot_platform.NIXOS_DEFAULT_SETUP)
+    assert message is not None
+    assert message.startswith("Refusing to install: this machine booted in legacy BIOS mode")
+    assert "UEFI" in message
+
+
+def test_x86_booted_in_uefi_mode_is_accepted() -> None:
+    # conftest makes /sys/firmware/efi exist.
+    assert boot_platform.legacy_bios_refusal(boot_platform.NIXOS_DEFAULT_SETUP) is None
+
+
+def test_the_pi_has_no_efi_and_is_not_refused(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    _bios(monkeypatch, tmp_path)
+    assert boot_platform.legacy_bios_refusal(_rpi(_firmware(tmp_path))) is None

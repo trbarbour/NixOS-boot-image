@@ -989,6 +989,40 @@ def _request_reboot() -> bool:
     return False
 
 
+def _refuse_legacy_bios(
+    boot_setup: boot_platform.BootSetup, *, status_dir: Path
+) -> Optional[AutoInstallResult]:
+    """Record and announce a legacy-BIOS refusal (task queue item 33)."""
+
+    message = boot_platform.legacy_bios_refusal(boot_setup)
+    if message is None:
+        return None
+    print(message)
+    _broadcast_install_message(message)
+    return _record_result(
+        "failed",
+        status_dir=status_dir,
+        reason="bios-unsupported",
+        details={"message": message},
+    )
+
+
+def legacy_bios_preflight(*, status_dir: Optional[Path] = None) -> Optional[AutoInstallResult]:
+    """Refuse an auto-install on a legacy-BIOS machine **before** storage is
+    provisioned for it; ``None`` when the install may go ahead.
+
+    An invalid boot declaration is left to :func:`auto_install` to report.
+    """
+
+    try:
+        boot_setup = boot_platform.boot_setup_from_environment()
+    except ValueError:
+        return None
+    return _refuse_legacy_bios(
+        boot_setup, status_dir=status_dir if status_dir is not None else state.default_state_dir()
+    )
+
+
 def auto_install(
     lan: Optional[LanConfiguration],
     storage_plan: Optional[Dict[str, Any]] = None,
@@ -1072,6 +1106,10 @@ def auto_install(
         kind=boot_setup.kind.value,
         rpi_firmware=boot_setup.rpi_firmware,
     )
+
+    refused = _refuse_legacy_bios(boot_setup, status_dir=status_dir)
+    if refused is not None:
+        return refused
 
     if not _wait_for_mount(root_path, attempts=mount_attempts, delay=mount_delay):
         return _record_result(

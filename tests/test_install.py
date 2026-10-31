@@ -775,3 +775,24 @@ def test_auto_install_x86_does_not_check_the_boot_order(tmp_path, monkeypatch, b
         _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
     )
     assert result.status == "success", result
+
+
+def test_auto_install_refuses_bios_before_running_anything(tmp_path, monkeypatch, broadcast_messages):
+    """Task queue item 33: on a legacy-BIOS x86 machine, nixos-install fails
+    ("You must set the option 'boot.loader.grub.devices'"), so refuse first."""
+
+    monkeypatch.setattr(install.boot_platform, "_SYSFS_EFI", tmp_path / "no-efi")
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    commands: list[list[str]] = []
+    root = tmp_path / "mnt"
+    monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands, expect_firmware=False))
+
+    result = install.auto_install(
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+    )
+
+    assert (result.status, result.reason) == ("failed", "bios-unsupported")
+    assert commands == []
+    status = (tmp_path / "status" / "auto-install-status").read_text()
+    assert "REASON=bios-unsupported" in status
+    assert any("legacy BIOS" in message for message in broadcast_messages)

@@ -583,3 +583,50 @@ def test_cli_refuses_to_partition_a_protected_disk(monkeypatch, existing_storage
 
     assert partitioned == []
     assert "Refusing to modify protected device(s)" in capsys.readouterr().err
+
+
+def _bios_cli(monkeypatch, tmp_path, *, auto_install: bool):
+    monkeypatch.setattr(pre_nixos.install.boot_platform, "_SYSFS_EFI", tmp_path / "no-efi")
+    monkeypatch.setenv("PRE_NIXOS_STATE_DIR", str(tmp_path / "state"))
+    if auto_install:
+        monkeypatch.setenv("PRE_NIXOS_AUTO_INSTALL", "1")
+    monkeypatch.setattr(
+        pre_nixos.inventory,
+        "enumerate_disks",
+        lambda: [Disk(name="sda", size=1000, rotational=False)],
+    )
+    lan = pre_nixos.network.LanConfiguration(
+        authorized_key=tmp_path / "key.pub", interface="lan", rename_rule=None, network_unit=None
+    )
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: lan)
+    applied: list[bool] = []
+    monkeypatch.setattr(
+        pre_nixos.apply, "apply_plan", lambda plan, dry_run=False, protected_disks=frozenset(): applied.append(dry_run)
+    )
+    monkeypatch.setattr(
+        pre_nixos.install,
+        "auto_install",
+        lambda *args, **kwargs: AutoInstallResult(status="skipped", reason="execution-disabled"),
+    )
+    return applied
+
+
+def test_cli_bios_with_auto_install_refuses_before_provisioning(monkeypatch, tmp_path, capsys):
+    """Task queue item 33: the disks must not be provisioned for an install
+    that cannot boot (R-B1, UEFI only on x86)."""
+
+    applied = _bios_cli(monkeypatch, tmp_path, auto_install=True)
+    with pytest.raises(SystemExit) as excinfo:
+        pre_nixos.main([])
+    assert excinfo.value.code == 1
+    assert applied == []
+    assert "bios-unsupported" in capsys.readouterr().err
+    assert "REASON=bios-unsupported" in (tmp_path / "state" / "auto-install-status").read_text()
+
+
+def test_cli_bios_without_auto_install_still_provisions(monkeypatch, tmp_path):
+    """Provisioning alone (the x86 VM tests run under SeaBIOS) is unchanged."""
+
+    applied = _bios_cli(monkeypatch, tmp_path, auto_install=False)
+    pre_nixos.main(["--no-auto-install"])
+    assert applied == [False]
