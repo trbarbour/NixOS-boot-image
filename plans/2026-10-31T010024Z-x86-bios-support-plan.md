@@ -111,7 +111,8 @@ Effort: items 2–5 are small, about one PR. Item 6 is most of the work. Item 7 
   - unit tests;
   - the flake checks: `installed-bios-boot-loader`, and `installed-configuration-parses` with the new kind;
   - a disko dry run of the user's shape, NVMe plus two HDDs: `sda1`/`sdb1` EF02 1M, `sda2`/`sdb2` EF00 4G, `sda3`/`sdb3` the mirror;
-  - the x86 VM tests (SeaBIOS, so they now plan the BIOS layout).
+  - the x86 VM tests (SeaBIOS, so they now plan the BIOS layout). At 4759880: 7 passed, 1 failed. The RAID test hard-coded `main`'s physical volume on `/dev/sda2`, but the BIOS layout puts it on `sda3`. The test now asserts the x86 layout, with type GUIDs for EF02 on `sda1` and the ESP on `sda2`. Re-run at 5a3a1e5: **passed** (12 min 38 s).
+- **Codex review on #330 (fixed in 5a3a1e5):** a group can mix NVMe and SATA disks of similar size. The boot partitions now go on its BIOS-bootable members only.
 - **Not done:**
   - work item 6, the end-to-end install VM test (task queue item 12);
   - work item 7, the hardware test on the user's machines, which also settles U1 (`pmbr_boot`);
