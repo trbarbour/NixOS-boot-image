@@ -343,6 +343,12 @@ _Last updated: 2026-10-30T12-35-13Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
 
 ## Recently Completed
+- 2026-10-31 - (user request) 0.25.0:
+  - image file names carry `-serial`/`-display` when the primary console is not the format's default (the user chose those words over `hdmi`);
+  - variant packages `bootImageSerial` and `bootImageSdDisplay` (the user chose variant packages over separate sites), so one command builds all four images;
+  - `lib.mkBootImage`/`mkBootConfiguration` take `primaryConsole`, overriding the site;
+  - covered by the flake check `image-file-names`.
+- 2026-10-31T05-21-22Z - Merged trbarbour/NixOS-boot-image#330 (0.24.0): x86 installs in legacy BIOS mode with GRUB (R-B4). It included 0.23.1, the guard that refuses BIOS installs before provisioning, now narrowed to machines with no BIOS-bootable disk. x86 VM tests 8/8 under SeaBIOS. A Codex finding (a mixed NVMe/SATA group) was fixed. Next: the user's hardware test on the old machines (U1 `pmbr_boot`); item 12, the end-to-end install VM test, is still open.
 - 2026-10-30T23-57-39Z - Merged trbarbour/NixOS-boot-image#329 (0.23.0): the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB] (R-B3; patch from another session, applied and verified here: unit tests, a disko dry run, sgdisk on a sparse image, and x86 VM tests 4/4). The PR also carried the CM4 item-10 acceptance records and the undervoltage notes. CI green, no Codex findings.
 - 2026-10-30T12-35-13Z - (user request) 0.23.0: the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB], instead of a fixed 1 GiB (R-B3). Array members share one size, from the smallest. The SD image is unchanged: its FAT partition holds only firmware. Design: `plans/2026-10-30T123513Z-esp-size-design.md`. Follow-up: item 32.
 - 2026-10-24T14-05-00Z - **AArch64 plan item 10 passed** (CM4 attempt 4, 0.22.1, user: "LGTM"; `docs/test-reports/2026-10-24T135908Z-cm4-item10-acceptance-4.md`). The SD installer auto-installed NixOS to NVMe, and the installed system boots firmware → U-Boot → extlinux → LVM root, with serial primary, one DHCP lease and SSH. Closes #326 and #327 on hardware. Attempts 1–3 found #320, #323, #324, #326 and #327, all fixed.

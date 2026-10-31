@@ -135,3 +135,6 @@
   - GRUB targets the boot disks by `by-id`.
   - With no bootable disk, the install is refused before provisioning.
 - §7.3: the per-disk layout notes the EF02 partition.
+
+### v0.29 — 2026-10-31
+- R-C2: console variant packages (`bootImageSerial`, `bootImageSdDisplay`). Image names carry `-serial`/`-display` when the primary console differs from the format's default.
