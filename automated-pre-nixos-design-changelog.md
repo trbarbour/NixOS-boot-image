@@ -126,3 +126,12 @@
 ### v0.27 — 2026-10-30
 - §5, §7.3, §7.6.1: the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB], instead of a fixed 1 GiB (R-B3). Array members share one size, from the smallest member. The boot image's SD layout is unchanged (R-P2); its FAT partition holds no generations.
 - §7.3: the ESP labels are `EFI`, `EFI2`, …, as the planner has always made them (the text said `ESP`).
+
+### v0.28 — 2026-10-31
+- §7.6.0: x86 installs under legacy BIOS (R-B1 amended, R-B4).
+  - The firmware mode is detected at install time.
+  - The x86 boot disks get a BIOS boot partition (EF02, partition 1).
+  - Under BIOS, `/boot` and GRUB go on the first non-NVMe disk set (main, other SSDs, swap, large).
+  - GRUB targets the boot disks by `by-id`.
+  - With no bootable disk, the install is refused before provisioning.
+- §7.3: the per-disk layout notes the EF02 partition.

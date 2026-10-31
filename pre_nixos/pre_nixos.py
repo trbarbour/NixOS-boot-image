@@ -9,6 +9,7 @@ from typing import Collection, Iterable, Sequence, Set
 
 from . import (
     apply,
+    boot_platform,
     install,
     inventory,
     network,
@@ -399,6 +400,11 @@ def main(argv: list[str] | None = None) -> None:
         for dev in args.partition_lvm:
             partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
 
+        try:
+            boot_setup = boot_platform.current_setup()
+        except ValueError as exc:
+            print(f"Invalid boot-image declaration: {exc}", file=sys.stderr)
+            sys.exit(1)
         disks = inventory.exclude_disks(inventory.enumerate_disks(), protected_disks)
         ram_gb = inventory.detect_ram_gb()
         plan = planner.plan_storage(
@@ -406,6 +412,7 @@ def main(argv: list[str] | None = None) -> None:
             disks,
             prefer_raid6_on_four=args.prefer_raid6_on_four,
             ram_gb=ram_gb,
+            boot_layout=boot_platform.partition_layout(boot_setup),
         )
         if args.output == "plan":
             plan_output = {key: value for key, value in plan.items() if key != "disko"}
@@ -428,7 +435,7 @@ def main(argv: list[str] | None = None) -> None:
         # Task queue item 33: an auto-install that cannot boot (legacy BIOS on
         # x86, R-B1) is refused before any disk is touched for it.
         if auto_install_enabled and not args.plan_only and not args.dry_run:
-            refused = install.legacy_bios_preflight()
+            refused = install.legacy_bios_preflight(plan)
             if refused is not None:
                 print(f"Auto-install failed: {refused.reason}", file=sys.stderr)
                 sys.exit(1)

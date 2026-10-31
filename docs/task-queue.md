@@ -338,6 +338,9 @@ _Last updated: 2026-10-30T12-35-13Z_
         - Proposed: D2 (a) on x86 only (ESP p1, EF02 p2, data p3).
         - New D6: on BIOS with an NVMe `main`, put `/boot` and GRUB on a SATA/SAS disk.
         - Waiting on the user: confirm D2 and D6; describe the SATA disks (U6).
+      - 2026-10-31 (user): D2 and D6 confirmed (the user used to put /boot on the swap disks); the machines have probably one NVMe and a pair of HDDs for swap.
+        - **Implemented in 0.24.0**; see plan §7.
+        - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
 
 ## Recently Completed
 - 2026-10-30T23-57-39Z - Merged trbarbour/NixOS-boot-image#329 (0.23.0): the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB] (R-B3; patch from another session, applied and verified here: unit tests, a disko dry run, sgdisk on a sparse image, and x86 VM tests 4/4). The PR also carried the CM4 item-10 acceptance records and the undervoltage notes. CI green, no Codex findings.

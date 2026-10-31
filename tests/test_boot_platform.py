@@ -173,26 +173,51 @@ def test_cli_refuses_a_boot_order_that_boots_the_card_first(tmp_path: Path, monk
     assert boot_platform.main(["--root", str(root), "--ignore-boot-order"]) == 0
 
 
+
 def _bios(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(boot_platform, "_SYSFS_EFI", tmp_path / "no-efi")
 
 
-def test_x86_booted_in_bios_mode_is_refused(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Task queue item 33 (R-B1: x86 installs need UEFI): refuse rather than
-    provision disks that nixos-install cannot then make bootable."""
+def test_x86_without_efi_becomes_bios_grub(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Plan D1: the ISO boots both ways, so the mode is found at run time."""
 
     _bios(monkeypatch, tmp_path)
-    message = boot_platform.legacy_bios_refusal(boot_platform.NIXOS_DEFAULT_SETUP)
-    assert message is not None
-    assert message.startswith("Refusing to install: this machine booted in legacy BIOS mode")
-    assert "UEFI" in message
+    setup = boot_platform.effective_setup(boot_platform.NIXOS_DEFAULT_SETUP)
+    assert setup.kind is InstalledBoot.X86_BIOS_GRUB
+    assert boot_platform.partition_layout(setup).value == "x86-bios"
 
 
-def test_x86_booted_in_uefi_mode_is_accepted() -> None:
+def test_x86_with_efi_stays_nixos_default() -> None:
     # conftest makes /sys/firmware/efi exist.
-    assert boot_platform.legacy_bios_refusal(boot_platform.NIXOS_DEFAULT_SETUP) is None
+    setup = boot_platform.effective_setup(boot_platform.NIXOS_DEFAULT_SETUP)
+    assert setup == boot_platform.NIXOS_DEFAULT_SETUP
+    assert boot_platform.partition_layout(setup).value == "x86-uefi"
 
 
-def test_the_pi_has_no_efi_and_is_not_refused(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    _bios(monkeypatch, tmp_path)
-    assert boot_platform.legacy_bios_refusal(_rpi(_firmware(tmp_path))) is None
+def test_the_pi_keeps_its_declared_chain(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    _bios(monkeypatch, tmp_path)  # the Pi has no EFI
+    setup = boot_platform.effective_setup(_rpi(_firmware(tmp_path)))
+    assert setup.kind is InstalledBoot.RPI4_UBOOT_EXTLINUX
+    assert boot_platform.partition_layout(setup).value == "esp"
+    assert boot_platform.legacy_bios_refusal(setup, []) is None
+
+
+def test_bios_without_a_bootable_disk_is_refused() -> None:
+    """R-B4 (task queue item 33): old BIOSes cannot boot NVMe."""
+
+    bios = BootSetup(InstalledBoot.X86_BIOS_GRUB)
+    message = boot_platform.legacy_bios_refusal(bios, [])
+    assert message is not None and message.startswith("Refusing to install")
+    assert "NVMe" in message
+    assert boot_platform.legacy_bios_refusal(bios, ["sda", "sdb"]) is None
+    assert boot_platform.legacy_bios_refusal(boot_platform.NIXOS_DEFAULT_SETUP, []) is None
+
+
+def test_bios_grub_keeps_the_grub_serial_lines_and_has_a_loader_module() -> None:
+    bios = BootSetup(InstalledBoot.X86_BIOS_GRUB)
+    assert "  boot.loader.grub.extraConfig = ''" in boot_platform.loader_config_lines(bios)
+    name = boot_platform.loader_module_template(bios)
+    assert name == "boot-x86-bios-grub.nix"
+    text = (Path(boot_platform.__file__).parent / "templates" / name).read_text()
+    assert text.count(boot_platform.BIOS_BOOT_DEVICES_PLACEHOLDER) == 1
+    assert boot_platform.install_boot_files(bios, Path("/nonexistent"), is_mount=lambda _: False) == []

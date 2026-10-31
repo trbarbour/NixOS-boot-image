@@ -585,23 +585,26 @@ def test_cli_refuses_to_partition_a_protected_disk(monkeypatch, existing_storage
     assert "Refusing to modify protected device(s)" in capsys.readouterr().err
 
 
-def _bios_cli(monkeypatch, tmp_path, *, auto_install: bool):
+NVME_ONLY = [Disk(name="nvme0n1", size=500, rotational=False, nvme=True)]
+NVME_AND_HDDS = NVME_ONLY + [
+    Disk(name="sda", size=1000, rotational=True),
+    Disk(name="sdb", size=1000, rotational=True),
+]
+
+
+def _bios_cli(monkeypatch, tmp_path, *, auto_install: bool, disks=NVME_ONLY):
     monkeypatch.setattr(pre_nixos.install.boot_platform, "_SYSFS_EFI", tmp_path / "no-efi")
     monkeypatch.setenv("PRE_NIXOS_STATE_DIR", str(tmp_path / "state"))
     if auto_install:
         monkeypatch.setenv("PRE_NIXOS_AUTO_INSTALL", "1")
-    monkeypatch.setattr(
-        pre_nixos.inventory,
-        "enumerate_disks",
-        lambda: [Disk(name="sda", size=1000, rotational=False)],
-    )
+    monkeypatch.setattr(pre_nixos.inventory, "enumerate_disks", lambda: list(disks))
     lan = pre_nixos.network.LanConfiguration(
         authorized_key=tmp_path / "key.pub", interface="lan", rename_rule=None, network_unit=None
     )
     monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: lan)
-    applied: list[bool] = []
+    applied: list[dict] = []
     monkeypatch.setattr(
-        pre_nixos.apply, "apply_plan", lambda plan, dry_run=False, protected_disks=frozenset(): applied.append(dry_run)
+        pre_nixos.apply, "apply_plan", lambda plan, dry_run=False, protected_disks=frozenset(): applied.append(plan)
     )
     monkeypatch.setattr(
         pre_nixos.install,
@@ -612,8 +615,8 @@ def _bios_cli(monkeypatch, tmp_path, *, auto_install: bool):
 
 
 def test_cli_bios_with_auto_install_refuses_before_provisioning(monkeypatch, tmp_path, capsys):
-    """Task queue item 33: the disks must not be provisioned for an install
-    that cannot boot (R-B1, UEFI only on x86)."""
+    """Task queue item 33, R-B4: with only NVMe, which an old BIOS cannot
+    boot, the disks must not be provisioned for an install that cannot boot."""
 
     applied = _bios_cli(monkeypatch, tmp_path, auto_install=True)
     with pytest.raises(SystemExit) as excinfo:
@@ -629,4 +632,22 @@ def test_cli_bios_without_auto_install_still_provisions(monkeypatch, tmp_path):
 
     applied = _bios_cli(monkeypatch, tmp_path, auto_install=False)
     pre_nixos.main(["--no-auto-install"])
-    assert applied == [False]
+    assert len(applied) == 1
+
+
+def test_cli_bios_with_a_bootable_disk_provisions_for_grub(monkeypatch, tmp_path):
+    """Plan D6, the user's old machines: NVMe root, /boot and GRUB on the
+    swap HDD pair."""
+
+    applied = _bios_cli(monkeypatch, tmp_path, auto_install=True, disks=NVME_AND_HDDS)
+    pre_nixos.main([])
+    (plan,) = applied
+    assert plan["boot"] == {"layout": "x86-bios", "disks": ["sda", "sdb"]}
+
+
+def test_cli_uefi_plans_the_x86_uefi_layout(monkeypatch, tmp_path):
+    applied = _bios_cli(monkeypatch, tmp_path, auto_install=False, disks=NVME_ONLY)
+    monkeypatch.setattr(pre_nixos.install.boot_platform, "_SYSFS_EFI", tmp_path)  # exists: UEFI
+    pre_nixos.main(["--no-auto-install"])
+    (plan,) = applied
+    assert plan["boot"] == {"layout": "x86-uefi", "disks": ["nvme0n1"]}

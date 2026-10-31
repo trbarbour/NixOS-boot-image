@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Callable, Mapping, Optional, Sequence
 
 from . import boot_order
+from .boot_layout import BootLayout
 
 INSTALLED_BOOT_ENV = "PRE_NIXOS_INSTALLED_BOOT"
 RPI_FIRMWARE_ENV = "PRE_NIXOS_RPI_FIRMWARE"
@@ -44,6 +45,10 @@ class InstalledBoot(enum.Enum):
     NIXOS_DEFAULT = "nixos-default"
     # Pi 4 / CM4 firmware -> NVMe-capable U-Boot -> extlinux (design §1).
     RPI4_UBOOT_EXTLINUX = "rpi4-uboot-extlinux"
+    # An x86 machine booted in legacy BIOS mode -> GRUB (i386-pc) on the disks
+    # the BIOS can boot (R-B4).  Never declared by an image: ``effective_setup``
+    # derives it at run time from ``NIXOS_DEFAULT`` (plan D1).
+    X86_BIOS_GRUB = "x86-bios-grub"
 
 
 @dataclass(frozen=True)
@@ -85,6 +90,36 @@ def boot_setup_from_environment(env: Mapping[str, str] = os.environ) -> BootSetu
 LOADER_MODULE_FILE = "pre-nixos-boot.nix"
 
 
+def effective_setup(setup: BootSetup) -> BootSetup:
+    """The boot chain for the machine this runs on (plan D1).
+
+    The ISO boots under UEFI and under legacy BIOS, so an x86 image's
+    ``NIXOS_DEFAULT`` becomes ``X86_BIOS_GRUB`` when the kernel was not started
+    by UEFI firmware (no ``/sys/firmware/efi``).  The Pi's chain is declared by
+    its image and kept.
+    """
+
+    if setup.kind is InstalledBoot.NIXOS_DEFAULT and not _SYSFS_EFI.is_dir():
+        return BootSetup(InstalledBoot.X86_BIOS_GRUB)
+    return setup
+
+
+def current_setup(env: Mapping[str, str] = os.environ) -> BootSetup:
+    """``effective_setup`` of the image's declaration; ``ValueError`` if invalid."""
+
+    return effective_setup(boot_setup_from_environment(env))
+
+
+def partition_layout(setup: BootSetup) -> BootLayout:
+    """The boot partitions the storage plan creates for ``setup`` (D2, D6)."""
+
+    return {
+        InstalledBoot.RPI4_UBOOT_EXTLINUX: BootLayout.ESP,
+        InstalledBoot.NIXOS_DEFAULT: BootLayout.X86_UEFI,
+        InstalledBoot.X86_BIOS_GRUB: BootLayout.X86_BIOS,
+    }[setup.kind]
+
+
 def loader_config_lines(setup: BootSetup) -> list[str]:
     """Return the loader lines for the managed ``configuration.nix`` block.
 
@@ -92,7 +127,8 @@ def loader_config_lines(setup: BootSetup) -> list[str]:
     defined twice in one file is a Nix parse error (#320).
     """
 
-    if setup.kind is InstalledBoot.NIXOS_DEFAULT:
+    if setup.kind is not InstalledBoot.RPI4_UBOOT_EXTLINUX:
+        # x86: GRUB on the serial console too, when GRUB is the loader.
         return [
             "  boot.loader.grub.extraConfig = ''",
             "    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
@@ -115,25 +151,32 @@ def loader_module_template(setup: BootSetup) -> Optional[str]:
 
     if setup.kind is InstalledBoot.RPI4_UBOOT_EXTLINUX:
         return "boot-rpi4-uboot-extlinux.nix"
+    if setup.kind is InstalledBoot.X86_BIOS_GRUB:
+        # Rendered: BIOS_BOOT_DEVICES_PLACEHOLDER becomes the GRUB target disks.
+        return "boot-x86-bios-grub.nix"
     return None
 
 
-def legacy_bios_refusal(setup: BootSetup) -> Optional[str]:
+# In boot-x86-bios-grub.nix: replaced by a Nix list of the disks' stable paths.
+BIOS_BOOT_DEVICES_PLACEHOLDER = "@BIOS_BOOT_DEVICES@"
+
+
+def legacy_bios_refusal(setup: BootSetup, boot_disks: Sequence[str]) -> Optional[str]:
     """Why an install on this machine must be refused, or ``None``.
 
-    x86 installs boot with UEFI only (reqs R-B1).  The ISO also boots in legacy
-    BIOS mode, but there nixos-generate-config enables GRUB without a target
-    disk and the layout has no BIOS boot partition, so nixos-install would fail
-    after the disks were provisioned (task queue item 33).  The Pi boots
-    through its own firmware and has no EFI, so the check is for x86 only.
+    ``setup`` is the effective setup; ``boot_disks`` are the disks the storage
+    plan put the boot partitions on (``plan["boot"]["disks"]``).  Under legacy
+    BIOS the plan finds none when every disk is NVMe, which old BIOSes cannot
+    boot (R-B4, plan D6); nixos-install would then fail, or install a system
+    that cannot boot, after the disks were provisioned (task queue item 33).
     """
 
-    if setup.kind is not InstalledBoot.NIXOS_DEFAULT or _SYSFS_EFI.is_dir():
+    if setup.kind is not InstalledBoot.X86_BIOS_GRUB or boot_disks:
         return None
     return (
         "Refusing to install: this machine booted in legacy BIOS mode, and "
-        "pre-nixos installs x86 systems for UEFI only. Reboot the installer in "
-        "UEFI mode (firmware setup: disable CSM/legacy boot)."
+        "none of its disks can be booted by a legacy BIOS (NVMe cannot). Add a "
+        "SATA/SAS disk, or reboot the installer in UEFI mode."
     )
 
 
@@ -150,7 +193,7 @@ def install_boot_files(
     the copy did not produce the required files.
     """
 
-    if setup.kind is InstalledBoot.NIXOS_DEFAULT:
+    if setup.kind is not InstalledBoot.RPI4_UBOOT_EXTLINUX:
         return []
     assert setup.rpi_firmware is not None  # guaranteed by BootSetup
 

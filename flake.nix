@@ -391,7 +391,7 @@
               export HOME=$TMPDIR NIX_STATE_DIR=$TMPDIR/nix-state NIX_LOG_DIR=$TMPDIR/nix-log
               export PRE_NIXOS_LOG_FILE=$TMPDIR/pre-nixos.log PYTHONPATH=${./.}
               for variant in extlinux grub efi; do
-                for kind in rpi4-uboot-extlinux nixos-default; do
+                for kind in rpi4-uboot-extlinux nixos-default x86-bios-grub; do
                   root=$TMPDIR/$variant-$kind
                   python3 ${./tests/nix/render_installed_configuration.py} \
                     ${./tests/fixtures/nixos-generate-config}/$variant $root $kind
@@ -474,6 +474,52 @@
             assert pkgs.lib.assertMsg (missing == [ ])
               "installed Pi initrd lacks ${builtins.toString missing}";
             pkgs.runCommand "installed-rpi-initrd-storage" {} ''
+              touch $out
+            '';
+          # R-B4 (task queue item 33): on a legacy-BIOS x86 machine the installed
+          # system boots through GRUB on the plan's boot disks.  Without the
+          # module, the generator's GRUB configuration fails with "You must set
+          # the option 'boot.loader.grub.devices'".
+          installed-bios-boot-loader =
+            let
+              devices = [ "/dev/disk/by-id/ata-TEST_DISK_A" "/dev/disk/by-id/ata-TEST_DISK_B" ];
+              module = builtins.toFile "pre-nixos-boot.nix" (builtins.replaceStrings
+                [ "@BIOS_BOOT_DEVICES@" ]
+                [ "[ ${lib.concatMapStringsSep " " (d: ''"${d}"'') devices} ]" ]
+                (builtins.readFile ./pre_nixos/templates/boot-x86-bios-grub.nix));
+              system = nixpkgs.lib.nixosSystem {
+                system = preInstallerSystem;
+                modules = [
+                  ./tests/fixtures/nixos-generate-config/grub/configuration.nix
+                  module
+                  ./pre_nixos/templates/network-networkd.nix
+                  ({ lib, ... }: {
+                    nixpkgs.hostPlatform = lib.mkForce preInstallerSystem;
+                    fileSystems."/" = { device = "/dev/main/slash"; fsType = "ext4"; };
+                    fileSystems."/boot" = { device = "/dev/disk/by-label/EFI"; fsType = "vfat"; };
+                  })
+                ];
+              };
+              inherit (system) config;
+              loader = {
+                grub = config.boot.loader.grub.enable;
+                efiSupport = config.boot.loader.grub.efiSupport;
+                systemdBoot = config.boot.loader.systemd-boot.enable;
+                devices = config.boot.loader.grub.devices;
+              };
+            in
+            assert pkgs.lib.assertMsg
+              (loader == { grub = true; efiSupport = false; systemdBoot = false; inherit devices; })
+              "installed BIOS loader is ${builtins.toJSON loader}";
+            assert builtins.seq config.system.build.toplevel.drvPath true;
+            # Plan D5: the installed system's BIOS GRUB is in the ISO's store, so a
+            # BIOS install needs no network for its boot loader.
+            assert pkgs.lib.assertMsg
+              (config.boot.loader.grub.zfsSupport == false
+                && builtins.elem system.pkgs.grub2.outPath
+                  (map (dep: dep.outPath or "") preInstallerConfig.config.system.extraDependencies))
+              "the ISO lacks the installed system's GRUB ${system.pkgs.grub2.name}";
+            pkgs.runCommand "installed-bios-boot-loader" {} ''
               touch $out
             '';
           # #326: the installed system has one DHCP client on lan, systemd-networkd

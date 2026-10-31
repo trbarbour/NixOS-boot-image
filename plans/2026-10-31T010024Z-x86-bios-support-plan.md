@@ -96,3 +96,23 @@ Effort: items 2–5 are small, about one PR. Item 6 is most of the work. Item 7 
   - **No non-NVMe disk at all:** refuse before provisioning, as now (`REASON=bios-unsupported`), with the message naming the reason.
   - **R-B4 (revised):** on legacy BIOS, `/boot` and GRUB go on a BIOS-bootable (non-NVMe) disk; `main` may still be NVMe.
 - **New unknown U6:** the SATA/SAS disks in the user's machines (SSD or HDD, how many, part of an array?). This decides which D6 branch they exercise. Asked.
+
+## 7. Implementation status (0.24.0, 2026-10-31)
+
+- **User decisions:** D2 (a) on x86 only, and D6 (user: "In the past I have used the swap disk(s) for this purpose"). The machines have probably one NVMe SSD and a pair of HDDs for swap; that case has its own test.
+- **Change to D2's order, found by disko's dry run:** disko gives EF02 priority 100, before every other partition, because "some BIOS implementations require it". So on x86 the order is **EF02 partition 1, ESP partition 2, data partition 3**. The plan's names follow it (`test_plan_partition_numbers_match_disko`). The Pi has no EF02, so its ESP stays partition 1.
+- **Done:**
+  - work item 2: `InstalledBoot.X86_BIOS_GRUB` and `boot_platform.effective_setup`;
+  - work item 3: `boot_layout.py` and the planner;
+  - work item 4: `templates/boot-x86-bios-grub.nix`, rendered with by-id paths, plus the flake check `installed-bios-boot-loader`. Without the module the check fails, as today's installs do;
+  - work item 5: `pkgs.grub2` in the ISO, checked by the same flake check;
+  - the refusal narrowed to "no BIOS-bootable disk".
+- **Verified:**
+  - unit tests;
+  - the flake checks: `installed-bios-boot-loader`, and `installed-configuration-parses` with the new kind;
+  - a disko dry run of the user's shape, NVMe plus two HDDs: `sda1`/`sdb1` EF02 1M, `sda2`/`sdb2` EF00 4G, `sda3`/`sdb3` the mirror;
+  - the x86 VM tests (SeaBIOS, so they now plan the BIOS layout).
+- **Not done:**
+  - work item 6, the end-to-end install VM test (task queue item 12);
+  - work item 7, the hardware test on the user's machines, which also settles U1 (`pmbr_boot`);
+  - keeping the other boot disks' ESPs in sync (D3 (b), `mirroredBoots`).

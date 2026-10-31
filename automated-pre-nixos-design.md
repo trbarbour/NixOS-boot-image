@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.27
+**Doc status:** Draft v0.28
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -92,7 +92,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - **Fallbacks:** If insufficient HDDs for a swap mirror, create VG `large` from available HDDs and put the swap LV there. With no rotating tier available, place the swap LV on `main` provided it can accommodate the configured size; otherwise skip swap.
 
 ### 7.3 Partitioning scheme (GPT)
-- **Per-disk layout:** every participating disk receives a GPT with a single data partition sized to the available capacity. When the disk underpins VG `main`, an EFI System Partition (FAT32, label `EFI`, or `EFI2`, `EFI3`, … on further members) is created before the data slice.
+- **Per-disk layout:** every participating disk receives a GPT with a single data partition sized to the available capacity. The boot disks (those of VG `main`, or under x86 legacy BIOS the set chosen in §7.6.0) also get an EFI System Partition (FAT32, label `EFI`, or `EFI2`, `EFI3`, … on further members) before the data slice. On x86 a 1 MiB BIOS boot partition (EF02) comes first (§7.6.0, R-B4).
 - **ESP size [R-B3]:** 3% of the disk, MiB-aligned, at least 1 GiB and at most 4 GiB (`planner.efi_partition_size`). Disks of 33 GiB or less get 1 GiB; disks of about 133 GiB or more get 4 GiB. Each generation on `/boot` takes about 200 MB, so 4 GiB holds about 20, extlinux's default `configurationLimit`. systemd-boot has no default limit, so on x86 a full ESP is still possible (`docs/task-queue.md` item 32).
   - When `main` is an array, every member's ESP has the same size, taken from the smallest member, so the ESPs stay interchangeable copies.
   - The planner records the size on each `efi` partition of the plan, and the disko layout takes it from there; an ESP without a size is an error, not a default.
@@ -118,11 +118,26 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ### 7.6 UEFI bootloader
 - Install **systemd-boot** into ESP by default. Fallback to GRUB-UEFI if firmware quirks detected.
 
-### 7.6.0 x86 firmware mode [R-B1]
-- The ISO boots under UEFI and under legacy BIOS. Installs are for UEFI only.
-- On a machine without `/sys/firmware/efi` (legacy BIOS), an **auto-install is refused before any storage is provisioned for it**: `REASON=bios-unsupported`, announced on every console. `--install-now` is refused the same way.
-- Why: `nixos-generate-config` would enable GRUB with no target disk, and the layout has no BIOS boot partition, so `nixos-install` would fail after the disks were wiped (task queue item 33).
-- Provisioning without auto-install is unchanged; it only touches empty disks, and the x86 VM tests run it under SeaBIOS.
+### 7.6.0 x86 firmware mode [R-B1, R-B4]
+- The ISO boots under UEFI and under legacy BIOS, and the installed system boots the same way.
+- **The mode is detected at install time** (`/sys/firmware/efi`), because one ISO serves both kinds of machine. It then becomes an explicit boot kind (`boot_platform.effective_setup`):
+  - `nixos-default` under UEFI, with the loader chosen by `nixos-generate-config` (systemd-boot);
+  - `x86-bios-grub` under legacy BIOS.
+- **Layout (`boot_layout.BootLayout`):** on x86 the boot disks get a 1 MiB BIOS boot partition (EF02) as **partition 1**, the ESP as partition 2, and the data as partition 3.
+  - EF02 comes first because disko creates it first: some BIOSes require it there.
+  - It is added under UEFI too, so a disk boots after moving between modes.
+  - The Pi keeps the ESP as partition 1.
+- **Boot disks under legacy BIOS:** the first BIOS-bootable (non-NVMe) set, in this order:
+  - `main`;
+  - the other SSD groups;
+  - `swap`, which is the user's old practice;
+  - `large`.
+  - The root stays on NVMe if `main` is NVMe. The plan records the choice in `plan["boot"]`.
+- **Loader:** `/etc/nixos/pre-nixos-boot.nix` (template `boot-x86-bios-grub.nix`) forces GRUB on, `efiSupport` off and systemd-boot off. It sets `grub.devices` to the boot disks' `/dev/disk/by-id` paths (WWN preferred).
+  - Every copy loads from `/boot`, the first boot disk's ESP; keeping the others in sync is not done yet.
+  - The ISO carries `pkgs.grub2`, so BIOS installs work offline.
+- **Refusal:** under legacy BIOS with no BIOS-bootable disk (NVMe only), an auto-install is refused **before** any storage is provisioned. It records `REASON=bios-unsupported` and announces it on every console. `--install-now` is refused the same way.
+- **Design:** `plans/2026-10-31T010024Z-x86-bios-support-plan.md`. Task queue item 33.
 
 ### 7.6.1 AArch64 (Raspberry Pi 4 / CM4) installed bootloader [R-B1, R-B2]
 - **Chain:** EEPROM (`BOOT_ORDER`, NVMe first) → stock `start4.elf`/`config.txt` → **NVMe-capable U-Boot** → `bootflow scan` (`nvme` first) → `/boot/extlinux/extlinux.conf` → NixOS kernel/initrd (md + LVM root).

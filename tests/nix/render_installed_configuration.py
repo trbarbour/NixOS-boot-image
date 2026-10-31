@@ -5,7 +5,7 @@ Used by the flake check ``installed-configuration-parses``
 ``ROOT/etc/nixos`` and applies pre-nixos's configuration rewrite to it, as
 ``auto_install`` does on the target after ``nixos-generate-config``.
 
-Usage: render_installed_configuration.py FIXTURE ROOT {nixos-default,rpi4-uboot-extlinux}
+Usage: render_installed_configuration.py FIXTURE ROOT {nixos-default,rpi4-uboot-extlinux,x86-bios-grub}
 """
 
 from __future__ import annotations
@@ -37,6 +37,11 @@ def main(argv: list[str]) -> int:
         None,
         console_kernel_params=["console=ttyS0,115200n8"],
         boot_setup=boot_platform.BootSetup(kind, firmware),
+        boot_devices=(
+            ["/dev/disk/by-id/ata-TEST_DISK_A", "/dev/disk/by-id/ata-TEST_DISK_B"]
+            if kind is boot_platform.InstalledBoot.X86_BIOS_GRUB
+            else ()
+        ),
     )
     install._rewrite_hardware_configuration(root)
     return 0
