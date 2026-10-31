@@ -319,6 +319,18 @@ _Last updated: 2026-10-30T12-35-13Z_
     - The ESP is now 1 to 4 GiB (R-B3), at about 200 MB per generation. extlinux keeps 20 generations by default, which overflows a 1 GiB ESP; systemd-boot (x86) has no default limit at all. A full `/boot` makes `nixos-rebuild switch` fail.
     - Consider writing `boot.loader.{systemd-boot,generic-extlinux-compatible}.configurationLimit` into the generated configuration, derived from the planned ESP size. Needs a design debate (fixed headroom per generation vs. measured closure; what happens when a kernel grows).
 
+33. **BIOS (legacy) x86 installs fail late: the disks are wiped first, then `nixos-install` fails.** *(defect plus possible feature, 2026-10-31, user question)*
+    - Facts (evaluated):
+      - the ISO is BIOS-bootable (`isoImage.makeBiosBootable = true`), and the x86 VM tests already boot it under SeaBIOS;
+      - on a BIOS machine, `nixos-generate-config` writes `grub.enable = true` with no device. The rendered configuration (the GRUB fixture plus the managed block) fails with "You must set the option 'boot.loader.grub.devices' or 'boot.loader.grub.mirroredBoots'".
+    - So under R-B1 (UEFI only) pre-nixos should refuse **before** planning or provisioning, by checking `/sys/firmware/efi`, as the BOOT_ORDER check does on the Pi.
+    - Optional feature (user: "not worth a lot of effort"):
+      - amend R-B1;
+      - detect the boot mode at run time;
+      - add a 1 MiB EF02 BIOS boot partition on the `main` disks;
+      - a GRUB module with `grub.devices` set to the `main` disks' by-id paths;
+      - tests: a flake check on the GRUB fixture, and the item-12 end-to-end install VM test under SeaBIOS.
+
 ## Recently Completed
 - 2026-10-30T23-57-39Z - Merged trbarbour/NixOS-boot-image#329 (0.23.0): the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB] (R-B3; patch from another session, applied and verified here: unit tests, a disko dry run, sgdisk on a sparse image, and x86 VM tests 4/4). The PR also carried the CM4 item-10 acceptance records and the undervoltage notes. CI green, no Codex findings.
 - 2026-10-30T12-35-13Z - (user request) 0.23.0: the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB], instead of a fixed 1 GiB (R-B3). Array members share one size, from the smallest. The SD image is unchanged: its FAT partition holds only firmware. Design: `plans/2026-10-30T123513Z-esp-size-design.md`. Follow-up: item 32.
