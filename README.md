@@ -80,7 +80,19 @@ A **site** is a directory with a `pre-nixos-site.nix` file. It supplies the sett
 }
 ```
 
-`primaryConsole` chooses where systemd's status lines, emergency shells and `/dev/console` go: the serial port or the screen. The installed system keeps the same choice. Unknown settings and wrong types are evaluation errors. Keep the directory outside git: either anywhere on your machine, or as `site/` in your checkout, which `.gitignore` excludes.
+`primaryConsole` chooses where systemd's status lines, emergency shells and `/dev/console` go: the serial port or the screen. The installed system keeps the same choice.
+
+**Console variants.** The flake also builds each image with the other primary console, whatever the site says:
+- `bootImageSerial`: the ISO with the serial port primary;
+- `bootImageSdDisplay`: the SD image with the screen primary.
+
+An image whose primary console is not its format's default has `-serial` or `-display` after the commit in its file name, e.g. `pre-nixos-0.25.0-g1234abc-serial-…-x86_64-linux.iso`. To build all four at once:
+
+```bash
+nix build .#bootImage .#bootImageSerial .#bootImageSd .#bootImageSdDisplay --override-input site path:./site
+```
+
+The results are `result` to `result-3`, in that order. `lib.mkBootImage` takes `primaryConsole` too. Unknown settings and wrong types are evaluation errors. Keep the directory outside git: either anywhere on your machine, or as `site/` in your checkout, which `.gitignore` excludes.
 
 **Build the one image you need, purely.** Each command builds only the image it names:
 

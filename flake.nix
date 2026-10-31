@@ -27,7 +27,11 @@
       # nixpkgs' default names only carry its own version, so two pre-nixos
       # images were indistinguishable once copied out of the store.
       sourceRev = "g" + (self.shortRev or self.dirtyShortRev or "unknown");
-      imageBaseName = { label, system }: "pre-nixos-${preNixosVersion}-${sourceRev}-${label}-${system}";
+      # A primary console other than the format's default (R-C2) is named after
+      # the commit, e.g. pre-nixos-0.25.0-g1234abc-serial-…-x86_64-linux.iso, so the
+      # variants can be told apart (user request, 2026-10-31).
+      imageBaseName = { label, system, consoleTag }:
+        "pre-nixos-${preNixosVersion}-${sourceRev}${lib.optionalString (consoleTag != null) "-${consoleTag}"}-${label}-${system}";
       # Legacy, impure fallback (design D2c): only read under --impure, and only
       # fills settings the site leaves unset.
       envSettings = {
@@ -93,7 +97,7 @@
       # `settings` (nix/site.nix resolveSettings) is the one source of both the
       # key embedded in the package and the module's options, so the image's
       # login notice and its behaviour cannot disagree (design D4).
-      mkPreInstaller = { system, imageModules, settings, console }:
+      mkPreInstaller = { system, imageModules, settings, console, consoleTag ? null }:
         let
           package = makePreNixosPackage { inherit system; inherit (settings) rootKey; };
         in
@@ -111,7 +115,7 @@
               services.pre-nixos.primaryConsole = console.primary;
               services.pre-nixos.serialConsole = console.serial;
               # The ISO and SD modules set image.baseName with normal priority.
-              image.baseName = lib.mkForce (imageBaseName { inherit system; label = config.system.nixos.label; });
+              image.baseName = lib.mkForce (imageBaseName { inherit system consoleTag; label = config.system.nixos.label; });
             })
           ];
         };
@@ -186,20 +190,29 @@
 
       # A boot image's NixOS configuration from a format and a site directory
       # (default: the flake input `site`).  Exported as lib.mkBootConfiguration.
-      mkBootConfigurationWith = { format, settings }:
+      # `primaryConsole` ("serial" | "display" | null), when given, overrides the
+      # site's setting: the variant packages use it (R-C2).
+      mkBootConfigurationWith = { format, settings, primaryConsole ? null }:
         let
           f = formatOf format;
-          build = console: mkPreInstaller { inherit (f) system imageModules; inherit settings console; };
+          build = console: consoleTag:
+            mkPreInstaller { inherit (f) system imageModules; inherit settings console consoleTag; };
           # The format's own consoles: the image with nothing appended.
-          consoles = consolesOf (build { primary = "display"; serial = null; }).config.boot.kernelParams;
+          consoles = consolesOf (build { primary = "display"; serial = null; } null).config.boot.kernelParams;
+          primary =
+            if primaryConsole != null then primaryConsole
+            else if settings.primaryConsole != null then settings.primaryConsole
+            else f.primaryConsole;
         in
+        assert lib.assertMsg (builtins.elem primary [ "serial" "display" ])
+          "pre-nixos: primaryConsole must be \"serial\" or \"display\", not ${builtins.toJSON primary}";
         build {
-          primary = if settings.primaryConsole != null then settings.primaryConsole else f.primaryConsole;
+          inherit primary;
           serial = serialConsoleFor { inherit format consoles; named = f.serialConsole; };
-        };
-      mkBootConfiguration = { format, site ? null }:
+        } (if primary == f.primaryConsole then null else primary);
+      mkBootConfiguration = { format, site ? null, primaryConsole ? null }:
         mkBootConfigurationWith {
-          inherit format;
+          inherit format primaryConsole;
           settings = if site == null then flakeSettings else settingsFor site;
         };
 
@@ -322,6 +335,10 @@
         modules = stockSdImageModules;
       };
 
+      # A boot image with the primary console that is not its format's default.
+      consoleVariant = format: primaryConsole:
+        (formatOf format).image (mkBootConfiguration { inherit format primaryConsole; }).config;
+
       # R-P2: pre-nixos must not change the stock image's boot chain or kernel
       # console parameters.  Evaluation only (no aarch64 build needed).
       bootSettings = config: {
@@ -344,6 +361,9 @@
           if system == preInstallerSystem then {
             default = preInstallerConfig.config.system.build.isoImage;
             bootImage = preInstallerConfig.config.system.build.isoImage;
+            # The same ISO with the serial console primary (R-C2; "-serial" in its name).
+            bootImageSerial = consoleVariant "iso" "serial";
+            bootImageSdDisplay = consoleVariant "sd" "display";
             # The AArch64 image again, so `nix build .#bootImageSd` works on an
             # x86_64 build host (built under emulation); short attribute names
             # resolve within the host's own system (PR #319 review).
@@ -353,6 +373,8 @@
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
             bootImageSd = aarch64Config.config.system.build.sdImage;
+            # The SD image with the display primary (R-C2; "-display" in its name).
+            bootImageSdDisplay = consoleVariant "sd" "display";
             ubootRpi4Nvme = aarch64Config.pkgs.callPackage ./nix/uboot-rpi4-nvme.nix { };
             rpi4NvmeFirmware = aarch64Config.config.services.pre-nixos.rpiFirmware;
           } else {
@@ -447,6 +469,32 @@
             # The ISO derivation names its file from isoName, not fileName.
             assert pkgs.lib.assertMsg (iso.isoImage.isoName == name "iso")
               "isoName ${iso.isoImage.isoName} differs from image.fileName ${name "iso"}";
+            # R-C2 (user request, 2026-10-31): a primary console other than the
+            # format's default is in the name, after the commit.  The variant
+            # packages set it whatever the site says; a site setting is tagged too.
+            assert pkgs.lib.all (case:
+                let
+                  c = (mkBootConfiguration ({ format = case.format; } // case.args)).config;
+                  tagged = pkgs.lib.hasPrefix "pre-nixos-${preNixosVersion}-${sourceRev}-${case.tag}-" c.image.fileName;
+                  untagged = !(pkgs.lib.hasInfix "-serial-" c.image.fileName || pkgs.lib.hasInfix "-display-" c.image.fileName);
+                in
+                pkgs.lib.assertMsg
+                  ((if case.tag == null then untagged else tagged)
+                    && c.services.pre-nixos.primaryConsole == case.primary)
+                  "${case.format} ${builtins.toJSON case.args}: ${c.image.fileName}, primary ${c.services.pre-nixos.primaryConsole}")
+              [
+                { format = "iso"; args = { }; tag = null; primary = "display"; }
+                { format = "iso"; args = { primaryConsole = "serial"; }; tag = "serial"; primary = "serial"; }
+                { format = "iso"; args = { primaryConsole = "display"; }; tag = null; primary = "display"; }
+                { format = "sd"; args = { }; tag = null; primary = "serial"; }
+                { format = "sd"; args = { primaryConsole = "display"; }; tag = "display"; primary = "display"; }
+                { format = "iso"; args = { site = ./tests/fixtures/site-serial-console; }; tag = "serial"; primary = "serial"; }
+                { format = "iso"; args = { site = ./tests/fixtures/site-serial-console; primaryConsole = "display"; }; tag = null; primary = "display"; }
+              ];
+            assert pkgs.lib.assertMsg
+              (self.packages.${preInstallerSystem}.bootImageSerial.name != self.packages.${preInstallerSystem}.bootImage.name
+                && self.packages.${preInstallerSystem}.bootImageSdDisplay.name != self.packages.${preInstallerSystem}.bootImageSd.name)
+              "the console variant packages must differ from the defaults";
             pkgs.runCommand "image-file-names" {} ''
               touch $out
             '';
@@ -621,10 +669,11 @@
       #       pre-nixos.lib.mkBootImage { format = "sd"; site = ./.; };
       #   };
       # `format`: "iso" (x86_64-linux) or "sd" (aarch64-linux); `site`: a
-      # directory with pre-nixos-site.nix (nix/site.nix).
+      # directory with pre-nixos-site.nix (nix/site.nix); `primaryConsole`:
+      # "serial" or "display", overriding the site's (R-C2).
       lib = {
         inherit mkBootConfiguration;
-        mkBootImage = { format, site ? null }@args:
+        mkBootImage = { format, site ? null, primaryConsole ? null }@args:
           (formatOf format).image (mkBootConfiguration args).config;
       };
       nixosModules.pre-nixos = preNixosModule;
