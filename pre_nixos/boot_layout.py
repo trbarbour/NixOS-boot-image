@@ -31,8 +31,10 @@ class BootLayout(enum.Enum):
         return self is not BootLayout.ESP
 
 
-def _bios_bootable(bucket: Sequence[Disk]) -> bool:
-    return bool(bucket) and not any(disk.nvme for disk in bucket)
+def _bios_bootable(bucket: Sequence[Disk]) -> List[Disk]:
+    """The members of ``bucket`` a legacy BIOS can boot (not NVMe)."""
+
+    return [disk for disk in bucket if not disk.nvme]
 
 
 def _preference(vg_name: str) -> Tuple[int, str]:
@@ -50,17 +52,20 @@ def _preference(vg_name: str) -> Tuple[int, str]:
 def choose_boot_disks(
     roles: Sequence[Tuple[str, List[Disk]]], layout: BootLayout
 ) -> Optional[List[Disk]]:
-    """The disk set (one plan bucket) that gets the boot partitions.
+    """The disks (all in one plan bucket) that get the boot partitions.
 
     ``roles`` pairs each bucket with the volume group it becomes.  Under UEFI
-    (and on the Pi) that is the ``main`` bucket.  Under legacy BIOS it is the
-    first BIOS-bootable bucket in D6 order, or ``None`` when there is none;
-    the install is then refused (R-B4).
+    (and on the Pi) that is the whole ``main`` bucket.  Under legacy BIOS it
+    is the BIOS-bootable members of the first bucket, in D6 order, that has
+    any: a bucket can mix an NVMe and a SATA disk of similar size (Codex
+    review on #330).  ``None`` when there are none; the install is then
+    refused (R-B4).
     """
 
     if layout is not BootLayout.X86_BIOS:
-        return next((bucket for name, bucket in roles if name == "main"), None)
+        return next((list(bucket) for name, bucket in roles if name == "main"), None)
     for _name, bucket in sorted(roles, key=lambda role: _preference(role[0])):
-        if _bios_bootable(bucket):
-            return bucket
+        bootable = _bios_bootable(bucket)
+        if bootable:
+            return bootable
     return None

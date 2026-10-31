@@ -92,11 +92,13 @@ def test_choose_boot_disks_order() -> None:
     swap = [HDD_A, HDD_B]
     large = [Disk(name="sdd", size=4000 * GIB, rotational=True)]
     roles = [("large", large), ("swap", swap), ("main_1", ssd_other), ("main", nvme_main)]
-    assert choose_boot_disks(roles, BootLayout.X86_BIOS) is ssd_other
-    assert choose_boot_disks(roles[:2], BootLayout.X86_BIOS) is swap
-    assert choose_boot_disks([("large", large)], BootLayout.X86_BIOS) is large
-    assert choose_boot_disks(roles, BootLayout.X86_UEFI) is nvme_main
+    assert choose_boot_disks(roles, BootLayout.X86_BIOS) == ssd_other
+    assert choose_boot_disks(roles[:2], BootLayout.X86_BIOS) == swap
+    assert choose_boot_disks([("large", large)], BootLayout.X86_BIOS) == large
+    assert choose_boot_disks(roles, BootLayout.X86_UEFI) == nvme_main
     assert choose_boot_disks([("main", nvme_main)], BootLayout.X86_BIOS) is None
+    # A mixed group: only its BIOS-bootable member (Codex review on #330).
+    assert choose_boot_disks([("main", [NVME, SATA_SSD])], BootLayout.X86_BIOS) == [SATA_SSD]
 
 
 def test_plan_partition_numbers_match_disko(tmp_path) -> None:
@@ -110,3 +112,41 @@ def test_plan_partition_numbers_match_disko(tmp_path) -> None:
         # disko's default priorities: EF02 100, sized partitions 1000, "100%" 9001.
         rank = {"EF02": 0, "EF00": 1, None: 2}
         assert types == sorted(types, key=lambda t: rank.get(t, 2)), (disk, types)
+
+
+def test_bios_mixed_nvme_and_sata_group_boots_from_the_sata_member() -> None:
+    """Codex review on #330: a SATA SSD and an NVMe of near-equal size form one
+    group (one array).  The BIOS can boot the SATA member, so it gets the boot
+    partitions; the NVMe member keeps only its data partition."""
+
+    nvme = Disk(name="nvme0n1", size=500 * GIB, rotational=False, nvme=True)
+    sata = Disk(name="sda", size=500 * GIB, rotational=False)
+    plan = plan_storage("careful", [nvme, sata], boot_layout=BootLayout.X86_BIOS)
+    assert plan["boot"] == {"layout": "x86-bios", "disks": ["sda"]}
+    assert _types(plan, "sda") == ["bios_grub", "efi", "linux-raid"]
+    assert _types(plan, "nvme0n1") == ["linux-raid"]
+    (array,) = plan["arrays"]
+    assert array["level"] == "raid1" and sorted(array["devices"]) == ["nvme0n1p1", "sda3"]
+    # The mirror is the smaller member: the SATA disk less its boot partitions.
+    assert _disko_parts(plan, "sda")["sda2"]["content"]["mountpoint"] == "/boot"
+
+
+def test_bios_nvme_plus_one_large_hdd_boots_from_the_swap_hdd() -> None:
+    """User question: NVMe and a single HDD.  The HDD becomes the swap VG and
+    gets the boot partitions; the root stays on NVMe."""
+
+    plan = plan_storage("fast", [NVME, HDD_A], boot_layout=BootLayout.X86_BIOS)
+    assert {vg["name"] for vg in plan["vgs"]} == {"main", "swap"}
+    assert plan["boot"]["disks"] == ["sda"]
+    assert _types(plan, "sda") == ["bios_grub", "efi", "lvm"]
+    assert _types(plan, "nvme0n1") == ["lvm"]
+
+
+def test_bios_nvme_plus_one_small_hdd_boots_from_the_large_hdd() -> None:
+    """Too small for swap (2 x RAM), the HDD becomes `large`, D6's last choice."""
+
+    small = Disk(name="sda", size=20 * GIB, rotational=True)
+    plan = plan_storage("fast", [NVME, small], boot_layout=BootLayout.X86_BIOS, ram_gb=16)
+    assert {vg["name"] for vg in plan["vgs"]} == {"main", "large"}
+    assert plan["boot"]["disks"] == ["sda"]
+    assert _types(plan, "sda") == ["bios_grub", "efi", "lvm"]

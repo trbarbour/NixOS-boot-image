@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List, Optional, Set
 
 from .inventory import Disk
 from .block_names import partition_name
@@ -195,6 +195,10 @@ def _assert_has_root(plan: Dict[str, Any], disks: List[Disk]) -> None:
         ), f"storage plan has no main/slash (#313): vgs={[vg['name'] for vg in plan['vgs']]}"
 
 
+def _names(disks: Optional[List[Disk]]) -> Set[str]:
+    return {disk.name for disk in disks or []}
+
+
 def plan_storage(
     mode: str,
     disks: List[Disk],
@@ -221,31 +225,33 @@ def plan_storage(
     vg_sizes: Dict[str, int] = {}
     used_vg_sizes: Dict[str, int] = {}
 
-    def record_partitions(ds: List[Disk], with_efi: bool, raid: bool) -> List[str]:
+    def record_partitions(ds: List[Disk], boot: Set[str], raid: bool) -> List[str]:
         """Record partitions for ``ds`` and return their data devices.
 
-        ``with_efi``: ``ds`` is the boot disk set.  It gets the ESP and, when
-        the layout has one, the BIOS boot partition first (partition 1, then
-        the ESP), before the data partition (D2).
+        ``boot``: the names of the members of ``ds`` that get the boot
+        partitions: the BIOS boot partition first when the layout has one
+        (partition 1), then the ESP, before the data partition (D2).
 
         The final partition type depends on ``raid``: when ``True`` the
         partition is marked as ``linux-raid`` (FD00); otherwise it becomes a
         ``lvm`` partition (8E00).
         """
 
-        with_bios = with_efi and boot_layout.has_bios_boot_partition
-        if with_efi:
-            plan["boot"]["disks"] = [d.name for d in ds]
+        boot_members = [d for d in ds if d.name in boot]
+        if boot_members:
+            plan["boot"]["disks"] = [d.name for d in boot_members]
 
         devices: List[str] = []
         # One ESP size for the whole set, from its smallest disk, so that the
         # ESPs on the members of an array are interchangeable copies (R-B3).
         efi_size = (
-            efi_partition_size(min(_to_bytes(d.size) for d in ds))
-            if with_efi and ds
+            efi_partition_size(min(_to_bytes(d.size) for d in boot_members))
+            if boot_members
             else 0
         )
         for d in ds:
+            with_efi = d.name in boot
+            with_bios = with_efi and boot_layout.has_bios_boot_partition
             if d.name not in plan["partitions"]:
                 parts: List[Dict[str, str]] = []
                 idx = 1
@@ -393,7 +399,7 @@ def plan_storage(
         arr = decide_hdd_array(bucket, prefer_raid6_on_four=prefer_raid6_on_four)
         boot_disks = choose_boot_disks([("main", bucket)], boot_layout)
         devices = record_partitions(
-            bucket, with_efi=boot_disks is bucket, raid=arr["level"] != "single"
+            bucket, boot=_names(boot_disks), raid=arr["level"] != "single"
         )
         if arr["level"] == "single":
             add_vg("main", devices)
@@ -492,7 +498,7 @@ def plan_storage(
         vg_name = ssd_vg_names[idx]
         arr = decide_ssd_array(bucket, mode)
         devices = record_partitions(
-            bucket, with_efi=bucket is boot_disks, raid=arr["level"] != "single"
+            bucket, boot=_names(boot_disks), raid=arr["level"] != "single"
         )
         if arr["level"] == "single":
             add_vg(vg_name, devices)
@@ -506,7 +512,7 @@ def plan_storage(
         vg_name = hdd_vg_names[idx]
         arr = hdd_arrays[idx]
         devices = record_partitions(
-            bucket, with_efi=bucket is boot_disks, raid=arr["level"] != "single"
+            bucket, boot=_names(boot_disks), raid=arr["level"] != "single"
         )
         if arr["level"] == "single":
             add_vg(vg_name, devices)
