@@ -456,11 +456,14 @@
           # Both images are named after this pre-nixos (version and commit).
           image-file-names =
             let
-              name = format: (mkBootConfiguration { inherit format; }).config.image.fileName;
+              # The repo's empty site, explicitly, so the check holds whatever
+              # site the flake is evaluated with (Codex review on #331).
+              emptySite = ./nix/site-default;
+              name = format: (mkBootConfiguration { inherit format; site = emptySite; }).config.image.fileName;
               want = format: extension:
-                let c = (mkBootConfiguration { inherit format; }).config; in
+                let c = (mkBootConfiguration { inherit format; site = emptySite; }).config; in
                 "pre-nixos-${preNixosVersion}-${sourceRev}-${c.system.nixos.label}-${formats.${format}.system}.${extension}";
-              iso = (mkBootConfiguration { format = "iso"; }).config;
+              iso = (mkBootConfiguration { format = "iso"; site = emptySite; }).config;
             in
             assert pkgs.lib.assertMsg (name "iso" == want "iso" "iso") "ISO file name is ${name "iso"}";
             assert pkgs.lib.assertMsg (name "sd" == want "sd" "img.zst") "SD file name is ${name "sd"}";
@@ -474,7 +477,7 @@
             # packages set it whatever the site says; a site setting is tagged too.
             assert pkgs.lib.all (case:
                 let
-                  c = (mkBootConfiguration ({ format = case.format; } // case.args)).config;
+                  c = (mkBootConfiguration ({ format = case.format; site = emptySite; } // case.args)).config;
                   tagged = pkgs.lib.hasPrefix "pre-nixos-${preNixosVersion}-${sourceRev}-${case.tag}-" c.image.fileName;
                   untagged = !(pkgs.lib.hasInfix "-serial-" c.image.fileName || pkgs.lib.hasInfix "-display-" c.image.fileName);
                 in
@@ -491,10 +494,12 @@
                 { format = "iso"; args = { site = ./tests/fixtures/site-serial-console; }; tag = "serial"; primary = "serial"; }
                 { format = "iso"; args = { site = ./tests/fixtures/site-serial-console; primaryConsole = "display"; }; tag = null; primary = "display"; }
               ];
+            # The variant packages always differ from their format's default
+            # console, so they are tagged whatever the site says.
             assert pkgs.lib.assertMsg
-              (self.packages.${preInstallerSystem}.bootImageSerial.name != self.packages.${preInstallerSystem}.bootImage.name
-                && self.packages.${preInstallerSystem}.bootImageSdDisplay.name != self.packages.${preInstallerSystem}.bootImageSd.name)
-              "the console variant packages must differ from the defaults";
+              (pkgs.lib.hasInfix "-serial-" self.packages.${preInstallerSystem}.bootImageSerial.name
+                && pkgs.lib.hasInfix "-display-" self.packages.${preInstallerSystem}.bootImageSdDisplay.name)
+              "the console variant packages must carry their console in the name";
             pkgs.runCommand "image-file-names" {} ''
               touch $out
             '';
