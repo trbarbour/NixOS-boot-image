@@ -334,6 +334,10 @@ _Last updated: 2026-10-30T12-35-13Z_
     - 2026-10-31: the x86 VM test `test_pre_nixos_vm.py` passed 3/3 at 0.23.1 under SeaBIOS, so provisioning without auto-install is unchanged.
     - **Plan for full support:** `plans/2026-10-31T010024Z-x86-bios-support-plan.md`.
       - Waiting on the user: approve R-B1/R-B4; choose D2 (an EF02 partition always, or only on BIOS); say what disks the old machines have (U2: NVMe cannot boot under BIOS).
+      - 2026-10-31 (user): R-B1/R-B4 approved. The old machines have SAS/SATA plus NVMe on PCIe carriers and cannot boot NVMe.
+        - Proposed: D2 (a) on x86 only (ESP p1, EF02 p2, data p3).
+        - New D6: on BIOS with an NVMe `main`, put `/boot` and GRUB on a SATA/SAS disk.
+        - Waiting on the user: confirm D2 and D6; describe the SATA disks (U6).
 
 ## Recently Completed
 - 2026-10-30T23-57-39Z - Merged trbarbour/NixOS-boot-image#329 (0.23.0): the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB] (R-B3; patch from another session, applied and verified here: unit tests, a disko dry run, sgdisk on a sparse image, and x86 VM tests 4/4). The PR also carried the CM4 item-10 acceptance records and the undervoltage notes. CI green, no Codex findings.

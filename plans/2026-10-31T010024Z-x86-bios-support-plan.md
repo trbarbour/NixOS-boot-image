@@ -76,3 +76,23 @@ The guard (0.23.1, task queue item 33) refuses an auto-install on a legacy-BIOS 
 8. **Docs:** reqs, design §7.6.0 and the README. Version 0.24.0.
 
 Effort: items 2–5 are small, about one PR. Item 6 is most of the work. Item 7 needs the user.
+
+## 6. User answers (2026-10-31) and the resulting changes
+
+1. **R-B1/R-B4 approved.**
+2. **D2:** the user asked for a recommendation. They used to add the 1 MiB partition always, "just in case"; the downside is "its increasing irrelevance in the future". **Proposed: D2 (a) on x86 only.**
+   - EF02 on every x86 install, BIOS or UEFI, so a disk boots after moving between machines or modes, at a cost of 1 MiB.
+   - **Order:** ESP partition 1, EF02 partition 2, data partition 3. The ESP stays partition 1, as the docs and the Pi chain assume, and nothing depends on partition numbers.
+   - **Not on the Pi:** it has no BIOS. Its EEPROM finds the boot partition by the ESP's type GUID ("Matched GUID bootable-part-idx 0", attempt-4 log), and its layout has just passed acceptance (plan item 10).
+3. **U2 answered:** the old machines have SAS/SATA disks and NVMe on PCIe carrier cards, and **cannot boot from NVMe**. The planner prefers NVMe for `main`, so refusing an NVMe `main` (the first R-B4 draft) would refuse exactly these machines. Hence D6.
+
+### D6. Where `/boot` goes on a BIOS machine whose `main` is NVMe
+- **(a) Refuse.** Rejected: it excludes the user's machines.
+- **(b) Put `main` on SATA instead.** Rejected: it gives up the NVMe for the root, against the planner's tiering (reqs §2.2).
+- **(c) Keep `main` on NVMe, and put `/boot` (ESP and EF02) and GRUB on a SATA/SAS disk.** Chosen (proposed). GRUB needs only `/boot` on a BIOS-readable disk; it loads the kernel and initrd from there, and the initrd has `nvme` to mount the root. The user must set that SATA disk first in the BIOS boot order.
+  - **Which disk:** a small fixed partition set (ESP plus EF02) at the **start** of a non-NVMe disk the plan already uses, before its own data partition.
+    - Preference: a non-rotational SATA/SAS disk, else the first rotational one. Ties are broken by device name, so the result is deterministic.
+    - If that disk is an md array member, its partners get the same partitions, so the members stay the same size.
+  - **No non-NVMe disk at all:** refuse before provisioning, as now (`REASON=bios-unsupported`), with the message naming the reason.
+  - **R-B4 (revised):** on legacy BIOS, `/boot` and GRUB go on a BIOS-bootable (non-NVMe) disk; `main` may still be NVMe.
+- **New unknown U6:** the SATA/SAS disks in the user's machines (SSD or HDD, how many, part of an array?). This decides which D6 branch they exercise. Asked.
