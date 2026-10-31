@@ -58,7 +58,9 @@ The system must automate the hardware setup process on new servers prior to NixO
 - All disks must use a **GPT partition table**.
 - On system (boot) disk or SSD array, create partitions for booting and for
   LVM usage. Boot requirements are per platform [R-B1]:
-  - **x86_64:** UEFI booting with an EFI System Partition is mandatory.
+  - **x86_64:** the installed system boots the way the installer was
+    booted: **UEFI**, with an EFI System Partition, or **legacy BIOS**, with
+    GRUB. (User decision, 2026-10-31.)
   - **AArch64 Raspberry Pi:** the installed system boots through the Raspberry
     Pi firmware, U-Boot and extlinux, as the stock NixOS SD image does.
 - The installed system's boot partition (the EFI System Partition, which also
@@ -68,6 +70,14 @@ The system must automate the hardware setup process on new servers prior to NixO
   boot image's own layout is unchanged (R-P2): its FAT partition holds only
   firmware, and its generations live on its root filesystem. [R-B3]
   (User decision, 2026-10-30.)
+- On x86_64, every disk that holds boot partitions also gets a 1 MiB BIOS boot
+  partition (GPT type EF02), whatever the firmware mode, so the disk boots
+  under UEFI or legacy BIOS. The Raspberry Pi has none. Under **legacy BIOS**,
+  `/boot` and GRUB go on a disk the BIOS can boot: the root's disks if they
+  are not NVMe (old BIOSes cannot boot NVMe), otherwise another of the
+  planned disks (the swap disks, for example), while the root stays on NVMe.
+  With no such disk, an automatic install is refused before any storage is
+  provisioned. [R-B4] (User decisions, 2026-10-31.)
 
 ### 2.4 LVM Configuration
 
@@ -148,7 +158,7 @@ The system must automate the hardware setup process on new servers prior to NixO
 ## 4. ⛓ Constraints
 
 - **GPT partitioning** only. No DOS/MBR.
-- On x86_64, **UEFI boot** is required; BIOS/Legacy mode is not supported. AArch64 Raspberry Pi boots as in §2.3. [R-B1]
+- On x86_64, the installed system boots with **UEFI** or **legacy BIOS**, as the installer was booted (§2.3, R-B1, R-B4). AArch64 Raspberry Pi boots as in §2.3. [R-B1]
 - **ext4** must be used on all filesystems; other filesystems are out of scope.
 - RAID levels are constrained to: **0, 1, 5, 6**.
 - LVM must be used to abstract storage volumes except for boot partitions.

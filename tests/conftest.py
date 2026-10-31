@@ -39,3 +39,11 @@ def _keep_tests_out_of_host_paths(
     host_paths = tmp_path_factory.mktemp("pre-nixos-host-paths")
     monkeypatch.setenv("PRE_NIXOS_LOG_FILE", str(host_paths / "actions.log"))
     monkeypatch.setattr(apply, "DISKO_CONFIG_PATH", host_paths / "disko-config.nix")
+    # The firmware mode of the machine pre-nixos runs on (task queue item 33):
+    # UEFI unless a test says otherwise.  The test host itself may have no
+    # /sys/firmware/efi (a container, or SeaBIOS), which would read as BIOS.
+    from pre_nixos import boot_platform
+
+    efi_dir = host_paths / "sys-firmware-efi"
+    efi_dir.mkdir()
+    monkeypatch.setattr(boot_platform, "_SYSFS_EFI", efi_dir)

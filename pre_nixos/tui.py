@@ -15,6 +15,7 @@ from typing import Any, Iterable, Iterator, Optional, Sequence, Tuple
 
 from . import (
     apply,
+    boot_platform,
     install,
     inventory,
     network,
@@ -1243,7 +1244,9 @@ def run() -> None:
     protected_disks = storage_detection.resolve_protected_disks()
     disks = inventory.exclude_disks(inventory.enumerate_disks(), protected_disks)
     ram_gb = inventory.detect_ram_gb()
-    plan = planner.plan_storage("fast", disks, ram_gb=ram_gb)
+    # An invalid boot declaration raises here, before any storage is touched.
+    boot_layout = boot_platform.partition_layout(boot_platform.current_setup())
+    plan = planner.plan_storage("fast", disks, ram_gb=ram_gb, boot_layout=boot_layout)
     state = _initial_state(plan, disks, lan_config)
     state.protected_disks = protected_disks
 

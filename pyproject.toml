@@ -21,6 +21,7 @@ pre_nixos = [
     "scripts/announce-lan-ip.sh",
     "templates/auto-install-ip.nix",
     "templates/boot-rpi4-uboot-extlinux.nix",
+    "templates/boot-x86-bios-grub.nix",
     "templates/network-networkd.nix",
 ]
 
@@ -58,6 +59,7 @@ files = [
   "pre_nixos/__init__.py",
   "pre_nixos/apply.py",
   "pre_nixos/block_names.py",
+  "pre_nixos/boot_layout.py",
   "pre_nixos/boot_order.py",
   "pre_nixos/boot_platform.py",
   "pre_nixos/inventory.py",

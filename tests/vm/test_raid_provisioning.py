@@ -41,8 +41,14 @@ def test_ssd_plus_hdd_pair_is_provisioned_with_raid1(
     assert "active raid1" in mdstat and "sdb1" in mdstat and "sdc1" in mdstat, mdstat
     assert "[UU]" in mdstat, mdstat
 
+    # x86 boot disk (R-B4, D2): BIOS boot partition 1 (EF02, first as disko
+    # creates it), ESP 2, data 3.  The VM boots with SeaBIOS, so this is also
+    # the legacy-BIOS layout with main on a SATA disk.
+    parttypes = _pairs(vm.run_as_root_checked("lsblk -nro NAME,PARTTYPE /dev/sda", timeout=120))
+    assert ("sda1", "21686148-6449-6e6f-744e-656564454649") in parttypes, parttypes
+    assert ("sda2", "c12a7328-f81f-11d2-ba4b-00a0c93ec93b") in parttypes, parttypes
     pvs = _pairs(vm.run_as_root_checked("pvs --noheadings -o pv_name,vg_name", timeout=120))
-    assert ("/dev/sda2", "main") in pvs, pvs
+    assert ("/dev/sda3", "main") in pvs, pvs
     assert any(vg == "swap" and pv.startswith("/dev/md") for pv, vg in pvs), pvs
     lvs = _pairs(vm.run_as_root_checked("lvs --noheadings -o lv_name,vg_name", timeout=120))
     assert {("slash", "main"), ("swap", "swap")} <= lvs, lvs

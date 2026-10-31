@@ -20,6 +20,12 @@ def _default_state_dir() -> Path:
     return Path("/run/pre-nixos")
 
 
+def default_state_dir() -> Path:
+    """The runtime state directory (``PRE_NIXOS_STATE_DIR`` or /run/pre-nixos)."""
+
+    return _default_state_dir()
+
+
 def storage_plan_path(*, state_dir: Optional[Path] = None) -> Path:
     """Return the path to the recorded storage plan JSON file."""
 

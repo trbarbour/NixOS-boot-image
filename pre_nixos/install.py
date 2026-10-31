@@ -583,6 +583,61 @@ def _ensure_import(lines: list[str], target: str) -> list[str]:
     return lines[:insertion_point] + insertion_block + lines[insertion_point:]
 
 
+# Preferred /dev/disk/by-id link kinds, most stable first: the WWN is the
+# disk's own world-wide name; the bus-specific names embed model and serial.
+_BY_ID_PREFERENCE = ("wwn-", "ata-", "scsi-", "nvme-")
+
+
+def _stable_disk_path(disk: str, by_id_dir: Path = Path("/dev/disk/by-id")) -> str:
+    """A name for ``/dev/<disk>`` that survives reordering (GRUB's targets).
+
+    The kernel name (``sda``) can change between boots, and nixos-rebuild
+    reinstalls GRUB to the configured devices, so a by-id link is used when
+    one exists; otherwise the kernel name, which is logged.
+    """
+
+    target = os.path.realpath(f"/dev/{disk}") if by_id_dir == Path("/dev/disk/by-id") else None
+    candidates: list[str] = []
+    try:
+        entries = sorted(by_id_dir.iterdir())
+    except OSError:
+        entries = []
+    for entry in entries:
+        if "-part" in entry.name:
+            continue
+        resolved = os.path.realpath(entry)
+        if os.path.basename(resolved) == disk or (target is not None and resolved == target):
+            candidates.append(entry.name)
+    for prefix in _BY_ID_PREFERENCE:
+        for name in candidates:
+            if name.startswith(prefix):
+                return str(by_id_dir / name)
+    if candidates:
+        return str(by_id_dir / candidates[0])
+    log_event("pre_nixos.install.no_stable_disk_path", disk=disk, by_id_dir=by_id_dir)
+    return f"/dev/{disk}"
+
+
+def _render_loader_module(template: str, boot_devices: Sequence[str]) -> str:
+    """Fill in GRUB's target disks where the template asks for them."""
+
+    placeholder = boot_platform.BIOS_BOOT_DEVICES_PLACEHOLDER
+    if placeholder not in template:
+        return template
+    assert template.count(placeholder) == 1, "placeholder must appear once"
+    assert boot_devices, "a BIOS loader module needs at least one target disk"
+    return template.replace(placeholder, _format_nix_list(boot_devices))
+
+
+def _plan_boot_disks(storage_plan: Optional[Dict[str, Any]]) -> list[str]:
+    """The disks the plan put the boot partitions on (``plan["boot"]``)."""
+
+    boot = (storage_plan or {}).get("boot") or {}
+    disks = boot.get("disks") or []
+    assert all(isinstance(disk, str) for disk in disks), f"bad boot disks {disks!r}"
+    return list(disks)
+
+
 def _inject_configuration(
     root_path: Path,
     key_text: str,
@@ -591,8 +646,12 @@ def _inject_configuration(
     install_network: Optional[InstallNetworkConfig] = None,
     console_kernel_params: Optional[Sequence[str]] = None,
     boot_setup: boot_platform.BootSetup = boot_platform.NIXOS_DEFAULT_SETUP,
+    boot_devices: Sequence[str] = (),
 ) -> None:
-    """Rewrite ``configuration.nix`` with the managed auto-install block."""
+    """Rewrite ``configuration.nix`` with the managed auto-install block.
+
+    ``boot_devices``: GRUB's target disks for ``X86_BIOS_GRUB`` (stable paths).
+    """
 
     config_dir = root_path / "etc/nixos"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -627,7 +686,8 @@ def _inject_configuration(
     loader_template = boot_platform.loader_module_template(boot_setup)
     if loader_template is not None:
         (config_dir / boot_platform.LOADER_MODULE_FILE).write_text(
-            _load_template(loader_template), encoding="utf-8"
+            _render_loader_module(_load_template(loader_template), boot_devices),
+            encoding="utf-8",
         )
         filtered = _ensure_import(filtered, f"./{boot_platform.LOADER_MODULE_FILE}")
 
@@ -989,6 +1049,48 @@ def _request_reboot() -> bool:
     return False
 
 
+def _refuse_legacy_bios(
+    boot_setup: boot_platform.BootSetup,
+    storage_plan: Optional[Dict[str, Any]],
+    *,
+    status_dir: Path,
+) -> Optional[AutoInstallResult]:
+    """Record and announce a legacy-BIOS refusal (task queue item 33, R-B4)."""
+
+    message = boot_platform.legacy_bios_refusal(boot_setup, _plan_boot_disks(storage_plan))
+    if message is None:
+        return None
+    print(message)
+    _broadcast_install_message(message)
+    return _record_result(
+        "failed",
+        status_dir=status_dir,
+        reason="bios-unsupported",
+        details={"message": message},
+    )
+
+
+def legacy_bios_preflight(
+    storage_plan: Dict[str, Any], *, status_dir: Optional[Path] = None
+) -> Optional[AutoInstallResult]:
+    """Refuse an auto-install that ``storage_plan`` cannot make bootable on a
+    legacy-BIOS machine, **before** storage is provisioned for it; ``None``
+    when the install may go ahead.
+
+    An invalid boot declaration is left to :func:`auto_install` to report.
+    """
+
+    try:
+        boot_setup = boot_platform.current_setup()
+    except ValueError:
+        return None
+    return _refuse_legacy_bios(
+        boot_setup,
+        storage_plan,
+        status_dir=status_dir if status_dir is not None else state.default_state_dir(),
+    )
+
+
 def auto_install(
     lan: Optional[LanConfiguration],
     storage_plan: Optional[Dict[str, Any]] = None,
@@ -1059,7 +1161,7 @@ def auto_install(
         )
 
     try:
-        boot_setup = boot_platform.boot_setup_from_environment()
+        boot_setup = boot_platform.current_setup()
     except ValueError as exc:
         log_event("pre_nixos.install.installed_boot_invalid", error=str(exc))
         return _record_result(
@@ -1072,6 +1174,10 @@ def auto_install(
         kind=boot_setup.kind.value,
         rpi_firmware=boot_setup.rpi_firmware,
     )
+
+    refused = _refuse_legacy_bios(boot_setup, storage_plan, status_dir=status_dir)
+    if refused is not None:
+        return refused
 
     if not _wait_for_mount(root_path, attempts=mount_attempts, delay=mount_delay):
         return _record_result(
@@ -1141,6 +1247,9 @@ def auto_install(
             install_network,
             console_kernel_params,
             boot_setup,
+            [_stable_disk_path(disk) for disk in _plan_boot_disks(storage_plan)]
+            if boot_setup.kind is boot_platform.InstalledBoot.X86_BIOS_GRUB
+            else (),
         )
         _rewrite_hardware_configuration(root_path)
     except Exception as exc:  # pragma: no cover - unexpected filesystem errors

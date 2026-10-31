@@ -775,3 +775,76 @@ def test_auto_install_x86_does_not_check_the_boot_order(tmp_path, monkeypatch, b
         _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
     )
     assert result.status == "success", result
+
+
+def test_auto_install_refuses_bios_before_running_anything(tmp_path, monkeypatch, broadcast_messages):
+    """Task queue item 33: on a legacy-BIOS x86 machine, nixos-install fails
+    ("You must set the option 'boot.loader.grub.devices'"), so refuse first."""
+
+    monkeypatch.setattr(install.boot_platform, "_SYSFS_EFI", tmp_path / "no-efi")
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    commands: list[list[str]] = []
+    root = tmp_path / "mnt"
+    monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands, expect_firmware=False))
+
+    result = install.auto_install(
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+    )
+
+    assert (result.status, result.reason) == ("failed", "bios-unsupported")
+    assert commands == []
+    status = (tmp_path / "status" / "auto-install-status").read_text()
+    assert "REASON=bios-unsupported" in status
+    assert any("legacy BIOS" in message for message in broadcast_messages)
+
+
+def test_stable_disk_path_prefers_wwn_then_bus_names(tmp_path):
+    by_id = tmp_path / "by-id"
+    by_id.mkdir()
+    dev = tmp_path / "dev"
+    dev.mkdir()
+    (dev / "sda").touch()
+    (dev / "sda1").touch()
+    for name, target in {
+        "ata-WDC_WD10EZEX_123": "sda",
+        "wwn-0x50014ee2b5c1d2e3": "sda",
+        "ata-WDC_WD10EZEX_123-part1": "sda1",
+    }.items():
+        (by_id / name).symlink_to(dev / target)
+    assert install._stable_disk_path("sda", by_id) == str(by_id / "wwn-0x50014ee2b5c1d2e3")
+    (by_id / "wwn-0x50014ee2b5c1d2e3").unlink()
+    assert install._stable_disk_path("sda", by_id) == str(by_id / "ata-WDC_WD10EZEX_123")
+    assert install._stable_disk_path("sdz", by_id) == "/dev/sdz"
+
+
+def test_auto_install_on_bios_writes_grub_for_the_plans_boot_disks(
+    tmp_path, monkeypatch, broadcast_messages
+):
+    """R-B4, plan D3/D4: GRUB's targets are the plan's boot disks, by stable
+    path, in a module of their own beside the generator's configuration."""
+
+    monkeypatch.setattr(install.boot_platform, "_SYSFS_EFI", tmp_path / "no-efi")
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(install, "_request_reboot", lambda: False)
+    monkeypatch.setattr(install, "_stable_disk_path", lambda disk: f"/dev/disk/by-id/ata-{disk}")
+    root = tmp_path / "mnt"
+    (root / "boot").mkdir(parents=True)
+    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
+    commands: list[list[str]] = []
+    monkeypatch.setattr(
+        install.subprocess, "run", _fake_install_run(root, commands, expect_firmware=False, generated="grub")
+    )
+    plan = _sample_storage_plan()
+    plan["boot"] = {"layout": "x86-bios", "disks": ["sda", "sdb"]}
+
+    result = install.auto_install(_make_lan(tmp_path), plan, root_path=root, status_dir=tmp_path / "status")
+
+    assert result.status == "success", result
+    module = (root / "etc/nixos/pre-nixos-boot.nix").read_text()
+    assert 'boot.loader.grub.devices = [ "/dev/disk/by-id/ata-sda" "/dev/disk/by-id/ata-sdb" ];' in module
+    assert "boot.loader.grub.enable = lib.mkForce true;" in module
+    assert "@BIOS_BOOT_DEVICES@" not in module
+    configuration = (root / "etc/nixos/configuration.nix").read_text()
+    assert "./pre-nixos-boot.nix" in configuration
+    paths = _top_level_paths(configuration)
+    assert sorted({path for path in paths if paths.count(path) > 1}) == []

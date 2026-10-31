@@ -189,6 +189,10 @@ in {
   # AArch64 plan §3.4), checked by the flake check stock-aarch64-boot-settings;
   # only their order follows primaryConsole (below).
   (lib.mkIf pkgs.stdenv.hostPlatform.isx86 {
+    # Legacy-BIOS installs (R-B4) need BIOS GRUB (i386-pc); the ISO's store has
+    # only the EFI one, and installs must work offline (plan D5).
+    # NixOS's GRUB module installs pkgs.grub2 (no ZFS support on our layouts).
+    system.extraDependencies = [ pkgs.grub2 ];
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
     boot.loader.grub.memtest86.enable = true;
     boot.loader.grub.extraConfig = ''
