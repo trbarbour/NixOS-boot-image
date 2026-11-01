@@ -343,6 +343,10 @@ _Last updated: 2026-10-30T12-35-13Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
 
 ## Recently Completed
+- 2026-11-01T13-54-41Z - Merged trbarbour/NixOS-boot-image#331 (0.25.0):
+  - console variant packages (`bootImageSerial`, `bootImageSdDisplay`), with `-serial`/`-display` in image names when the console is not the format's default;
+  - fixes #332: with `--override-input` on a clean tree, names fall back to `<date>-s<hash>` instead of `gunknown`;
+  - Codex's finding (the check assumed the default site) was fixed.
 - 2026-10-31 - (user request) 0.25.0:
   - image file names carry `-serial`/`-display` when the primary console is not the format's default (the user chose those words over `hdmi`);
   - variant packages `bootImageSerial` and `bootImageSdDisplay` (the user chose variant packages over separate sites), so one command builds all four images;
