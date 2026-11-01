@@ -80,7 +80,19 @@ A **site** is a directory with a `pre-nixos-site.nix` file. It supplies the sett
 }
 ```
 
-`primaryConsole` chooses where systemd's status lines, emergency shells and `/dev/console` go: the serial port or the screen. The installed system keeps the same choice. Unknown settings and wrong types are evaluation errors. Keep the directory outside git: either anywhere on your machine, or as `site/` in your checkout, which `.gitignore` excludes.
+`primaryConsole` chooses where systemd's status lines, emergency shells and `/dev/console` go: the serial port or the screen. The installed system keeps the same choice.
+
+**Console variants.** The flake also builds each image with the other primary console, whatever the site says:
+- `bootImageSerial`: the ISO with the serial port primary;
+- `bootImageSdDisplay`: the SD image with the screen primary.
+
+An image whose primary console is not its format's default has `-serial` or `-display` after the commit in its file name, e.g. `pre-nixos-0.25.0-g1234abc-serial-…-x86_64-linux.iso`. To build all four at once:
+
+```bash
+nix build .#bootImage .#bootImageSerial .#bootImageSd .#bootImageSdDisplay --override-input site path:./site
+```
+
+The results are `result` to `result-3`, in that order. `lib.mkBootImage` takes `primaryConsole` too. Unknown settings and wrong types are evaluation errors. Keep the directory outside git: either anywhere on your machine, or as `site/` in your checkout, which `.gitignore` excludes.
 
 **Build the one image you need, purely.** Each command builds only the image it names:
 
@@ -92,9 +104,11 @@ nix build .#bootImage   --override-input site path:./site     # only the x86_64 
 
 The image is named after the pre-nixos version and git commit that built it, followed by nixpkgs' label and the system. For example, `result/sd-image/pre-nixos-0.21.0-g4852185-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst` (or `result/iso/pre-nixos-…-x86_64-linux.iso`). A build from uncommitted changes has `-dirty` after the commit.
 
+**With `--override-input`, Nix does not tell the build its git commit** (Nix 2.34; #332). Such images are named after the commit's date and a short hash of the source tree instead, e.g. `pre-nixos-0.25.0-20261101120000-s1a2b3c4-…`. To get the commit itself in the name, build from a flake of your own, below. Your site directory can hold that flake, and it pins this repository by commit.
+
 `path:./site` is resolved against the current directory, and an absolute path always works. The override does not change `flake.lock`, and the repo's default site (`nix/site-default`) embeds no key.
 
-**Or from a flake of your own**, which also pins this repository by commit. Each `mkBootImage` call is one image, so define only the ones you use:
+**Or from a flake of your own**, which also pins this repository by commit and puts that commit in the image names. Each `mkBootImage` call is one image, so define only the ones you use:
 
 ```nix
 # ~/cm4-site/flake.nix, next to pre-nixos-site.nix and root_key.pub

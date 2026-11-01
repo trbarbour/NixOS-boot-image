@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.28
+**Doc status:** Draft v0.29
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -202,6 +202,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
      - Set by the site setting `primaryConsole = "serial" | "display"`. The default is serial on the SD image and display on the ISO.
      - Serial primary appends `console=ttyS0,115200n8` once more, because the kernel prefers a repeated `console=` (verified in QEMU).
      - The installed system inherits it through R-C1.
+     - **Variants:** the flake builds `bootImageSerial` (ISO) and `bootImageSdDisplay` (SD) with the other console, overriding the site (`lib.mkBootImage { primaryConsole; }`). A non-default console is named in the image file: `-serial`/`-display` after the commit (user request, 2026-10-31).
      - Design: `plans/2026-10-23T022949Z-primary-console-design.md`.
    - Parse kernel args; detect available consoles from `/proc/consoles` and `/proc/cmdline`.
    - Start a `getty` on the primary serial console to allow logins.
