@@ -26,7 +26,16 @@
       # the system, e.g. pre-nixos-0.21.0-g4852185-26.05.20261015.26f4107-aarch64-linux.img.zst.
       # nixpkgs' default names only carry its own version, so two pre-nixos
       # images were indistinguishable once copied out of the store.
-      sourceRev = "g" + (self.shortRev or self.dirtyShortRev or "unknown");
+      # The source in image names (#332): "g" and the git commit, "-dirty" for
+      # uncommitted changes.  With --override-input (the README's site build)
+      # Nix gives `self` no revision at all, only lastModifiedDate and narHash,
+      # so the commit's date and a short hash of the source tree identify it
+      # instead.  A wrapper flake (lib.mkBootImage) keeps the commit.
+      sourceIdOf = src:
+        if src ? shortRev then "g${src.shortRev}"
+        else if src ? dirtyShortRev then "g${src.dirtyShortRev}"
+        else "${src.lastModifiedDate or "undated"}-s${builtins.substring 0 8 (builtins.hashString "sha256" src.narHash)}";
+      sourceRev = sourceIdOf self;
       # A primary console other than the format's default (R-C2) is named after
       # the commit, e.g. pre-nixos-0.25.0-g1234abc-serial-…-x86_64-linux.iso, so the
       # variants can be told apart (user request, 2026-10-31).
@@ -451,6 +460,23 @@
             in
             assert builtins.all check [ "extlinux" "grub" "efi" ];
             pkgs.runCommand "installed-rpi-boot-loader" {} ''
+              touch $out
+            '';
+          # #332: the source is always identified.  The git commit when Nix
+          # provides it; with --override-input it provides none (Nix 2.34), so
+          # the commit's date and a hash of the source tree.
+          source-id =
+            let
+              narHash = "sha256-hZFZSWjWD6VbgOYeI7SkBHpvUZckXZk8Aw3CWybZMQM=";
+              hashPart = builtins.substring 0 8 (builtins.hashString "sha256" narHash);
+            in
+            assert pkgs.lib.assertMsg
+              (sourceIdOf { shortRev = "abc1234"; dirtyShortRev = "x"; inherit narHash; } == "gabc1234"
+                && sourceIdOf { dirtyShortRev = "abc1234-dirty"; inherit narHash; } == "gabc1234-dirty"
+                && sourceIdOf { lastModifiedDate = "20261031152346"; inherit narHash; } == "20261031152346-s${hashPart}"
+                && !(pkgs.lib.hasInfix "unknown" sourceRev))
+              "source id: this flake is ${sourceRev}";
+            pkgs.runCommand "source-id" {} ''
               touch $out
             '';
           # Both images are named after this pre-nixos (version and commit).

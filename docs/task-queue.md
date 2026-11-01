@@ -348,6 +348,11 @@ _Last updated: 2026-10-30T12-35-13Z_
   - variant packages `bootImageSerial` and `bootImageSdDisplay` (the user chose variant packages over separate sites), so one command builds all four images;
   - `lib.mkBootImage`/`mkBootConfiguration` take `primaryConsole`, overriding the site;
   - covered by the flake check `image-file-names`.
+- 2026-11-01 - (user choice, option 3) #332:
+  - with `--override-input` and a clean tree, Nix 2.34 gives `self` no revision (an experiment; a dirty tree keeps `dirtyShortRev`), so images were named `gunknown`;
+  - names now fall back to `<lastModifiedDate>-s<hash of narHash>`;
+  - the README recommends a wrapper flake for the exact commit;
+  - covered by the flake check `source-id`.
 - 2026-10-31T05-21-22Z - Merged trbarbour/NixOS-boot-image#330 (0.24.0): x86 installs in legacy BIOS mode with GRUB (R-B4). It included 0.23.1, the guard that refuses BIOS installs before provisioning, now narrowed to machines with no BIOS-bootable disk. x86 VM tests 8/8 under SeaBIOS. A Codex finding (a mixed NVMe/SATA group) was fixed. Next: the user's hardware test on the old machines (U1 `pmbr_boot`); item 12, the end-to-end install VM test, is still open.
 - 2026-10-30T23-57-39Z - Merged trbarbour/NixOS-boot-image#329 (0.23.0): the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB] (R-B3; patch from another session, applied and verified here: unit tests, a disko dry run, sgdisk on a sparse image, and x86 VM tests 4/4). The PR also carried the CM4 item-10 acceptance records and the undervoltage notes. CI green, no Codex findings.
 - 2026-10-30T12-35-13Z - (user request) 0.23.0: the ESP is sized at 3% of its disk, clamped to [1 GiB, 4 GiB], instead of a fixed 1 GiB (R-B3). Array members share one size, from the smallest. The SD image is unchanged: its FAT partition holds only firmware. Design: `plans/2026-10-30T123513Z-esp-size-design.md`. Follow-up: item 32.

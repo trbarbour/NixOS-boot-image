@@ -104,9 +104,11 @@ nix build .#bootImage   --override-input site path:./site     # only the x86_64 
 
 The image is named after the pre-nixos version and git commit that built it, followed by nixpkgs' label and the system. For example, `result/sd-image/pre-nixos-0.21.0-g4852185-sd-card-26.05.20261015.26f4107-aarch64-linux.img.zst` (or `result/iso/pre-nixos-…-x86_64-linux.iso`). A build from uncommitted changes has `-dirty` after the commit.
 
+**With `--override-input`, Nix does not tell the build its git commit** (Nix 2.34; #332). Such images are named after the commit's date and a short hash of the source tree instead, e.g. `pre-nixos-0.25.0-20261101120000-s1a2b3c4-…`. To get the commit itself in the name, build from a flake of your own, below. Your site directory can hold that flake, and it pins this repository by commit.
+
 `path:./site` is resolved against the current directory, and an absolute path always works. The override does not change `flake.lock`, and the repo's default site (`nix/site-default`) embeds no key.
 
-**Or from a flake of your own**, which also pins this repository by commit. Each `mkBootImage` call is one image, so define only the ones you use:
+**Or from a flake of your own**, which also pins this repository by commit and puts that commit in the image names. Each `mkBootImage` call is one image, so define only the ones you use:
 
 ```nix
 # ~/cm4-site/flake.nix, next to pre-nixos-site.nix and root_key.pub
