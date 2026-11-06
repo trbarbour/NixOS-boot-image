@@ -363,6 +363,9 @@ _Last updated: 2026-10-30T12-35-13Z_
     - **Suspect:** `network.wait_for_lan`, 30 × 2 s waiting for carrier when no NIC has a link. It runs on every manual start, before planning.
     - Asked whether the Ethernet cable was connected, and for the `wait_for_lan` lines of `/var/log/pre-nixos/actions.log`.
     - 2026-11-06: the cable was connected (the firewall blocks outbound traffic, which does not affect carrier). The carrier theory is unconfirmed; the `actions.log` timestamps are needed.
+    - **2026-11-06, root cause (user's events log, `PRE_NIXOS_LOG_EVENTS=1`):** not the carrier wait (carrier was found at once). `configure_lan` ran again on the manual run: rename, link down/up, then `wait_for_ipv4` timed out after 60 s (02:50:28.475 → 02:51:28.764). The user's network deliberately gives no DHCP lease.
+    - **Fixed in 0.25.2** (user request: skip the network setup on manual runs). `lan_reuse.ensure_lan` reuses the boot's configuration, recorded in `/run/pre-nixos/lan-configuration.json`, while it still matches the machine. `tests/test_lan_reuse.py`; its CLI test failed before the fix ("configure_lan must not run again").
+    - Not yet confirmed on the user's PC.
 
 36. **The plan is printed twice on the serial ISO.**
     - `pre_nixos.main` prints the plan to stdout and also writes it to `/dev/console`. With the serial console primary, both are the same port. The same pattern as #327.

@@ -12,6 +12,7 @@ from . import (
     boot_platform,
     install,
     inventory,
+    lan_reuse,
     network,
     partition,
     planner,
@@ -336,7 +337,7 @@ def main(argv: list[str] | None = None) -> None:
     try:
         # Configure networking before performing storage operations so the machine
         # becomes remotely reachable as early as possible.
-        lan_config = network.configure_lan()
+        lan_config = lan_reuse.ensure_lan()
         auto_install_enabled = args.auto_install
         if auto_install_enabled is None:
             auto_install_enabled = _auto_install_default(lan_config)

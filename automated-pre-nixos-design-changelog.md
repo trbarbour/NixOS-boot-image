@@ -138,3 +138,6 @@
 
 ### v0.29 — 2026-10-31
 - R-C2: console variant packages (`bootImageSerial`, `bootImageSdDisplay`). Image names carry `-serial`/`-display` when the primary console differs from the format's default.
+
+### v0.30 — 2026-11-06
+- §7.7: a manual run reuses the boot's LAN configuration instead of renaming the NIC and waiting for DHCP again (task queue item 35).
