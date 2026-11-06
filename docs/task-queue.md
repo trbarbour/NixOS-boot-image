@@ -342,6 +342,21 @@ _Last updated: 2026-10-30T12-35-13Z_
         - **Implemented in 0.24.0**; see plan §7.
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
 
+34. **An old SATA SSD is planned as an HDD.** *(user report, 2026-11-06, the first BIOS PC: 128 GB SATA SSD `sda` plus two 750 GB HDDs, serial ISO 0.25.0)*
+    - The plan put `main` on a RAID-1 of the HDDs and `sda` in `large`; the TUI showed `sda` as an HDD.
+    - pre-nixos uses only the kernel's `/sys/block/<disk>/queue/rotational` (`inventory.py:52`).
+    - **Hypothesis:** the kernel reports `1` because the drive's ATA identify data does not report "solid state" (word 217), as some early SSDs do not.
+    - Asked the user for `queue/rotational`, `lsblk ROTA` and `hdparm -I` (rotation rate).
+    - Then design an override (a site setting, a TUI toggle, or reading the rotation rate).
+
+35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
+    - **Suspect:** `network.wait_for_lan`, 30 × 2 s waiting for carrier when no NIC has a link. It runs on every manual start, before planning.
+    - Asked whether the Ethernet cable was connected, and for the `wait_for_lan` lines of `/var/log/pre-nixos/actions.log`.
+
+36. **The plan is printed twice on the serial ISO.**
+    - `pre_nixos.main` prints the plan to stdout and also writes it to `/dev/console`. With the serial console primary, both are the same port. The same pattern as #327.
+    - Reproduce in a unit test, then fix (for example, skip the console copy when stdout is the console).
+
 ## Recently Completed
 - 2026-11-01T13-54-41Z - Merged trbarbour/NixOS-boot-image#331 (0.25.0):
   - console variant packages (`bootImageSerial`, `bootImageSdDisplay`), with `-serial`/`-display` in image names when the console is not the format's default;
