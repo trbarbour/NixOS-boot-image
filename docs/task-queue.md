@@ -354,14 +354,20 @@ _Last updated: 2026-10-30T12-35-13Z_
       - `hdparm -I /dev/sda | grep -i rotation` prints nothing, so the drive does not report a rotation rate and the kernel defaults to rotational.
       - Not a pre-nixos defect. The user can lay the disks out in the TUI.
       - Optional improvement (user to decide): an override, such as a site setting listing disks to treat as SSD, a TUI toggle, or treating a model name containing "SSD" as solid-state.
+    - **2026-11-06, user decision:** do both of these (not many such drives are expected):
+      1. When an apparently rotational disk has "SSD" in its model name, do not assume: **ask**, and block auto-install until answered.
+      2. A per-disk SSD/HDD toggle in the TUI.
+      - Needs a short design (where the question is asked; how auto-install reports the block).
 
 35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
     - **Suspect:** `network.wait_for_lan`, 30 × 2 s waiting for carrier when no NIC has a link. It runs on every manual start, before planning.
     - Asked whether the Ethernet cable was connected, and for the `wait_for_lan` lines of `/var/log/pre-nixos/actions.log`.
+    - 2026-11-06: the cable was connected (the firewall blocks outbound traffic, which does not affect carrier). The carrier theory is unconfirmed; the `actions.log` timestamps are needed.
 
 36. **The plan is printed twice on the serial ISO.**
     - `pre_nixos.main` prints the plan to stdout and also writes it to `/dev/console`. With the serial console primary, both are the same port. The same pattern as #327.
     - Reproduce in a unit test, then fix (for example, skip the console copy when stdout is the console).
+    - **2026-11-06: fixed in 0.25.1** (user request). The console copy is written only when stdout is not a terminal, i.e. the boot-time service. `test_cli_at_a_terminal_prints_the_plan_once` failed before the fix.
 
 ## Recently Completed
 - 2026-11-01T13-54-41Z - Merged trbarbour/NixOS-boot-image#331 (0.25.0):
