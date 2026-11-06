@@ -348,6 +348,12 @@ _Last updated: 2026-10-30T12-35-13Z_
     - **Hypothesis:** the kernel reports `1` because the drive's ATA identify data does not report "solid state" (word 217), as some early SSDs do not.
     - Asked the user for `queue/rotational`, `lsblk ROTA` and `hdparm -I` (rotation rate).
     - Then design an override (a site setting, a TUI toggle, or reading the rotation rate).
+    - **2026-11-06, confirmed (user):**
+      - `/sys/block/sda/queue/rotational` = 1;
+      - `lsblk`: `sda 1 sata G.SKILL 128GB SSD`;
+      - `hdparm -I /dev/sda | grep -i rotation` prints nothing, so the drive does not report a rotation rate and the kernel defaults to rotational.
+      - Not a pre-nixos defect. The user can lay the disks out in the TUI.
+      - Optional improvement (user to decide): an override, such as a site setting listing disks to treat as SSD, a TUI toggle, or treating a model name containing "SSD" as solid-state.
 
 35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
     - **Suspect:** `network.wait_for_lan`, 30 × 2 s waiting for carrier when no NIC has a link. It runs on every manual start, before planning.
