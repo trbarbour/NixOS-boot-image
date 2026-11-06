@@ -18,6 +18,7 @@ from . import (
     boot_platform,
     install,
     inventory,
+    lan_reuse,
     network,
     planner,
     state as state_store,
@@ -1240,7 +1241,7 @@ def _handle_manual_install(stdscr: curses.window, state: TUIState) -> bool:
 def run() -> None:
     """Launch the interactive provisioning TUI."""
 
-    lan_config = network.configure_lan()
+    lan_config = lan_reuse.ensure_lan()
     protected_disks = storage_detection.resolve_protected_disks()
     disks = inventory.exclude_disks(inventory.enumerate_disks(), protected_disks)
     ram_gb = inventory.detect_ram_gb()

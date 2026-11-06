@@ -305,6 +305,38 @@ def test_cli_writes_console(monkeypatch, tmp_path, capsys):
     assert '"disko"' not in console_output
 
 
+def test_cli_at_a_terminal_prints_the_plan_once(monkeypatch, tmp_path, capsys):
+    """Task queue item 36 (user report, serial ISO 0.25.0): run at a terminal,
+    the plan went to stdout and to /dev/console, which with the serial
+    console primary is the same port, so it appeared twice.  The console
+    copy is for the boot-time service, whose stdout is the journal."""
+
+    monkeypatch.setattr(
+        pre_nixos.inventory,
+        "enumerate_disks",
+        lambda: [Disk(name="sda", size=1000, rotational=False)],
+    )
+    import io
+
+    fake_console = io.StringIO()
+    fake_console.close = lambda: None  # type: ignore[method-assign]
+    monkeypatch.setattr(pre_nixos, "_maybe_open_console", lambda: fake_console)
+    monkeypatch.setattr(pre_nixos, "_stdout_is_terminal", lambda: True)
+    monkeypatch.setattr(
+        pre_nixos.network,
+        "configure_lan",
+        lambda: pre_nixos.network.LanConfiguration(
+            authorized_key=tmp_path / "key.pub", interface="lan", rename_rule=None, network_unit=None
+        ),
+    )
+    monkeypatch.setattr(
+        pre_nixos.install, "auto_install", lambda *args, **kwargs: AutoInstallResult(status="skipped")
+    )
+    pre_nixos.main(["--plan-only"])
+    assert '"main"' in capsys.readouterr().out
+    assert fake_console.getvalue() == ""
+
+
 def test_cli_no_auto_install_flag(monkeypatch, tmp_path):
     monkeypatch.setattr(
         pre_nixos.inventory,

@@ -38,6 +38,9 @@ def _keep_tests_out_of_host_paths(
 
     host_paths = tmp_path_factory.mktemp("pre-nixos-host-paths")
     monkeypatch.setenv("PRE_NIXOS_LOG_FILE", str(host_paths / "actions.log"))
+    # Runtime state (/run/pre-nixos), e.g. the LAN record a run reuses
+    # (task queue item 35), must not leak between tests or onto the host.
+    monkeypatch.setenv("PRE_NIXOS_STATE_DIR", str(host_paths / "state"))
     monkeypatch.setattr(apply, "DISKO_CONFIG_PATH", host_paths / "disko-config.nix")
     # The firmware mode of the machine pre-nixos runs on (task queue item 33):
     # UEFI unless a test says otherwise.  The test host itself may have no
