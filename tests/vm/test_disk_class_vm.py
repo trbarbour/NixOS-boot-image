@@ -24,10 +24,17 @@ def test_boot_run_waits_for_the_disk_class_answer(
 ) -> None:
     vm = boot_image_vm_with_ambiguous_ssd
 
-    # The scenario only means something if the guest sees the disk as the user's.
-    rota = vm.run_as_root_checked("cat /sys/block/sda/queue/rotational", timeout=120).strip()
-    model = vm.run_as_root_checked("cat /sys/block/sda/device/model", timeout=120).strip()
-    assert (rota, model) == ("1", "TEST SSD")
+    # The guest names SCSI disks in probe-completion order, not by target id
+    # (2026-11-07: target 0 was sda in one run and sdb in the next), so find
+    # the stand-in SSD by its model.  The scenario only means something if
+    # the guest sees it as the user's drive: rotating, named SSD.
+    listing = vm.run_as_root_checked(
+        'for d in /sys/block/sd*; do echo "${d##*/} $(cat $d/queue/rotational) $(cat $d/device/model)"; done',
+        timeout=120,
+    )
+    disks = [line.split(maxsplit=2) for line in listing.splitlines() if line.startswith("sd")]
+    (ssd,) = [name for name, _rota, model in disks if model.strip() == "TEST SSD"]
+    assert len(disks) == 3 and all(rota == "1" for _name, rota, _model in disks), listing
 
     status = vm.wait_for_storage_status()
     if (status.get("STATE"), status.get("DETAIL")) != ("plan-only", "disk-class-unconfirmed"):
@@ -39,7 +46,7 @@ def test_boot_run_waits_for_the_disk_class_answer(
 
     # Nothing was provisioned: no partitions, arrays or volume groups.
     names = vm.run_as_root_checked("lsblk -nro NAME /dev/sda /dev/sdb /dev/sdc", timeout=120)
-    assert names.split() == ["sda", "sdb", "sdc"], names
+    assert sorted(names.split()) == ["sda", "sdb", "sdc"], names
     # No arrays.  /proc/mdstat exists only once the md driver is loaded, and
     # nothing loads it when nothing is provisioned (first run, 2026-11-07).
     mdstat = vm.run_as_root_checked("cat /proc/mdstat 2>/dev/null || true", timeout=120)
@@ -47,13 +54,13 @@ def test_boot_run_waits_for_the_disk_class_answer(
     assert vm.run_as_root_checked("vgs --noheadings -o vg_name", timeout=120).strip() == ""
 
     journal = vm.collect_journal("pre-nixos.service")
-    assert "Disk type unconfirmed: sda (TEST SSD)" in journal, journal
+    assert f"Disk type unconfirmed: {ssd} (TEST SSD)" in journal, journal
     assert "pre-nixos.service: Failed" not in journal, journal
 
     # The answer on the command line plans `main` on the SSD (D3 (c)).
     plan = json.loads(
-        vm.run_as_root_checked("pre-nixos --plan-only --ssd sda 2>/dev/null", timeout=300)
+        vm.run_as_root_checked(f"pre-nixos --plan-only --ssd {ssd} 2>/dev/null", timeout=300)
     )
     vgs = {vg["name"]: vg["devices"] for vg in plan["vgs"]}
-    assert vgs["main"] == ["sda3"] and vgs["swap"] == ["md0"], vgs
-    assert plan["disk_classes"] == {"sda": "ssd"}
+    assert vgs["main"] == [f"{ssd}3"] and vgs["swap"] == ["md0"], vgs
+    assert plan["disk_classes"] == {ssd: "ssd"}

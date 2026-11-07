@@ -8,8 +8,10 @@ RAID spike 2026-10-19), so they cannot model an SSD.  ``scsi-hd`` takes a
 kernel then defaults to ``rotational=1``, like an SSD that reports no rate
 (``rotational=None``; task queue item 34, notes/2026-11-07T165520Z-u1-scsi-unreported-rotation.md).
 ``product`` sets the model name the guest sees (``device/model``).  Disks attach to one virtio-scsi
-controller in list order (``scsi-id`` = index), so the guest names them
-``/dev/sda``, ``/dev/sdb``, … in that order.
+controller in list order (``scsi-id`` = index).  The guest does **not**
+reliably name them ``/dev/sda``, ``/dev/sdb``, … in that order: names follow
+probe completion (2026-11-07, notes/2026-11-07T171600Z-vm-run: target 0 became
+``sdb``).  Identify a disk by its model or serial.
 """
 
 from __future__ import annotations
