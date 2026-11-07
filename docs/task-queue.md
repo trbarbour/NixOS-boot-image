@@ -358,6 +358,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       1. When an apparently rotational disk has "SSD" in its model name, do not assume: **ask**, and block auto-install until answered.
       2. A per-disk SSD/HDD toggle in the TUI.
       - Needs a short design (where the question is asked; how auto-install reports the block).
+    - **2026-11-07: design** `plans/2026-11-07T161535Z-ssd-model-name-design.md`. Finding F3: on blank disks the boot run provisions storage even without auto-install, so the design recommends blocking provisioning too (D2 (b)). Waiting on the user: R-S3/R-S4, D2.
 
 35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
     - **Suspect:** `network.wait_for_lan`, 30 × 2 s waiting for carrier when no NIC has a link. It runs on every manual start, before planning.
@@ -365,7 +366,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - 2026-11-06: the cable was connected (the firewall blocks outbound traffic, which does not affect carrier). The carrier theory is unconfirmed; the `actions.log` timestamps are needed.
     - **2026-11-06, root cause (user's events log, `PRE_NIXOS_LOG_EVENTS=1`):** not the carrier wait (carrier was found at once). `configure_lan` ran again on the manual run: rename, link down/up, then `wait_for_ipv4` timed out after 60 s (02:50:28.475 → 02:51:28.764). The user's network deliberately gives no DHCP lease.
     - **Fixed in 0.25.2** (user request: skip the network setup on manual runs). `lan_reuse.ensure_lan` reuses the boot's configuration, recorded in `/run/pre-nixos/lan-configuration.json`, while it still matches the machine. `tests/test_lan_reuse.py`; its CLI test failed before the fix ("configure_lan must not run again").
-    - Not yet confirmed on the user's PC.
+    - **2026-11-07, confirmed (user):** with 0.25.2, `time pre-nixos --plan-only` took 0.35 s (was 60.76 s). Done.
 
 36. **The plan is printed twice on the serial ISO.**
     - `pre_nixos.main` prints the plan to stdout and also writes it to `/dev/console`. With the serial console primary, both are the same port. The same pattern as #327.
