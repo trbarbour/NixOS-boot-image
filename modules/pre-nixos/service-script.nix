@@ -97,6 +97,15 @@ in ''
   set -e
   read_auto_status
 
+  # R-S3 (task queue item 34): pre-nixos stopped before touching any disk,
+  # because a disk named SSD is reported as rotating and needs the user's
+  # answer.  That is plan-only, not a failure (pre_nixos.EXIT_NEEDS_ANSWER).
+  if [ "$pre_status" -eq 3 ]; then
+    pre_status=0
+    status_state="plan-only"
+    status_detail="disk-class-unconfirmed"
+  fi
+
   if [ "$pre_status" -eq 0 ]; then
     {
       printf 'STATE=%s\n' "$status_state"

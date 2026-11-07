@@ -8,6 +8,8 @@ _2026-11-07T16:15:35Z. Task queue item 34._
 1. "The first should not assume, but it could ask if an apparent HDD has SSD in its name. This will block auto-installation, but it should block in this case."
 2. A per-disk SSD/HDD toggle in the TUI. "I don't expect many of these."
 
+**Decisions (user, 2026-11-07):** R-S3 and R-S4 approved; D2 (b), blocking provisioning and auto-install. Implemented in 0.26.0.
+
 ## 1. Facts
 
 | # | Fact | Evidence |
@@ -61,7 +63,8 @@ Consequence of F3: if only auto-install were blocked, a blank machine with such 
   - `apply_classes(disks, answers: Mapping[str, DiskClass]) -> list[Disk]`, a pure function returning new `Disk` values (`dataclasses.replace`), for the planner;
   - a precondition that every answer names a known disk.
 - The planner is unchanged: it plans the disks it is given.
-- The plan records answers that override the kernel, as `plan["disk_classes"] = {"sda": "ssd"}`, so the log and the saved plan show why `sda` is in `main`.
+- The plan records the user's answers, as `plan["disk_classes"] = {"sda": "ssd"}`, so the log and the saved plan show why `sda` is in `main`. (Implemented: every answer is recorded, including one that agrees with the kernel, since it records a confirmation.)
+- (Implemented) A refused run exits 3 (`pre_nixos.EXIT_NEEDS_ANSWER`). The service script maps that to `STATE=plan-only`, `DETAIL=disk-class-unconfirmed` and succeeds, rather than reading the reason back from a status file. The flake check `boot-service-status` runs the real service script with stub commands for exits 3, 0 and 1.
 
 ## 4. Unknowns
 

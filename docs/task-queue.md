@@ -359,6 +359,13 @@ _Last updated: 2026-10-30T12-35-13Z_
       2. A per-disk SSD/HDD toggle in the TUI.
       - Needs a short design (where the question is asked; how auto-install reports the block).
     - **2026-11-07: design** `plans/2026-11-07T161535Z-ssd-model-name-design.md`. Finding F3: on blank disks the boot run provisions storage even without auto-install, so the design recommends blocking provisioning too (D2 (b)). Waiting on the user: R-S3/R-S4, D2.
+    - **2026-11-07 (user):** R-S3/R-S4 approved; D2 (b) (block provisioning and auto-install).
+    - **Implemented in 0.26.0:**
+      - `disk_class.py` (the D1 rule, answers applied to the inventory, the plan's `disk_classes`);
+      - `pre-nixos --ssd/--hdd`; a run that would provision or install stops first (exit 3, `REASON=disk-class-unconfirmed`);
+      - the boot service reports exit 3 as `STATE=plan-only`, `DETAIL=disk-class-unconfirmed` (flake check `boot-service-status`), and the login notice says how to answer;
+      - TUI: a question per unconfirmed disk at start, and `T` to switch any disk's class.
+      - U1 resolved by experiment: `notes/2026-11-07T165520Z-u1-scsi-unreported-rotation.md`. VM test `tests/vm/test_disk_class_vm.py`.
 
 35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
     - **Suspect:** `network.wait_for_lan`, 30 × 2 s waiting for carrier when no NIC has a link. It runs on every manual start, before planning.

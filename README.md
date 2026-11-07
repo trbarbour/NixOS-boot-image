@@ -52,6 +52,18 @@ matches the target install-time network. These options persist the chosen
 network values for the next installation run and emit the equivalent static
 `systemd.network` configuration in the generated NixOS config.
 
+A disk's SSD/HDD class comes from the kernel's `queue/rotational`. Some SSDs
+report no rotation rate, and the kernel then calls them rotating. When such a
+disk has "SSD" in its model name, pre-nixos does not guess: the boot service
+neither provisions storage nor installs, and the login notice and journal say
+which disk needs an answer. Answer with `--ssd DISK` or `--hdd DISK` (either can
+also override any other disk's class), for example:
+
+```bash
+pre-nixos --plan-only --ssd sda   # preview
+pre-nixos --ssd sda               # provision (and install, if enabled)
+```
+
 For an interactive review and to apply the plan manually, use the TUI helper,
 which displays the current IP address or a diagnostic message when the
 embedded SSH key is missing or no address was assigned:
@@ -65,7 +77,10 @@ whether the TUI should launch the same minimal `nixos-install` workflow after
 applying the storage plan; the header reflects the most recent auto-install
 outcome. Press `C` to set static install-time network details, which default to
 the network information assigned via DHCP so you can enter only the host
-portion of the desired static address.
+portion of the desired static address. At start the TUI asks about each disk
+named SSD but reported as rotating (`S` or `H`); press `T` on a disk's row to
+switch any disk between SSD and HDD and plan again (this discards edits made
+with `E` or `L`).
 
 ## Site settings
 

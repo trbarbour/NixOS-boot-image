@@ -10,6 +10,7 @@ from typing import Collection, Iterable, Sequence, Set
 from . import (
     apply,
     boot_platform,
+    disk_class,
     install,
     inventory,
     lan_reuse,
@@ -247,6 +248,11 @@ def _handle_existing_storage(
     return True
 
 
+# Exit status of a run that stopped for the user's answer (R-S3); the boot
+# service reports it as plan-only, not as a failure.
+EXIT_NEEDS_ANSWER = 3
+
+
 def main(argv: list[str] | None = None) -> None:
     """Run the pre-nixos tool."""
     parser = argparse.ArgumentParser(description="Pre-NixOS setup")
@@ -312,7 +318,28 @@ def main(argv: list[str] | None = None) -> None:
         "--install-gateway",
         help="Default gateway for the installed system's static IPv4 configuration.",
     )
+    parser.add_argument(
+        "--ssd",
+        metavar="DISK",
+        action="append",
+        default=[],
+        help=(
+            "Plan DISK as an SSD, whatever the kernel reports (can be repeated). "
+            "Answers the question about a disk named SSD but reported as rotating."
+        ),
+    )
+    parser.add_argument(
+        "--hdd",
+        metavar="DISK",
+        action="append",
+        default=[],
+        help="Plan DISK as an HDD, whatever the kernel reports (can be repeated).",
+    )
     args = parser.parse_args(argv)
+    try:
+        class_answers = disk_class.parse_answers(args.ssd, args.hdd)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     install_network: install.InstallNetworkConfig | None = install.load_install_network_config()
     install_network_args: tuple[str, str | None, str | None] | None = None
@@ -364,7 +391,7 @@ def main(argv: list[str] | None = None) -> None:
                 )
 
         if args.install_now:
-            if args.plan_only or args.partition_boot or args.partition_lvm:
+            if args.plan_only or args.partition_boot or args.partition_lvm or class_answers:
                 parser.error("--install-now cannot be combined with planning options")
             if args.output != "plan":
                 parser.error("--install-now cannot be combined with --output")
@@ -416,13 +443,21 @@ def main(argv: list[str] | None = None) -> None:
             print(f"Invalid boot-image declaration: {exc}", file=sys.stderr)
             sys.exit(1)
         disks = inventory.exclude_disks(inventory.enumerate_disks(), protected_disks)
+        try:
+            classified = disk_class.apply_classes(disks, class_answers)
+        except ValueError as exc:
+            parser.error(str(exc))
+        unconfirmed_disks = disk_class.unconfirmed(disks, class_answers)
         ram_gb = inventory.detect_ram_gb()
-        plan = planner.plan_storage(
-            args.mode,
-            disks,
-            prefer_raid6_on_four=args.prefer_raid6_on_four,
-            ram_gb=ram_gb,
-            boot_layout=boot_platform.partition_layout(boot_setup),
+        plan = disk_class.annotate_plan(
+            planner.plan_storage(
+                args.mode,
+                classified,
+                prefer_raid6_on_four=args.prefer_raid6_on_four,
+                ram_gb=ram_gb,
+                boot_layout=boot_platform.partition_layout(boot_setup),
+            ),
+            class_answers,
         )
         if args.output == "plan":
             plan_output = {key: value for key, value in plan.items() if key != "disko"}
@@ -444,6 +479,16 @@ def main(argv: list[str] | None = None) -> None:
                 console_output = output.replace("\n", "\r\n") + "\r\n"
                 console.write(console_output)
                 console.flush()
+
+        # R-S3 (task queue item 34): a disk named SSD but reported as rotating
+        # is not classified by guesswork.  A run that would provision storage
+        # or install stops before touching any disk until the user answers.
+        if unconfirmed_disks:
+            message = disk_class.refusal_message(unconfirmed_disks)
+            if not args.plan_only and not args.dry_run:
+                install.refuse_unconfirmed_disks(message)
+                sys.exit(EXIT_NEEDS_ANSWER)
+            print(message, file=sys.stderr)
 
         # Task queue item 33: an auto-install that cannot boot (legacy BIOS on
         # x86, R-B1) is refused before any disk is touched for it.
