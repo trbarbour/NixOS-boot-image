@@ -809,7 +809,7 @@ def _ask_disk_classes(stdscr: curses.window, state: TUIState) -> None:
         lines = [
             disk_class.question(disk),
             "",
-            "[S] SSD    [H] HDD    (change it later with [T] on the disk's row)",
+            "[S] SSD    [H] HDD    (change it later with [T])",
         ]
         for idx, line in enumerate(lines):
             stdscr.addstr(idx, 0, _trim(line, width - 1))
@@ -827,17 +827,51 @@ def _ask_disk_classes(stdscr: curses.window, state: TUIState) -> None:
     assert not disk_class.unconfirmed(state.kernel_disks, state.class_answers)
 
 
-def _toggle_focused_disk_class(stdscr: curses.window, state: TUIState) -> None:
-    """[T]: switch the focused disk between SSD and HDD, and re-plan (R-S4)."""
+_DISK_CHOICE_KEYS = "123456789abcdefghijklmnoprstuvwxyz"  # no "q": it cancels
 
-    focus = state.focus
-    kernel = {disk.name: disk for disk in state.kernel_disks}
-    if focus is None or focus[0] != "disk" or focus[1] not in kernel:
-        _show_modal(stdscr, ["Select a disk's row to change whether it is an SSD or an HDD."])
+
+def _choose_disk(stdscr: curses.window, state: TUIState) -> inventory.Disk | None:
+    """List every disk with its class; return the one picked, or ``None``.
+
+    A list, rather than the focused row: the detailed and compact layouts
+    focus a disk's rows on its LVs, VGs or arrays, and one array or VG spans
+    several disks' rows (Codex on #335).
+    """
+
+    disks = state.kernel_disks[: len(_DISK_CHOICE_KEYS)]
+    planned = {disk.name: disk for disk in state.disks}
+    stdscr.clear()
+    _, width = stdscr.getmaxyx()
+    lines = ["Change which disk between SSD and HDD?", ""]
+    for key, disk in zip(_DISK_CHOICE_KEYS, disks):
+        cls = disk_class.current_class(planned.get(disk.name, disk)).label
+        source = "your answer" if disk.name in state.class_answers else "kernel"
+        lines.append(f"[{key}] {disk_class.describe(disk)}: {cls} ({source})")
+    lines += ["", "[Q] or [Esc] Cancel"]
+    for idx, line in enumerate(lines):
+        stdscr.addstr(idx, 0, _trim(line, width - 1))
+    stdscr.refresh()
+    choices = dict(zip(_DISK_CHOICE_KEYS, disks))
+    while True:
+        try:
+            key = stdscr.getkey()
+        except curses.error:
+            continue
+        lowered = key.lower() if len(key) == 1 else key
+        if lowered in {"q", "\x1b"}:
+            return None
+        if lowered in choices:
+            return choices[lowered]
+
+
+def _toggle_disk_class(stdscr: curses.window, state: TUIState) -> None:
+    """[T]: switch a chosen disk between SSD and HDD, and re-plan (R-S4)."""
+
+    disk = _choose_disk(stdscr, state)
+    if disk is None:
         return
-    state.class_answers = disk_class.toggled(state.class_answers, kernel[focus[1]])
+    state.class_answers = disk_class.toggled(state.class_answers, disk)
     _replan(state)
-    state.focus = focus
 
 
 def _move_focus(state: TUIState, render: RenderResult, direction: int) -> None:
@@ -1389,7 +1423,7 @@ def run() -> None:
                 state.auto_install_enabled = not state.auto_install_enabled
                 continue
             if key_lower == "t":
-                _toggle_focused_disk_class(stdscr, state)
+                _toggle_disk_class(stdscr, state)
                 continue
             if key_lower in {"KEY_UP", "k"}:
                 _move_focus(state, render, -1)

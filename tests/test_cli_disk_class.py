@@ -131,3 +131,30 @@ def test_install_now_rejects_disk_classes(cli, capsys) -> None:
         pre_nixos.main(["--install-now", "--ssd", "sda"])
     assert excinfo.value.code == 2
     assert "--install-now cannot be combined with planning options" in capsys.readouterr().err
+
+
+def test_forced_cleanup_stops_for_the_answer_too(cli, monkeypatch, tmp_path, existing_storage) -> None:
+    """Codex on #335 (P1): booted with ``pre-nixos-force-cleanup=1`` on disks
+    with existing storage, the service runs ``--plan-only`` with forced
+    cleanup, which wipes the plan's devices.  That too touches the disks, so
+    it must wait for the answer (R-S3)."""
+
+    from pre_nixos.storage_detection import ExistingStorageDevice
+
+    existing_storage.devices = [ExistingStorageDevice(device="/dev/sda1", reasons=("ext4",))]
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setenv("PRE_NIXOS_FORCE_CLEANUP", "1")
+    wiped: list[object] = []
+    monkeypatch.setattr(
+        pre_nixos.storage_cleanup,
+        "perform_storage_cleanup",
+        lambda action, targets, execute: wiped.append((action, targets)),
+    )
+    monkeypatch.setattr(pre_nixos, "_expand_devices_with_lsblk", lambda devices: set(devices))
+
+    with pytest.raises(SystemExit) as excinfo:
+        pre_nixos.main(["--plan-only"])
+
+    assert excinfo.value.code == pre_nixos.EXIT_NEEDS_ANSWER
+    assert wiped == []
+    assert "REASON=disk-class-unconfirmed" in _auto_status(tmp_path)

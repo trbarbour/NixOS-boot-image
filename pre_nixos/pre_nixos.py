@@ -481,11 +481,15 @@ def main(argv: list[str] | None = None) -> None:
                 console.flush()
 
         # R-S3 (task queue item 34): a disk named SSD but reported as rotating
-        # is not classified by guesswork.  A run that would provision storage
-        # or install stops before touching any disk until the user answers.
+        # is not classified by guesswork.  A run that would touch the disks
+        # stops first until the user answers: one that provisions or installs,
+        # and a forced cleanup, which runs even with --plan-only and wipes the
+        # plan's devices (Codex on #335).
+        forced_cleanup_action = _forced_cleanup_action()
         if unconfirmed_disks:
             message = disk_class.refusal_message(unconfirmed_disks)
-            if not args.plan_only and not args.dry_run:
+            touches_disks = not args.plan_only or forced_cleanup_action is not None
+            if touches_disks and not args.dry_run:
                 install.refuse_unconfirmed_disks(message)
                 sys.exit(EXIT_NEEDS_ANSWER)
             print(message, file=sys.stderr)
@@ -498,7 +502,6 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"Auto-install failed: {refused.reason}", file=sys.stderr)
                 sys.exit(1)
 
-        forced_cleanup_action = _forced_cleanup_action()
         will_modify_storage = (
             not args.dry_run
             and os.environ.get("PRE_NIXOS_EXEC") == "1"

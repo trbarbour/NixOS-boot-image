@@ -62,35 +62,45 @@ def test_no_question_without_an_ambiguous_disk(user_pc_state) -> None:
     assert user_pc_state.plan is before and window.lines == {}
 
 
-def test_toggle_on_a_disk_row_switches_and_replans(user_pc_state) -> None:
-    user_pc_state.focus = ("disk", "sda", None)
-    tui._toggle_focused_disk_class(_window(), user_pc_state)
+def test_toggle_lists_every_disk_and_switches_the_chosen_one(user_pc_state) -> None:
+    window = _window("1")
+    tui._toggle_disk_class(window, user_pc_state)
+    listed = "\n".join(window.lines.values())
+    assert "[1] sda (G.SKILL 128GB SSD): HDD (kernel)" in listed
+    assert "[2] sdb (ST3750528AS): HDD (kernel)" in listed
+    assert "[3] sdd (ST3750528AS): HDD (kernel)" in listed
     assert user_pc_state.class_answers == {"sda": DiskClass.SSD}
-    assert "main" in _vgs(user_pc_state) and _vgs(user_pc_state)["main"] == ["sda3"]
-    assert user_pc_state.focus == ("disk", "sda", None)
+    assert _vgs(user_pc_state) == {"main": ["sda3"], "swap": ["md0"]}
 
-    tui._toggle_focused_disk_class(_window(), user_pc_state)
+    window = _window("1")
+    tui._toggle_disk_class(window, user_pc_state)
+    assert "[1] sda (G.SKILL 128GB SSD): SSD (your answer)" in "\n".join(window.lines.values())
     assert user_pc_state.class_answers == {"sda": DiskClass.HDD}
     assert _vgs(user_pc_state)["main"] == ["md0"]
 
 
-def test_toggle_works_on_any_disk(user_pc_state) -> None:
-    """R-S4: not only the ambiguous one (here an HDD planned as an SSD)."""
+def test_toggle_reaches_disks_whose_rows_focus_lvs_or_arrays(user_pc_state, monkeypatch) -> None:
+    """Codex on #335 (P2): after answering sda as SSD, the detailed layout
+    offers no ``disk`` focus for either HDD (their rows focus the swap LV
+    and md0), yet R-S4 says any disk's class can be set."""
 
     user_pc_state.class_answers = {"sda": DiskClass.SSD}
-    user_pc_state.focus = ("disk", "sdb", None)
-    tui._toggle_focused_disk_class(_window(), user_pc_state)
+    tui._replan(user_pc_state)
+    render = user_pc_state.renderer.render(200, 40, None, "detailed", set())
+    assert not any(token and token[0] == "disk" and token[1] == "sdb" for token in render.focusables)
+
+    tui._toggle_disk_class(_window("2"), user_pc_state)
     assert user_pc_state.class_answers == {"sda": DiskClass.SSD, "sdb": DiskClass.SSD}
     assert user_pc_state.plan["disk_classes"] == {"sda": "ssd", "sdb": "ssd"}
 
 
-def test_toggle_needs_a_disk_row(user_pc_state) -> None:
-    user_pc_state.focus = ("vg", "main", None)
+@pytest.mark.parametrize("key", ["q", "\x1b"])
+def test_toggle_can_be_cancelled(user_pc_state, key) -> None:
     before = user_pc_state.plan
-    window = _window("x")
-    tui._toggle_focused_disk_class(window, user_pc_state)
+    window = _window("z", key)  # an unlisted key is ignored
+    tui._toggle_disk_class(window, user_pc_state)
     assert user_pc_state.plan is before and user_pc_state.class_answers == {}
-    assert any("Select a disk's row" in text for text in window.lines.values())
+    assert window.key_queue == []
 
 
 def test_apply_refuses_while_a_disk_is_unconfirmed(user_pc_state, monkeypatch) -> None:
