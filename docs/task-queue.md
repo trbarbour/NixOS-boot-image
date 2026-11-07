@@ -382,6 +382,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - **2026-11-06: fixed in 0.25.1** (user request). The console copy is written only when stdout is not a terminal, i.e. the boot-time service. `test_cli_at_a_terminal_prints_the_plan_once` failed before the fix.
 
 ## Recently Completed
+- 2026-11-07T20-14-14Z - Merged trbarbour/NixOS-boot-image#335 (0.26.0): item 34, R-S3/R-S4. A disk named SSD but reported as rotating waits for the user's answer (TUI or `--ssd`/`--hdd`) before anything touches the disks; the TUI's `T` sets any disk's class. Fixes #334 (VM tests assumed sd names follow attach order). Codex found four issues over two reviews (forced cleanup, explicit partitioning, `T` unreachable disks, `T` list overflow), each reproduced and fixed. CI green. Not yet tried on the user's PC.
 - 2026-11-06T13-53-17Z - Merged trbarbour/NixOS-boot-image#333 (0.25.1, 0.25.2): the plan is printed once at a terminal (item 36); manual runs reuse the boot's LAN configuration instead of waiting 60 s for DHCP (item 35). CI green, no Codex findings. Item 35 awaits confirmation on the user's PC.
 - 2026-11-01T13-54-41Z - Merged trbarbour/NixOS-boot-image#331 (0.25.0):
   - console variant packages (`bootImageSerial`, `bootImageSdDisplay`), with `-serial`/`-display` in image names when the console is not the format's default;
