@@ -432,11 +432,6 @@ def main(argv: list[str] | None = None) -> None:
             (_normalise_device_path(dev) or dev for dev in explicit_targets),
             protected_disks,
         )
-        if args.partition_boot:
-            partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
-        for dev in args.partition_lvm:
-            partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
-
         try:
             boot_setup = boot_platform.current_setup()
         except ValueError as exc:
@@ -483,16 +478,27 @@ def main(argv: list[str] | None = None) -> None:
         # R-S3 (task queue item 34): a disk named SSD but reported as rotating
         # is not classified by guesswork.  A run that would touch the disks
         # stops first until the user answers: one that provisions or installs,
-        # and a forced cleanup, which runs even with --plan-only and wipes the
-        # plan's devices (Codex on #335).
+        # a forced cleanup, which runs even with --plan-only and wipes the
+        # plan's devices, and explicit partitioning, which zaps the named
+        # disks (Codex on #335, both reviews).
         forced_cleanup_action = _forced_cleanup_action()
         if unconfirmed_disks:
             message = disk_class.refusal_message(unconfirmed_disks)
-            touches_disks = not args.plan_only or forced_cleanup_action is not None
+            touches_disks = (
+                not args.plan_only
+                or forced_cleanup_action is not None
+                or bool(explicit_targets)
+            )
             if touches_disks and not args.dry_run:
                 install.refuse_unconfirmed_disks(message)
                 sys.exit(EXIT_NEEDS_ANSWER)
             print(message, file=sys.stderr)
+
+        # Explicit partitioning (after the R-S3 stop: it erases the disks).
+        if args.partition_boot:
+            partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
+        for dev in args.partition_lvm:
+            partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
 
         # Task queue item 33: an auto-install that cannot boot (legacy BIOS on
         # x86, R-B1) is refused before any disk is touched for it.

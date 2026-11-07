@@ -79,7 +79,8 @@ outcome. Press `C` to set static install-time network details, which default to
 the network information assigned via DHCP so you can enter only the host
 portion of the desired static address. At start the TUI asks about each disk
 named SSD but reported as rotating (`S` or `H`). Press `T` to list the disks
-with their current type and pick one to switch between SSD and HDD; the plan is
+with their current type (paged with `N`/`P` if they do not fit) and pick one to
+switch between SSD and HDD; the plan is
 made again (this discards edits made with `E` or `L`).
 
 ## Site settings

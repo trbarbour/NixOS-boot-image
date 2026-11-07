@@ -827,7 +827,10 @@ def _ask_disk_classes(stdscr: curses.window, state: TUIState) -> None:
     assert not disk_class.unconfirmed(state.kernel_disks, state.class_answers)
 
 
-_DISK_CHOICE_KEYS = "123456789abcdefghijklmnoprstuvwxyz"  # no "q": it cancels
+# Keys for the disks on one page; n, p and q page and cancel.
+_DISK_CHOICE_KEYS = "123456789abcdefghijklmorstuvwxyz"
+# Lines around the disk list: title, blank, blank, the key help line.
+_DISK_LIST_FRAME_LINES = 4
 
 
 def _choose_disk(stdscr: curses.window, state: TUIState) -> inventory.Disk | None:
@@ -835,33 +838,46 @@ def _choose_disk(stdscr: curses.window, state: TUIState) -> inventory.Disk | Non
 
     A list, rather than the focused row: the detailed and compact layouts
     focus a disk's rows on its LVs, VGs or arrays, and one array or VG spans
-    several disks' rows (Codex on #335).
+    several disks' rows (Codex on #335).  The list is paged to fit the
+    window, so every disk stays reachable (Codex on #335, second review).
     """
 
-    disks = state.kernel_disks[: len(_DISK_CHOICE_KEYS)]
+    disks = list(state.kernel_disks)
+    if not disks:
+        _show_modal(stdscr, ["No disks to change."])
+        return None
     planned = {disk.name: disk for disk in state.disks}
-    stdscr.clear()
-    _, width = stdscr.getmaxyx()
-    lines = ["Change which disk between SSD and HDD?", ""]
-    for key, disk in zip(_DISK_CHOICE_KEYS, disks):
-        cls = disk_class.current_class(planned.get(disk.name, disk)).label
-        source = "your answer" if disk.name in state.class_answers else "kernel"
-        lines.append(f"[{key}] {disk_class.describe(disk)}: {cls} ({source})")
-    lines += ["", "[Q] or [Esc] Cancel"]
-    for idx, line in enumerate(lines):
-        stdscr.addstr(idx, 0, _trim(line, width - 1))
-    stdscr.refresh()
-    choices = dict(zip(_DISK_CHOICE_KEYS, disks))
+    page = 0
     while True:
-        try:
-            key = stdscr.getkey()
-        except curses.error:
-            continue
-        lowered = key.lower() if len(key) == 1 else key
-        if lowered in {"q", "\x1b"}:
-            return None
-        if lowered in choices:
-            return choices[lowered]
+        height, width = stdscr.getmaxyx()
+        page_size = max(1, min(len(_DISK_CHOICE_KEYS), height - _DISK_LIST_FRAME_LINES))
+        pages = (len(disks) + page_size - 1) // page_size
+        page %= pages
+        shown = disks[page * page_size : (page + 1) * page_size]
+        lines = [f"Change which disk between SSD and HDD?  (Page {page + 1} of {pages})", ""]
+        for key, disk in zip(_DISK_CHOICE_KEYS, shown):
+            cls = disk_class.current_class(planned.get(disk.name, disk)).label
+            source = "your answer" if disk.name in state.class_answers else "kernel"
+            lines.append(f"[{key}] {disk_class.describe(disk)}: {cls} ({source})")
+        lines += ["", "[N] Next page  [P] Previous page  [Q] or [Esc] Cancel"]
+        stdscr.clear()
+        for idx, line in enumerate(lines[: max(height - 1, 1)]):
+            stdscr.addstr(idx, 0, _trim(line, width - 1))
+        stdscr.refresh()
+        choices = dict(zip(_DISK_CHOICE_KEYS, shown))
+        while True:
+            try:
+                key = stdscr.getkey()
+            except curses.error:
+                continue
+            lowered = key.lower() if len(key) == 1 else key
+            if lowered in {"q", "\x1b"}:
+                return None
+            if lowered in {"n", "p", "KEY_RESIZE"}:
+                page += {"n": 1, "p": -1}.get(lowered, 0)
+                break
+            if lowered in choices:
+                return choices[lowered]
 
 
 def _toggle_disk_class(stdscr: curses.window, state: TUIState) -> None:

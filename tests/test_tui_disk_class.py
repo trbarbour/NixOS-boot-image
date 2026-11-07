@@ -118,3 +118,51 @@ def test_footer_lists_the_toggle(user_pc_state, monkeypatch) -> None:
     window = FakeWindow(width=300)
     tui._draw_plan(window, user_pc_state)
     assert "[T] SSD/HDD" in window.lines[window.height - 1]
+
+
+class BoundedWindow(FakeWindow):
+    """Like curses: writing below the last row is an error."""
+
+    def addstr(self, *args):
+        if len(args) == 3 and not 0 <= args[0] < self.height:
+            raise tui.curses.error("addwstr() returned ERR")
+        super().addstr(*args)
+
+    def clear(self) -> None:
+        self.lines = {}
+
+
+def _many_disks_state(existing_storage, count: int) -> tui.TUIState:
+    from pre_nixos.inventory import Disk
+
+    existing_storage.devices = []
+    disks = [Disk(name=f"sd{chr(97 + i // 26)}{chr(97 + i % 26)}", model="HDD", size=500 * 1024**3, rotational=True) for i in range(count)]
+    plan = plan_storage("fast", disks, ram_gb=16, boot_layout=BootLayout.X86_BIOS)
+    state = tui._initial_state(plan, disks, None)
+    state.ram_gb = 16
+    state.boot_layout = BootLayout.X86_BIOS
+    return state
+
+
+def test_disk_list_pages_to_fit_the_terminal(existing_storage) -> None:
+    """Codex on #335 (P2, second review): with more disks than rows, the list
+    wrote below the window and curses raised.  It now pages ([N]/[P])."""
+
+    state = _many_disks_state(existing_storage, 40)
+    window = BoundedWindow(height=12, width=80)  # 8 disks per page: 5 pages
+    window.key_queue = ["n", "p", "n", "n", "1"]  # page 3, its first disk
+    tui._toggle_disk_class(window, state)
+    names = [disk.name for disk in state.kernel_disks]
+    assert list(state.class_answers) == [names[16]]
+    shown = "\n".join(window.lines.values())
+    assert "Page 3 of 5" in shown and f"[1] {names[16]} (HDD)" in shown
+
+
+def test_disk_list_reaches_the_last_disk(existing_storage) -> None:
+    state = _many_disks_state(existing_storage, 40)
+    window = BoundedWindow(height=10, width=80)
+    window.key_queue = ["p", "1"]  # [P] on the first page wraps to the last
+    tui._toggle_disk_class(window, state)
+    (picked,) = state.class_answers
+    names = [disk.name for disk in state.kernel_disks]
+    assert names.index(picked) > len(names) - 10

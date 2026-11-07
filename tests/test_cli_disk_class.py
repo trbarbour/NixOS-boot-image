@@ -158,3 +158,34 @@ def test_forced_cleanup_stops_for_the_answer_too(cli, monkeypatch, tmp_path, exi
     assert excinfo.value.code == pre_nixos.EXIT_NEEDS_ANSWER
     assert wiped == []
     assert "REASON=disk-class-unconfirmed" in _auto_status(tmp_path)
+
+
+@pytest.mark.parametrize("plan_only", [False, True])
+@pytest.mark.parametrize("option", ["--partition-boot", "--partition-lvm"])
+def test_explicit_partitioning_stops_for_the_answer_too(cli, monkeypatch, capsys, option, plan_only) -> None:
+    """Codex on #335 (P1, second review): ``--partition-boot``/``--partition-lvm``
+    zap the named disk; they ran before the stop, so the disk was erased and
+    then the run said storage was not provisioned.  Explicit partitioning
+    touches the disks too, with or without ``--plan-only``."""
+
+    partitioned: list[tuple] = []
+    monkeypatch.setattr(
+        pre_nixos.partition, "create_partitions", lambda *a, **k: partitioned.append(a)
+    )
+    argv = [option, "/dev/sda"] + (["--plan-only"] if plan_only else [])
+
+    with pytest.raises(SystemExit) as excinfo:
+        pre_nixos.main(argv)
+
+    assert excinfo.value.code == pre_nixos.EXIT_NEEDS_ANSWER
+    assert partitioned == []
+    assert cli == {"apply": [], "install": []}
+
+
+def test_explicit_partitioning_runs_once_answered(cli, monkeypatch) -> None:
+    partitioned: list[tuple] = []
+    monkeypatch.setattr(
+        pre_nixos.partition, "create_partitions", lambda *a, **k: partitioned.append(a)
+    )
+    pre_nixos.main(["--partition-lvm", "/dev/sdb", "--plan-only", "--ssd", "sda"])
+    assert partitioned == [("/dev/sdb",)]
