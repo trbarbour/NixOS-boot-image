@@ -23,6 +23,16 @@ The system must automate the hardware setup process on new servers prior to NixO
   - SSD(s): designated for the system `slash` volume. NVMe, eMMC and SD
     (`mmcblk*`) devices count as solid-state. A machine **may have no SSD**,
     and a single solid-state device is a valid system disk. [R-S2]
+  - A disk's class comes from the kernel (`queue/rotational`), except:
+    - A non-NVMe disk reported as rotating whose model name contains "SSD"
+      (any case) has an **unconfirmed class**: some SSDs report no rotation
+      rate, and the kernel then calls them rotating. No unattended run plans
+      it: the boot service neither provisions storage nor installs while any
+      planned disk's class is unconfirmed, and says why
+      (`disk-class-unconfirmed`). The user answers SSD or HDD in the TUI or
+      with `pre-nixos --ssd DISK` / `--hdd DISK`. [R-S3]
+    - The user may set any disk's class (SSD or HDD) in the TUI or on the
+      command line; the plan records the answers (`disk_classes`). [R-S4]
   - For each group of (approximately) same-sized rotating disks:
     - If exactly two → use for swap on RAID-1.
     - If three or more → use for bulk storage on RAID-5 or RAID-6, depending on count.

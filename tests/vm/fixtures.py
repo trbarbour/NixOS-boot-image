@@ -771,6 +771,49 @@ def boot_image_vm_with_raid_disks(
     )
 
 
+@pytest.fixture(scope="module")
+def ambiguous_ssd_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[ScsiDisk]]:
+    """The user's first BIOS PC in small (task queue item 34): an SSD that
+    reports no rotation rate, so the guest calls it rotating, named "TEST SSD"
+    (U1, notes/2026-11-07T165520Z-u1-scsi-unreported-rotation.md), plus an
+    equal pair of HDDs."""
+
+    sizes = (("ssd", None, 4, "TEST SSD"), ("hdda", True, 5, ""), ("hddb", True, 5, ""))
+    disks: List[ScsiDisk] = []
+    for serial, rotational, gib, product in sizes:
+        path = _create_disk_image(
+            tmp_path_factory, prefix=f"boot-image-class-{serial}", size_bytes=gib * 1024**3
+        )
+        disks.append(ScsiDisk(path=path, rotational=rotational, serial=serial, product=product))
+    try:
+        yield disks
+    finally:
+        _remove_disk_images([disk.path for disk in disks])
+
+
+@pytest.fixture(scope="module")
+def boot_image_vm_with_ambiguous_ssd(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    ambiguous_ssd_scsi_disks: List[ScsiDisk],
+    ssh_executable: str,
+    request: pytest.FixtureRequest,
+) -> Iterator["BootImageVM"]:
+    """A VM whose only disks are ``ambiguous_ssd_scsi_disks``."""
+
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
+        boot_image_build=boot_image_build,
+        vm_disk_image=None,
+        extra_disks=[],
+        ssh_executable=ssh_executable,
+        request=request,
+        scsi_disks=ambiguous_ssd_scsi_disks,
+    )
+
+
 __all__ = [
     "BootImageBuild",
     "BuiltArtifact",
@@ -797,6 +840,8 @@ __all__ = [
     "boot_image_vm_from_usb_stick",
     "boot_image_vm_with_raid_disks",
     "raid_scsi_disks",
+    "ambiguous_ssd_scsi_disks",
+    "boot_image_vm_with_ambiguous_ssd",
     "nix_executable",
     "probe_qemu_version",
     "qemu_executable",

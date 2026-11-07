@@ -141,3 +141,6 @@
 
 ### v0.30 — 2026-11-06
 - §7.7: a manual run reuses the boot's LAN configuration instead of renaming the NIC and waiting for DHCP again (task queue item 35).
+
+### v0.31 — 2026-11-07
+- §7.1: disk classes (R-S3, R-S4). A disk named SSD but reported as rotating is unconfirmed until the user answers (TUI or `--ssd`/`--hdd`); unattended runs neither provision nor install meanwhile. The TUI can set any disk's class (task queue item 34).

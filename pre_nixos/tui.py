@@ -16,6 +16,7 @@ from typing import Any, Iterable, Iterator, Optional, Sequence, Tuple
 from . import (
     apply,
     boot_platform,
+    disk_class,
     install,
     inventory,
     lan_reuse,
@@ -25,6 +26,7 @@ from . import (
     storage_cleanup,
     storage_detection,
 )
+from .boot_layout import BootLayout
 
 
 FocusKey = Tuple[str, str, Optional[str]]
@@ -610,6 +612,13 @@ class TUIState:
     install_network: install.InstallNetworkConfig | None = None
     # Disks backing the running system; never planned or applied (reqs §2.3).
     protected_disks: frozenset[str] = frozenset()
+    # R-S3/R-S4 (task queue item 34): the disks as the kernel reports them,
+    # the user's SSD/HDD answers, and what re-planning needs.  ``disks`` is
+    # ``kernel_disks`` with the answers applied.
+    kernel_disks: list[inventory.Disk] = field(default_factory=list)
+    class_answers: dict[str, disk_class.DiskClass] = field(default_factory=dict)
+    ram_gb: int = 0
+    boot_layout: BootLayout = BootLayout.ESP
 
 
 def _initial_state(
@@ -625,6 +634,7 @@ def _initial_state(
         renderer=PlanRenderer(plan, disks),
         lan_config=lan_config,
         install_network=install.load_install_network_config(),
+        kernel_disks=list(disks),
     )
     state.cleanup_notice = _initial_cleanup_notice()
     state.auto_install_enabled = _default_auto_install_enabled(lan_config)
@@ -759,6 +769,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         "[A]pply",
         "[N] Install now",
         "[I] Auto-install toggle",
+        "[T] SSD/HDD",
         "[Q]uit",
     ]
     footer = "  ".join(footer_parts)
@@ -767,6 +778,116 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
     stdscr.addstr(height - 1, 0, _trim(footer, width - 1))
     stdscr.refresh()
     return render
+
+
+def _replan(state: TUIState) -> None:
+    """Plan again from the kernel's disks with the user's answers (R-S4).
+
+    Replaces the plan, so edits made with [E]dit or [L]oad are discarded.
+    """
+
+    state.disks = disk_class.apply_classes(state.kernel_disks, state.class_answers)
+    state.plan = disk_class.annotate_plan(
+        planner.plan_storage("fast", state.disks, ram_gb=state.ram_gb, boot_layout=state.boot_layout),
+        state.class_answers,
+    )
+    state.renderer = PlanRenderer(state.plan, state.disks)
+    state.focus = None
+    state.expanded.clear()
+
+
+def _ask_disk_classes(stdscr: curses.window, state: TUIState) -> None:
+    """Ask about each disk named SSD but reported as rotating (R-S3, D3 (a)).
+
+    Only [S] or [H] answers: the TUI never plans such a disk by guesswork.
+    """
+
+    pending = disk_class.unconfirmed(state.kernel_disks, state.class_answers)
+    for disk in pending:
+        stdscr.clear()
+        _, width = stdscr.getmaxyx()
+        lines = [
+            disk_class.question(disk),
+            "",
+            "[S] SSD    [H] HDD    (change it later with [T])",
+        ]
+        for idx, line in enumerate(lines):
+            stdscr.addstr(idx, 0, _trim(line, width - 1))
+        stdscr.refresh()
+        answer: disk_class.DiskClass | None = None
+        while answer is None:
+            try:
+                key = stdscr.getkey()
+            except curses.error:
+                continue
+            answer = {"s": disk_class.DiskClass.SSD, "h": disk_class.DiskClass.HDD}.get(key.lower())
+        state.class_answers = {**state.class_answers, disk.name: answer}
+    if pending:
+        _replan(state)
+    assert not disk_class.unconfirmed(state.kernel_disks, state.class_answers)
+
+
+# Keys for the disks on one page; n, p and q page and cancel.
+_DISK_CHOICE_KEYS = "123456789abcdefghijklmorstuvwxyz"
+# Lines around the disk list: title, blank, blank, the key help line.
+_DISK_LIST_FRAME_LINES = 4
+
+
+def _choose_disk(stdscr: curses.window, state: TUIState) -> inventory.Disk | None:
+    """List every disk with its class; return the one picked, or ``None``.
+
+    A list, rather than the focused row: the detailed and compact layouts
+    focus a disk's rows on its LVs, VGs or arrays, and one array or VG spans
+    several disks' rows (Codex on #335).  The list is paged to fit the
+    window, so every disk stays reachable (Codex on #335, second review).
+    """
+
+    disks = list(state.kernel_disks)
+    if not disks:
+        _show_modal(stdscr, ["No disks to change."])
+        return None
+    planned = {disk.name: disk for disk in state.disks}
+    page = 0
+    while True:
+        height, width = stdscr.getmaxyx()
+        page_size = max(1, min(len(_DISK_CHOICE_KEYS), height - _DISK_LIST_FRAME_LINES))
+        pages = (len(disks) + page_size - 1) // page_size
+        page %= pages
+        shown = disks[page * page_size : (page + 1) * page_size]
+        lines = [f"Change which disk between SSD and HDD?  (Page {page + 1} of {pages})", ""]
+        for key, disk in zip(_DISK_CHOICE_KEYS, shown):
+            cls = disk_class.current_class(planned.get(disk.name, disk)).label
+            source = "your answer" if disk.name in state.class_answers else "kernel"
+            lines.append(f"[{key}] {disk_class.describe(disk)}: {cls} ({source})")
+        lines += ["", "[N] Next page  [P] Previous page  [Q] or [Esc] Cancel"]
+        stdscr.clear()
+        for idx, line in enumerate(lines[: max(height - 1, 1)]):
+            stdscr.addstr(idx, 0, _trim(line, width - 1))
+        stdscr.refresh()
+        choices = dict(zip(_DISK_CHOICE_KEYS, shown))
+        while True:
+            try:
+                key = stdscr.getkey()
+            except curses.error:
+                continue
+            lowered = key.lower() if len(key) == 1 else key
+            if lowered in {"q", "\x1b"}:
+                return None
+            if lowered in {"n", "p", "KEY_RESIZE"}:
+                page += {"n": 1, "p": -1}.get(lowered, 0)
+                break
+            if lowered in choices:
+                return choices[lowered]
+
+
+def _toggle_disk_class(stdscr: curses.window, state: TUIState) -> None:
+    """[T]: switch a chosen disk between SSD and HDD, and re-plan (R-S4)."""
+
+    disk = _choose_disk(stdscr, state)
+    if disk is None:
+        return
+    state.class_answers = disk_class.toggled(state.class_answers, disk)
+    _replan(state)
 
 
 def _move_focus(state: TUIState, render: RenderResult, direction: int) -> None:
@@ -1079,6 +1200,12 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     """Handle the apply-plan workflow. Returns ``True`` when exiting."""
 
     execute = os.environ.get("PRE_NIXOS_EXEC") == "1"
+    # R-S3: never apply a plan that guessed a disk's class.  The start-up
+    # questions answer them all, so this guards against a broken invariant.
+    unconfirmed = disk_class.unconfirmed(state.kernel_disks, state.class_answers)
+    if unconfirmed:
+        _show_modal(stdscr, [disk_class.refusal_message(unconfirmed)])
+        return False
     try:
         devices = storage_detection.detect_existing_storage()
     except Exception as exc:
@@ -1250,6 +1377,8 @@ def run() -> None:
     plan = planner.plan_storage("fast", disks, ram_gb=ram_gb, boot_layout=boot_layout)
     state = _initial_state(plan, disks, lan_config)
     state.protected_disks = protected_disks
+    state.ram_gb = ram_gb
+    state.boot_layout = boot_layout
 
     def refresh_renderer() -> None:
         state.renderer = PlanRenderer(state.plan, state.disks)
@@ -1266,6 +1395,8 @@ def run() -> None:
             curses.curs_set(0)
         except curses.error:
             pass
+
+        _ask_disk_classes(stdscr, state)
 
         while True:
             render = _draw_plan(stdscr, state)
@@ -1306,6 +1437,9 @@ def run() -> None:
                 continue
             if key_lower == "i":
                 state.auto_install_enabled = not state.auto_install_enabled
+                continue
+            if key_lower == "t":
+                _toggle_disk_class(stdscr, state)
                 continue
             if key_lower in {"KEY_UP", "k"}:
                 _move_focus(state, render, -1)

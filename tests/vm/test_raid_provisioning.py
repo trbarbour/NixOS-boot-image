@@ -26,9 +26,15 @@ def test_ssd_plus_hdd_pair_is_provisioned_with_raid1(
 ) -> None:
     vm = boot_image_vm_with_raid_disks
 
-    # The scenario only means something if the guest classifies the disks as intended.
-    rotation = vm.run_as_root_checked("lsblk -dnro NAME,ROTA /dev/sda /dev/sdb /dev/sdc", timeout=120)
-    assert _pairs(rotation) == {("sda", "0"), ("sdb", "1"), ("sdc", "1")}, rotation
+    # The scenario only means something if the guest classifies the disks as
+    # intended: one SSD and two HDDs.  The guest names them in probe order,
+    # not by SCSI target (#334), so the SSD is found by its rotational flag.
+    rotation = _pairs(
+        vm.run_as_root_checked("lsblk -dnro NAME,ROTA /dev/sda /dev/sdb /dev/sdc", timeout=120)
+    )
+    assert sorted(rota for _name, rota in rotation) == ["0", "1", "1"], rotation
+    (ssd,) = [name for name, rota in rotation if rota == "0"]
+    hdds = sorted(name for name, rota in rotation if rota == "1")
 
     status = vm.wait_for_storage_status()
     if status.get("STATE") != "applied" or status.get("DETAIL") != "auto-applied":
@@ -38,17 +44,17 @@ def test_ssd_plus_hdd_pair_is_provisioned_with_raid1(
         )
 
     mdstat = vm.run_as_root_checked("cat /proc/mdstat", timeout=120)
-    assert "active raid1" in mdstat and "sdb1" in mdstat and "sdc1" in mdstat, mdstat
+    assert "active raid1" in mdstat and all(f"{hdd}1" in mdstat for hdd in hdds), mdstat
     assert "[UU]" in mdstat, mdstat
 
     # x86 boot disk (R-B4, D2): BIOS boot partition 1 (EF02, first as disko
     # creates it), ESP 2, data 3.  The VM boots with SeaBIOS, so this is also
     # the legacy-BIOS layout with main on a SATA disk.
-    parttypes = _pairs(vm.run_as_root_checked("lsblk -nro NAME,PARTTYPE /dev/sda", timeout=120))
-    assert ("sda1", "21686148-6449-6e6f-744e-656564454649") in parttypes, parttypes
-    assert ("sda2", "c12a7328-f81f-11d2-ba4b-00a0c93ec93b") in parttypes, parttypes
+    parttypes = _pairs(vm.run_as_root_checked(f"lsblk -nro NAME,PARTTYPE /dev/{ssd}", timeout=120))
+    assert (f"{ssd}1", "21686148-6449-6e6f-744e-656564454649") in parttypes, parttypes
+    assert (f"{ssd}2", "c12a7328-f81f-11d2-ba4b-00a0c93ec93b") in parttypes, parttypes
     pvs = _pairs(vm.run_as_root_checked("pvs --noheadings -o pv_name,vg_name", timeout=120))
-    assert ("/dev/sda3", "main") in pvs, pvs
+    assert (f"/dev/{ssd}3", "main") in pvs, pvs
     assert any(vg == "swap" and pv.startswith("/dev/md") for pv, vg in pvs), pvs
     lvs = _pairs(vm.run_as_root_checked("lvs --noheadings -o lv_name,vg_name", timeout=120))
     assert {("slash", "main"), ("swap", "swap")} <= lvs, lvs

@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from importlib import resources
 from dataclasses import dataclass, field
@@ -14,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
-from . import boot_order, boot_platform, network, state
+from . import boot_order, boot_platform, disk_class, network, state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -1066,6 +1067,25 @@ def _refuse_legacy_bios(
         "failed",
         status_dir=status_dir,
         reason="bios-unsupported",
+        details={"message": message},
+    )
+
+
+def refuse_unconfirmed_disks(
+    message: str, *, status_dir: Optional[Path] = None
+) -> AutoInstallResult:
+    """Record and announce that disks need the user's answer first (R-S3).
+
+    Nothing was provisioned or installed; the run waits for the user, so the
+    install is ``skipped``, not ``failed``.
+    """
+
+    print(message, file=sys.stderr)
+    _broadcast_install_message(message)
+    return _record_result(
+        "skipped",
+        status_dir=status_dir if status_dir is not None else state.default_state_dir(),
+        reason=disk_class.UNCONFIRMED_REASON,
         details={"message": message},
     )
 

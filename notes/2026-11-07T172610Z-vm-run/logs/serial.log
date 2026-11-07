@@ -1,0 +1,224 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261015.26f4107 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261015.26f4107 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot//nix/store/l94h0skn99v3fqhvzjcr7cvcz202nabd-linux-6.18.56/bzImage... ok
+Loading /boot//nix/store/ynggxn04i2f37r1idr07cqsiz515lkqr-initrd-linux-6.18.56/initrd...ok
+[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;start=09de53fcd6bf46be90419fe963064d35;user=root;hostname=nixos;machineid=9ff81ea9d86341fc97c3d5119ca4aee6;bootid=c5187eee76434e1daf31e2d6db27fef5;pid=688;pidfdid=689;comm=(agetty);servicename=serial-getty@ttyS0.service;invocationid=da0e1a782118427185f45a5b3e8d2b4e;type=service\P+q6E616D65\
+<<< Welcome to the pre-nixos auto-install boot image (26.05.20261015.26f4107, x86_64) - ttyS0 >>>
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+(PRE_NIXOS_AUTO_INSTALL=)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)
+
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072446622__\n'
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072446622__\n'
+pre-nixos boot image version 0.26.0
+]3008;start=29811920c1b54b048f179dd10190e35e;user=root;hostname=nixos;machineid=9ff81ea9d86341fc97c3d5119ca4aee6;bootid=c5187eee76434e1daf31e2d6db27fef5;pid=688;pidfdid=689;comm=login;targetuser=nixos;sessionid=2;type=session\pre-nixos boot image version 0.26.0
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> ' SYSTEMD
+_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072446622__\n'
+[?2004l__PROMPT_READY__1794072446622__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794072456049__%s__UID_MARK__1794072456049__\n' "$(id -u)"
+
+[?2004l[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072456150__\n'
+printf '__UID_MARK__1794072456049__%s__UID_MARK__1794072456049__\n' "$(id -u)"
+[?2004lexport PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072456150__\n'
+__UID_MARK__1794072456049__1000__UID_MARK__1794072456049__
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072456150__\n'
+[?2004l__PROMPT_READY__1794072456150__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794072456049__%s__UID_MARK__1794072456049__\n' "$(id -u)"
+sudo -i
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072456049__%s__UID_MARK__1794072456049__\n' "$(id -u)"
+[?2004lsudo -i
+__UID_MARK__1794072456049__1000__UID_MARK__1794072456049__
+[?2004hPRE-NIXOS> sudo -i
+[?2004lpre-nixos boot image version 0.26.0
+[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072458326__\n'
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794072458326__\n'
+[?2004l__PROMPT_READY__1794072458326__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072458409__%s__UID_MARK__1794072458409__\n' "$(id -u)"
+printf '__UID_MARK__1794072458409__%s__UID_MARK__1794072458409__\n' "$(id -u)"
+[?2004l__UID_MARK__1794072458409__0__UID_MARK__1794072458409__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072458581__%s__UID_MARK__1794072458581__\n' "$(id -u)"
+printf '__UID_MARK__1794072458581__%s__UID_MARK__1794072458581__\n' "$(id -u)"
+[?2004l__UID_MARK__1794072458581__0__UID_MARK__1794072458581__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; lsblk -dnro NAME,ROTA /dev/sda /dev/sdb /dev/sdc; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; lsblk -dnro NAME,ROTA /dev/sda /dev/sdb /dev/sdc; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+sda 1
+sdb 1
+sdc 0
+
+__EXIT__=0
+[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+LAN IPv4 address: 10.0.2.15
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+LAN IPv4 address: 10.0.2.15
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004lSTATE=applied
+DETAIL=auto-applied
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disabled
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072561232__%s__UID_MARK__1794072561232__\n' "$(id -u)"
+printf '__UID_MARK__1794072561232__%s__UID_MARK__1794072561232__\n' "$(id -u)"
+[?2004l__UID_MARK__1794072561232__0__UID_MARK__1794072561232__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; cat /proc/mdstat; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; cat /proc/mdstat; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+Personalities : [raid1] 
+md127 : active raid1 sdb1[1] sda1[0]
+      5235712 blocks super 1.2 [2/2] [UU]
+      [=========>...........]  resync = 49.6% (2601984/5235712) finish=0.2min speed=216832K/sec
+      
+unused devices: <none>
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072561485__%s__UID_MARK__1794072561485__\n' "$(id -u)"
+printf '__UID_MARK__1794072561485__%s__UID_MARK__1794072561485__\n' "$(id -u)"
+[?2004l__UID_MARK__1794072561485__0__UID_MARK__1794072561485__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; lsblk -nro NAME,PARTTYPE /dev/sdc; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; lsblk -nro NAME,PARTTYPE /dev/sdc; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+sdc 
+sdc1 21686148-6449-6e6f-744e-656564454649
+sdc2 c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+sdc3 0fc63daf-8483-4772-8e79-3d69d8477de4
+main-slash 
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072561745__%s__UID_MARK__1794072561745__\n' "$(id -u)"
+printf '__UID_MARK__1794072561745__%s__UID_MARK__1794072561745__\n' "$(id -u)"
+[?2004l__UID_MARK__1794072561745__0__UID_MARK__1794072561745__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; pvs --noheadings -o pv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; pvs --noheadings -o pv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+  /dev/md127 swap
+  /dev/sdc3  main
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072562038__%s__UID_MARK__1794072562038__\n' "$(id -u)"
+printf '__UID_MARK__1794072562038__%s__UID_MARK__1794072562038__\n' "$(id -u)"
+[?2004l__UID_MARK__1794072562038__0__UID_MARK__1794072562038__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+  slash main
+  swap  swap
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794072562329__%s__UID_MARK__1794072562329__\n' "$(id -u)"
+printf '__UID_MARK__1794072562329__%s__UID_MARK__1794072562329__\n' "$(id -u)"
+[?2004l__UID_MARK__1794072562329__0__UID_MARK__1794072562329__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; mdadm --detail /dev/md/md0; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; mdadm --detail /dev/md/md0; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+/dev/md/md0:
+           Version : 1.2
+     Creation Time : Sat Nov  7 17:29:08 2026
+        Raid Level : raid1
+        Array Size : 5235712 (4.99 GiB 5.36 GB)
+     Used Dev Size : 5235712 (4.99 GiB 5.36 GB)
+      Raid Devices : 2
+     Total Devices : 2
+       Persistence : Superblock is persistent
+
+       Update Time : Sat Nov  7 17:29:21 2026
+             State : clean, resyncing 
+    Active Devices : 2
+   Working Devices : 2
+    Failed Devices : 0
+     Spare Devices : 0
+
+Consistency Policy : resync
+
+     Resync Status : 52% complete
+
+              Name : any:md0
+              UUID : d7df471c:bf2a1226:c7edfc24:57430f7a
+            Events : 18
+
+    Number   Major   Minor   RaidDevice State
+       0       8        1        0      active sync   /dev/sda1
+       1       8       17        1      active sync   /dev/sdb1
+
+__EXIT__=0
+[?2004hPRE-NIXOS> poweroff
+poweroff
+[?2004l
+Broadcast message from root@nixos on pts/0 (Sat 2026-11-07 17:29:22 UTC):
+
+The system will power off now!
+
+[?2004hPRE-NIXOS> [!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;end=09de53fcd6bf46be90419fe963064d35\[  185.642459] reboot: Power down

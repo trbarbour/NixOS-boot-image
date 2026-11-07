@@ -31,3 +31,19 @@ def test_rotation_rates_and_order(tmp_path: Path) -> None:
 def test_serial_must_be_alphanumeric(tmp_path: Path) -> None:
     with pytest.raises(AssertionError):
         ScsiDisk(tmp_path / "x.img", rotational=True, serial="bad,serial")
+
+
+def test_unreported_rotation_and_product(tmp_path: Path) -> None:
+    """Task queue item 34: an SSD reporting no rotation rate, named SSD."""
+
+    disk = ScsiDisk(tmp_path / "x.img", rotational=None, serial="ssd", product="TEST SSD")
+    (device,) = [a for a in scsi_disk_args([disk]) if a.startswith("scsi-hd")]
+    assert device == (
+        "scsi-hd,bus=scsi0.0,drive=scsidisk0,rotation_rate=0,product=TEST SSD,serial=ssd,scsi-id=0"
+    )
+
+
+@pytest.mark.parametrize("product", ["A" * 17, "bad,name"])
+def test_product_must_fit_scsi_and_qemu(tmp_path: Path, product: str) -> None:
+    with pytest.raises(AssertionError):
+        ScsiDisk(tmp_path / "x.img", rotational=None, serial="ssd", product=product)

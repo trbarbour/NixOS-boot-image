@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.30
+**Doc status:** Draft v0.31
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -77,6 +77,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
 - For each disk: gather `model`, `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
 - Group disks into **SSDs** and **HDDs**, then bucket them by approximate size (≤1% tolerance).
+- **Disk class [R-S3, R-S4]** (`disk_class.py`; plans/2026-11-07T161535Z-ssd-model-name-design.md):
+  - The class is the kernel's `rotational`, unless the user answered for the disk (`--ssd`/`--hdd`, the TUI's start-up question or its `T` toggle). The answers are applied to the inventory before planning, so the planner is unchanged; the plan records them as `disk_classes`.
+  - A non-NVMe disk reported as rotating with "ssd" (any case) in its model is **unconfirmed** until answered.
+  - A run that would touch the disks stops first while one is unconfirmed (provisioning, installing, a forced cleanup, which runs even with `--plan-only`, or explicit `--partition-boot`/`--partition-lvm`, which now run after the stop; Codex on #335): it records `REASON=disk-class-unconfirmed` in `auto-install-status` and exits 3. The boot service reports that as `STATE=plan-only`, `DETAIL=disk-class-unconfirmed` (not a failure), and the login notice says how to answer. `--plan-only` and `--dry-run` print the plan with a note.
+  - The TUI asks about each unconfirmed disk at start ([S]SD or [H]DD only), and `T` lists every disk with its class (the kernel's or the user's) and switches the one picked (paged to fit the window, `N`/`P`), then plans again (discarding manual plan edits). A list rather than the focused row: the detailed and compact layouts focus a disk's rows on its LVs, VGs or arrays (Codex on #335).
 - **Equal-size requirement:** Only disks in the same bucket form a RAID set. Larger disks are not truncated down; outliers are excluded unless explicitly overridden.
 
 ### 7.2 RAID plan selection

@@ -10,6 +10,7 @@ from typing import Collection, Iterable, Sequence, Set
 from . import (
     apply,
     boot_platform,
+    disk_class,
     install,
     inventory,
     lan_reuse,
@@ -247,6 +248,11 @@ def _handle_existing_storage(
     return True
 
 
+# Exit status of a run that stopped for the user's answer (R-S3); the boot
+# service reports it as plan-only, not as a failure.
+EXIT_NEEDS_ANSWER = 3
+
+
 def main(argv: list[str] | None = None) -> None:
     """Run the pre-nixos tool."""
     parser = argparse.ArgumentParser(description="Pre-NixOS setup")
@@ -312,7 +318,28 @@ def main(argv: list[str] | None = None) -> None:
         "--install-gateway",
         help="Default gateway for the installed system's static IPv4 configuration.",
     )
+    parser.add_argument(
+        "--ssd",
+        metavar="DISK",
+        action="append",
+        default=[],
+        help=(
+            "Plan DISK as an SSD, whatever the kernel reports (can be repeated). "
+            "Answers the question about a disk named SSD but reported as rotating."
+        ),
+    )
+    parser.add_argument(
+        "--hdd",
+        metavar="DISK",
+        action="append",
+        default=[],
+        help="Plan DISK as an HDD, whatever the kernel reports (can be repeated).",
+    )
     args = parser.parse_args(argv)
+    try:
+        class_answers = disk_class.parse_answers(args.ssd, args.hdd)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     install_network: install.InstallNetworkConfig | None = install.load_install_network_config()
     install_network_args: tuple[str, str | None, str | None] | None = None
@@ -364,7 +391,7 @@ def main(argv: list[str] | None = None) -> None:
                 )
 
         if args.install_now:
-            if args.plan_only or args.partition_boot or args.partition_lvm:
+            if args.plan_only or args.partition_boot or args.partition_lvm or class_answers:
                 parser.error("--install-now cannot be combined with planning options")
             if args.output != "plan":
                 parser.error("--install-now cannot be combined with --output")
@@ -405,24 +432,27 @@ def main(argv: list[str] | None = None) -> None:
             (_normalise_device_path(dev) or dev for dev in explicit_targets),
             protected_disks,
         )
-        if args.partition_boot:
-            partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
-        for dev in args.partition_lvm:
-            partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
-
         try:
             boot_setup = boot_platform.current_setup()
         except ValueError as exc:
             print(f"Invalid boot-image declaration: {exc}", file=sys.stderr)
             sys.exit(1)
         disks = inventory.exclude_disks(inventory.enumerate_disks(), protected_disks)
+        try:
+            classified = disk_class.apply_classes(disks, class_answers)
+        except ValueError as exc:
+            parser.error(str(exc))
+        unconfirmed_disks = disk_class.unconfirmed(disks, class_answers)
         ram_gb = inventory.detect_ram_gb()
-        plan = planner.plan_storage(
-            args.mode,
-            disks,
-            prefer_raid6_on_four=args.prefer_raid6_on_four,
-            ram_gb=ram_gb,
-            boot_layout=boot_platform.partition_layout(boot_setup),
+        plan = disk_class.annotate_plan(
+            planner.plan_storage(
+                args.mode,
+                classified,
+                prefer_raid6_on_four=args.prefer_raid6_on_four,
+                ram_gb=ram_gb,
+                boot_layout=boot_platform.partition_layout(boot_setup),
+            ),
+            class_answers,
         )
         if args.output == "plan":
             plan_output = {key: value for key, value in plan.items() if key != "disko"}
@@ -445,6 +475,31 @@ def main(argv: list[str] | None = None) -> None:
                 console.write(console_output)
                 console.flush()
 
+        # R-S3 (task queue item 34): a disk named SSD but reported as rotating
+        # is not classified by guesswork.  A run that would touch the disks
+        # stops first until the user answers: one that provisions or installs,
+        # a forced cleanup, which runs even with --plan-only and wipes the
+        # plan's devices, and explicit partitioning, which zaps the named
+        # disks (Codex on #335, both reviews).
+        forced_cleanup_action = _forced_cleanup_action()
+        if unconfirmed_disks:
+            message = disk_class.refusal_message(unconfirmed_disks)
+            touches_disks = (
+                not args.plan_only
+                or forced_cleanup_action is not None
+                or bool(explicit_targets)
+            )
+            if touches_disks and not args.dry_run:
+                install.refuse_unconfirmed_disks(message)
+                sys.exit(EXIT_NEEDS_ANSWER)
+            print(message, file=sys.stderr)
+
+        # Explicit partitioning (after the R-S3 stop: it erases the disks).
+        if args.partition_boot:
+            partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
+        for dev in args.partition_lvm:
+            partition.create_partitions(dev, with_efi=False, dry_run=args.dry_run)
+
         # Task queue item 33: an auto-install that cannot boot (legacy BIOS on
         # x86, R-B1) is refused before any disk is touched for it.
         if auto_install_enabled and not args.plan_only and not args.dry_run:
@@ -453,7 +508,6 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"Auto-install failed: {refused.reason}", file=sys.stderr)
                 sys.exit(1)
 
-        forced_cleanup_action = _forced_cleanup_action()
         will_modify_storage = (
             not args.dry_run
             and os.environ.get("PRE_NIXOS_EXEC") == "1"

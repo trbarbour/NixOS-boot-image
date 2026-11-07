@@ -633,6 +633,50 @@
             pkgs.runCommand "installed-network-single-dhcp-client" {} ''
               touch $out
             '';
+          # R-S3 (task queue item 34): the boot service records pre-nixos's
+          # "needs the user's answer" exit (3) as plan-only with
+          # DETAIL=disk-class-unconfirmed and succeeds; other exits keep their
+          # meaning.  The real service script runs with stub commands.
+          boot-service-status =
+            let
+              stubs = exitCode: pkgs.runCommand "pre-nixos-stub-${toString exitCode}" { } ''
+                mkdir -p $out/bin
+                printf '#!${pkgs.runtimeShell}\nexit ${toString exitCode}\n' > $out/bin/pre-nixos
+                # No existing storage: the service runs pre-nixos without --plan-only.
+                printf '#!${pkgs.runtimeShell}\nexit 1\n' > $out/bin/pre-nixos-detect-storage
+                printf '#!${pkgs.runtimeShell}\nexit 0\n' > $out/bin/pre-nixos-console
+                chmod +x $out/bin/*
+              '';
+              script = exitCode: pkgs.writeText "service-script-${toString exitCode}"
+                (import ./modules/pre-nixos/service-script.nix {
+                  pkgs = pkgs // {
+                    pre-nixos = stubs exitCode;
+                    # The LAN announcement waits for an address; not under test.
+                    writeShellScript = _name: _text: "${pkgs.coreutils}/bin/true";
+                  };
+                });
+              run = exitCode: expectedStatus: expectedLines: ''
+                state=$TMPDIR/state-${toString exitCode}
+                set +e
+                PRE_NIXOS_STATE_DIR=$state PRE_NIXOS_LOG_FILE=$TMPDIR/log \
+                  ${pkgs.bash}/bin/bash ${script exitCode}
+                status=$?
+                set -e
+                echo "pre-nixos exit ${toString exitCode}: service exit $status"
+                cat "$state/storage-status"
+                [ "$status" -eq ${toString expectedStatus} ]
+                ${pkgs.lib.concatMapStrings (line: ''
+                  grep -qx '${line}' "$state/storage-status"
+                '') expectedLines}
+              '';
+            in
+            pkgs.runCommand "boot-service-status" { } ''
+              set -eu
+              ${run 3 0 [ "STATE=plan-only" "DETAIL=disk-class-unconfirmed" ]}
+              ${run 0 0 [ "STATE=applied" "DETAIL=auto-applied" ]}
+              ${run 1 1 [ "STATE=failed" "DETAIL=auto-applied" ]}
+              touch $out
+            '';
           # #324: on the installer, sshd starts once secure_ssh has hardened it,
           # not when pre-nixos.service (which runs the whole auto-install) ends;
           # and nothing starts it at boot (reqs §2.7).

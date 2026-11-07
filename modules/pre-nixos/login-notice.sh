@@ -24,6 +24,9 @@ if [ -r "$status_file" ]; then
       if [ "$detail" = "existing-storage" ]; then
         printf '%s\n' "pre-nixos: Existing storage detected; provisioning ran in plan-only mode."
         printf '%s\n' "             Review and apply the plan with 'pre-nixos' or 'pre-nixos-tui'."
+      elif [ "$detail" = "disk-class-unconfirmed" ]; then
+        printf '%s\n' "pre-nixos: A disk named SSD is reported as rotating; nothing was provisioned or installed."
+        printf '%s\n' "             Confirm its type with 'pre-nixos-tui', or 'pre-nixos --ssd DISK' (or --hdd DISK)."
       elif [ "$detail" = "detection-error" ]; then
         printf '%s\n' "pre-nixos: Storage detection encountered an error; provisioning ran in plan-only mode."
         printf '%s\n' "             Check 'journalctl -u pre-nixos' for details before continuing."
