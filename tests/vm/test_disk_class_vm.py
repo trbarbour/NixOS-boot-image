@@ -40,7 +40,9 @@ def test_boot_run_waits_for_the_disk_class_answer(
     # Nothing was provisioned: no partitions, arrays or volume groups.
     names = vm.run_as_root_checked("lsblk -nro NAME /dev/sda /dev/sdb /dev/sdc", timeout=120)
     assert names.split() == ["sda", "sdb", "sdc"], names
-    mdstat = vm.run_as_root_checked("cat /proc/mdstat", timeout=120)
+    # No arrays.  /proc/mdstat exists only once the md driver is loaded, and
+    # nothing loads it when nothing is provisioned (first run, 2026-11-07).
+    mdstat = vm.run_as_root_checked("cat /proc/mdstat 2>/dev/null || true", timeout=120)
     assert "active" not in mdstat, mdstat
     assert vm.run_as_root_checked("vgs --noheadings -o vg_name", timeout=120).strip() == ""
 

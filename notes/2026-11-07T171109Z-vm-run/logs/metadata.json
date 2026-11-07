@@ -1,0 +1,98 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/8gp861ryf043hbilxjs5vzrvssm4iknw-pre-nixos-0.26.0-g193bbb2-dirty-26.05.20261015.26f4107-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/11b0xc7jxnrlc35axaymaz8bl8afh4rv-pre-nixos-0.26.0-g193bbb2-dirty-26.05.20261015.26f4107-x86_64-linux.iso/iso/pre-nixos-0.26.0-g193bbb2-dirty-26.05.20261015.26f4107-x86_64-linux.iso",
+    "nar_hash": "sha256-ugZSYS8ljAPbFB+MqU104GPUM2tegtwQS5Pq2W/DVPw=",
+    "root_key_fingerprint": "256 SHA256:+wdyhV++27EoeL/gtiamEgQEILfwtzW7eC7nIs4m0XI boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/11b0xc7jxnrlc35axaymaz8bl8afh4rv-pre-nixos-0.26.0-g193bbb2-dirty-26.05.20261015.26f4107-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [
+      {
+        "label": "Serial log tail",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/diagnostics/serial-log-tail-01.log"
+      },
+      {
+        "label": "Login transcript",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/diagnostics/login-transcript-02.txt"
+      },
+      {
+        "label": "Failure context",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/diagnostics/failure-context-03.log"
+      },
+      {
+        "label": "dmesg (post-test teardown)",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/diagnostics/dmesg-post-test-teardown-04.log"
+      },
+      {
+        "label": "pre-nixos journal",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/diagnostics/pre-nixos-journal-05.log"
+      }
+    ],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-11-07T17:11:09.313617+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/nix/store/03m7xs3pd5nb75f21sp7w1pjdsjggx6l-qemu-10.2.4/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-serial",
+      "stdio",
+      "-boot",
+      "d",
+      "-cdrom",
+      "/nix/store/11b0xc7jxnrlc35axaymaz8bl8afh4rv-pre-nixos-0.26.0-g193bbb2-dirty-26.05.20261015.26f4107-x86_64-linux.iso/iso/pre-nixos-0.26.0-g193bbb2-dirty-26.05.20261015.26f4107-x86_64-linux.iso",
+      "-device",
+      "virtio-scsi-pci,id=scsi0",
+      "-drive",
+      "file=/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-class-ssd0/disk.img,if=none,id=scsidisk0,format=raw",
+      "-device",
+      "scsi-hd,bus=scsi0.0,drive=scsidisk0,rotation_rate=0,product=TEST SSD,serial=ssd,scsi-id=0",
+      "-drive",
+      "file=/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-class-hdda0/disk.img,if=none,id=scsidisk1,format=raw",
+      "-device",
+      "scsi-hd,bus=scsi0.0,drive=scsidisk1,rotation_rate=7200,serial=hdda,scsi-id=1",
+      "-drive",
+      "file=/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-class-hddb0/disk.img,if=none,id=scsidisk2,format=raw",
+      "-device",
+      "scsi-hd,bus=scsi0.0,drive=scsidisk2,rotation_rate=7200,serial=hddb,scsi-id=2",
+      "-qmp",
+      "unix:/tmp/boot-image-shared-tmp/qmp-kw_xmgy1/qmp.sock,server=on,wait=off",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:34337-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": null,
+    "extra_disks": [
+      "/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-class-ssd0/disk.img",
+      "/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-class-hdda0/disk.img",
+      "/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-class-hddb0/disk.img"
+    ],
+    "version": "QEMU emulator version 10.2.4"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 34337
+  },
+  "timings": {
+    "boot_to_login_seconds": 90.462,
+    "build_seconds": 348.981,
+    "end": "2026-11-07T17:12:46.172677+00:00",
+    "start": "2026-11-07T17:11:09.242812+00:00",
+    "total_seconds": 96.856
+  }
+}

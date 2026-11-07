@@ -1,0 +1,170 @@
+[2026-11-07T17:11:09.317440+00:00] Boot image artifact metadata
+[2026-11-07T17:11:09.317508+00:00] Harness metadata written to /home/user/NixOS-boot-image/notes/2026-11-07T171109Z-vm-run/logs/metadata.json
+[2026-11-07T17:11:09.317532+00:00] Starting login sequence
+[2026-11-07T17:11:09.317934+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=300s)
+[2026-11-07T17:11:09.792602+00:00] Serial output: ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+[2026-11-07T17:11:09.792727+00:00] Serial output: e%@)0(B
+[2026-11-07T17:11:09.799495+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2026-11-07T17:11:09.799597+00:00] Serial output: x
+[2026-11-07T17:11:09.800210+00:00] Serial output: NixOS
+[2026-11-07T17:11:09.800475+00:00] Serial output: x
+[2026-11-07T17:11:09.803990+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2026-11-07T17:11:09.804218+00:00] Serial output: x
+[2026-11-07T17:11:09.807710+00:00] Serial output: NixOS 26.05.20261015.26f4107 Installer
+[2026-11-07T17:11:09.808014+00:00] Serial output: x
+[2026-11-07T17:11:09.808063+00:00] Serial output: x
+[2026-11-07T17:11:09.811317+00:00] Serial output: Options                                                                                      >
+[2026-11-07T17:11:09.811537+00:00] Serial output: x
+[2026-11-07T17:11:09.811592+00:00] Serial output: x
+[2026-11-07T17:11:09.814781+00:00] Serial output: Memtest86+
+[2026-11-07T17:11:09.815070+00:00] Serial output: x
+[2026-11-07T17:11:09.815108+00:00] Serial output: x
+[2026-11-07T17:11:09.816877+00:00] Serial output: x
+[2026-11-07T17:11:09.816922+00:00] Serial output: x
+[2026-11-07T17:11:09.818742+00:00] Serial output: x
+[2026-11-07T17:11:09.818800+00:00] Serial output: x
+[2026-11-07T17:11:09.820617+00:00] Serial output: x
+[2026-11-07T17:11:09.825004+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2026-11-07T17:11:09.825421+00:00] Serial output: Press [Tab] to edit options
+[2026-11-07T17:11:09.828517+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:09.828575+00:00] Serial output: 10
+[2026-11-07T17:11:10.868122+00:00] Serial output: seconds...
+[2026-11-07T17:11:10.868519+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:10.868573+00:00] Serial output: 9
+[2026-11-07T17:11:11.910124+00:00] Serial output: seconds...
+[2026-11-07T17:11:11.910480+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:11.910532+00:00] Serial output: 8
+[2026-11-07T17:11:12.954503+00:00] Serial output: seconds...
+[2026-11-07T17:11:12.955128+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:12.955260+00:00] Serial output: 7
+[2026-11-07T17:11:13.997928+00:00] Serial output: seconds...
+[2026-11-07T17:11:13.998084+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:13.998118+00:00] Serial output: 6
+[2026-11-07T17:11:15.041558+00:00] Serial output: seconds...
+[2026-11-07T17:11:15.042037+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:15.042086+00:00] Serial output: 5
+[2026-11-07T17:11:16.084670+00:00] Serial output: seconds...
+[2026-11-07T17:11:16.084825+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:16.084871+00:00] Serial output: 4
+[2026-11-07T17:11:17.128048+00:00] Serial output: seconds...
+[2026-11-07T17:11:17.128434+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:17.128503+00:00] Serial output: 3
+[2026-11-07T17:11:18.171922+00:00] Serial output: seconds...
+[2026-11-07T17:11:18.172323+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:18.172372+00:00] Serial output: 2
+[2026-11-07T17:11:19.215416+00:00] Serial output: seconds...
+[2026-11-07T17:11:19.215590+00:00] Serial output: Automatic boot in
+[2026-11-07T17:11:19.215624+00:00] Serial output: 1
+[2026-11-07T17:11:20.258912+00:00] Serial output: second...
+[2026-11-07T17:11:20.264624+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2026-11-07T17:11:20.264746+00:00] Serial output: x
+[2026-11-07T17:11:20.265353+00:00] Serial output: NixOS
+[2026-11-07T17:11:20.265606+00:00] Serial output: x
+[2026-11-07T17:11:20.269480+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2026-11-07T17:11:20.269760+00:00] Serial output: x
+[2026-11-07T17:11:20.273691+00:00] Serial output: NixOS 26.05.20261015.26f4107 Installer
+[2026-11-07T17:11:20.273994+00:00] Serial output: x
+[2026-11-07T17:11:20.274039+00:00] Serial output: x
+[2026-11-07T17:11:20.277373+00:00] Serial output: Options                                                                                      >
+[2026-11-07T17:11:20.277605+00:00] Serial output: x
+[2026-11-07T17:11:20.277833+00:00] Serial output: x
+[2026-11-07T17:11:20.281649+00:00] Serial output: Memtest86+
+[2026-11-07T17:11:20.281900+00:00] Serial output: x
+[2026-11-07T17:11:20.281939+00:00] Serial output: x
+[2026-11-07T17:11:20.283892+00:00] Serial output: x
+[2026-11-07T17:11:20.283954+00:00] Serial output: x
+[2026-11-07T17:11:20.285783+00:00] Serial output: x
+[2026-11-07T17:11:20.285839+00:00] Serial output: x
+[2026-11-07T17:11:20.287453+00:00] Serial output: x
+[2026-11-07T17:11:20.291923+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2026-11-07T17:11:20.292155+00:00] Serial output: Press [Tab] to edit options
+[2026-11-07T17:11:20.323780+00:00] Serial output: e%@)0(B
+[2026-11-07T17:12:29.369331+00:00] Serial output: Loading /boot//nix/store/l94h0skn99v3fqhvzjcr7cvcz202nabd-linux-6.18.56/bzImage... ok
+[2026-11-07T17:12:29.369545+00:00] Serial output: Loading /boot//nix/store/ynggxn04i2f37r1idr07cqsiz515lkqr-initrd-linux-6.18.56/initrd...ok
+[2026-11-07T17:12:29.369616+00:00] Serial output: pre-nixos boot image version 0.26.0
+[2026-11-07T17:12:29.377979+00:00] Serial output: 7
+[2026-11-07T17:12:29.749579+00:00] Serial output: 8
+[2026-11-07T17:12:29.750309+00:00] Serial output: 7
+[2026-11-07T17:12:30.085567+00:00] Serial output: 8
+[2026-11-07T17:12:30.087785+00:00] Serial output: 3008;start=c85eaceaf8e04533b0c363f6b9c3919f;user=root;hostname=nixos;machineid=125771f686714fa89bcfb181a4776803;bootid=9f5f2da8512d4a6d832ba6d63849be12;pid=746;pidfdid=747;comm=(agetty);servicename=serial-getty@ttyS0.service;invocationid=ed6eb1ac3fcd4f7a956d96f927c4e7b9;type=service
+[2026-11-07T17:12:30.649529+00:00] Serial output: <<< Welcome to the pre-nixos auto-install boot image (26.05.20261015.26f4107, x86_64) - ttyS0 >>>
+[2026-11-07T17:12:30.649642+00:00] Serial output: Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+[2026-11-07T17:12:30.649662+00:00] Serial output: (PRE_NIXOS_AUTO_INSTALL=)
+[2026-11-07T17:12:30.649676+00:00] Serial output: The "nixos" and "root" accounts have empty passwords for console logins.
+[2026-11-07T17:12:30.649690+00:00] Serial output: SSH access:
+[2026-11-07T17:12:30.649703+00:00] Serial output: - Use the matching private key for the embedded root SSH key to log in as root.
+[2026-11-07T17:12:30.649718+00:00] Serial output: - Add additional public keys to /root/.ssh/authorized_keys if needed.
+[2026-11-07T17:12:30.649731+00:00] Serial output: Networking starts automatically; verify connectivity with ip addr or networkctl.
+[2026-11-07T17:12:30.649744+00:00] Serial output: Run "nixos-help" for the NixOS manual.
+[2026-11-07T17:12:30.649758+00:00] Serial output: nixos
+[2026-11-07T17:12:30.649774+00:00] Matched pattern: 'login: '
+[2026-11-07T17:12:30.650014+00:00] Awaiting patterns: \(automatic login\) (timeout=1s)
+[2026-11-07T17:12:30.650054+00:00] Serial output: nixos
+[2026-11-07T17:12:30.650070+00:00] Matched pattern: '\\(automatic login\\)'
+[2026-11-07T17:12:30.650085+00:00] Automatic login banner observed
+[2026-11-07T17:12:30.700500+00:00] Awaiting patterns: __PROMPT_READY__1794071550650__ (timeout=120s)
+[2026-11-07T17:12:30.708312+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-07T17:12:30.708426+00:00] Matched pattern: '__PROMPT_READY__1794071550650__'
+[2026-11-07T17:12:30.708568+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-07T17:12:36.336494+00:00] Serial output: \n'
+[2026-11-07T17:12:36.337977+00:00] Serial output: 3008;start=5ee026da0f4f48bf8d7bee6140d1cc76;user=root;hostname=nixos;machineid=125771f686714fa89bcfb181a4776803;bootid=9f5f2da8512d4a6d832ba6d63849be12;pid=746;pidfdid=747;comm=login;targetuser=nixos;sessionid=2;type=session
+[2026-11-07T17:12:37.893710+00:00] Serial output: pre-nixos boot image version 0.26.0
+[2026-11-07T17:12:37.894179+00:00] Serial output: [
+[2026-11-07T17:12:37.894464+00:00] Serial output: nixos@nixos:~]$
+[2026-11-07T17:12:37.906809+00:00] Serial output: export PS1='
+[2026-11-07T17:12:37.906934+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-07T17:12:37.906960+00:00] Shell prompt configured for interaction
+[2026-11-07T17:12:37.957515+00:00] Running command: printf '__UID_MARK__1794071557906__%s__UID_MARK__1794071557906__\n' "$(id -u)"
+[2026-11-07T17:12:38.008601+00:00] Failed to parse id -u output; resynchronising prompt before retry
+[2026-11-07T17:12:38.059047+00:00] Awaiting patterns: __PROMPT_READY__1794071558008__ (timeout=120s)
+[2026-11-07T17:12:38.059544+00:00] Serial output: printf '__UID_MARK__1794071557906__%s__UID_MARK__1794071557906__\n' "$(id -u)"
+[2026-11-07T17:12:38.061210+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-07T17:12:38.061284+00:00] Matched pattern: '__PROMPT_READY__1794071558008__'
+[2026-11-07T17:12:38.061326+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-07T17:12:38.204176+00:00] Serial output: \n'
+[2026-11-07T17:12:38.204297+00:00] Serial output: __UID_MARK__1794071557906__1000__UID_MARK__1794071557906__
+[2026-11-07T17:12:38.204534+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-07T17:12:38.204561+00:00] Shell prompt configured for interaction
+[2026-11-07T17:12:38.255077+00:00] Running command: printf '__UID_MARK__1794071557906__%s__UID_MARK__1794071557906__\n' "$(id -u)"
+[2026-11-07T17:12:38.305760+00:00] Recovered UID marker after parse failure
+[2026-11-07T17:12:38.305821+00:00] Initial shell lacks root privileges
+[2026-11-07T17:12:38.305842+00:00] Attempting to escalate with sudo -i
+[2026-11-07T17:12:38.356291+00:00] Awaiting patterns: \[sudo\] password for nixos:, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=120s)
+[2026-11-07T17:12:38.356715+00:00] Serial output: PRE-NIXOS> printf '__UID_MARK__1794071557906__%s__UID_MARK__1794071557906__\n' "$(id -u)"
+[2026-11-07T17:12:38.395227+00:00] Serial output: sudo -i
+[2026-11-07T17:12:38.395339+00:00] Serial output: __UID_MARK__1794071557906__1000__UID_MARK__1794071557906__
+[2026-11-07T17:12:38.396199+00:00] Serial output: PRE-NIXOS> sudo -i
+[2026-11-07T17:12:39.539391+00:00] Serial output: pre-nixos boot image version 0.26.0
+[2026-11-07T17:12:39.539563+00:00] Serial output: [
+[2026-11-07T17:12:39.539815+00:00] Serial output: 0;
+[2026-11-07T17:12:39.539847+00:00] Matched pattern: 'root@.*# ?'
+[2026-11-07T17:12:39.590254+00:00] Awaiting patterns: __PROMPT_READY__1794071559539__ (timeout=120s)
+[2026-11-07T17:12:39.597946+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-07T17:12:39.598040+00:00] Matched pattern: '__PROMPT_READY__1794071559539__'
+[2026-11-07T17:12:39.598091+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-07T17:12:39.599605+00:00] Serial output: \n'
+[2026-11-07T17:12:39.601123+00:00] Serial output: __PROMPT_READY__1794071559539__
+[2026-11-07T17:12:39.601175+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-07T17:12:39.601195+00:00] Shell prompt configured for interaction
+[2026-11-07T17:12:39.657601+00:00] Running command: printf '__UID_MARK__1794071559601__%s__UID_MARK__1794071559601__\n' "$(id -u)"
+[2026-11-07T17:12:39.779199+00:00] id -u after sudo -i returned: '0'
+[2026-11-07T17:12:39.779322+00:00] Successfully escalated privileges with sudo -i
+[2026-11-07T17:12:39.851331+00:00] Running command: printf '__UID_MARK__1794071559791__%s__UID_MARK__1794071559791__\n' "$(id -u)"
+[2026-11-07T17:12:39.968321+00:00] Running command: { printf '\n__BEGIN__\n'; cat /sys/block/sda/queue/rotational; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-07T17:12:40.097354+00:00] Checked command exited with status 0: cat /sys/block/sda/queue/rotational
+[2026-11-07T17:12:40.153410+00:00] Running command: printf '__UID_MARK__1794071560097__%s__UID_MARK__1794071560097__\n' "$(id -u)"
+[2026-11-07T17:12:40.279204+00:00] Running command: { printf '\n__BEGIN__\n'; cat /sys/block/sda/device/model; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-07T17:12:40.388445+00:00] Checked command exited with status 0: cat /sys/block/sda/device/model
+[2026-11-07T17:12:40.388604+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-07T17:12:45.512663+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-07T17:12:45.598521+00:00] Running command: :
+[2026-11-07T17:12:45.708241+00:00] Running command: printf '__UID_MARK__1794071565653__%s__UID_MARK__1794071565653__\n' "$(id -u)"
+[2026-11-07T17:12:45.795175+00:00] Running command: { printf '\n__BEGIN__\n'; lsblk -nro NAME /dev/sda /dev/sdb /dev/sdc; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-07T17:12:45.892575+00:00] Checked command exited with status 0: lsblk -nro NAME /dev/sda /dev/sdb /dev/sdc
+[2026-11-07T17:12:45.946762+00:00] Running command: printf '__UID_MARK__1794071565892__%s__UID_MARK__1794071565892__\n' "$(id -u)"
+[2026-11-07T17:12:46.033769+00:00] Running command: { printf '\n__BEGIN__\n'; cat /proc/mdstat; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-07T17:12:46.121728+00:00] Checked command exited with status 1: cat /proc/mdstat
+[2026-11-07T17:12:46.121850+00:00] Serial output: { printf '\n__BEGIN__\n'; cat /proc/mdstat; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-07T17:12:46.121874+00:00] Serial output: __BEGIN__
+[2026-11-07T17:12:46.121889+00:00] Serial output: cat: /proc/mdstat: No such file or directory
+[2026-11-07T17:12:46.121902+00:00] Serial output: __EXIT__=1

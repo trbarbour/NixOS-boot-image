@@ -1,0 +1,50 @@
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794071565653__%s__UID_MARK__1794071565653__\n' "$(id -u)"
+printf '__UID_MARK__1794071565653__%s__UID_MARK__1794071565653__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1794071565653__0__UID_MARK__1794071565653__
+
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; lsblk -nro NAME /dev/sda /dev/sdb /dev/sdc; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; lsblk -nro NAME /dev/sda /dev/sdb /dev/sdc; printf '\n__EXIT__=%s\n' $?; }
+
+[?2004l
+
+
+__BEGIN__
+
+sda
+
+sdb
+
+sdc
+
+
+
+__EXIT__=0
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794071565892__%s__UID_MARK__1794071565892__\n' "$(id -u)"
+printf '__UID_MARK__1794071565892__%s__UID_MARK__1794071565892__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1794071565892__0__UID_MARK__1794071565892__
+
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; cat /proc/mdstat; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; cat /proc/mdstat; printf '\n__EXIT__=%s\n' $?; }
+
+[?2004l
+
+
+__BEGIN__
+
+cat: /proc/mdstat: No such file or directory
+
+
+
+__EXIT__=1
+
+[?2004hPRE-NIXOS> 
