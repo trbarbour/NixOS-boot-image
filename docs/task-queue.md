@@ -400,6 +400,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Hypothesis: the cleanup deactivates LVs and stops arrays before wiping them, so signatures inside LVs/arrays survive and reappear at the same offsets.
     - **Reproduced 2026-11-08** (`tests/vm/test_reprovision_vm.py`, 0.26.1, `notes/2026-11-08T171557Z-vm-run`): `FAT-fs (sda2): bogus number of reserved sectors`, then on the retry `Can't open /dev/md127 exclusively` and `Cannot use /dev/md/md0: device has a signature` — the user's two failures.
     - **Fix (0.26.2):** `storage_cleanup._dismantle_graph` releases mounts and swap, then for each node leaf to root wipes it while active (`wipefs`/`lvremove` an LV, `vgremove` a VG, `pvremove`/`wipefs` an array) and only then deactivates it (`mdadm --stop`, zero the members). Unit test `test_global_teardown_and_wipe_leaf_to_root` updated to the correct order (it pinned the faulty one); the mounted-target kernel model now covers `lvremove`/`vgremove`.
+      - VM `test_reprovision_vm.py` **passed** on 0.26.2 (`notes/2026-11-08T173200Z-vm-run`).
       - 2026-11-08 16:44Z run interrupted: the first provision (HDD layout) succeeded; during the second apply the session's disk filled (VM images plus test ISOs) and the user's upload failed. Logs `notes/2026-11-08T164406Z-vm-run`. Rerun with a free-space watchdog (item 38).
     - Also: the TUI wipes, then `apply_plan` wipes again, then retries disko after a third wipe. Review once the root cause is fixed.
 

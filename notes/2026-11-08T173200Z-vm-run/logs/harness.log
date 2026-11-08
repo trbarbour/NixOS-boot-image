@@ -113,3 +113,87 @@
 [2026-11-08T17:33:32.810615+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
 [2026-11-08T17:33:32.810739+00:00] Matched pattern: '__PROMPT_READY__1794159212754__'
 [2026-11-08T17:33:32.810891+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-08T17:33:39.834462+00:00] Serial output: \n'
+[2026-11-08T17:33:39.834651+00:00] Serial output: pre-nixos boot image version 0.26.2
+[2026-11-08T17:33:39.836068+00:00] Serial output: 3008;start=9fb91ad303b74f67a8f0143ed55d70d1;user=root;hostname=nixos;machineid=feaaf4ee48664cb4911e5c752e836aa7;bootid=eaa83442bd604db597f91335919f2ffe;pid=708;pidfdid=709;comm=login;targetuser=nixos;sessionid=1;type=session
+[2026-11-08T17:33:41.456131+00:00] Serial output: pre-nixos boot image version 0.26.2
+[2026-11-08T17:33:41.460751+00:00] Serial output: [
+[2026-11-08T17:33:41.461133+00:00] Serial output: nixos@nixos:~]$
+[2026-11-08T17:33:41.467347+00:00] Serial output: export PS1='
+[2026-11-08T17:33:41.467449+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-08T17:33:41.467469+00:00] Shell prompt configured for interaction
+[2026-11-08T17:33:41.467469+00:00]   context=initial login
+[2026-11-08T17:33:41.518048+00:00] Running command: printf '__UID_MARK__1794159221467__%s__UID_MARK__1794159221467__\n' "$(id -u)"
+[2026-11-08T17:33:41.569151+00:00] Failed to parse id -u output; resynchronising prompt before retry
+[2026-11-08T17:33:41.569151+00:00]   attempt=1, error=UID marker not found in output block: '', block=UID marker not found in output block: ''
+[2026-11-08T17:33:41.619823+00:00] Awaiting patterns: __PROMPT_READY__1794159221569__ (timeout=120s)
+[2026-11-08T17:33:41.620325+00:00] Serial output: printf '__UID_MARK__1794159221467__%s__UID_MARK__1794159221467__\n' "$(id -u)"
+[2026-11-08T17:33:41.622264+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-08T17:33:41.622339+00:00] Matched pattern: '__PROMPT_READY__1794159221569__'
+[2026-11-08T17:33:41.622565+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-08T17:33:41.915023+00:00] Serial output: \n'
+[2026-11-08T17:33:41.915187+00:00] Serial output: __UID_MARK__1794159221467__1000__UID_MARK__1794159221467__
+[2026-11-08T17:33:41.915229+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-08T17:33:41.915246+00:00] Shell prompt configured for interaction
+[2026-11-08T17:33:41.915246+00:00]   context=uid validation resync
+[2026-11-08T17:33:41.965877+00:00] Running command: printf '__UID_MARK__1794159221467__%s__UID_MARK__1794159221467__\n' "$(id -u)"
+[2026-11-08T17:33:42.016542+00:00] Recovered UID marker after parse failure
+[2026-11-08T17:33:42.016542+00:00]   attempt=2, source=serial log tail, uid=2004
+[2026-11-08T17:33:42.016597+00:00] Initial shell lacks root privileges
+[2026-11-08T17:33:42.016660+00:00] Attempting to escalate with sudo -i
+[2026-11-08T17:33:42.070667+00:00] Awaiting patterns: \[sudo\] password for nixos:, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=120s)
+[2026-11-08T17:33:42.079073+00:00] Serial output: PRE-NIXOS> printf '__UID_MARK__1794159221467__%s__UID_MARK__1794159221467__\n' "$(id -u)"
+[2026-11-08T17:33:42.401417+00:00] Serial output: __UID_MARK__1794159221467__1000__UID_MARK__1794159221467__
+[2026-11-08T17:33:42.403789+00:00] Serial output: PRE-NIXOS> sudo -i
+[2026-11-08T17:33:44.086898+00:00] Serial output: pre-nixos boot image version 0.26.2
+[2026-11-08T17:33:44.087553+00:00] Serial output: [
+[2026-11-08T17:33:44.087688+00:00] Matched pattern: 'root@.*# ?'
+[2026-11-08T17:33:44.138230+00:00] Awaiting patterns: __PROMPT_READY__1794159224087__ (timeout=120s)
+[2026-11-08T17:33:44.152463+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-08T17:33:44.152642+00:00] Matched pattern: '__PROMPT_READY__1794159224087__'
+[2026-11-08T17:33:44.152698+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-08T17:33:44.152732+00:00] Serial output: \n'
+[2026-11-08T17:33:44.161656+00:00] Serial output: __PROMPT_READY__1794159224087__
+[2026-11-08T17:33:44.161798+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-08T17:33:44.161820+00:00] Shell prompt configured for interaction
+[2026-11-08T17:33:44.161820+00:00]   context=sudo -i
+[2026-11-08T17:33:44.218012+00:00] Running command: printf '__UID_MARK__1794159224161__%s__UID_MARK__1794159224161__\n' "$(id -u)"
+[2026-11-08T17:33:44.350368+00:00] id -u after sudo -i returned: '0'
+[2026-11-08T17:33:44.350571+00:00] Successfully escalated privileges with sudo -i
+[2026-11-08T17:33:44.374139+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-08T17:33:49.543608+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-08T17:33:54.680260+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-08T17:33:54.803440+00:00] Running command: :
+[2026-11-08T17:33:54.918413+00:00] Running command: printf '__UID_MARK__1794159234862__%s__UID_MARK__1794159234862__\n' "$(id -u)"
+[2026-11-08T17:33:55.030113+00:00] Running command: { printf '\n__BEGIN__\n'; for d in /sys/block/sd*; do echo "${d##*/} $(cat $d/size)"; done; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-08T17:33:55.240078+00:00] Checked command exited with status 0: for d in /sys/block/sd*; do echo "${d##*/} $(cat $d/size)"; done
+[2026-11-08T17:33:55.240078+00:00]   sda 8388608
+[2026-11-08T17:33:55.240078+00:00]   sdb 10485760
+[2026-11-08T17:33:55.240078+00:00]   sdc 10485760
+[2026-11-08T17:33:55.298512+00:00] Running command: printf '__UID_MARK__1794159235240__%s__UID_MARK__1794159235240__\n' "$(id -u)"
+[2026-11-08T17:33:55.405949+00:00] Running command: { printf '\n__BEGIN__\n'; pre-nixos --hdd sda --no-auto-install > /tmp/first.log 2>&1; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-08T17:36:42.290505+00:00] Checked command exited with status 0: pre-nixos --hdd sda --no-auto-install > /tmp/first.log 2>&1
+[2026-11-08T17:36:42.290505+00:00]   <no output>
+[2026-11-08T17:36:42.357359+00:00] Running command: printf '__UID_MARK__1794159402290__%s__UID_MARK__1794159402290__\n' "$(id -u)"
+[2026-11-08T17:36:42.496298+00:00] Running command: { printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name,devices; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-08T17:36:42.759620+00:00] Checked command exited with status 0: lvs --noheadings -o lv_name,vg_name,devices
+[2026-11-08T17:36:42.759620+00:00]   data  large /dev/sda1(0)
+[2026-11-08T17:36:42.759620+00:00]   swap  large /dev/sda1(1)
+[2026-11-08T17:36:42.759620+00:00]   slash main  /dev/md127(0)
+[2026-11-08T17:36:42.827373+00:00] Running command: printf '__UID_MARK__1794159402759__%s__UID_MARK__1794159402759__\n' "$(id -u)"
+[2026-11-08T17:36:43.025798+00:00] Running command: PRE_NIXOS_FORCE_CLEANUP=1 pre-nixos --ssd sda --no-auto-install > /tmp/second.log 2>&1; echo second-exit=$?
+[2026-11-08T17:39:22.170571+00:00] Running command: printf '__UID_MARK__1794159562110__%s__UID_MARK__1794159562110__\n' "$(id -u)"
+[2026-11-08T17:39:22.276614+00:00] Running command: grep -v '^+ ' /tmp/second.log | tail -n 80
+[2026-11-08T17:39:22.558678+00:00] Running command: printf '__UID_MARK__1794159562499__%s__UID_MARK__1794159562499__\n' "$(id -u)"
+[2026-11-08T17:39:22.783057+00:00] Running command: findmnt -n -o SOURCE,FSTYPE /mnt/boot; true
+[2026-11-08T17:39:22.995655+00:00] Running command: printf '__UID_MARK__1794159562938__%s__UID_MARK__1794159562938__\n' "$(id -u)"
+[2026-11-08T17:39:23.167654+00:00] Running command: { printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-08T17:39:23.372396+00:00] Checked command exited with status 0: lvs --noheadings -o lv_name,vg_name
+[2026-11-08T17:39:23.372396+00:00]   slash main
+[2026-11-08T17:39:23.372396+00:00]   swap  swap
+[2026-11-08T17:39:23.430270+00:00] Running command: printf '__UID_MARK__1794159563372__%s__UID_MARK__1794159563372__\n' "$(id -u)"
+[2026-11-08T17:39:23.541596+00:00] Running command: { printf '\n__BEGIN__\n'; pvs --noheadings -o pv_name,vg_name; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-08T17:39:23.913989+00:00] Checked command exited with status 0: pvs --noheadings -o pv_name,vg_name
+[2026-11-08T17:39:23.913989+00:00]   /dev/md127 swap
+[2026-11-08T17:39:23.913989+00:00]   /dev/sda3  main
+[2026-11-08T17:39:23.915785+00:00] Disk free at VM teardown: 13.1 GiB
