@@ -2,8 +2,8 @@
 
 The user's first BIOS PC had a ``G.SKILL 128GB SSD`` that reports no rotation
 rate, so the kernel calls it rotating; pre-nixos planned it as an HDD.  Here
-the stand-in is a QEMU disk with no rotation rate named "TEST SSD" (U1), plus
-an equal HDD pair.  On blank disks the boot service provisions storage even
+the stand-in is a QEMU SATA disk with no rotation rate and the user's model
+name (U1; on SATA, #336), plus an equal HDD pair.  On blank disks the boot service provisions storage even
 without auto-install (design F3), so it must stop before touching any disk
 (D2 (b)) and say why.  Design: plans/2026-11-07T161535Z-ssd-model-name-design.md.
 """
@@ -24,17 +24,20 @@ def test_boot_run_waits_for_the_disk_class_answer(
 ) -> None:
     vm = boot_image_vm_with_ambiguous_ssd
 
-    # The guest names SCSI disks in probe-completion order, not by target id
-    # (2026-11-07: target 0 was sda in one run and sdb in the next), so find
-    # the stand-in SSD by its model.  The scenario only means something if
-    # the guest sees it as the user's drive: rotating, named SSD.
+    # The guest names disks in probe-completion order (#334), so find the
+    # stand-in SSD by its size (4 GiB; the HDDs are 5 GiB).  The scenario
+    # only means something if the guest sees it as the user's drive did:
+    # rotating, with sysfs's 16-character model dropping the "D" of "SSD"
+    # (#336), so only the full ATA model says SSD.
     listing = vm.run_as_root_checked(
-        'for d in /sys/block/sd*; do echo "${d##*/} $(cat $d/queue/rotational) $(cat $d/device/model)"; done',
+        'for d in /sys/block/sd*; do echo "${d##*/} $(cat $d/size) $(cat $d/queue/rotational) $(cat $d/device/model)"; done',
         timeout=120,
     )
-    disks = [line.split(maxsplit=2) for line in listing.splitlines() if line.startswith("sd")]
-    (ssd,) = [name for name, _rota, model in disks if model.strip() == "TEST SSD"]
-    assert len(disks) == 3 and all(rota == "1" for _name, rota, _model in disks), listing
+    disks = [line.split(maxsplit=3) for line in listing.splitlines() if line.startswith("sd")]
+    assert len(disks) == 3 and all(rota == "1" for _n, _s, rota, _m in disks), listing
+    (ssd,) = [name for name, size, _rota, _model in disks if int(size) * 512 == 4 * 1024**3]
+    (ssd_model,) = [model.strip() for name, _s, _r, model in disks if name == ssd]
+    assert ssd_model == "G.SKILL 128GB SS", listing
 
     status = vm.wait_for_storage_status()
     if (status.get("STATE"), status.get("DETAIL")) != ("plan-only", "disk-class-unconfirmed"):
@@ -54,7 +57,7 @@ def test_boot_run_waits_for_the_disk_class_answer(
     assert vm.run_as_root_checked("vgs --noheadings -o vg_name", timeout=120).strip() == ""
 
     journal = vm.collect_journal("pre-nixos.service")
-    assert f"Disk type unconfirmed: {ssd} (TEST SSD)" in journal, journal
+    assert f"Disk type unconfirmed: {ssd} (G.SKILL 128GB SSD)" in journal, journal
     assert "pre-nixos.service: Failed" not in journal, journal
 
     # The answer on the command line plans `main` on the SSD (D3 (c)).

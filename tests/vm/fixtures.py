@@ -24,7 +24,7 @@ from scripts.nix_git_inputs import nix_command
 from tests.vm.boot_medium import UsbStick, make_usb_stick
 from tests.vm.machines import Machine, x86_machine
 from tests.vm.qmp import allocate_qmp_socket_path
-from tests.vm.scsi_disks import ScsiDisk, scsi_disk_args
+from tests.vm.scsi_disks import Bus, ScsiDisk, scsi_disk_args
 from tests.vm.metadata import (
     append_run_ledger_entry,
     record_run_timings,
@@ -773,18 +773,25 @@ def boot_image_vm_with_raid_disks(
 
 @pytest.fixture(scope="module")
 def ambiguous_ssd_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[ScsiDisk]]:
-    """The user's first BIOS PC in small (task queue item 34): an SSD that
-    reports no rotation rate, so the guest calls it rotating, named "TEST SSD"
-    (U1, notes/2026-11-07T165520Z-u1-scsi-unreported-rotation.md), plus an
-    equal pair of HDDs."""
+    """The user's first BIOS PC in small (task queue item 34), on SATA: an SSD
+    named as the user's (``G.SKILL 128GB SSD``) that reports no rotation rate,
+    so the guest calls it rotating, plus an equal pair of HDDs.  On SATA the
+    kernel truncates ``device/model`` to 16 characters, dropping the "D"
+    (#336); the earlier SCSI stand-in ("TEST SSD") did not model that."""
 
-    sizes = (("ssd", None, 4, "TEST SSD"), ("hdda", True, 5, ""), ("hddb", True, 5, ""))
+    sizes = (
+        ("ssd", None, 4, "G.SKILL 128GB SSD"),
+        ("hdda", True, 5, "ST3750528AS"),
+        ("hddb", True, 5, "ST3750528AS"),
+    )
     disks: List[ScsiDisk] = []
-    for serial, rotational, gib, product in sizes:
+    for serial, rotational, gib, model in sizes:
         path = _create_disk_image(
             tmp_path_factory, prefix=f"boot-image-class-{serial}", size_bytes=gib * 1024**3
         )
-        disks.append(ScsiDisk(path=path, rotational=rotational, serial=serial, product=product))
+        disks.append(
+            ScsiDisk(path=path, rotational=rotational, serial=serial, model=model, bus=Bus.SATA)
+        )
     try:
         yield disks
     finally:

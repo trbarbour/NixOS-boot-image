@@ -366,6 +366,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       - the boot service reports exit 3 as `STATE=plan-only`, `DETAIL=disk-class-unconfirmed` (flake check `boot-service-status`), and the login notice says how to answer;
       - TUI: a question per unconfirmed disk at start, and `T` to switch any disk's class.
       - U1 resolved by experiment: `notes/2026-11-07T165520Z-u1-scsi-unreported-rotation.md`. VM test `tests/vm/test_disk_class_vm.py`.
+      - **2026-11-08, user:** with 0.26.0, `pre-nixos --plan-only` on the PC did not ask; the SSD was still planned as an HDD. **Root cause (#336, experiment `notes/2026-11-08T003000Z-u2-sata-model-truncation.md`):** for SATA disks, sysfs `device/model` is 16 characters (`G.SKILL 128GB SS`). The VM stand-in was virtio-scsi, which does not truncate. **Fix in 0.26.1:** the model comes from `device/vpd_pg89` (ATA IDENTIFY) when present; the VM test now uses an AHCI disk with the user's model name.
       - 2026-11-07, VM runs: run 1 failed on the test's own `cat /proc/mdstat` (no md driver when nothing is provisioned); run 2 found the TEST SSD named `sdb`, which exposed #334 (sd names follow probe order). Run 3 **passed** (`notes/2026-11-07T172113Z-vm-run`). `test_raid_provisioning.py`, fixed for #334, **passed** (`notes/2026-11-07T172610Z-vm-run`). `nix flake check` passed, including the new `boot-service-status`.
 
 35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
