@@ -394,6 +394,25 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Plan: before building, delete this repo's older `pre-nixos-*.iso` store paths (unreferenced ones only, `nix-store --delete`), or have the fixture warn when free space is below ~3 GB.
     - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
 
+39. **Re-provisioning over an earlier layout fails; the disks are wiped three times** *(user report, 2026-11-08, 0.26.1, first BIOS PC; trbarbour/NixOS-boot-image#338)*.
+    - TUI Apply after answering "S": disko skipped `mkfs.vfat` on the new ESP (old signature found), mounting `/boot` failed; the retry failed at `pvcreate` on md0 (`md127` held open).
+    - Hypothesis: the cleanup deactivates LVs and stops arrays before wiping them, so signatures inside LVs/arrays survive and reappear at the same offsets.
+    - Reproduction: `tests/vm/test_reprovision_vm.py` (in progress).
+    - Also: the TUI wipes, then `apply_plan` wipes again, then retries disko after a third wipe. Review once the root cause is fixed.
+
+40. **`pre-nixos --plan-only` with an unconfirmed disk: the note is glued to the plan, then repeated** *(user report, 2026-11-08, 0.26.1)*.
+    - User request: when a disk's class is unconfirmed, do not print the plan (it is the wrong one); print only the question.
+    - The duplication and missing newline are not explained yet (one `print` to stderr in that path); reproduce on a serial console first.
+
+41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
+    - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.
+    - Proposal (user): when the installer has no address from DHCP, adopt the same static configuration, unless told otherwise. Needs a short design.
+
+42. **A target to write an image to removable media** *(user request, 2026-11-08)*.
+    - Build the chosen image and write it to a chosen device, perhaps as a TUI.
+    - Must refuse non-removable devices; default to a USB stick for the ISO and an (u)SD card for the SD image.
+    - Needs a design (debate) first.
+
 ## Recently Completed
 - 2026-11-08T04-04-13Z - Merged trbarbour/NixOS-boot-image#337 (0.26.1): fixes #336, the model now comes from ATA IDENTIFY (`device/vpd_pg89`), so a SATA disk's full model (`G.SKILL 128GB SSD`) reaches the R-S3 rule. CI green, no Codex findings. Item 34 awaits the user's try on the PC.
 - 2026-11-07T20-14-14Z - Merged trbarbour/NixOS-boot-image#335 (0.26.0): item 34, R-S3/R-S4. A disk named SSD but reported as rotating waits for the user's answer (TUI or `--ssd`/`--hdd`) before anything touches the disks; the TUI's `T` sets any disk's class. Fixes #334 (VM tests assumed sd names follow attach order). Codex found four issues over two reviews (forced cleanup, explicit partitioning, `T` unreachable disks, `T` list overflow), each reproduced and fixed. CI green. Not yet tried on the user's PC.
