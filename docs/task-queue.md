@@ -398,6 +398,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - TUI Apply after answering "S": disko skipped `mkfs.vfat` on the new ESP (old signature found), mounting `/boot` failed; the retry failed at `pvcreate` on md0 (`md127` held open).
     - Hypothesis: the cleanup deactivates LVs and stops arrays before wiping them, so signatures inside LVs/arrays survive and reappear at the same offsets.
     - Reproduction: `tests/vm/test_reprovision_vm.py` (in progress).
+      - 2026-11-08 16:44Z run interrupted: the first provision (HDD layout) succeeded; during the second apply the session's disk filled (VM images plus test ISOs) and the user's upload failed. Logs `notes/2026-11-08T164406Z-vm-run`. Rerun with a free-space watchdog (item 38).
     - Also: the TUI wipes, then `apply_plan` wipes again, then retries disko after a third wipe. Review once the root cause is fixed.
 
 40. **`pre-nixos --plan-only` with an unconfirmed disk: the note is glued to the plan, then repeated** *(user report, 2026-11-08, 0.26.1)*.
