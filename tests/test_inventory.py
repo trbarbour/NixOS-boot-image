@@ -101,3 +101,14 @@ def test_unreadable_vpd_pg89_falls_back_to_sysfs(tmp_path: Path) -> None:
     (tmp_path / "sda" / "device" / "vpd_pg89").mkdir()  # reading it raises IsADirectoryError
     (d,) = enumerate_disks(tmp_path)
     assert d.model == "G.SKILL 128GB SS"
+
+
+def test_user_pc_drive_page_gives_the_full_model() -> None:
+    """#336 on the real drive: the page read on the user's PC (serial blanked)."""
+
+    from pre_nixos.inventory import ata_model_from_vpd_pg89
+
+    page = (FIXTURES / "gskill-128gb-ssd-user-pc.bin").read_bytes()
+    assert ata_model_from_vpd_pg89(page) == "G.SKILL 128GB SSD"
+    # IDENTIFY word 217, nominal media rotation rate: 0, not reported.
+    assert page[60 + 2 * 217 : 60 + 2 * 218] == b"\x00\x00"
