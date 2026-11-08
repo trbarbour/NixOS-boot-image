@@ -127,19 +127,21 @@ def test_global_teardown_and_wipe_leaf_to_root(monkeypatch) -> None:
         runner=runner,
     )
 
+    # #338: each node is wiped while it is still active, then deactivated,
+    # leaf to root.  Wiping after deactivation (the old order) found no LV or
+    # array device, so the signatures inside them survived and reappeared
+    # when a new layout put a partition or array at the same offsets.
     expected = [
         ("umount", "-R", "/target"),
-        ("lvchange", "-an", "/dev/main/slash"),
-        ("vgchange", "-an", "main"),
-        ("mdadm", "--stop", "--force", "/dev/md0"),
-        ("mdadm", "--zero-superblock", "--force", "/dev/sda1"),
-        ("mdadm", "--zero-superblock", "--force", "/dev/sdb1"),
         ("wipefs", "-a", "/dev/main/slash"),
         ("lvremove", "-fy", "/dev/main/slash"),
         ("vgremove", "-ff", "-y", "main"),
         ("pvremove", "-ff", "-y", "/dev/md0"),
         ("mdadm", "--zero-superblock", "--force", "/dev/md0"),
         ("wipefs", "-a", "/dev/md0"),
+        ("mdadm", "--stop", "--force", "/dev/md0"),
+        ("mdadm", "--zero-superblock", "--force", "/dev/sda1"),
+        ("mdadm", "--zero-superblock", "--force", "/dev/sdb1"),
         ("mdadm", "--zero-superblock", "--force", "/dev/sda1"),
         ("wipefs", "-a", "/dev/sda1"),
         ("mdadm", "--zero-superblock", "--force", "/dev/sdb1"),

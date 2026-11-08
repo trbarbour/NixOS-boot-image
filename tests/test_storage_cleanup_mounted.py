@@ -78,6 +78,19 @@ class KernelModel:
                 return self._result(cmd, 5)  # contains a filesystem in use
             self.active_lvs.discard(lv)
             return self._result(cmd, 0)
+        if name == "lvremove":
+            # #338: LVs are now removed while active (after their wipe), so
+            # model it: refused while in use, like deactivation.
+            lv = LV_ALIASES.get(args[-1], args[-1])
+            if self._lv_in_use(lv):
+                return self._result(cmd, 5)
+            self.active_lvs.discard(lv)
+            return self._result(cmd, 0)
+        if name == "vgremove":
+            if any(self._lv_in_use(lv) for lv in self.active_lvs):
+                return self._result(cmd, 5)
+            self.active_lvs.clear()
+            return self._result(cmd, 0)
         if name == "vgchange" and args[:1] == ["-an"]:
             if any(self._lv_in_use(lv) for lv in self.active_lvs):
                 return self._result(cmd, 5)
@@ -145,7 +158,11 @@ def test_cleanup_releases_everything_on_a_mounted_target(mounted_target: KernelM
 def test_no_lvm_or_md_deactivation_is_attempted_while_in_use(mounted_target: KernelModel) -> None:
     _run_cleanup(mounted_target)
 
-    refused = [c for c in mounted_target.failures if c[0] in {"lvchange", "vgchange", "umount"}]
+    refused = [
+        c
+        for c in mounted_target.failures
+        if c[0] in {"lvchange", "vgchange", "lvremove", "vgremove", "umount"}
+    ]
     assert refused == []
 
 

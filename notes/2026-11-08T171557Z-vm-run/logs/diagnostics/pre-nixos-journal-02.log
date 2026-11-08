@@ -1,0 +1,8 @@
+Nov 08 17:17:21 nixos systemd[1]: Starting Pre-NixOS setup...
+Nov 08 17:17:22 nixos pre-nixos-start[661]: pre-nixos boot image version 0.26.1
+Nov 08 17:17:59 nixos pre-nixos-start[889]: Disk type unconfirmed: sda (G.SKILL 128GB SSD) reported as rotating, but the model name says SSD. Storage is not provisioned and NixOS is not installed until you confirm: run pre-nixos-tui, or pre-nixos with --ssd or --hdd for each of: sda.
+Nov 08 17:17:59 nixos pre-nixos-start[889]: LAN IPv4 address: 10.0.2.15
+Nov 08 17:17:59 nixos pre-nixos-start[961]: LAN IPv4 address: 10.0.2.15
+Nov 08 17:18:01 nixos systemd[1]: pre-nixos.service: Deactivated successfully.
+Nov 08 17:18:01 nixos systemd[1]: Finished Pre-NixOS setup.
+Nov 08 17:18:01 nixos systemd[1]: pre-nixos.service: Consumed 17.225s CPU time over 39.930s wall clock time, 48.9M memory peak, 55.6M read from disk.
