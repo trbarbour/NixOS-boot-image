@@ -59,17 +59,57 @@ def test_unanswered_disk_stops_provisioning_and_install(
     assert "STATE=skipped" in status and "REASON=disk-class-unconfirmed" in status
 
 
-def test_plan_only_shows_the_kernel_plan_and_the_question(cli, capsys) -> None:
+def test_plan_only_shows_only_the_question(cli, capsys) -> None:
+    """Item 40 (user, 2026-11-08): with a disk's class unconfirmed, the plan is
+    the wrong one, so it is not printed; only the question is, once."""
+
     pre_nixos.main(["--plan-only"])
     captured = capsys.readouterr()
-    plan = json.loads(captured.out)
-    assert {vg["name"]: vg["devices"] for vg in plan["vgs"]} == {
-        "main": ["md0"],
-        "large": ["sda1"],
-    }
-    assert "disk_classes" not in plan
-    assert "Disk type unconfirmed" in captured.err
+    assert captured.out == ""
+    assert captured.err.count("Disk type unconfirmed") == 1
     assert cli == {"apply": [], "install": []}
+
+
+@pytest.mark.parametrize("argv", [[], ["--plan-only"]])
+def test_at_a_terminal_the_note_appears_once(cli, monkeypatch, capsys, argv) -> None:
+    """Item 40: on the serial console, stdout is also /dev/console.  The
+    refusal printed the note and then broadcast it to the consoles, so the
+    user saw it twice (their session, 2026-11-08; reproduced on a pty)."""
+
+    from pre_nixos import console
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(console, "stdout_is_terminal", lambda: True)
+    written: list[str] = []
+    monkeypatch.setattr(
+        console, "broadcast_line", lambda message, **kwargs: written.append(message) or {}
+    )
+    if argv:
+        pre_nixos.main(argv)
+    else:
+        with pytest.raises(SystemExit):
+            pre_nixos.main(argv)
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.count("Disk type unconfirmed") == 1
+    assert written == []
+
+
+def test_boot_service_broadcasts_the_refusal(cli, monkeypatch, capsys) -> None:
+    """Without a terminal (the boot service, stdout is the journal) the note
+    still reaches the consoles."""
+
+    from pre_nixos import console
+
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(console, "stdout_is_terminal", lambda: False)
+    written: list[str] = []
+    monkeypatch.setattr(
+        console, "broadcast_line", lambda message, **kwargs: written.append(message) or {}
+    )
+    with pytest.raises(SystemExit):
+        pre_nixos.main([])
+    assert len(written) == 1 and written[0].startswith("Disk type unconfirmed")
 
 
 def test_answer_ssd_plans_main_on_it_and_provisions(cli, capsys) -> None:

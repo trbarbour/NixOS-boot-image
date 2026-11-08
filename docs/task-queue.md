@@ -403,7 +403,9 @@ _Last updated: 2026-10-30T12-35-13Z_
 
 40. **`pre-nixos --plan-only` with an unconfirmed disk: the note is glued to the plan, then repeated** *(user report, 2026-11-08, 0.26.1)*.
     - User request: when a disk's class is unconfirmed, do not print the plan (it is the wrong one); print only the question.
-    - The duplication and missing newline are not explained yet (one `print` to stderr in that path); reproduce on a serial console first.
+    - **Root cause of the duplication (user's session, reproduced on a pty):** the user ran `pre-nixos` (not `--plan-only`), so the refusal path printed the note and then broadcast it to the consoles; on the serial console the terminal is `/dev/console`. Every print-then-broadcast in `install.py` (BIOS refusal, boot-order refusal, install start and completion) had the same flaw.
+    - **Fixed:** `console.stdout_is_terminal` (shared with item 36's rule); `install._announce` prints and broadcasts only when stdout is not a terminal; the plan is not printed while a disk's class is unconfirmed. Tests: `test_plan_only_shows_only_the_question`, `test_at_a_terminal_the_note_appears_once`, `test_boot_service_broadcasts_the_refusal`.
+    - Not explained: the missing newline after `}` on the user's serial console (a pty shows `}\r\n`). It cannot recur here since the plan is no longer printed with the note; recorded in case it appears elsewhere.
 
 41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
     - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.

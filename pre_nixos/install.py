@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
-from . import boot_order, boot_platform, disk_class, network, state
+from . import boot_order, boot_platform, console, disk_class, network, state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -966,6 +966,18 @@ def _format_timestamp(moment: datetime) -> str:
     return moment.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
 
 
+def _announce(message: str, *, to_stderr: bool = False) -> Tuple[bool, Dict[str, bool]] | None:
+    """Print ``message``, and broadcast it to the consoles unless stdout is a
+    terminal: there the reader already sees it, and on the serial console the
+    terminal is ``/dev/console``, so a broadcast showed it twice (task queue
+    item 40; #327, item 36).  ``None`` when nothing was broadcast."""
+
+    print(message, file=sys.stderr if to_stderr else sys.stdout)
+    if console.stdout_is_terminal():
+        return None
+    return _broadcast_install_message(message)
+
+
 def _broadcast_install_message(message: str) -> Tuple[bool, Dict[str, bool]] | None:
     """Send ``message`` to all consoles and report success."""
 
@@ -1061,8 +1073,7 @@ def _refuse_legacy_bios(
     message = boot_platform.legacy_bios_refusal(boot_setup, _plan_boot_disks(storage_plan))
     if message is None:
         return None
-    print(message)
-    _broadcast_install_message(message)
+    _announce(message)
     return _record_result(
         "failed",
         status_dir=status_dir,
@@ -1080,8 +1091,7 @@ def refuse_unconfirmed_disks(
     install is ``skipped``, not ``failed``.
     """
 
-    print(message, file=sys.stderr)
-    _broadcast_install_message(message)
+    _announce(message, to_stderr=True)
     return _record_result(
         "skipped",
         status_dir=status_dir if status_dir is not None else state.default_state_dir(),
@@ -1214,8 +1224,7 @@ def auto_install(
         log_event("pre_nixos.install.boot_order", verdict=repr(verdict))
         if isinstance(verdict, boot_order.Refused):
             message = boot_order.describe_refusal(verdict)
-            print(message)
-            _broadcast_install_message(message)
+            _announce(message)
             return _record_result(
                 "failed",
                 status_dir=status_dir,
@@ -1228,8 +1237,7 @@ def auto_install(
         "Starting automatic NixOS installation at "
         f"{_format_timestamp(start_time)} UTC."
     )
-    print(start_message)
-    _broadcast_install_message(start_message)
+    _announce(start_message)
 
     log_event("pre_nixos.install.generate_config.start", root_path=root_path)
     result = subprocess.run(
@@ -1345,8 +1353,7 @@ def auto_install(
         "Automatic NixOS installation completed at "
         f"{_format_timestamp(completed_at)} UTC."
     )
-    print(completion_message)
-    completion_broadcast = _broadcast_install_message(completion_message)
+    completion_broadcast = _announce(completion_message)
 
     issue_path = _write_installation_issue(root_path, completed_at)
     reboot_requested = _request_reboot()
