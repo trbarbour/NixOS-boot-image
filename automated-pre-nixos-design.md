@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.31
+**Doc status:** Draft v0.32
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -75,7 +75,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ## 7) Discovery & Heuristics (Core logic)
 ### 7.1 Disk inventory
 - Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
-- For each disk: gather `model`, `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
+- For each disk: gather `model` (the full ATA model from `device/vpd_pg89` when present, since a SATA disk's `device/model` is cut to 16 characters, #336; else `device/model`), `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
 - Group disks into **SSDs** and **HDDs**, then bucket them by approximate size (≤1% tolerance).
 - **Disk class [R-S3, R-S4]** (`disk_class.py`; plans/2026-11-07T161535Z-ssd-model-name-design.md):
   - The class is the kernel's `rotational`, unless the user answered for the disk (`--ssd`/`--hdd`, the TUI's start-up question or its `T` toggle). The answers are applied to the inventory before planning, so the planner is unchanged; the plan records them as `disk_classes`.

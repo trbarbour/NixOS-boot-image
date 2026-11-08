@@ -366,6 +366,9 @@ _Last updated: 2026-10-30T12-35-13Z_
       - the boot service reports exit 3 as `STATE=plan-only`, `DETAIL=disk-class-unconfirmed` (flake check `boot-service-status`), and the login notice says how to answer;
       - TUI: a question per unconfirmed disk at start, and `T` to switch any disk's class.
       - U1 resolved by experiment: `notes/2026-11-07T165520Z-u1-scsi-unreported-rotation.md`. VM test `tests/vm/test_disk_class_vm.py`.
+      - **2026-11-08, user:** with 0.26.0, `pre-nixos --plan-only` on the PC did not ask; the SSD was still planned as an HDD. **Root cause (#336, experiment `notes/2026-11-08T003000Z-u2-sata-model-truncation.md`):** for SATA disks, sysfs `device/model` is 16 characters (`G.SKILL 128GB SS`). The VM stand-in was virtio-scsi, which does not truncate. **Fix in 0.26.1:** the model comes from `device/vpd_pg89` (ATA IDENTIFY) when present; the VM test now uses an AHCI disk with the user's model name.
+      - 2026-11-08: the SATA VM test **passed** (guest sysfs model `G.SKILL 128GB SS`; journal names `G.SKILL 128GB SSD`). The user's real drive page (serial blanked) is a fixture and decodes to the full model; its rotation rate (word 217) is 0.
+      - 2026-11-08: RAID VM test passed with the SATA-capable disk helper; `nix flake check` passed (inputs over git, `scripts/nix_git_inputs.py`).
       - 2026-11-07, VM runs: run 1 failed on the test's own `cat /proc/mdstat` (no md driver when nothing is provisioned); run 2 found the TEST SSD named `sdb`, which exposed #334 (sd names follow probe order). Run 3 **passed** (`notes/2026-11-07T172113Z-vm-run`). `test_raid_provisioning.py`, fixed for #334, **passed** (`notes/2026-11-07T172610Z-vm-run`). `nix flake check` passed, including the new `boot-service-status`.
 
 35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
@@ -381,7 +384,18 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Reproduce in a unit test, then fix (for example, skip the console copy when stdout is the console).
     - **2026-11-06: fixed in 0.25.1** (user request). The console copy is written only when stdout is not a terminal, i.e. the boot-time service. `test_cli_at_a_terminal_prints_the_plan_once` failed before the fix.
 
+37. **The VM fixture hides `nix build` errors.** *(anomaly, 2026-11-08)*
+    - When the ISO build fails, the test reports only `CalledProcessError` with the command; Nix's stderr (the actual error) is not in the pytest output or the run log.
+    - Found when the build ran out of disk (`xorriso : FAILURE : Image size 769296s exceeds free space on media 485468s`), seen only by rerunning the build by hand.
+    - Plan: capture the build's stderr and include its tail in the failure (and the run's harness log).
+
+38. **Test ISOs fill the cloud session's disk allowance.** *(recurring: 2026-10-18, 2026-10-19, 2026-11-07, 2026-11-08)*
+    - Each VM run builds a ~1.5 GB ISO into the Nix store; they are not GC roots but stay until collected, and a session's writable disk is a fixed allowance.
+    - Plan: before building, delete this repo's older `pre-nixos-*.iso` store paths (unreferenced ones only, `nix-store --delete`), or have the fixture warn when free space is below ~3 GB.
+    - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
+
 ## Recently Completed
+- 2026-11-07T20-14-14Z - Merged trbarbour/NixOS-boot-image#335 (0.26.0): item 34, R-S3/R-S4. A disk named SSD but reported as rotating waits for the user's answer (TUI or `--ssd`/`--hdd`) before anything touches the disks; the TUI's `T` sets any disk's class. Fixes #334 (VM tests assumed sd names follow attach order). Codex found four issues over two reviews (forced cleanup, explicit partitioning, `T` unreachable disks, `T` list overflow), each reproduced and fixed. CI green. Not yet tried on the user's PC.
 - 2026-11-06T13-53-17Z - Merged trbarbour/NixOS-boot-image#333 (0.25.1, 0.25.2): the plan is printed once at a terminal (item 36); manual runs reuse the boot's LAN configuration instead of waiting 60 s for DHCP (item 35). CI green, no Codex findings. Item 35 awaits confirmation on the user's PC.
 - 2026-11-01T13-54-41Z - Merged trbarbour/NixOS-boot-image#331 (0.25.0):
   - console variant packages (`bootImageSerial`, `bootImageSdDisplay`), with `-serial`/`-display` in image names when the console is not the format's default;

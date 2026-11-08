@@ -144,3 +144,6 @@
 
 ### v0.31 — 2026-11-07
 - §7.1: disk classes (R-S3, R-S4). A disk named SSD but reported as rotating is unconfirmed until the user answers (TUI or `--ssd`/`--hdd`); unattended runs neither provision nor install meanwhile. The TUI can set any disk's class (task queue item 34).
+
+### v0.32 — 2026-11-08
+- §7.1: a disk's model comes from the ATA IDENTIFY data (`device/vpd_pg89`) when present: on SATA, `device/model` is 16 characters, so `G.SKILL 128GB SSD` lost its "D" and R-S3 never asked (#336).

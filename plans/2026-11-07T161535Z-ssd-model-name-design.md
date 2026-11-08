@@ -38,6 +38,7 @@ Consequence of F3: if only auto-install were blocked, a blank machine with such 
   - Catches `G.SKILL 128GB SSD`, `Samsung SSD 850 EVO` and Intel's `INTEL SSDSC2BB120G4`.
   - Does not catch hybrid drives (`ST1000LM014-1EJ164` with an "SSHD" label; "SSHD" does not contain "SSD"), which are rotational.
   - NVMe is already solid-state (reqs §2.1), so the rule never applies to it.
+- **Correction (2026-11-08, #336):** "the model" must be the full ATA model. For SATA disks, sysfs `device/model` is the 16-character SCSI product field (`G.SKILL 128GB SS`), so 0.26.0 never asked on the user's PC. Since 0.26.1 the model comes from `device/vpd_pg89` (ATA IDENTIFY words 27–46) when present. Experiment: `notes/2026-11-08T003000Z-u2-sata-model-truncation.md`.
 - **(b) A word match ("SSD" as a whole word):** misses Intel's `SSDSC…` model numbers.
 - **(c) Also the reverse case (a non-rotational disk named "HDD"):** not requested, and no such report; left out.
 
