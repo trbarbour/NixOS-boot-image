@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 from typing import Iterable, Sequence, Tuple
 
@@ -62,6 +63,20 @@ def get_console_paths(
         paths.append(_DEFAULT_FALLBACK)
 
     return paths
+
+
+def stdout_is_terminal() -> bool:
+    """``True`` when stdout is a terminal, i.e. run by hand, not as a service.
+
+    A message printed to a terminal must not also be broadcast to the
+    consoles: on the serial console the terminal is ``/dev/console``, so the
+    reader sees it twice (#327; task queue items 36 and 40).
+    """
+
+    try:
+        return sys.stdout.isatty()
+    except (AttributeError, ValueError):  # replaced or closed stdout
+        return False
 
 
 def broadcast_line(

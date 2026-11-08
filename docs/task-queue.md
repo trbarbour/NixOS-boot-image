@@ -392,9 +392,36 @@ _Last updated: 2026-10-30T12-35-13Z_
 38. **Test ISOs fill the cloud session's disk allowance.** *(recurring: 2026-10-18, 2026-10-19, 2026-11-07, 2026-11-08)*
     - Each VM run builds a ~1.5 GB ISO into the Nix store; they are not GC roots but stay until collected, and a session's writable disk is a fixed allowance.
     - Plan: before building, delete this repo's older `pre-nixos-*.iso` store paths (unreferenced ones only, `nix-store --delete`), or have the fixture warn when free space is below ~3 GB.
+    - 2026-11-08: also the VM disk images. A RAID-1 resync writes the whole member, so sparse images become fully allocated: the reprovision test (`test_reprovision_vm.py`, two array creations on 4+5+5 GiB) needs ~14 GB. Run `notes/2026-11-08T165915Z-vm-run` was stopped by a free-space watchdog (< 1.5 GB). `nix-store --gc` freed 18.7 GiB (the nixpkgs closure from before the flake update, and old builds).
     - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
 
+39. **Re-provisioning over an earlier layout fails; the disks are wiped three times** *(user report, 2026-11-08, 0.26.1, first BIOS PC; trbarbour/NixOS-boot-image#338)*.
+    - TUI Apply after answering "S": disko skipped `mkfs.vfat` on the new ESP (old signature found), mounting `/boot` failed; the retry failed at `pvcreate` on md0 (`md127` held open).
+    - Hypothesis: the cleanup deactivates LVs and stops arrays before wiping them, so signatures inside LVs/arrays survive and reappear at the same offsets.
+    - **Reproduced 2026-11-08** (`tests/vm/test_reprovision_vm.py`, 0.26.1, `notes/2026-11-08T171557Z-vm-run`): `FAT-fs (sda2): bogus number of reserved sectors`, then on the retry `Can't open /dev/md127 exclusively` and `Cannot use /dev/md/md0: device has a signature` — the user's two failures.
+    - **Fix (0.26.2):** `storage_cleanup._dismantle_graph` releases mounts and swap, then for each node leaf to root wipes it while active (`wipefs`/`lvremove` an LV, `vgremove` a VG, `pvremove`/`wipefs` an array) and only then deactivates it (`mdadm --stop`, zero the members). Unit test `test_global_teardown_and_wipe_leaf_to_root` updated to the correct order (it pinned the faulty one); the mounted-target kernel model now covers `lvremove`/`vgremove`.
+      - VM `test_reprovision_vm.py` **passed** on 0.26.2 (`notes/2026-11-08T173200Z-vm-run`).
+      - Regression on 0.26.2: VM `test_pre_nixos_cleanup.py` and `test_raid_provisioning.py` passed; `nix flake check` passed.
+      - 2026-11-08 16:44Z run interrupted: the first provision (HDD layout) succeeded; during the second apply the session's disk filled (VM images plus test ISOs) and the user's upload failed. Logs `notes/2026-11-08T164406Z-vm-run`. Rerun with a free-space watchdog (item 38).
+    - Also: the TUI wipes, then `apply_plan` wipes again, then retries disko after a third wipe. Review once the root cause is fixed.
+
+40. **`pre-nixos --plan-only` with an unconfirmed disk: the note is glued to the plan, then repeated** *(user report, 2026-11-08, 0.26.1)*.
+    - User request: when a disk's class is unconfirmed, do not print the plan (it is the wrong one); print only the question.
+    - **Root cause of the duplication (user's session, reproduced on a pty):** the user ran `pre-nixos` (not `--plan-only`), so the refusal path printed the note and then broadcast it to the consoles; on the serial console the terminal is `/dev/console`. Every print-then-broadcast in `install.py` (BIOS refusal, boot-order refusal, install start and completion) had the same flaw.
+    - **Fixed:** `console.stdout_is_terminal` (shared with item 36's rule); `install._announce` prints and broadcasts only when stdout is not a terminal; the plan is not printed while a disk's class is unconfirmed. Tests: `test_plan_only_shows_only_the_question`, `test_at_a_terminal_the_note_appears_once`, `test_boot_service_broadcasts_the_refusal`.
+    - Not explained: the missing newline after `}` on the user's serial console (a pty shows `}\r\n`). It cannot recur here since the plan is no longer printed with the note; recorded in case it appears elsewhere.
+
+41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
+    - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.
+    - Proposal (user): when the installer has no address from DHCP, adopt the same static configuration, unless told otherwise. Needs a short design.
+
+42. **A target to write an image to removable media** *(user request, 2026-11-08)*.
+    - Build the chosen image and write it to a chosen device, perhaps as a TUI.
+    - Must refuse non-removable devices; default to a USB stick for the ISO and an (u)SD card for the SD image.
+    - Needs a design (debate) first.
+
 ## Recently Completed
+- 2026-11-08T04-04-13Z - Merged trbarbour/NixOS-boot-image#337 (0.26.1): fixes #336, the model now comes from ATA IDENTIFY (`device/vpd_pg89`), so a SATA disk's full model (`G.SKILL 128GB SSD`) reaches the R-S3 rule. CI green, no Codex findings. Item 34 awaits the user's try on the PC.
 - 2026-11-07T20-14-14Z - Merged trbarbour/NixOS-boot-image#335 (0.26.0): item 34, R-S3/R-S4. A disk named SSD but reported as rotating waits for the user's answer (TUI or `--ssd`/`--hdd`) before anything touches the disks; the TUI's `T` sets any disk's class. Fixes #334 (VM tests assumed sd names follow attach order). Codex found four issues over two reviews (forced cleanup, explicit partitioning, `T` unreachable disks, `T` list overflow), each reproduced and fixed. CI green. Not yet tried on the user's PC.
 - 2026-11-06T13-53-17Z - Merged trbarbour/NixOS-boot-image#333 (0.25.1, 0.25.2): the plan is printed once at a terminal (item 36); manual runs reuse the boot's LAN configuration instead of waiting 60 s for DHCP (item 35). CI green, no Codex findings. Item 35 awaits confirmation on the user's PC.
 - 2026-11-01T13-54-41Z - Merged trbarbour/NixOS-boot-image#331 (0.25.0):

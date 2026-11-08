@@ -508,10 +508,13 @@ def _teardown_node(
     runner: CommandRunner,
     scheduled: List[str],
     graph: Mapping[str, StorageNode] | None = None,
+    removed: bool = False,
 ) -> bool:
     # Mounts and swap were released by _release_mounts_and_swap beforehand.
+    # ``removed``: _wipe_node already removed this LV or VG, so there is
+    # nothing left to deactivate.
     success = True
-    if node.node_type in {"lvm", "lvm_lv"}:
+    if node.node_type in {"lvm", "lvm_lv"} and not removed:
         result = _execute_command(
             ["lvchange", "-an", node.name],
             action=action,
@@ -524,7 +527,7 @@ def _teardown_node(
         if result.returncode != 0:
             success = False
 
-    if node.node_type == "lvm_vg":
+    if node.node_type == "lvm_vg" and not removed:
         vg_name = node.metadata.get("vg_name", node.name.replace("lvm-vg:", ""))
         result = _execute_command(
             ["vgchange", "-an", vg_name],
@@ -673,7 +676,7 @@ def _release_mounts_and_swap(
     return success
 
 
-def _teardown_graph(
+def _dismantle_graph(
     action: str,
     device: str,
     nodes: list[str],
@@ -682,7 +685,20 @@ def _teardown_graph(
     execute: bool,
     runner: CommandRunner,
     scheduled: List[str],
+    progress_callback: Callable[[str], None] | None = None,
+    device_label: str = "",
 ) -> bool:
+    """Release mounts, then wipe and deactivate each node, leaf to root.
+
+    Each node is wiped while it is still active, then deactivated, before its
+    parent is touched (#338).  Deactivating everything first left the LV and
+    array devices absent when they were wiped, so the signatures inside them
+    survived and reappeared when a new layout put a partition or array at the
+    same offsets: disko then skipped formatting the new ESP, and a recreated
+    array brought back (and auto-activated) the old LVM.
+    """
+
+    _emit_progress(progress_callback, f"Tearing down existing storage on {device_label}")
     success = _release_mounts_and_swap(
         action,
         device,
@@ -692,11 +708,20 @@ def _teardown_graph(
         runner=runner,
         scheduled=scheduled,
     )
+    _emit_progress(progress_callback, f"Removing metadata from dependent volumes on {device_label}")
     for name in nodes:
         node = graph.get(name)
         if not node:
             continue
-        node_success = _teardown_node(
+        wiped, removed = _wipe_node(
+            action,
+            device,
+            node,
+            execute=execute,
+            runner=runner,
+            scheduled=scheduled,
+        )
+        torn_down = _teardown_node(
             action,
             device,
             node,
@@ -704,9 +729,9 @@ def _teardown_graph(
             runner=runner,
             scheduled=scheduled,
             graph=graph,
+            removed=removed,
         )
-        if not node_success:
-            success = False
+        success = success and wiped and torn_down
     if not success:
         log_event(
             "pre_nixos.cleanup.teardown_failed",
@@ -718,87 +743,27 @@ def _teardown_graph(
     return success
 
 
-def _wipe_descendant_metadata_graph(
+def _wipe_node(
     action: str,
     device: str,
-    nodes: list[str],
-    graph: dict[str, StorageNode],
+    node: StorageNode,
     *,
     execute: bool,
     runner: CommandRunner,
     scheduled: List[str],
-) -> bool:
-    success = True
-    for name in nodes:
-        node = graph.get(name)
-        if not node:
-            continue
-        if node.node_type == "file":
-            continue
-        if node.node_type in {"lvm", "lvm_lv"}:
-            result = _execute_command(
-                ["wipefs", "-a", node.name],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
-            result = _execute_command(
-                ["lvremove", "-fy", node.name],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
-            continue
-        if node.node_type == "lvm_vg":
-            vg_name = node.metadata.get("vg_name", node.name.replace("lvm-vg:", ""))
-            result = _execute_command(
-                ["vgremove", "-ff", "-y", vg_name],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
-            continue
-        if node.metadata.get("vg_name"):
-            result = _execute_command(
-                ["pvremove", "-ff", "-y", node.name],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
-        if _is_raid_node(node):
-            result = _execute_command(
-                ["mdadm", "--zero-superblock", "--force", node.name],
-                action=action,
-                device=device,
-                execute=execute,
-                runner=runner,
-                scheduled=scheduled,
-                tolerate_failure=True,
-            )
-            if result.returncode != 0:
-                success = False
+) -> tuple[bool, bool]:
+    """Wipe ``node``'s signatures and LVM/md metadata while it is active.
+
+    Returns ``(success, removed)``; ``removed`` when an LV or VG was removed,
+    so it needs no deactivation.
+    """
+
+    if node.node_type == "file":
+        return True, False
+
+    def run(cmd: list[str]) -> bool:
         result = _execute_command(
-            ["wipefs", "-a", node.name],
+            cmd,
             action=action,
             device=device,
             execute=execute,
@@ -806,16 +771,23 @@ def _wipe_descendant_metadata_graph(
             scheduled=scheduled,
             tolerate_failure=True,
         )
-        if result.returncode != 0:
-            success = False
-    if not success:
-        log_event(
-            "pre_nixos.cleanup.descendant_wipe_failed",
-            action=action,
-            device=device,
-            execute=execute,
-        )
-    return success
+        return result.returncode == 0
+
+    if node.node_type in {"lvm", "lvm_lv"}:
+        wiped = run(["wipefs", "-a", node.name])
+        removed = run(["lvremove", "-fy", node.name])
+        return wiped and removed, removed
+    if node.node_type == "lvm_vg":
+        vg_name = node.metadata.get("vg_name", node.name.replace("lvm-vg:", ""))
+        removed = run(["vgremove", "-ff", "-y", vg_name])
+        return removed, removed
+    success = True
+    if node.metadata.get("vg_name"):
+        success = run(["pvremove", "-ff", "-y", node.name]) and success
+    if _is_raid_node(node):
+        success = run(["mdadm", "--zero-superblock", "--force", node.name]) and success
+    success = run(["wipefs", "-a", node.name]) and success
+    return success, False
 
 
 def _verify_md_lvm_absent(
@@ -1052,8 +1024,7 @@ def perform_storage_cleanup(
     ordered_nodes = _ordered_nodes_leaf_to_root(graph, reachable)
 
     device_label = ", ".join(devices)
-    _emit_progress(progress_callback, f"Tearing down existing storage on {device_label}")
-    _teardown_graph(
+    _dismantle_graph(
         action,
         ",".join(devices),
         ordered_nodes,
@@ -1061,17 +1032,8 @@ def perform_storage_cleanup(
         execute=execute,
         runner=runner,
         scheduled=scheduled,
-    )
-
-    _emit_progress(progress_callback, f"Removing metadata from dependent volumes on {device_label}")
-    _wipe_descendant_metadata_graph(
-        action,
-        ",".join(devices),
-        ordered_nodes,
-        graph,
-        execute=execute,
-        runner=runner,
-        scheduled=scheduled,
+        progress_callback=progress_callback,
+        device_label=device_label,
     )
 
     if execute:

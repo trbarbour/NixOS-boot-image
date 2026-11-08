@@ -1,0 +1,50 @@
+
+__EXIT__=0
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794157445919__%s__UID_MARK__1794157445919__\n' "$(id -u)"
+printf '__UID_MARK__1794157445919__%s__UID_MARK__1794157445919__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1794157445919__0__UID_MARK__1794157445919__
+
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name,devices; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; lvs --noheadings -o lv_name,vg_name,devices; printf '\n__EXIT__=%s\n' $?; }
+
+[?2004l
+
+
+__BEGIN__
+
+  data  large /dev/sda1(0) 
+
+  swap  large /dev/sda1(1) 
+
+  slash main  /dev/md127(0)
+
+
+
+__EXIT__=0
+
+[?2004hPRE-NIXOS> 
+
+
+[?2004l
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794157446284__%s__UID_MARK__1794157446284__\n' "$(id -u)"
+printf '__UID_MARK__1794157446284__%s__UID_MARK__1794157446284__\n' "$(id -u)"
+
+[?2004l
+__UID_MARK__1794157446284__0__UID_MARK__1794157446284__
+
+[?2004hPRE-NIXOS> PRE_NIXOS_FORCE_CLEANUP=1 pre-nixos --ssd sda --no-auto-install > /tmp/second.log 2>&1; echo second-exit=$?
+PRE_NIXOS_FORCE_CLEANUP=1 pre-nixos --ssd sda --no-auto-install > /tmp/second.log 2>&1; echo second-exit=$?
+
+[?2004l
+qemu-system-x86_64: terminating on signal 15 from pid 5695 (<unknown process>)
+dmesg --color=never 2>&1 || dmesg 2>&1 || true
+journalctl --no-pager -u pre-nixos.service -b || true
+dmesg --color=never 2>&1 || dmesg 2>&1 || true
+journalctl --no-pager -u pre-nixos.service -b || true

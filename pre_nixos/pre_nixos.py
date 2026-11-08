@@ -21,6 +21,7 @@ from . import (
     storage_cleanup,
     storage_detection,
 )
+from . import console as console_module  # `console` is main's /dev/console handle
 
 
 def _maybe_open_console() -> io.TextIOWrapper | None:
@@ -29,15 +30,6 @@ def _maybe_open_console() -> io.TextIOWrapper | None:
         return open("/dev/console", "w", buffering=1)
     except OSError:
         return None
-
-
-def _stdout_is_terminal() -> bool:
-    """``True`` when stdout is a terminal, i.e. run by hand, not as a service."""
-
-    try:
-        return sys.stdout.isatty()
-    except (AttributeError, ValueError):  # replaced or closed stdout
-        return False
 
 
 def _is_interactive() -> bool:
@@ -461,12 +453,14 @@ def main(argv: list[str] | None = None) -> None:
             devices = plan.get("disko") or {}
             output = apply._render_disko_config(devices)
 
-        if _plan_stdout_enabled():
+        # Item 40 (user, 2026-11-08): while a disk's class is unconfirmed the
+        # plan is a guess, so it is not shown; the question below is.
+        if _plan_stdout_enabled() and not unconfirmed_disks:
             print(output)
             # The console copy is for the boot-time service, whose stdout is
             # the journal.  At a terminal it would print the plan twice when
             # that terminal is the console, e.g. the serial ISO (item 36).
-            if console is not None and not _stdout_is_terminal():
+            if console is not None and not console_module.stdout_is_terminal():
                 # ``/dev/console`` expects carriage return + line feed for proper
                 # rendering on some terminals. Ensure each newline in the rendered
                 # output resets the cursor to the start of the line before returning

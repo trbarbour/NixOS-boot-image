@@ -321,7 +321,7 @@ def test_cli_at_a_terminal_prints_the_plan_once(monkeypatch, tmp_path, capsys):
     fake_console = io.StringIO()
     fake_console.close = lambda: None  # type: ignore[method-assign]
     monkeypatch.setattr(pre_nixos, "_maybe_open_console", lambda: fake_console)
-    monkeypatch.setattr(pre_nixos, "_stdout_is_terminal", lambda: True)
+    monkeypatch.setattr(pre_nixos.console_module, "stdout_is_terminal", lambda: True)
     monkeypatch.setattr(
         pre_nixos.network,
         "configure_lan",
