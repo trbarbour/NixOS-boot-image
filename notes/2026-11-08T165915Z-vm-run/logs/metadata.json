@@ -7,7 +7,56 @@
     "store_path": "/nix/store/kha0wbyz0rjbmrarahy20xw7j011xbzw-pre-nixos-0.26.1-20261108163541-s9c126c89-26.05.20261031.fa13731-x86_64-linux.iso"
   },
   "diagnostics": {
-    "artifacts": [],
+    "artifacts": [
+      {
+        "label": "QEMU exit status",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/qemu-exit-status-01.log"
+      },
+      {
+        "label": "Serial log tail",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/serial-log-tail-02.log"
+      },
+      {
+        "label": "Login transcript",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/login-transcript-03.txt"
+      },
+      {
+        "label": "QEMU exit status",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/qemu-exit-status-04.log"
+      },
+      {
+        "label": "Serial log tail",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/serial-log-tail-05.log"
+      },
+      {
+        "label": "Login transcript",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/login-transcript-06.txt"
+      },
+      {
+        "label": "QEMU exit status",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/qemu-exit-status-07.log"
+      },
+      {
+        "label": "Serial log tail",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/serial-log-tail-08.log"
+      },
+      {
+        "label": "Login transcript",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/login-transcript-09.txt"
+      },
+      {
+        "label": "QEMU exit status",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/qemu-exit-status-10.log"
+      },
+      {
+        "label": "Serial log tail",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/serial-log-tail-11.log"
+      },
+      {
+        "label": "Login transcript",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics/login-transcript-12.txt"
+      }
+    ],
     "directory": "/home/user/NixOS-boot-image/notes/2026-11-08T165915Z-vm-run/logs/diagnostics"
   },
   "generated_at": "2026-11-08T16:59:15.509883+00:00",
@@ -68,7 +117,10 @@
     "port": 41645
   },
   "timings": {
+    "boot_to_login_seconds": 109.264,
     "build_seconds": 236.784,
-    "start": "2026-11-08T16:59:15.374979+00:00"
+    "end": "2026-11-08T17:06:28.957307+00:00",
+    "start": "2026-11-08T16:59:15.374979+00:00",
+    "total_seconds": 433.443
   }
 }
