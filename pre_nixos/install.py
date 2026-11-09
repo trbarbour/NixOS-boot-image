@@ -5,6 +5,7 @@ from __future__ import annotations
 import ipaddress
 import os
 import re
+import enum
 import shutil
 import subprocess
 import sys
@@ -1121,12 +1122,56 @@ def legacy_bios_preflight(
     )
 
 
+class InstallTrigger(enum.Enum):
+    """Why an install runs (task queue item 44).
+
+    ``AUTOMATIC``: after provisioning, because auto-install is enabled (the
+    boot service, ``pre-nixos``, the TUI's Apply).  It waits for the network.
+    ``REQUESTED``: the user asked for it (``--install-now``, the TUI's ``N``);
+    it runs regardless, with a warning.
+    """
+
+    AUTOMATIC = "automatic"
+    REQUESTED = "requested"
+
+
+def _network_gate(trigger: InstallTrigger, status_dir: Path) -> Optional[AutoInstallResult]:
+    """Skip an automatic install while the installer has no address and
+    default route; ``None`` when the install may go ahead."""
+
+    readiness = network.installer_network()
+    log_event(
+        "pre_nixos.install.network_readiness",
+        trigger=trigger.value,
+        address=readiness.address,
+        gateway=readiness.gateway,
+    )
+    if readiness.ready:
+        return None
+    if trigger is InstallTrigger.REQUESTED:
+        print(f"Warning: {readiness.problem}; the install may fail to download packages.")
+        return None
+    message = (
+        f"Auto-install skipped: {readiness.problem} (it needs an IPv4 address and a "
+        "default route). Configure the network, then run pre-nixos --install-now, "
+        "or press N in pre-nixos-tui."
+    )
+    _announce(message)
+    return _record_result(
+        "skipped",
+        status_dir=status_dir,
+        reason="no-network",
+        details={"message": message},
+    )
+
+
 def auto_install(
     lan: Optional[LanConfiguration],
     storage_plan: Optional[Dict[str, Any]] = None,
     *,
     install_network: Optional[InstallNetworkConfig] = None,
     enabled: bool = True,
+    trigger: InstallTrigger = InstallTrigger.AUTOMATIC,
     dry_run: bool = False,
     root_path: Path = Path("/mnt"),
     status_dir: Path = Path("/run/pre-nixos"),
@@ -1174,6 +1219,12 @@ def auto_install(
             status_dir=status_dir,
             reason="execution-disabled",
         )
+
+    # Task queue item 44 (user decision b): an automatic install waits for an
+    # IPv4 address and a default route; nothing on /mnt is touched before.
+    gated = _network_gate(trigger, status_dir)
+    if gated is not None:
+        return gated
 
     if not lan.authorized_key.exists():
         return _record_result(

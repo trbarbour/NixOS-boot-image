@@ -39,3 +39,29 @@ def test_missing_from_closure_reports_absent_paths_sorted() -> None:
         "/nix/store/fff-stdenv-linux"
     ]
     assert missing_from_closure(required, required) == []
+
+
+def test_dry_run_list_from_a_serial_transcript() -> None:
+    """The VM's transcript as read on 2026-11-09: terminal escapes and
+    "\\r\\r\\n" endings (#340; the first parser found nothing and passed)."""
+
+    from tests.vm.test_offline_install_closure_vm import _to_build
+
+    transcript = (
+        "cat /tmp/offline-dry-run.txt\r\r\n"
+        "\x1b[?2004l\rthese 2 derivations will be built:\r\r\n"
+        "  /nix/store/2kbbzfsz1hzd21yj0h989s3z40cgrp58-stage0-posix-1.9.1-source.drv\r\r\n"
+        "  /nix/store/ah9bgvfcw4px7wzj3x3ijf88w04fx6l3-nixos-system-nixos-26.05pre-git.drv\r\r\n"
+        "dry-run-exit=0\r\r\n"
+    )
+    expected = [
+        "/nix/store/2kbbzfsz1hzd21yj0h989s3z40cgrp58-stage0-posix-1.9.1-source.drv",
+        "/nix/store/ah9bgvfcw4px7wzj3x3ijf88w04fx6l3-nixos-system-nixos-26.05pre-git.drv",
+    ]
+    assert _to_build(transcript) == expected
+    # The same text after a text-mode read (each "\r" becomes a newline).
+    assert _to_build(transcript.replace("\r\n", "\n").replace("\r", "\n")) == expected
+    # As BootImageVM.run returns it: escapes removed and every line stripped.
+    from tests.vm.controller import clean_command_output
+
+    assert _to_build(clean_command_output(transcript, "cat /tmp/offline-dry-run.txt")) == expected

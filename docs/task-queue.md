@@ -420,7 +420,23 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Must refuse non-removable devices; default to a USB stick for the ISO and an (u)SD card for the SD image.
     - Needs a design (debate) first.
 
+43. **Offline `nixos-install` fails: it plans the compiler bootstrap** *(user report, 2026-11-09, 0.26.2, first BIOS PC; trbarbour/NixOS-boot-image#340)*.
+    - Storage provisioning now works on the hardware (#338 fixed). `nixos-install` then planned 1907 derivations from `stage0-posix`/`hex0-seed` up, and failed on the first source download (no network).
+    - Suspect: the installed system's configuration-specific derivations need build-time tools (a C compiler stdenv) that 26.05's installer no longer ships; same pattern as disko on 2026-10-18 (`tests/vm/offline_closure.py`).
+    - Reproduction: `tests/vm/test_offline_install_closure_vm.py` (dry-run build with substituters disabled, in the VM). Part of item 12.
+    - **Root cause** (host, isolated store; `notes/*-offline-install-closure.md`): the installed system needs packages the minimal ISO lacks (`info` outputs and texinfo, a few packages, GRUB's Perl modules) and builder tools for per-machine configuration derivations. Each missing output forces a rebuild from source, which ends in the compiler bootstrap. The VM test passed wrongly twice (parser), fixed.
+    - **Fix (0.27.0):** `modules/pre-nixos/reference-installed.nix`, two reference installed systems plus six builder tools in the x86 image (about 100 MiB unpacked). A differing configuration: 1247 → 63 derivations to build offline, none of the toolchain.
+      - VM `test_offline_install_closure_vm.py` **passed** on 0.27.0 (`notes/2026-11-09T042722Z-vm-run`): 78 derivations to build offline (was 1751), all configuration; checked against the raw transcript.
+      - Regression on 0.27.0: VM `test_pre_nixos_vm.py` (3), `test_disk_class_vm.py`, `test_reprovision_vm.py`, `test_pre_nixos_cleanup.py`, `test_raid_provisioning.py` passed (7/7); `nix flake check` passed.
+
+44. **Auto-install must wait for the network** *(user, 2026-11-09)*.
+    - The TUI's Apply started `nixos-install` on a machine with no IPv4 address (no DHCP server; the user meant to set a static address next).
+    - User decision: option (b), an IPv4 address **and** a default route on `lan`; explicit requests still run, with a warning. Requirement R-I1 (§2.11).
+    - Implemented: `network.installer_network`, `install.InstallTrigger`, the gate in `auto_install`, TUI and login-notice messages. Tests: `tests/test_install_network_gate.py`, `test_apply_without_network_explains_the_skipped_install`, `test_login_notice_explains_an_install_waiting_for_the_network`.
+    - Correction recorded: "installs must work offline" (BIOS plan D5) was never a requirement; the stock NixOS installer needs the network too.
+
 ## Recently Completed
+- 2026-11-08T18-17-10Z - Merged trbarbour/NixOS-boot-image#339 (0.26.2): fixes #338 (cleanup wipes each LV/array while active, then deactivates) and item 40 (only the question while a disk is unconfirmed; messages announced once at a terminal). CI green, no Codex findings. Awaits the user's apply on the PC.
 - 2026-11-08T04-04-13Z - Merged trbarbour/NixOS-boot-image#337 (0.26.1): fixes #336, the model now comes from ATA IDENTIFY (`device/vpd_pg89`), so a SATA disk's full model (`G.SKILL 128GB SSD`) reaches the R-S3 rule. CI green, no Codex findings. Item 34 awaits the user's try on the PC.
 - 2026-11-07T20-14-14Z - Merged trbarbour/NixOS-boot-image#335 (0.26.0): item 34, R-S3/R-S4. A disk named SSD but reported as rotating waits for the user's answer (TUI or `--ssd`/`--hdd`) before anything touches the disks; the TUI's `T` sets any disk's class. Fixes #334 (VM tests assumed sd names follow attach order). Codex found four issues over two reviews (forced cleanup, explicit partitioning, `T` unreachable disks, `T` list overflow), each reproduced and fixed. CI green. Not yet tried on the user's PC.
 - 2026-11-06T13-53-17Z - Merged trbarbour/NixOS-boot-image#333 (0.25.1, 0.25.2): the plan is printed once at a terminal (item 36); manual runs reuse the boot's LAN configuration instead of waiting 60 s for DHCP (item 35). CI green, no Codex findings. Item 35 awaits confirmation on the user's PC.

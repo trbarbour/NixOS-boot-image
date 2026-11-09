@@ -53,6 +53,7 @@ The guard (0.23.1, task queue item 33) refuses an auto-install on a legacy-BIOS 
 ### D5. Offline installs
 - **(a) Add `grub2` (i386-pc) to the ISO's `system.extraDependencies`.** Chosen. A BIOS install then needs no network for its boot loader, as #311 required for disko. Covered by the offline-closure test (`tests/vm/offline_closure.py`).
 - **(b) Rely on the binary cache.** Rejected: the installer must work offline.
+- **Correction (2026-11-09):** "the installer must work offline" was an assumption, generalized from #311 (disko's run-time build); it was never a requirement. Like the stock NixOS installer, an install needs the network, and an automatic install now waits for it (R-I1, task queue item 44). Carrying the installed system's packages in the image (item 43) is kept for robustness.
 
 ## 4. Unknowns and experiments
 

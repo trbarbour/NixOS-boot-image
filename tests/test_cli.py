@@ -57,15 +57,16 @@ def test_cli_install_now(monkeypatch, capsys, tmp_path):
 
     calls: list[tuple] = []
 
-    def fake_auto_install(lan_config, plan, *, enabled, dry_run, install_network=None):
-        calls.append((lan_config, plan, enabled, dry_run, install_network))
+    def fake_auto_install(lan_config, plan, *, enabled, dry_run, install_network=None, trigger):
+        calls.append((lan_config, plan, enabled, dry_run, install_network, trigger))
         return AutoInstallResult(status="success")
 
     monkeypatch.setattr(pre_nixos.install, "auto_install", fake_auto_install)
 
     pre_nixos.main(["--install-now"])
 
-    assert calls == [(sample_lan, None, True, False, None)]
+    # An explicit request: runs even without the network (item 44).
+    assert calls == [(sample_lan, None, True, False, None, pre_nixos.install.InstallTrigger.REQUESTED)]
     out = capsys.readouterr().out
     assert "Install completed successfully." in out
 

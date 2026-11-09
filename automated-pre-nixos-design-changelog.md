@@ -147,3 +147,7 @@
 
 ### v0.32 — 2026-11-08
 - §7.1: a disk's model comes from the ATA IDENTIFY data (`device/vpd_pg89`) when present: on SATA, `device/model` is 16 characters, so `G.SKILL 128GB SSD` lost its "D" and R-S3 never asked (#336).
+
+
+### v0.33 — 2026-11-09
+- §7.7.1: an automatic install waits for an IPv4 address and a default route on `lan` (R-I1, task queue item 44); an explicit request runs with a warning.

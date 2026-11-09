@@ -328,15 +328,16 @@ def test_handle_manual_install_runs_auto_install(monkeypatch, tmp_path, sample_p
 
     auto_calls: list[tuple] = []
 
-    def fake_auto(lan_config, plan, *, enabled, dry_run, install_network=None):
-        auto_calls.append((lan_config, plan, enabled, dry_run, install_network))
+    def fake_auto(lan_config, plan, *, enabled, dry_run, install_network=None, trigger):
+        auto_calls.append((lan_config, plan, enabled, dry_run, install_network, trigger))
         return AutoInstallResult(status="success")
 
     monkeypatch.setattr(tui.install, "auto_install", fake_auto)
 
     win = FakeWindow(height=2, width=120)
     assert tui._handle_manual_install(win, state) is True
-    assert auto_calls == [(lan_config, None, True, False, None)]
+    # [N] is an explicit request: runs even without the network (item 44).
+    assert auto_calls == [(lan_config, None, True, False, None, tui.install.InstallTrigger.REQUESTED)]
     assert state.last_auto_install is not None
     assert state.last_auto_install.status == "success"
     assert "Install completed." in win.lines[0]
@@ -413,3 +414,29 @@ def test_edit_plan_ignores_invalid_input(monkeypatch, sample_plan, inputs):
     win = PromptWindow(inputs)
     tui._edit_plan(win, plan)
     assert plan == snapshot
+
+
+def test_apply_without_network_explains_the_skipped_install(monkeypatch, tmp_path, sample_plan, sample_disks):
+    """Task queue item 44 (user, 2026-11-09): after Apply, an automatic install
+    without an address and default route is skipped, and the TUI says why and
+    what to do (the user's PC: no DHCP server)."""
+
+    state = tui._initial_state(sample_plan, sample_disks, None)
+    state.lan_config = LanConfiguration(authorized_key=tmp_path / "key.pub", interface="lan")
+    state.auto_install_enabled = True
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(tui.apply, "apply_plan", lambda plan, protected_disks=frozenset(): None)
+    monkeypatch.setattr(
+        tui.network, "installer_network", lambda iface="lan": tui.network.NetworkReadiness(None, None)
+    )
+    monkeypatch.setattr(
+        tui.install,
+        "auto_install",
+        lambda *a, **k: AutoInstallResult(status="skipped", reason="no-network"),
+    )
+
+    win = FakeWindow(height=5, width=200)
+    assert tui._handle_apply_plan(win, state) is False  # not done: the install is still to run
+    shown = " ".join(win.lines.values())
+    assert "the installer has no IPv4 address on lan" in shown
+    assert "press 'n'" in shown

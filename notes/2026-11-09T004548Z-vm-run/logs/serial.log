@@ -1,0 +1,1920 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261031.fa13731 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261031.fa13731 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot//nix/store/jyb28mnqm5vaxfggp513xkivabwqvkpy-linux-6.18.60/bzImage... ok
+Loading /boot//nix/store/nxiy1fj619pdyhbqa72x71dw5sj9ldlx-initrd-linux-6.18.60/initrd...ok
+[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;start=0a6f9527c35f4beea6bb52746a89a8f1;user=root;hostname=nixos;machineid=2ee2432d92154686a7cc9cdde83c468e;bootid=7e497b249fe94a1e88563cb926d10d51;pid=717;pidfdid=718;comm=(agetty);servicename=serial-getty@ttyS0.service;invocationid=bc7b8765f96b4530a63a63e1940cb82d;type=service\P+q6E616D65\
+<<< Welcome to the pre-nixos auto-install boot image (26.05.20261031.fa13731, x86_64) - ttyS0 >>>
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+(PRE_NIXOS_AUTO_INSTALL=)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185237527__\n'
+
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185237527__\n'
+pre-nixos boot image version 0.26.2
+]3008;start=b4da74ecca59466abba788d866bf7dd0;user=root;hostname=nixos;machineid=2ee2432d92154686a7cc9cdde83c468e;bootid=7e497b249fe94a1e88563cb926d10d51;pid=717;pidfdid=718;comm=login;targetuser=nixos;sessionid=2;type=session\pre-nixos boot image version 0.26.2
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185237527__\n'
+
+[?2004l__PROMPT_READY__1794185237527__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794185246957__%s__UID_MARK__1794185246957__\n' "$(id -u)"
+
+[?2004l[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185247060__\n'
+printf '__UID_MARK__1794185246957__%s__UID_MARK__1794185246957__\n' "$(id -u)"
+[?2004lexport PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185247060__\n'
+__UID_MARK__1794185246957__1000__UID_MARK__1794185246957__
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185247060__\n'
+[?2004l__PROMPT_READY__1794185247060__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794185246957__%s__UID_MARK__1794185246957__\n' "$(id -u)"
+sudo -i
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185246957__%s__UID_MARK__1794185246957__\n' "$(id -u)"
+[?2004lsudo -i
+__UID_MARK__1794185246957__1000__UID_MARK__1794185246957__
+[?2004hPRE-NIXOS> sudo -i
+[?2004lpre-nixos boot image version 0.26.2
+[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185249703__\n'
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794185249703__\n'
+[?2004l__PROMPT_READY__1794185249703__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185249771__%s__UID_MARK__1794185249771__\n' "$(id -u)"
+printf '__UID_MARK__1794185249771__%s__UID_MARK__1794185249771__\n' "$(id -u)"
+[?2004l__UID_MARK__1794185249771__0__UID_MARK__1794185249771__
+[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+LAN IPv4 address: 10.0.2.15
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+Disk type unconfirmed: sdc (G.SKILL 128GB SSD) reported as rotating, but the model name says SSD. Storage is not provisioned and NixOS is not installed until you confirm: run pre-nixos-tui, or pre-nixos with --ssd or --hdd for each of: sdc.
+LAN IPv4 address: 10.0.2.15
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004lSTATE=plan-only
+DETAIL=disk-class-unconfirmed
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disk-class-unconfirmed
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185270705__%s__UID_MARK__1794185270705__\n' "$(id -u)"
+printf '__UID_MARK__1794185270705__%s__UID_MARK__1794185270705__\n' "$(id -u)"
+[?2004l__UID_MARK__1794185270705__0__UID_MARK__1794185270705__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; for d in /sys/block/sd*; do echo "${d##*/} $(cat $d/size)"; done; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; for d in /sys/block/sd*; do echo "${d##*/} $(cat $d/size)"; done; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+sda 10485760
+sdb 10485760
+sdc 8388608
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185271070__%s__UID_MARK__1794185271070__\n' "$(id -u)"
+printf '__UID_MARK__1794185271070__%s__UID_MARK__1794185271070__\n' "$(id -u)"
+[?2004l__UID_MARK__1794185271070__0__UID_MARK__1794185271070__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; pre-nixos --ssd sdc --no-auto-install > /tmp/provision.log 2>&1; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; pre-nixos --ssd sdc --no-auto-install > /tmp/provision.log 2>&1; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185403084__%s__UID_MARK__1794185403084__\n' "$(id -u)"
+printf '__UID_MARK__1794185403084__%s__UID_MARK__1794185403084__\n' "$(id -u)"
+[?2004l__UID_MARK__1794185403084__0__UID_MARK__1794185403084__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; findmnt -n /mnt/boot; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; findmnt -n /mnt/boot; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+/mnt/boot
+  /dev/sdc2
+    v rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=iso8859-1,shortna
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185403678__%s__UID_MARK__1794185403678__\n' "$(id -u)"
+printf '__UID_MARK__1794185403678__%s__UID_MARK__1794185403678__\n' "$(id -u)"
+[?2004l__UID_MARK__1794185403678__0__UID_MARK__1794185403678__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; mkdir -p /root/shim && cat > /root/shim/nixos-install <<'EOF'
+#!/bin/sh
+# Stand-in for nixos-install (tests/vm/test_offline_install_closure_vm.py).
+nix-build '<nixpkgs/nixos>' -A system -I nixos-config=/mnt/etc/nixos/configuration.nix \
+  --dry-run --option substituters '' > /tmp/offline-dry-run.txt 2>&1
+echo "dry-run-exit=$?" >> /tmp/offline-dry-run.txt
+exit 1
+EOF
+chmod +x /root/shim/nixos-install; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; mkdir -p /root/shim && cat > /root/shim/nixos-install <<'EOF'
+[?2004l  --dry-run --option substituters '' > /tmp/offline-dry-run.txt 2>&1
+echo "dry-run-exit=$?" >> /tmp/offline-dry-run.txt
+exit 1
+EOF
+chmod +x /root/shim/nixos-install; printf '\n__EXIT__=%s\n' $?; }
+[?2004h> #!/bin/sh
+[?2004l[?2004h> # Stand-in for nixos-install (tests/vm/test_offline_install_closure_vm.py).
+[?2004l[?2004h> nix-build '<nixpkgs/nixos>' -A system -I nixos-config=/mnt/etc/nixos/configuration.nix \
+[?2004l[?2004h>   --dry-run --option substituters '' > /tmp/offline-dry-run.txt 2>&1
+[?2004l[?2004h> echo "dry-run-exit=$?" >> /tmp/offline-dry-run.txt
+[?2004l[?2004h> exit 1
+[?2004l[?2004h> EOF
+[?2004l[?2004h> chmod +x /root/shim/nixos-install; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185404059__%s__UID_MARK__1794185404059__\n' "$(id -u)"
+printf '__UID_MARK__1794185404059__%s__UID_MARK__1794185404059__\n' "$(id -u)"
+[?2004l__UID_MARK__1794185404059__0__UID_MARK__1794185404059__
+[?2004hPRE-NIXOS> PATH=/root/shim:$PATH pre-nixos --install-now > /tmp/install.log 2>&1; true
+PATH=/root/shim:$PATH pre-nixos --install-now > /tmp/install.log 2>&1; true
+[?2004lStarting automatic NixOS installation at 2026-11-09 00:50:06Z UTC.
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794185554173__%s__UID_MARK__1794185554173__\n' "$(id -u)"
+printf '__UID_MARK__1794185554173__%s__UID_MARK__1794185554173__\n' "$(id -u)"
+[?2004l__UID_MARK__1794185554173__0__UID_MARK__1794185554173__
+[?2004hPRE-NIXOS> cat /tmp/offline-dry-run.txt
+cat /tmp/offline-dry-run.txt
+[?2004lthese 1751 derivations will be built:
+  /nix/store/2kbbzfsz1hzd21yj0h989s3z40cgrp58-stage0-posix-1.9.1-source.drv
+  /nix/store/j76if9fyh6aw41qvc8nqr9c8ha4azayn-hex0-seed.drv
+  /nix/store/zf8dvv680i9z2wpggik614r20n54hyii-hex0-1.9.1.drv
+  /nix/store/fmhwfv6ikfd8wsg2mha7rw8nmdc4jxrx-hex1-1.9.1.drv
+  /nix/store/rxpmjxrz1xnr2pkamsa59afl929cj57k-hex2-1.9.1.drv
+  /nix/store/2jwh5pdbg0mff2bhxvc2vam8bm05wa08-catm-1.9.1.drv
+  /nix/store/rq77y1w9cbyx76dqcnw4wa24w1wq3ybw-M2-0.c-1.9.1.drv
+  /nix/store/kkr0ncy5fyd3rv59wdb679q0fhah7fn6-M0.hex2-1.9.1.drv
+  /nix/store/z4xincpdf0q9ikjbma0s5sf5jrl3s187-M0-1.9.1.drv
+  /nix/store/pj475p4a7p2hzb49xslzyrbzmnwvjp4c-cc_arch-0.hex2-1.9.1.drv
+  /nix/store/yx1ipzzcjya556sz0z3vc3gvgw86lb5c-cc_arch-1.hex2-1.9.1.drv
+  /nix/store/s47mlxqkjc26fvmx2yrps4hkpigimxi1-cc_arch-1.9.1.drv
+  /nix/store/fg5yn059hlcxgb0116bq8s47rbg4gzs2-M2-0.M1-1.9.1.drv
+  /nix/store/dschwsfi21lwar5ldv5wdqnm1waf197a-M2-0-0.M1-1.9.1.drv
+  /nix/store/fxii7wgh8167mckd8bbjal5mxq9l9p05-M2-0.hex2-1.9.1.drv
+  /nix/store/9mj2rqzivmn0skmx8kgy0qsrm8n2ph0z-M2-0-0.hex2-1.9.1.drv
+  /nix/store/46c2vwwb9lcd8976mmwaqiy2glsh8a6s-M2-1.9.1.drv
+  /nix/store/j4wjiwwh98lysm3nj7gidv06ch0zns2p-hex2_linker-2.M1-1.9.1.drv
+  /nix/store/9knysaa0w5wbkbi2c1hbvvf7gjv8iqfb-blood-elf-0.M1-1.9.1.drv
+  /nix/store/drh372b18rwrl15nrww5bc105xpwd3kx-blood-elf-0-0.M1-1.9.1.drv
+  /nix/store/nnkx70rnb45cksjrsh24ral5jd6al5h2-blood-elf-0.hex2-1.9.1.drv
+  /nix/store/x9sj5ai5qx2c6wmy5qz6dpl90g6rbrxg-blood-elf-0-0.hex2-1.9.1.drv
+  /nix/store/xsn3z4sqkn6ac7mlq35b62qs31mlnhbw-blood-elf-0-1.9.1.drv
+  /nix/store/83kd55avbcj2wx0gc643yhph72ahdacn-hex2_linker-2-footer.M1-1.9.1.drv
+  /nix/store/12kq01qr9jcw4gpgvzqg962gixgjg4w8-M1-macro-1.M1-1.9.1.drv
+  /nix/store/1l0a69sq1vbdjjcbhnr0yic533yvkpdj-M1-macro-1-footer.M1-1.9.1.drv
+  /nix/store/d9q3m3dkpm5f2yidcnf39bxqy3xniw6q-M1-macro-0.M1-1.9.1.drv
+  /nix/store/zhwaq1pghk6gqbjlcjgw3crf8ggrazay-M1-macro-0-footer.M1-1.9.1.drv
+  /nix/store/dyffnfdiz10lpiraxazf9k9chkx1prqj-M1-macro-0-0.M1-1.9.1.drv
+  /nix/store/9qrfjhdgqij7dg7pvy85yw848hchjj86-M1-macro-0.hex2-1.9.1.drv
+  /nix/store/ncn47n6zrpsy3kxc146392s75fk4lk2c-M1-macro-0-0.hex2-1.9.1.drv
+  /nix/store/wzc5vlgxwlx8xjs4v6jgw8xan080jxks-M1-0-1.9.1.drv
+  /nix/store/hq2cbwrkyyck3hl3vcddi1256qk4kd9y-M1-macro-1.hex2-1.9.1.drv
+  /nix/store/9nh28gh5xv970hclrry924m5s9a7pc04-hex2_linker-0.M1-1.9.1.drv
+  /nix/store/ppw8q27avhjirlrdcharilyf3lfih28f-hex2_linker-0-footer.M1-1.9.1.drv
+  /nix/store/33fk6f3q18k6ifvg92vgsnmck9dcsqli-hex2_linker-0.hex2-1.9.1.drv
+  /nix/store/salhf0y3pwji5rc43kgh51czb4ck6qgx-hex2_linker-0-0.hex2-1.9.1.drv
+  /nix/store/qsyqpi5hy1i3rzmg1x5l2nm0d3hcdmdc-hex2-1-1.9.1.drv
+  /nix/store/zf7smly23scq1jpgwy8lbv6vksd5si6b-M1-1.9.1.drv
+  /nix/store/387n5gn04pv4cjjlrxxh4plc6c60ifl6-hex2_linker-2.hex2-1.9.1.drv
+  /nix/store/jfgdmzd75pybl8jbyv0qharzncawvfjk-hex2-1.9.1.drv
+  /nix/store/zp92khnxilvlvdha1wan9c8xh3ns7qsc-kaem.M1-1.9.1.drv
+  /nix/store/nqn9nizwqy5201zcv0jn5l7pnjm8i637-kaem-footer.M1-1.9.1.drv
+  /nix/store/scff6n77m9an0n7wzdm221b5diz0k4rj-kaem.hex2-1.9.1.drv
+  /nix/store/mls5sqcps3yi6iwbn5bbyr1pymsk8cyy-kaem-unwrapped-1.9.1.drv
+  /nix/store/dbasqqw4gv4864jxfc7i9fir1ik1h91b-mescc-tools-extra-mkdir-1.9.1.drv
+  /nix/store/faklixjfqrpfwz3z513s6p9lmk2qf3mw-mescc-tools-extra-cp-1.9.1.drv
+  /nix/store/fx1ariccq0k411lvhjl3iwbql4qq6xiv-mescc-tools-extra-replace-1.9.1.drv
+  /nix/store/gs9mwc2r1p7hs6xrnqz5s36dsw3c9nqm-mescc-tools-extra-chmod-1.9.1.drv
+  /nix/store/pz3m6g7iabylyazm40p363y8795vybf9-mescc-tools-1.9.1.drv
+  /nix/store/bkmjhag9fkyxdmh3khll3hd7fbjqz5zl-nyacc-1.09.1.tar.gz.drv
+  /nix/store/yjp7zwabw9xcm6g42736mbhlvcddw410-mescc-tools-extra-1.9.1.drv
+  /nix/store/zlsfxdxsnzp1nzzw113avl2v0s5mgjpr-kaem-1.9.1.drv
+  /nix/store/hz2a2dlrpqz662khc2f2nqcfx03wgn3r-nyacc-1.09.1-builder.drv
+  /nix/store/wxbms5xmv39yyyqy337w0xylps100055-nyacc-1.09.1.drv
+  /nix/store/zkwvl1yljz9gp7zbppzslzdhyq5zwg19-mes-0.27.1.tar.gz.drv
+  /nix/store/q8c5l3jqyqw4g02k0anhhxh1g4307ni5-mes-src-0.27.1-builder.drv
+  /nix/store/h6pi2cyw7j5liy0fbzq8i1ippcqwdjd3-mes-src-0.27.1.drv
+  /nix/store/8y8aadripzcsxfvg4hsdacwcgw6ypm50-strncpy-builder.drv
+  /nix/store/00d529rs5cfj1kwz79sm79qackf9gppk-strncpy.drv
+  /nix/store/b44mdg7iwqp8z0szrncb0asls9q2l323-globals-builder.drv
+  /nix/store/k9map8ma3f064ibw34sr5mrnd818fk35-globals.drv
+  /nix/store/blibvc5hp8ky3qi4rpwkxcw501akd418-oputs-builder.drv
+  /nix/store/llki4kvcykzkpn69hpkvxk86gpjb8cmn-oputs.drv
+  /nix/store/9dh6yj0xma2rsc8c2ylqhqvr6gvy6g78-strlen-builder.drv
+  /nix/store/m6wmvp7bp6c8kn3jlbl4my0g467kdl0l-strlen.drv
+  /nix/store/8lp51hpsccqbr2ydb5wv9qhwhzb83cnd-__init_io-builder.drv
+  /nix/store/pxzj1p0myjc6zd2q95i8f82y8vg4ymyi-__init_io.drv
+  /nix/store/zw2ds5k1knfgqzqlrv3wyvnh3za6nmf6-puts-builder.drv
+  /nix/store/pyy0lwwdfhrxws0g4w4kq88x4qikyvc1-puts.drv
+  /nix/store/9zz696rw3sw7hjgavl83p3pbps1fn8g6-exit-builder.drv
+  /nix/store/vcjywcg8j3zy9i3may1p25scpwjsa441-exit.drv
+  /nix/store/5pq8iapp8p7zwipgwlfzbq3c5ivjali0-write-builder.drv
+  /nix/store/vd81g2231n9h6pm282j0fij7dj88pmh0-write.drv
+  /nix/store/7bw87grjq72s0rdp5j3422lj9c30z4ck-eputs-builder.drv
+  /nix/store/w9ncwnrxfgg0mhq5bnv9i25ahx7zfm7a-eputs.drv
+  /nix/store/9859v83l3ldymlgh5y6d69b48w5d9gds-_write-builder.drv
+  /nix/store/y8xglficy4lqy8g4k0vfb0lbr4zzgk5x-_write.drv
+  /nix/store/r7yy2b087clhd9zrdksjnsdygxg0dnh2-_exit-builder.drv
+  /nix/store/ynn3b7sb95w08pc639sr5m9n1s6m9lcc-_exit.drv
+  /nix/store/nix4lx9q3da89ip0fnd3rjpi1kjacif3-mes-libc-mini-0.27.1-builder.drv
+  /nix/store/037vygj573j4f43vw934yzayjzmxyqjw-mes-libc-mini-0.27.1.drv
+  /nix/store/1mpy7l8c822wij0cygkjydv5lv8lj0m8-crt1-builder.drv
+  /nix/store/5zga9hbg59nhww93dfwqdx6xc1q81pif-crt1.drv
+  /nix/store/3k613fvf47ib8g1r2whcz93z6wlczmz8-__getdirentries-builder.drv
+  /nix/store/03h7kw2rpg8qw1x6bng65imsmilaz624-__getdirentries.drv
+  /nix/store/xk5gc7f6j4h9hcx2z3in2cz12knwmj1a-oputc-builder.drv
+  /nix/store/09aln9yisls20di7x9wj1kiwhbp2gmm1-oputc.drv
+  /nix/store/mj28d302q2w5hixap96y39dq8b1la411-free-builder.drv
+  /nix/store/2adhxc3jvhi49x2i4076yk9k97z831w1-free.drv
+  /nix/store/9m9m75zvf97rz7f9cml70i1gz2i259d3-getpid-builder.drv
+  /nix/store/2bj79bj56nqc3l0x4j9578qkm193j3fp-getpid.drv
+  /nix/store/in9n30q90i5kwqf9rahhp4vnxz5y117a-raise-builder.drv
+  /nix/store/2kpjq9x1yy9zmq0cjjwkqw7l8mnjwigb-raise.drv
+  /nix/store/8sx493k2xnfwakm089q5w1g6pg2npr30-getenv-builder.drv
+  /nix/store/2xy9v2qajsvlhlq7wdfscvc2658qvkk4-getenv.drv
+  /nix/store/n55h30m46ndihq18phz5n0cr6ii0jzmb-getc-builder.drv
+  /nix/store/46s1ihj1l58kgdwy02vwvwam0z5vx1ar-getc.drv
+  /nix/store/786ngprql5h6i8qcpzm8987rf5mvr6km-strcpy-builder.drv
+  /nix/store/4745hdf59rrg9fanw4r357m8maqskhcp-strcpy.drv
+  /nix/store/idh7xqk7a67n07f69jpsls2ncfz1ghnw-unlink-builder.drv
+  /nix/store/4wzln1qrnyz1zr6arar3813z3mn5a7rn-unlink.drv
+  /nix/store/4fi5xvzq940y4fyag9sf3swmd04x23hn-getcwd-builder.drv
+  /nix/store/4xxv2r7w1zpqicpdqflas64dwvbanh0k-getcwd.drv
+  /nix/store/90ghkblwz1x58v2bf4j2d2qk7p5ln594-wait4-builder.drv
+  /nix/store/52m5687xb0sxg1dmw82mg9mlqc8yyp8d-wait4.drv
+  /nix/store/5y5rhx8xkvnb1rv27ygq7qx2jh721n6c-fstat-builder.drv
+  /nix/store/53b8cx0879bqmw80q6jhl2q8v26lg3dz-fstat.drv
+  /nix/store/mxbj66h6gclhhqy318i4v01lx2qiy9z3-__mes_debug-builder.drv
+  /nix/store/5ma1s9g8s1r48yaqy114hj8n9bz0nd7b-__mes_debug.drv
+  /nix/store/8szf5lgh88ymz0wjd7f62lww0ki0kl5r-memcpy-builder.drv
+  /nix/store/5vfq7hk4md3y9fnqipn07cmiyi13bqlh-memcpy.drv
+  /nix/store/5j58nxqnf1npah00yma30515vxl9rdfa-setenv-builder.drv
+  /nix/store/62fjvcsvb78qc4nl1ip1bwkdm2g4x9mj-setenv.drv
+  /nix/store/zg19fm6fzvh5787swpwfrwj7gciidrj6-__assert_fail-builder.drv
+  /nix/store/63ylg04cgw4dqrlxy6zxx58l0mvc28qf-__assert_fail.drv
+  /nix/store/bc1pgwnxifikxdvgbag1i396jp1klzgx-ntoab-builder.drv
+  /nix/store/6d922flrrliv0x67xmwni82a6yhrkrha-ntoab.drv
+  /nix/store/6vh5kn7pd1k9x103kbrb66yy91chanz0-utimensat-builder.drv
+  /nix/store/70ph6wa755qr51i6m9qjsj8j4mwq0r0x-utimensat.drv
+  /nix/store/hxsqmjd5sp9ddjjyhr6gmrhf58gpad1m-fdputc-builder.drv
+  /nix/store/7jyjq8p67kr0n0v92w1kmwhp5mvc9994-fdputc.drv
+  /nix/store/hg84x27sr3pglh61b22jf93x34q1694p-close-builder.drv
+  /nix/store/804g2dcnwn4bhkbf98ni9nmq4wghbxnf-close.drv
+  /nix/store/g9cwbx1jfj0vfxla7ifxcrk2xjnw1bsz-readdir-builder.drv
+  /nix/store/86x3nhabnia98ihxzwcvmf19hy5fby1k-readdir.drv
+  /nix/store/fk7844pynkdlf9121b12ipbrf55c9g9h-fgetc-builder.drv
+  /nix/store/8gjrq7nfvdhlpbc4licbbqfn291ikq85-fgetc.drv
+  /nix/store/1f1ni464i1yi79k5ln2cp4wn6idg0a9p-_getcwd-builder.drv
+  /nix/store/8psl70bgq47wkm69p5dm6kx1ylnpa6b8-_getcwd.drv
+  /nix/store/pbrsvvhf1i7d9w3h87gk60q3bsngp69z-wait-builder.drv
+  /nix/store/9awbldasqn9q9kk6pjsg4v4k0cmp2hn2-wait.drv
+  /nix/store/hf1vsgpn7231y185ckq6z2lc6v34b3kq-eputc-builder.drv
+  /nix/store/9hjwncik9p8h51s705cvh9262f6jm1i3-eputc.drv
+  /nix/store/xjhir7vz7kb75jz8g66qa4b4ks4m2k9p-ltoa-builder.drv
+  /nix/store/9xrg0ykb88mfyf536qk8rns6bxp1jmyx-ltoa.drv
+  /nix/store/p9x2bbq9n0mqccsg834h99sadrgmsj7c-stat-builder.drv
+  /nix/store/a1g2j692marrk5wlyqhxlvclv322gxdr-stat.drv
+  /nix/store/1cnglsb0a5017gk6f19k0hikb4f7nrpr-isxdigit-builder.drv
+  /nix/store/a57hhkslijbbzz65khax4qxc2gspx6g5-isxdigit.drv
+  /nix/store/d23sd66xkg81wd8j7m0jgw91wmsafspp-fputc-builder.drv
+  /nix/store/an791rac20in20im3mlfkirch2pwaw0s-fputc.drv
+  /nix/store/ywwjm8pb0vv9dnz5mcqybzmznjz0ix79-ungetc-builder.drv
+  /nix/store/bbbyy52mymn1ghzh8kf3h0yxsgddj26d-ungetc.drv
+  /nix/store/5hpxjqykbkdk302khw74c9vpsyybm71a-open-builder.drv
+  /nix/store/bha00fzgyxii9w9q9y3w14ynjzivi9k4-open.drv
+  /nix/store/m2q365smdp66pvh626qw4yjr17j90s8b-dup2-builder.drv
+  /nix/store/bjlz9wzdlh767w232y6n5pjds14raw5h-dup2.drv
+  /nix/store/agsl5l6inmhgyggscpcn5ng2f1943b2j-memmove-builder.drv
+  /nix/store/bpzkd3r26cl6hwr2v0y7giswnd9chr7x-memmove.drv
+  /nix/store/lmflf3xziz6s4ia23j485l3gvd97vlg7-umask-builder.drv
+  /nix/store/bwbl3xl91p3p02ylm29nkjjhyqdsr4hs-umask.drv
+  /nix/store/9d2q1bl9997dm8502k6cxg5r8r85pmdh-kill-builder.drv
+  /nix/store/bx85m89qvvn4dgmnb3rafz4ffnk41rkx-kill.drv
+  /nix/store/1vkbzh19qql99n9jv0c0ffqgyzjqlwhy-time-builder.drv
+  /nix/store/c2p74ajc9zfg6dvmv48f4v1xkr82j7ij-time.drv
+  /nix/store/j8j2dnbhmvnry5ijz8qhl5n4ghjn150f-fsync-builder.drv
+  /nix/store/c4q67q5gj8f0y6hb33cak3f7sjpq63c7-fsync.drv
+  /nix/store/dmz6h2m7nf6n698mm14i6zyms33dhaay-chmod-builder.drv
+  /nix/store/c8aqhk9y238r2swcqcw6dm5qh26lik9f-chmod.drv
+  /nix/store/kclz14inz8rmx1jg77kb5nl3hqgqjnc7-clock_gettime-builder.drv
+  /nix/store/d77vfr3v3vvbs9v964ngmxlq5dpylgnm-clock_gettime.drv
+  /nix/store/v0wvdpyrdxf6y8qb2flcq775zwc71hlh-syscall-builder.drv
+  /nix/store/fgw96sp22039kys7pyjaxns4qxckh829-syscall.drv
+  /nix/store/z5i7na9qpvfx6wx5phib8gwhqd1kyp99-fdputs-builder.drv
+  /nix/store/fslvmm29rxbvmrl8mssmh3f252k65xmd-fdputs.drv
+  /nix/store/f5g8kz53hxyz1k9q4nlnp7kpvik4yd15-rmdir-builder.drv
+  /nix/store/fxgid84c7kz0jkac0gwpahxpwvr5nsap-rmdir.drv
+  /nix/store/pvhb5byc5ya3z3692i00lcsr7rc6d6yj-ultoa-builder.drv
+  /nix/store/fxh7wabjwq8ifyb45vy2f09zawiynyca-ultoa.drv
+  /nix/store/al3c2iqx4nqjcl4d87m5x1sxnc7m1n0f-assert_msg-builder.drv
+  /nix/store/g096i4ibwxnri1f7zmij06pjv7i4k651-assert_msg.drv
+  /nix/store/zpph8w4vm2h6nxfm2ghxx9jvjq5dn25i-lseek-builder.drv
+  /nix/store/g34h3g6sjisk7fqp6lc0f5mcls3x2rd6-lseek.drv
+  /nix/store/h51d0h0pwlgli2m8rx4r5a97pihqvsm2-access-builder.drv
+  /nix/store/gb36vm7d2qjqdsc89bdcmyn7qchy7xcd-access.drv
+  /nix/store/wbq1wksxsc1gsgdkcan2h40l4x4gxx6w-lstat-builder.drv
+  /nix/store/gqc0mq7fw0ckyzy3cp8qfblp4qldnl3c-lstat.drv
+  /nix/store/wzbw9g2rzl3a9rlw6gm3yvy1gshawg79-brk-builder.drv
+  /nix/store/gy95ardpys0lm0djcwpq4mym7iid5636-brk.drv
+  /nix/store/mza46h92jsn5430vmsh4sx8zq3cc2v3y-atoi-builder.drv
+  /nix/store/h3fr2g42a1jn2j3wwlkf8jawdadj3nmh-atoi.drv
+  /nix/store/mwr39jx5bysz6lgcj42dp70q1yvjr4dh-fork-builder.drv
+  /nix/store/h5z9yb9fcb61sij3pzybq04rpyzgx391-fork.drv
+  /nix/store/85fl7xw30igvdd4237dvqd3qx692kd7z-execve-builder.drv
+  /nix/store/hymk33wkc3qs89h56hxmcs54n9nxafpa-execve.drv
+  /nix/store/wy41a6rmv90s4ryk8ri9b88y1rid9aan-strcmp-builder.drv
+  /nix/store/ig80p3grw6fhna4qdz9nsxsb3z7q0h6z-strcmp.drv
+  /nix/store/as2v8bpjgrwp7mji129lcpbhs2w0805a-__raise-builder.drv
+  /nix/store/igp30wh0ssfl580sfh321gwhfsjfnsjn-__raise.drv
+  /nix/store/j7p42afk0zv32v4s14mpsmgmlnwlhgvw-isdigit-builder.drv
+  /nix/store/iqppcir7yrxh3ajirzqd5krv64dd9vix-isdigit.drv
+  /nix/store/dgpv1xd3s1mj9vc7z66610s5p1ap1k4y-strncmp-builder.drv
+  /nix/store/j65zznfqb602v6ar0k7a7bb061iwshr1-strncmp.drv
+  /nix/store/ngq1yidsz2dihpmkfl4shq98ky4rgpq9-utoa-builder.drv
+  /nix/store/j96xnv3mwd9lrpw3p12c9dihl1nq7bi8-utoa.drv
+  /nix/store/71n1agkwjvki00q4v63dcn6rsakv49ak-nanosleep-builder.drv
+  /nix/store/k1cn30bfjwfgsfvpm1yp1nms1si2wf2x-nanosleep.drv
+  /nix/store/2h2jx5jrglyqws10sa53n2bvyjqpi9mp-putc-builder.drv
+  /nix/store/k3f1j20sax11l61frp7kfn3sns54qv1x-putc.drv
+  /nix/store/db1yx8fllcas5nni56p9fq7dghrki2gm-getchar-builder.drv
+  /nix/store/kbirnxddc12bv3px7x7mh6vha8rkrcdx-getchar.drv
+  /nix/store/wzkj5hhzwm6ppkw8nyan97h6aw358av2-memcmp-builder.drv
+  /nix/store/kpg9rvnnj20hmjlhagakbh370b0wgmj8-memcmp.drv
+  /nix/store/4i7p4sdfbaw3y9lr963ck03y409j3lq9-getdents-builder.drv
+  /nix/store/kxb0bf0fan1sq37khpxqnsz9fmgxfq7m-getdents.drv
+  /nix/store/zm0h1rwqw0jc93rhhsfzqnfw0lk6k3r5-symlink-builder.drv
+  /nix/store/lfxjv1zhyc2wl6sz7m55bvl896zgb4f2-symlink.drv
+  /nix/store/dmlvfmqi0x2hdzqb97fic9jrk0bcany0-fdungetc-builder.drv
+  /nix/store/ls8gxq4vrviapqfzbnvlzn6md9zgfy5b-fdungetc.drv
+  /nix/store/q335r4z6sia41v85hpj7a2mzkbvr2dgi-putchar-builder.drv
+  /nix/store/mpyi8xvv5i4ydkmgv1ly2wcmliz8vq5l-putchar.drv
+  /nix/store/fsh8qdzcqnfw96hhy6ssy2vw0ljjsc8q-malloc-builder.drv
+  /nix/store/ni3mx708vbjmn68ziv908hia51ah5am6-malloc.drv
+  /nix/store/07rmmdnlwybi90vx19shlmd37azxfgrb-uname-builder.drv
+  /nix/store/p1525f5i8db7wrjjq08xh0m8hyjc1wk6-uname.drv
+  /nix/store/d4p16n5n0kx7hss8kqa8dmrlf8zxf356-chdir-builder.drv
+  /nix/store/p30fckwbymg431mqzcfixvd08p6v5h4k-chdir.drv
+  /nix/store/46pcnsn6dy8jcq0ihi5zn2n8lz6dn777-ltoab-builder.drv
+  /nix/store/p5qdp6gr977n1s1518lpkn3zk2m70c8k-ltoab.drv
+  /nix/store/cm0rq8z9vapni52r76hsn0r1y5rbq227-calloc-builder.drv
+  /nix/store/pn63pwy6gv617hpy7r33m6l4zifafzfj-calloc.drv
+  /nix/store/ccs62zg6j0khwdjgswyv9hnd2gwc0l8y-isspace-builder.drv
+  /nix/store/q0pxfghmib8rkqh9dfbc233llkihs3h5-isspace.drv
+  /nix/store/4r537r355zybpnj6151m51l3c88gpkpp-_read-builder.drv
+  /nix/store/q0xr619c14v9cl1vhyq83407r23npx4j-_read.drv
+  /nix/store/6vppdb8z7bm6nsvhmbp7ajcbwnjdz39i-ioctl3-builder.drv
+  /nix/store/q9nj3bw34c6ag70kcss8zlbanrqs5maq-ioctl3.drv
+  /nix/store/s012w05rhh5sbhykm5b956n86clnpxk6-mes_open-builder.drv
+  /nix/store/qpzlh718p7p4nxhhwmcmjirqi0818rh6-mes_open.drv
+  /nix/store/w324cws23p14nxdwqbmafpkykcsqg8r7-_open3-builder.drv
+  /nix/store/qwsbaxq6i3scbf6zqliy6jq832jabfi1-_open3.drv
+  /nix/store/cxyal2ckly5vlzvyxkggkl2y9xirz2f6-__buffered_read-builder.drv
+  /nix/store/r78s609apr1sim2gafawm5az6va9gkn0-__buffered_read.drv
+  /nix/store/03qi1b45nyw8bmswdwgkva41bh47z3x4-itoa-builder.drv
+  /nix/store/rhmr6f9rbhfl1fjblqcdmr1jannl6qhs-itoa.drv
+  /nix/store/07f6ncaqrcmwjki20pq4y0v1cf31zbz7-rename-builder.drv
+  /nix/store/rpixjnc530mwhkqspphhicl4svcq10w4-rename.drv
+  /nix/store/72m9p36fk1v6a4m3989rw32kh45ssxf8-realloc-builder.drv
+  /nix/store/rwlh0lyww7if8gd94fzbnwh3917m9p5m-realloc.drv
+  /nix/store/1qjfvcwnwknh80nz8hdr1hcr7sqs9k59-isnumber-builder.drv
+  /nix/store/sb4ni1gpi595rakb4qlrbfzz6znk8p71-isnumber.drv
+  /nix/store/yk049frwz19wiswc9j1ssp5bbvarpazy-waitpid-builder.drv
+  /nix/store/siqp0bc5va5ng2k6kvvxhbxd87jlbcx5-waitpid.drv
+  /nix/store/wlp9qi7x32sldkpfrmjqd831hwwmqvc2-mkdir-builder.drv
+  /nix/store/snijyhj9mfzbgmncy8ib3xy10zq22nmx-mkdir.drv
+  /nix/store/i9jy5m8nyl16d2djd48p0d81xs4na9pp-fcntl-builder.drv
+  /nix/store/vb8v1pvxr5piwksxsffwmdd5zz6s2j39-fcntl.drv
+  /nix/store/07lxsila1467h3qxm5pw69qcvbbhcvbr-gettimeofday-builder.drv
+  /nix/store/vjacq537970f9g0wh6bm999dwbpixnrc-gettimeofday.drv
+  /nix/store/gi8pcvkd1knjmh59d57ka1yqxx4r1b4r-link-builder.drv
+  /nix/store/vsvi58gj6rmkdwyxb8iw7glcc6vh0dfc-link.drv
+  /nix/store/3299wqz95dmz5wrh0fh2d60x9r31hmbd-execv-builder.drv
+  /nix/store/vx2wmbx2yqrkdz267650gpnn4bndjq5g-execv.drv
+  /nix/store/h4fhkingkx88wnxhq1yw36xqdqim2fd8-buffered-read-builder.drv
+  /nix/store/vxj9mw4549sighgb4hv2k718kl2p70sk-buffered-read.drv
+  /nix/store/jfvmc8risbjpwar6fg5if3yy3zw7hzmc-fdgetc-builder.drv
+  /nix/store/wk8l4607gjnfyv4v2bnh69gfcqisqlx1-fdgetc.drv
+  /nix/store/xawlq0m3mqzjw2n8zvxsrqnwx51cmnpl-pipe-builder.drv
+  /nix/store/wv752wrcldm19d604ls1xz1ibja7qacl-pipe.drv
+  /nix/store/9wgdxlkh86vnk9z6lpnvksw0pz9wj5b1-opendir-builder.drv
+  /nix/store/wvk16ysmscid85nmvb54ia8wzcws6b2z-opendir.drv
+  /nix/store/n82czkqpwvkzyjar5xgf5x8s05ih49kv-memset-builder.drv
+  /nix/store/xd10s7g0zy3m2kycbx6pnlmkx8wbd16g-memset.drv
+  /nix/store/agfp8f5mwgq3pvqla0gsh6zpycjjjbff-closedir-builder.drv
+  /nix/store/xp4239xk0iiba8z35i58i9jk4wljs517-closedir.drv
+  /nix/store/kmm4m261ix0b3b74380z1z44d737jac3-fputs-builder.drv
+  /nix/store/yawmf6sx8qa1nylbxxz01723ddsy5h41-fputs.drv
+  /nix/store/kx5chwyxn47w0mg2qbpmxfqcajvdd9fn-dup-builder.drv
+  /nix/store/zn15kp0ivyafi24ap2g4745g8cs9faki-dup.drv
+  /nix/store/lmwdsxcxmjgjq861yz7mrqrqq918hqj2-memchr-builder.drv
+  /nix/store/zpwqvr4bvp8hgc8dnix7xyyrb371dxh5-memchr.drv
+  /nix/store/r70i48xmaw176ydwjhwdya8kmh1b34xy-abtol-builder.drv
+  /nix/store/zqqcsys6awnmp60kp9q0d7a6r4rzgh30-abtol.drv
+  /nix/store/srsdkcf2f392mxfk2c9w5a0q2dz26jja-isatty-builder.drv
+  /nix/store/zrx02p5fi8vxf7ys4sjyz6ggxz85w0kp-isatty.drv
+  /nix/store/w4vpchc8ps72xfmi6gbbrs6iw7y9kqjn-cast-builder.drv
+  /nix/store/zy9kmif499i10lh2hqcpjmw0lgjv57wj-cast.drv
+  /nix/store/v7yw14dv8az2q00ii6xpqysajbbagva2-write-builder.drv
+  /nix/store/zzpghyckmljy4pzbmnj5vnbigmjv4a3d-write.drv
+  /nix/store/9w2ljzcaf1crccchjhm2rsqqsnk9vnv8-mes-libc-0.27.1-builder.drv
+  /nix/store/a12jwdp6swyb0bzcbmlixi7h0hn3m8qg-mes-libc-0.27.1.drv
+  /nix/store/827wd86bx54ijslsnncg2vywdk2gq40d-fclose-builder.drv
+  /nix/store/030bc69ppgsrcvxqxinlwn446dj86j52-fclose.drv
+  /nix/store/k1vkfqjn6h31hr48gdd2ki5yamwlzicr-fseek-builder.drv
+  /nix/store/0f9kajpkkz3mbcaj3ajwha1rw10iwzmi-fseek.drv
+  /nix/store/0ah1g18zgkkg0l9vhh8fz9rl6rawdprj-strlwr-builder.drv
+  /nix/store/12j2ylk2hir40iqqbia03rh5330884b1-strlwr.drv
+  /nix/store/q75f3s0l812jqmqks1x90f35srn6ac2m-strcat-builder.drv
+  /nix/store/1i51x7j44ck1y9kc8sp5fk7c32sp85cx-strcat.drv
+  /nix/store/j0l7801fhy6ralfrcw6b407bksgf3hp5-fread-builder.drv
+  /nix/store/1jsd2flxdv4s2lgg32p5l27rp466xap7-fread.drv
+  /nix/store/ns18qc97ciac3jfhnqzm1xmn4nnll4nr-strtold-builder.drv
+  /nix/store/1l9zwpxb1njah0z7wvrpjih0src22nsi-strtold.drv
+  /nix/store/pfnj6kx8hcpl8srpk4grlj0c09sdnfaq-mprotect-builder.drv
+  /nix/store/3as9iwgnarigh1ffsdb6frbhl586yli3-mprotect.drv
+  /nix/store/dl3gi6dn65ss5py6mnm0iqrxvcjhl67h-toupper-builder.drv
+  /nix/store/4683d3nfmlf0ff7gi0ihfdyqsymrn07s-toupper.drv
+  /nix/store/1n7hk0448wph3jshbpli7l4di11zjp90-ldexp-builder.drv
+  /nix/store/46q2kmbs4amzqac5achpxkr681r5r95w-ldexp.drv
+  /nix/store/ik8l0khmd493q0mxq1c1gscmir3c8rql-ferror-builder.drv
+  /nix/store/6czr4pwq85m5206gfjxayx6c971id7sk-ferror.drv
+  /nix/store/l0580hbqkpfwj5d8ggm480zq8k8sg2nk-localtime-builder.drv
+  /nix/store/7ladh3xrna3k85c58c1qps7djmprjjqp-localtime.drv
+  /nix/store/knxryyvdxg6ppqb06f25p7xfg2lw2a7v-ftell-builder.drv
+  /nix/store/7q387c5zr2rzn1sfl6p4l0732ag834ig-ftell.drv
+  /nix/store/wjqrmkhykih7qy97sgd5x3ba7d42wkx0-fwrite-builder.drv
+  /nix/store/7zq4yvhvgqqgn7ly5gasnlkfpm838k6w-fwrite.drv
+  /nix/store/93hi8ypxk1ihc51l17y9k4bsiybr8y27-setjmp-builder.drv
+  /nix/store/8ijrrxc1xxi3drxznpn7h195zkwpnp3g-setjmp.drv
+  /nix/store/sl1ai37193yxd9cddpz7w6a55h0kyinq-strtol-builder.drv
+  /nix/store/8kvh3k82j18fi5abj6bmqahnrc5yp680-strtol.drv
+  /nix/store/wl53f1adanfm6qfdkh77xqsj5c8dkwsf-fdopen-builder.drv
+  /nix/store/8mlyq4wagf0gv2vdiqzpfg8ld4gqwbyp-fdopen.drv
+  /nix/store/kyq3pkcn2zym902ks396id0nhczxkw9q-snprintf-builder.drv
+  /nix/store/9wbfdc5fqjxlyl27xa10759yvxcyf8ym-snprintf.drv
+  /nix/store/sfxibi1q7pz850ah56lk91lr2rc6qciv-dtoab-builder.drv
+  /nix/store/asdvhbkjhgwcd51lafnwqiah250299j3-dtoab.drv
+  /nix/store/30pxaahlnn3ip5c4wkc52gk6k2b1i4xy-execvp-builder.drv
+  /nix/store/azx7db7w8nnrdzwz1hasa4a1psi475r4-execvp.drv
+  /nix/store/bf7qin7fa9d8vpd5dna84yknfd2qrl35-sprintf-builder.drv
+  /nix/store/b9jn5s5rpykzz8q7isifnsx1phmwl175-sprintf.drv
+  /nix/store/z82bg9br5cmdpwhpzf4qzjdag1calp2b-strtod-builder.drv
+  /nix/store/cj22vbp3vzj8xxw4h8wdf04gqfh4gv9n-strtod.drv
+  /nix/store/m9i79vj3c32hfrxbbginyz4p252jrps3-sigaction-builder.drv
+  /nix/store/d6373avfzg9j0c79mdd4q8rva2izzl19-sigaction.drv
+  /nix/store/3qi2a5212jjx0jn49vwxqlw369zabl3j-vsscanf-builder.drv
+  /nix/store/dfxx6gjnya5f876sf152swznsacb95gp-vsscanf.drv
+  /nix/store/yl1igz5ag7fwrk7cd7w1cdqr9z3z11dq-strtoull-builder.drv
+  /nix/store/g5ms3szgrrh6p205vmz90qj0k181b54h-strtoull.drv
+  /nix/store/70pnb6xgjxzj6v6v27sxfjsbbbpaa3jy-fopen-builder.drv
+  /nix/store/gh33z218ga15qwxb7vr31yfi774rbbly-fopen.drv
+  /nix/store/d4aaks7jhys92cqj8b0c26xwqhqijaaj-vsnprintf-builder.drv
+  /nix/store/gi3ss7gv2i9hx4x78yyaw0qnq8yg3lsm-vsnprintf.drv
+  /nix/store/qsz7cv59yzz5a9yqxbaridbr2nax5ms2-sigemptyset-builder.drv
+  /nix/store/gi4k3pj06rc4b78l2ld3czi2qgd6zbby-sigemptyset.drv
+  /nix/store/7fsmyydkmaza3z37m84xdcg1r7dz0rmy-fprintf-builder.drv
+  /nix/store/giffxpxvvdncny4f42vbv6ndmv6z7q7d-fprintf.drv
+  /nix/store/wvfnp9binadwclp8lyczahspfddz22q7-fflush-builder.drv
+  /nix/store/gnm4qxbivv7y2n112w898rdabc0q6pxa-fflush.drv
+  /nix/store/3hlqgwk5mfjp5yb5kw4j1x6g8gjwhh0q-putenv-builder.drv
+  /nix/store/hy5d29af1p9k653rxb16254s0xnmssn3-putenv.drv
+  /nix/store/pp31fvcgghilkm5xbgbblgd24vv7rl7v-strstr-builder.drv
+  /nix/store/hypg46mi1fwnff9f7n14ialasjy7b550-strstr.drv
+  /nix/store/bccvb6y1c2ssd4zvmg7iag47241lirh2-strchr-builder.drv
+  /nix/store/i41fymycfib1hv8qdjk3nsk0h7g578dw-strchr.drv
+  /nix/store/i0bhjf8ai1bl51bvpyc112bjmk46hby3-vsprintf-builder.drv
+  /nix/store/jr8wxdxn0fznnd4nrximxkwbfix0cp38-vsprintf.drv
+  /nix/store/83hnwff3zqi6b01b1bq409p05amxvjc5-vprintf-builder.drv
+  /nix/store/jsdxi07zgfm66r2338nhsi3q5q6xzv8j-vprintf.drv
+  /nix/store/bmlz5dr8h49pdq0dn4xdxsw3r9z1wx1z-remove-builder.drv
+  /nix/store/jyh0vzwz039ffsgmysy34jsbp0mq3w3v-remove.drv
+  /nix/store/faa0yzm7giga1x8llmhy2sxxkh6j89f0-strtoul-builder.drv
+  /nix/store/k3bc319glc91sa222f5g8cdp43brmvyx-strtoul.drv
+  /nix/store/5b0v0cj57rfjpqjrc4k38k0si2db4jyi-islower-builder.drv
+  /nix/store/k6s1z4harj1xjv07yhx7j6ypqdmrmm60-islower.drv
+  /nix/store/ig962i9my0fqk3cw7wzzrx3kmdq72571-strrchr-builder.drv
+  /nix/store/kp6wvw7jdv9ssi4zafs58y3vn5zk6ldx-strrchr.drv
+  /nix/store/04sblc2j6gvwqf9hnyfi2ky7lk5rlx4i-search-path-builder.drv
+  /nix/store/krnzk3z85c0shx3jwz68v0pq2yjv9k2k-search-path.drv
+  /nix/store/ymd4zqgir8lilx0q7l1djvgjp6v8cjyp-realpath-builder.drv
+  /nix/store/l5s22qij435ycw3f6is0bwyf5m67fs7m-realpath.drv
+  /nix/store/4lh6y35gcg0zx5m9a1sx9hsp36xn1br0-strtof-builder.drv
+  /nix/store/lniysvvb2862r072fmdbxahfkihryw0s-strtof.drv
+  /nix/store/7syw1g6xr2zqzv38cpfq043pz9n8qffy-memmem-builder.drv
+  /nix/store/lqx91q2khs5xrb42p1lirxvnwdh23sg5-memmem.drv
+  /nix/store/dfly1dzyy8qx8y260mz1cgq0p2wnvnr4-tolower-builder.drv
+  /nix/store/nax1rvp3q4xnj7l9z726dm9nxablqlgl-tolower.drv
+  /nix/store/cv6mdrwwydc2927kkz3i29b6k9k639bd-printf-builder.drv
+  /nix/store/nr843fdsa5jd0ib9dhyg68xsxfka8zyk-printf.drv
+  /nix/store/g3m8vb911l1ij9ysibrqznbcf6y4vnzd-qsort-builder.drv
+  /nix/store/vcp6y915w85d7sbb4d27qfq5w5r8za5v-qsort.drv
+  /nix/store/icd8xv4gd1q59850bdnps90lnl1jq351-abtod-builder.drv
+  /nix/store/vhaqzkl380y6x9vlfmy7kd39f0fypdmi-abtod.drv
+  /nix/store/y4ni69pgbj6r3yvgzkqb5aly6i0vn8ym-vfprintf-builder.drv
+  /nix/store/vlf0sxa4sgdzfm30fzszg9wvjnkg3q3p-vfprintf.drv
+  /nix/store/biz5hn7rgmvdry6kan1kr31v6mk6gavl-strtoll-builder.drv
+  /nix/store/vr3f3vnds0i0dpkkj69x510j7nrk65id-strtoll.drv
+  /nix/store/334rm4dwxknvj9h9mjy319wa1bkz0id8-isupper-builder.drv
+  /nix/store/w22wfi526ln8j9jfm87lamjjsdrqcdwa-isupper.drv
+  /nix/store/ay5c52823flsrmd8887q1xdi9igxq7m5-strupr-builder.drv
+  /nix/store/w30lzfrj78qpp2lnmp6c3r5bqwjna34k-strupr.drv
+  /nix/store/6fvs3jh21nkzmrsm8ka5yi7pglzy3pl0-sscanf-builder.drv
+  /nix/store/wjfp3sba56m3mgbpssdwpg8gc4558q33-sscanf.drv
+  /nix/store/7aclmj1lii828pwwinxwxja8wqqsip0q-mes-libc+tcc-0.27.1-builder.drv
+  /nix/store/a609q8xwsiqmbq4vf1r2cg9kmw0h9nxc-mes-libc+tcc-0.27.1.drv
+  /nix/store/w7skxq7bn25rvbxazn7prxvc8c5jjpjr-syscall-internal-builder.drv
+  /nix/store/6bra21k8nb03inbdy8qk2ashyj6xhcdl-syscall-internal.drv
+  /nix/store/y3l2fjfs2fjy1ljsgq8b7f36sxn2777a-mes-libmescc-0.27.1-builder.drv
+  /nix/store/v0y90g5sah7n98g296v65xlnwb00vbsq-mes-libmescc-0.27.1.drv
+  /nix/store/irpf44fixgjjcisk8ifmwqwbm49mlrlx-mes-m2-libs-0.27.1-builder.drv
+  /nix/store/ax275rpcdyhncynghzfbz409pn1r9bjk-mes-m2-libs-0.27.1.drv
+  /nix/store/ffisxdinfy53xam8vhlqv8c5jkj29yi9-mes-builder.drv
+  /nix/store/1wn9ym4cmvkn6nnbb7p2n1xf8bigi01x-mes.drv
+  /nix/store/7nq167q7zsw74gprqg48hzxzbcb3z42p-vector-builder.drv
+  /nix/store/268p0jcm6cm8y48mzwfm47ylrz61ldg5-vector.drv
+  /nix/store/a07893l2w29xc0jpqyq7gmckdqd07974-gc-builder.drv
+  /nix/store/2sakdmbkjgy4zzml0bmmmghlx8pfm4rl-gc.drv
+  /nix/store/7gxscgn6gvpczrdy9vhlpahw130p6zk9-module-builder.drv
+  /nix/store/43lgm1xpplnh04c5bszki39wv48ba9mc-module.drv
+  /nix/store/anxcf04gjylc3lhrymdc4c3hmkhkr84g-struct-builder.drv
+  /nix/store/4s26xanhs14v8nvvm0r525cva3l2wl7s-struct.drv
+  /nix/store/ccvnn15aaggbqby30qjzyp17x49bjjb8-core-builder.drv
+  /nix/store/7p1an6982kg69v5x7c249wysndkxy1pq-core.drv
+  /nix/store/7gl04lx18jp6m4m2f6b26xmz4yd5z76s-math-builder.drv
+  /nix/store/7w302d1c7mxnicpgqgh32zbsb9kc0f9a-math.drv
+  /nix/store/8rw2jmn1zm1ygz0zzs4b82mxbgfczbw9-display-builder.drv
+  /nix/store/bkllg3nvs9krj4lvxirs7321ckmf6a0l-display.drv
+  /nix/store/j7jfgy99zxzpj6xd682dg3s75l1scfwm-string-builder.drv
+  /nix/store/di9nrzh0qk5z7igcimmzxg8xx4q4s83v-string.drv
+  /nix/store/s0xhkwp277nc4pb46k2s70npdnyc54s7-globals-builder.drv
+  /nix/store/fc9f5c6w5f8ap0gra21l3q7hvcgr9wnr-globals.drv
+  /nix/store/lz4nn74jnxg612cl2jzpd49baqsl19mc-cc-builder.drv
+  /nix/store/gp0g0x7dg0gvjh98xfkyajni6qa5v1n2-cc.drv
+  /nix/store/cqzx6j0x2pa2p932j12nqw1cbz7mp27a-builtins-builder.drv
+  /nix/store/j2cw7yamyxg8lpsgb2yv46v0sgf8vlcr-builtins.drv
+  /nix/store/rr0issf5mmnpsfmqv861x5qixs79rwpg-stack-builder.drv
+  /nix/store/k8jw844syw3gyrpj9vkyfbgv1bh0jx6n-stack.drv
+  /nix/store/6m7j106hrrldsrqmq2cwlf9aj492n4bz-lib-builder.drv
+  /nix/store/kln9pm3dds6m4gz0npsp84gb1qqm3sqv-lib.drv
+  /nix/store/vda3dxp2568dwv487kb113qqmylby9g7-eval-apply-builder.drv
+  /nix/store/n3sc2081xz33g8q4l4svcw8v6v3qh9r9-eval-apply.drv
+  /nix/store/6brx5qj5qw0rj68wcz1xyxi0sdhv82n6-posix-builder.drv
+  /nix/store/nwlwl6mkyy3a4s9hisffr3vajhk50c5p-posix.drv
+  /nix/store/zrr64l06h5bg96dr9s460kkwk3fjk8jv-reader-builder.drv
+  /nix/store/rdw25dyfrm5nxp6kanr64z1v9lh3kx6k-reader.drv
+  /nix/store/vvhsac436ggb1pg732mqkhw7s9jppl13-symbol-builder.drv
+  /nix/store/svc88737cf1py5bv6qnxpcp66jc1ngwz-symbol.drv
+  /nix/store/li5ls9fwpvck2n5hmbvg949a12kay86w-variable-builder.drv
+  /nix/store/wk1dy4n41iad1gk1zzfjsq2in2jw441j-variable.drv
+  /nix/store/0d9jqiq9g575wwcr0kv7b3f8l43ik83n-hash-builder.drv
+  /nix/store/ziimwk3g7vc4nji5pj5mbivmd0rw6zyh-hash.drv
+  /nix/store/453w5gjvblvbv7sflcjxvrwnm76j3kza-mes-0.27.1-builder.drv
+  /nix/store/vyw7h2czv5x2dn19g4gxd6k7djqq940a-mes-0.27.1.drv
+  /nix/store/m8i4xrdxpk18vi054wvs4j890g8mx728-ln-boot-unstable-2023-05-22-builder.drv
+  /nix/store/0fclgm4r5525jlh8lv82r81kba6vh0cc-ln-boot-unstable-2023-05-22.drv
+  /nix/store/0wybcx14pra94k7lxshah1knf12yiz73-mes-libc-0.27.1-builder.drv
+  /nix/store/bll3p7icr7ylyxprj5n60j2r8bkf5qa3-mes-libc-0.27.1.drv
+  /nix/store/h699vzb1lagddixp8liilf9kihibax6x-tinycc-ea3900f6d5e71776c5cfabcabee317652e3a19ee.tar.gz.drv
+  /nix/store/fz6vky5jh09qakfdzx2ygsfasldr6p0d-tinycc-bootstrappable-unstable-2024-07-07-source-builder.drv
+  /nix/store/lnfwrgak7pvwc8mjp1c58h4mhb5857pw-tinycc-bootstrappable-unstable-2024-07-07-source.drv
+  /nix/store/yp67000wll97809fd49wjy5hbalpy8lw-tinycc-boot-mes-unstable-2024-07-07-builder.drv
+  /nix/store/jbiiiby5kxq7vwa94liwyw56h23liih7-tinycc-boot-mes-unstable-2024-07-07.drv
+  /nix/store/dlks1y7nzrw0z05rbcrr5cg7lrdcj7k1-libtcc1.a-builder.drv
+  /nix/store/7q3wpyfk2q0lcppd56x09ac34s5q7hfv-libtcc1.a.drv
+  /nix/store/972r80d928xbv1ymadl6bv7pjl7ldlm5-crt-builder.drv
+  /nix/store/91w94nj3l6sqaacc5vsjwadprsby7qkq-crt.drv
+  /nix/store/67nky23lmrxxyrmf2sd519iplfdkqfp9-libc.a-builder.drv
+  /nix/store/lb92pc9xa37l3lqhw7r1rrg3gvfvr87m-libc.a.drv
+  /nix/store/hz4s5xc0rxrjcf6c51nbjcmbsl9zy39j-libgetopt.a-builder.drv
+  /nix/store/mla70gpi43cs9h1knjk2jvk5j832rin5-libgetopt.a.drv
+  /nix/store/27x328r5v1pwb73hih8b612c9f55psmg-tinycc-boot-mes-libs-unstable-2024-07-07-builder.drv
+  /nix/store/z4jpll2dilfbxm6ax4ymmhr67j3nbrvv-tinycc-boot-mes-libs-unstable-2024-07-07.drv
+  /nix/store/g5ifkaw6hws40d16zkprrgb1ddlb9wib-tinycc-boot0-unstable-2024-07-07-builder.drv
+  /nix/store/ks1l1rm4andjkd4gxr1qj5iqwflgmcsi-tinycc-boot0-unstable-2024-07-07.drv
+  /nix/store/lj67kbyl99ja30x42rfcnbvzqzsxiwrj-libgetopt.a-builder.drv
+  /nix/store/9vfznpw8fbrvvjaky8rkc8lbsay31x56-libgetopt.a.drv
+  /nix/store/6qw1xlhvhf6jrkygxgqc68kiyclygb4r-crt-builder.drv
+  /nix/store/dk7swnidjivlr8j15vjn7nww8aw3i4pp-crt.drv
+  /nix/store/i71nsvc83jpla9pszrll657an2nsdsil-libtcc1.a-builder.drv
+  /nix/store/fslv8fzwwhv8zcvli06y1p66w9jh9b06-libtcc1.a.drv
+  /nix/store/fz7m1s1j4v0gkiggw7s80c9yq0rqgj10-libc.a-builder.drv
+  /nix/store/gq86ghc61gmkl70f305w4cppzv0zjnjf-libc.a.drv
+  /nix/store/jfyw0fak0943dzrsz6sqc1vw92x9p4wx-tinycc-boot0-libs-unstable-2024-07-07-builder.drv
+  /nix/store/hsw0bb8jg0nzvdf6bq2223ik4vcmic15-tinycc-boot0-libs-unstable-2024-07-07.drv
+  /nix/store/v1v5w7szkp8l1yr379x9r4vyw7fkmmkl-tinycc-boot1-unstable-2024-07-07-builder.drv
+  /nix/store/wyzbc8bi1ff5fyasvmq7w09yjlkd86b6-tinycc-boot1-unstable-2024-07-07.drv
+  /nix/store/ndg73iq0ha0rk67lfcr5i0ni1qx93wi0-libc.a-builder.drv
+  /nix/store/75x4zjzb2ydgf9bkizf7fndl9jg5vyl7-libc.a.drv
+  /nix/store/d756f43xmzg11rr9g98n77x6ah6w4kcw-libgetopt.a-builder.drv
+  /nix/store/l4xhnq4jk2fxh396c3ksnlg7rbljlr5j-libgetopt.a.drv
+  /nix/store/yhws1yr6pg2x51q0fabmzr99vl7dj5gp-libtcc1.a-builder.drv
+  /nix/store/p385mc566pxgq1xsw5lka31mmnm39i0i-libtcc1.a.drv
+  /nix/store/l6i9qfdw2j2c3ggjifrpsyc8lmn0mrr5-crt-builder.drv
+  /nix/store/vv6kfrbh9q0s1qj9f8xprx52d01xw5hj-crt.drv
+  /nix/store/ldgmv28v6i8dzq8vs5nf0da0qpzls80v-tinycc-boot1-libs-unstable-2024-07-07-builder.drv
+  /nix/store/b61k4wb1f0c05y70qj035s9n98bsydx1-tinycc-boot1-libs-unstable-2024-07-07.drv
+  /nix/store/dpr00azdamvsr009q3jin35dgkqys66m-tinycc-boot2-unstable-2024-07-07-builder.drv
+  /nix/store/c08j9sk7k3dqfyllv0l5wcp80001rjpm-tinycc-boot2-unstable-2024-07-07.drv
+  /nix/store/20i1igy2hxwh5i5nrakzj41cmaafsm6z-crt-builder.drv
+  /nix/store/6h3msgmh2a9l833qnsa3qxwagybrf2fp-crt.drv
+  /nix/store/vdwm176pyf9v2p3shy9ck53084ymcjx3-libc.a-builder.drv
+  /nix/store/rc6rff9rwixd0ah70cynhkw6fl79whwq-libc.a.drv
+  /nix/store/cmgw7lyp6b47wd2xk9lj8j6vx985k1p0-libtcc1.a-builder.drv
+  /nix/store/sw7gwv37bczvhkynh6vcbi9q6i84y3a4-libtcc1.a.drv
+  /nix/store/10hawwrir5ybxn629yca8wjmn3qpn1zx-libgetopt.a-builder.drv
+  /nix/store/z1adhd9pfdiazma0ww8h5vds6j5a23vv-libgetopt.a.drv
+  /nix/store/hggb46w9b2gp3cqs7z5z10379adalrga-tinycc-boot2-libs-unstable-2024-07-07-builder.drv
+  /nix/store/dqg4r1dzlcq4zv2gmhdm2m2cdirchy2n-tinycc-boot2-libs-unstable-2024-07-07.drv
+  /nix/store/4xywz0vr941lrjgspzvg5a8agl3qgxr5-tinycc-boot3-unstable-2024-07-07-builder.drv
+  /nix/store/m10ysgh47imr6jidkz6ij1h66rdfqjgl-tinycc-boot3-unstable-2024-07-07.drv
+  /nix/store/p1jb1am4inf7c82i05kybj8iqmiiyldh-libtcc1.a-builder.drv
+  /nix/store/b6266kgqhlnyhdkdp7027kdmsq2aw51l-libtcc1.a.drv
+  /nix/store/909rhv815886n625rjzvb6wlc1bak9d5-crt-builder.drv
+  /nix/store/hyjhwkahcbyhh6yirys29d9v0530x4cv-crt.drv
+  /nix/store/9bv6x8rkxfxdlzkqv2c35qr3jvam66sk-libc.a-builder.drv
+  /nix/store/sa2if2mwj7kpyqd1kgjnx00ny3l2xivj-libc.a.drv
+  /nix/store/izqfaybr44m2b7vrs3j466z6g4cn32w2-libgetopt.a-builder.drv
+  /nix/store/yvycxrsn9c2zmbkr9kvixpmazqlxzc7m-libgetopt.a.drv
+  /nix/store/yvwzkmzh716qqqj6qx331lmm18mpffva-tinycc-boot3-libs-unstable-2024-07-07-builder.drv
+  /nix/store/czkqbq1rq0ch1lpla9bgsgwarc6hrb72-tinycc-boot3-libs-unstable-2024-07-07.drv
+  /nix/store/1wri1ai0flqq0jghyk9i4fdw568h0xms-tinycc-bootstrappable-unstable-2024-07-07-builder.drv
+  /nix/store/ikynbpdjj2lr2ivhzlmzv9gw05fa7ibn-tinycc-bootstrappable-unstable-2024-07-07.drv
+  /nix/store/d1simrxi41d15h88m043y00yd400fpd4-cb41cbfe717e4c00d7bb70035cda5ee5f0ff9341.tar.gz.drv
+  /nix/store/5qbjq17pking8vfi5n2d1vsm6hknwdgs-tinycc-unstable-2025-12-03-source-builder.drv
+  /nix/store/w5008ccs8cadyjvgpx3bzk9d387ml2dw-tinycc-unstable-2025-12-03-source.drv
+  /nix/store/nqvwimqscq7jb7wgbdikwj9f6i6w4ffj-libgetopt.a-builder.drv
+  /nix/store/2b2v62sgah3hyxxbvqgnww2ifckj93ps-libgetopt.a.drv
+  /nix/store/i16zp1zmdi4m4wcqq9y3prcbgfcr3hwm-libc.a-builder.drv
+  /nix/store/bm21lvr3ishd7qqkhiyq7lqjz7j4sdgj-libc.a.drv
+  /nix/store/gq999sv6ad4gpmqly6rm9jpq0g49pzx7-libtcc1.a-builder.drv
+  /nix/store/kq769aa9ay0qz50alprfqlj2bmd0b7ir-libtcc1.a.drv
+  /nix/store/6mmhdk9d1mw6grbi73sjmvbyv6vsl79l-crt-builder.drv
+  /nix/store/w9q6kw3yb7az7wwzsvm97hqw7c8nrv0g-crt.drv
+  /nix/store/5fwbsmcai8jq0ji1m6mh1v7i14rgxspp-tinycc-bootstrappable-libs-unstable-2024-07-07-builder.drv
+  /nix/store/xi8dy016hq7842iplkgfdmzribiy8a3m-tinycc-bootstrappable-libs-unstable-2024-07-07.drv
+  /nix/store/cjzncxj18nk2xpm15gnm3a1lgrqbicpn-tccdefs-unstable-2025-12-03-builder.drv
+  /nix/store/5kp3zisdmyvlrf52qxka2rdhp1vj1izy-tccdefs-unstable-2025-12-03.drv
+  /nix/store/6fq4fcp7sbxsz1yvl05qx341zqkyq5va-tinycc-mes-boot-unstable-2025-12-03-builder.drv
+  /nix/store/cqm0q08dhgvsdq3hvj85lxhq173x0m6d-tinycc-mes-boot-unstable-2025-12-03.drv
+  /nix/store/i5c7m3r8bbas0w8zl539ng8zzr53mxr8-libtcc1.a-builder.drv
+  /nix/store/0j62lpv5g1lfxzd1i4iikf3ladai14r9-libtcc1.a.drv
+  /nix/store/ra17f5z1cxikjsywysyd63qcp5nlxa7a-libc.a-builder.drv
+  /nix/store/8axs2x9qsak35kj0jf2ynfbj1wnv3kg2-libc.a.drv
+  /nix/store/whm5pdc61pzf843jhlvy2r44x993xldj-libgetopt.a-builder.drv
+  /nix/store/bcl7s5w3dyj4sj5v3l2v8qh78b0j1pm7-libgetopt.a.drv
+  /nix/store/yh462hds2b7nzdqk3rrbivzqsjjq7zr5-crt-builder.drv
+  /nix/store/vvv7kxv3b7mairchnx5vniz4vcd1dksp-crt.drv
+  /nix/store/fqdmyb945n7hx152y0n26bi0b0q7i8np-tinycc-mes-boot-libs-unstable-2025-12-03-builder.drv
+  /nix/store/r2qcv2rkxs62fjy3n514p78mhqlyxflh-tinycc-mes-boot-libs-unstable-2025-12-03.drv
+  /nix/store/rrqrgx623i8lkf40gaw366d07m7vl3lw-tinycc-mes-unstable-2025-12-03-builder.drv
+  /nix/store/1vgxf29abq71i0mh3m5839my4664jfmh-tinycc-mes-unstable-2025-12-03.drv
+  /nix/store/whkczx14wnzmkchfys92zgas16rnzqw9-make-4.4.1.tar.gz.drv
+  /nix/store/200n6nl9ykx5d3lhbjpvxm9f3b81pb23-gnumake-4.4.1-builder.drv
+  /nix/store/0dl092g6chmw86gs84rfgvxj9nw2hnrx-libgetopt.a-builder.drv
+  /nix/store/85b7b7c8bp00hcbvw1pv80s0sbv1qnhd-libgetopt.a.drv
+  /nix/store/ymxfm7hllmgkxfhpn62szs2gy9k025rf-libtcc1.a-builder.drv
+  /nix/store/csih3q578qgyycfjbypmnkmrxsg3rdpf-libtcc1.a.drv
+  /nix/store/n5j4h0w3fspyk6f5q197ii440gsjmk1k-crt-builder.drv
+  /nix/store/nfg4vm8619w5b6fpal9swrkx75nsp3bx-crt.drv
+  /nix/store/nbrgq9hv4agp3mz77z3mysr1798ik6q9-libc.a-builder.drv
+  /nix/store/xmifliaki5fkzvl1pw3qr6iv55krvpca-libc.a.drv
+  /nix/store/8rlmsvgdhb7sqgc1ry2hazkk2da5y6hm-tinycc-mes-libs-unstable-2025-12-03-builder.drv
+  /nix/store/7bq69blihkvvqq5np4liiszw674bcqqj-tinycc-mes-libs-unstable-2025-12-03.drv
+  /nix/store/m2khnp0iw665w7zjkyvil62v5wjlbl8i-patch-2.5.9.tar.gz.drv
+  /nix/store/l9j90v4nlsfd1zgmxhz6y4f4nrjnnlr0-gnupatch-2.5.9-builder.drv
+  /nix/store/zmvpmmh7i1qba20c97v4cl6yi7zqpv3a-gnupatch-2.5.9.drv
+  /nix/store/b0faqgmz5282qmis5v2m13b7bsc0y9jg-gnumake-4.4.1.drv
+  /nix/store/013mqc5ymx4cih72blz21l6ync49i3jg-expr-strcmp.patch.drv
+  /nix/store/aspfvh0wlsi4w6kva34p3m9kkcxr7vym-sort-locale.patch.drv
+  /nix/store/b147bn8sgyn2s58vy3cw59d89vrd482g-mbstate.patch.drv
+  /nix/store/br3yqsjafxyhh91879brxq1xzbyjwlwb-ls-strcmp.patch.drv
+  /nix/store/c672ird0l7wv8dr5idknpgnh1rhzlnqf-coreutils-5.0.tar.gz.drv
+  /nix/store/lbn6dc55b8f36v2p2hkqbpk2z63wnjyx-touch-dereference.patch.drv
+  /nix/store/qp9mn19nkyp680m55w409i550zni62gh-modechange.patch.drv
+  /nix/store/vrkgrz8l2z0yq45fai507hpcaqp0i9cq-touch-getdate.patch.drv
+  /nix/store/x7l0vwljyrwyncsxkyvzh6gmc1f8p2rw-main.mk.drv
+  /nix/store/xfz5c7irzix5sakph3m18v0h400s6id6-uniq-fopen.patch.drv
+  /nix/store/f4svikqqff9hghyrwn25bq7kf2kid2dn-bootstrap-coreutils-5.0-builder.drv
+  /nix/store/d9hngw468h7b7fpcyx284kqwdgcn3gzy-bootstrap-coreutils-5.0.drv
+  /nix/store/2vknf2sz2fdbpqkpsph03x5qyp7pprzy-dev-tty.patch.drv
+  /nix/store/377arxf1jfpbv6shjl3iczj9v07v07h1-locale.patch.drv
+  /nix/store/3qg3iia0yapdaqy7wh3ysih94vi3ng0z-mes-libc.patch.drv
+  /nix/store/80i37dl6zigax7nh3w81ysgbjjs6j3gl-tinycc.patch.drv
+  /nix/store/8m1p5s3mfpbp48ihlp8bnp1ssqj6k409-main.mk.drv
+  /nix/store/gfjavirn9zvghj3r86wbbpkhw9xpipzi-builtins.mk.drv
+  /nix/store/mkwbpkxwzssdkc9c1rsx0s37kj951sz4-missing-defines.patch.drv
+  /nix/store/rivkjf3vnb267xl9xpjwj8wyzis4y0hs-bash-2.05b.tar.gz.drv
+  /nix/store/wa6xxcihyrcglxac311wc59lxsfssh9x-common.mk.drv
+  /nix/store/mgl0nby6f64kzvgc236801pf7jvyv21x-bash-2.05b-builder.drv
+  /nix/store/54jdq8vp944qn49b18harrbjw34dlxcp-bash-2.05b.drv
+  /nix/store/64w55pscmwz6wl53nh5x11n5qag8gylp-sed-4.0.9.tar.gz.drv
+  /nix/store/fj69pic5k2hr161cw3spagly2cspp3x7-main.mk.drv
+  /nix/store/9ms5jx08n6hdg7ji8fxln4lsfbzd92fa-gnused-mes-4.0.9.drv
+  /nix/store/dvl148vwwn460fa0zq13z8wlyrd2fz8k-gawk-3.0.6.tar.gz.drv
+  /nix/store/pxxi73ah5w9h8987s2fdwspybf6jabvh-grep-2.4.tar.gz.drv
+  /nix/store/sb1sw1wqkaswx04a9pds57ms69gfi2ya-gnugrep-2.4.drv
+  /nix/store/3vbridlri44i5lnczbcxqlwgzbxk3pg5-gawk-mes-3.0.6.drv
+  /nix/store/rvcb8pzv5f8ax35ggc1hdk2vh5n6fq25-gzip-1.2.4.tar.gz.drv
+  /nix/store/bv4a5fw05q4ysq24wy0z06bd5jysq1p2-gzip-1.2.4.drv
+  /nix/store/mvwqinqcy1zjvb5zmhji91rjnmzh0fqf-tar-1.12.tar.gz.drv
+  /nix/store/pshx4r5vypzz5cjy5ikscgjyzhv2s99x-gnutar-1.12.drv
+  /nix/store/59pgig863abfc3p6lmz20vh8gjf2nsv1-musl-1.2.6.tar.gz.drv
+  /nix/store/zc4i6kv4525v20s2zh7fhxj1gcbcgggq-sigsetjmp.patch.drv
+  /nix/store/yiv6sqyjk4mgai8fsbq0imh3vzca8ag0-musl-1.2.6.drv
+  /nix/store/28x04lk2i4zy13bidwmj5ylbx3v880n4-tinycc-musl-unstable-2025-12-03.drv
+  /nix/store/kcd8hlvcamwjs3p36is87ncigh6i1zbf-tinycc-musl-unstable-2025-12-03-compiler.drv
+  /nix/store/lmx5h1xhlck345nc3as6dglfv57aq9rn-tinycc-musl-unstable-2025-12-03-libs.drv
+  /nix/store/wjmzjx1jzp5h8pmrcjvbs3hc8d5g8y4v-musl-1.2.6.drv
+  /nix/store/p3x8835w2rwiyy79ydrjmnz7kq5nsdia-tinycc-musl-unstable-2025-12-03.drv
+  /nix/store/4hfq6p045k7knv86fc57kq5cnf2djia6-tinycc-musl-unstable-2025-12-03-libs.drv
+  /nix/store/9dvsrxv7mw64yqa5zyzwnws29kn4ry20-gawk-5.3.2.tar.gz.drv
+  /nix/store/j1aiw0pfh51nyay8zavyx3adq86xdnkl-tinycc-musl-unstable-2025-12-03-compiler.drv
+  /nix/store/s3jjrqw6ay6nllpng4f1m1cffa11bhsb-tar-1.12.tar.gz.drv
+  /nix/store/jvn6rxfx2j66k0svyl5njyqzq2nh0v5s-gnutar-musl-1.12.drv
+  /nix/store/fw6qa513xbkv6cmywc5bmnl42vn3is7a-make-4.4.1.tar.gz.drv
+  /nix/store/n9y1n1w3cwwlivnqhv98axp155wv1b76-sed-4.2.tar.gz.drv
+  /nix/store/xlhf3ibq6r6qy2myin330ay7qscfzi1g-gnused-4.2.drv
+  /nix/store/l6a6rj0gy31gp6k7k80qzn4ni0yvyzgh-gnumake-musl-4.4.1.drv
+  /nix/store/41kp7bkyk4g0lk2xq45hiqn268nbmx8a-gawk-5.3.2.drv
+  /nix/store/x2dafg049vyrb1sm6jkydck0b1da2zab-coreutils-9.10.tar.gz.drv
+  /nix/store/jm8c5a9ysfm3fckryllnl6pd3nm1hd17-bootstrap-coreutils-musl-9.10.drv
+  /nix/store/p93ssgf0b6f5bnzlsmb8zqfizhh9jfmr-xz-5.8.3.tar.gz.drv
+  /nix/store/3zhi7fn92ym1ds0n3yybmjyjvksypi39-xz-5.8.3.drv
+  /nix/store/yglzrih7p6n7myi80gidsxv1v8f4v1ka-diffutils-3.8.tar.xz.drv
+  /nix/store/9gwpvw0ssr7xmfzvy97c6f493fhc2f7r-diffutils-3.8.drv
+  /nix/store/y84saga4qsmk7xrprd0qv8rgdqjk67g1-bash-5.3.tar.gz.drv
+  /nix/store/v8jl1cziqai2qqgn0axr9cv3masm5nb5-bash-5.3.drv
+  /nix/store/winwi7l97nmy056ljjgi0pamca39d14k-findutils-4.10.0.tar.xz.drv
+  /nix/store/6b0xnqkbv7qnbbbc7zhqwahygjf7mc2i-findutils-4.10.0.drv
+  /nix/store/0q1fkyw9jc9fafyswh9gkv48wph52yzy-isl-0.24.tar.bz2.drv
+  /nix/store/1hgh3ynq1lsicaxr0r5pdbvkbbhb0vrr-gmp-6.3.0.tar.xz.drv
+  /nix/store/19vlv640sa5fr6cpnr14s166v9vd2p9m-bzip2-1.0.8.tar.gz.drv
+  /nix/store/3298jfza8zv78425rrpr80xxcnnrbgr9-bzip2-1.0.8.drv
+  /nix/store/hi93kfb0mz4b8b5mk060cl972p05bplr-mpc-1.4.1.tar.xz.drv
+  /nix/store/37zapxlhmx12r050xsjw39n4vw3nck3a-mpc-1.0.3.tar.gz.drv
+  /nix/store/cxpi1vdfflr3zh9xhgsqz44vqjk0jfk8-mpfr-2.4.2.tar.gz.drv
+  /nix/store/ia4sjsi3cl16751r14yfv92603830nnn-gmp-4.3.2.tar.gz.drv
+  /nix/store/l3c18sdal1zr6930p31awpmz1ncs68wy-gcc-core-4.6.4.tar.gz.drv
+  /nix/store/cblshqv4b81g5gxis3zpb4inagkaffi1-binutils-2.46.0.tar.xz.drv
+  /nix/store/s2g0la1392ys0bp34d0m38kmlzwi30v1-binutils-2.46.0.drv
+  /nix/store/yp4zsyn8fp1v5y8zpvp430lv339lvr7p-gcc-g++-4.6.4.tar.gz.drv
+  /nix/store/18d4rgqv4dfdd3qq09r312hpzjjxwrky-gcc-4.6.4.drv
+  /nix/store/4m76wqg80yx0yg0wv4z6kqc1y78yd58p-tar-1.35.tar.gz.drv
+  /nix/store/vf5nz05lk9n6xm1h1sh3c8s951ybk08h-musl-1.2.6.drv
+  /nix/store/hxagi71byf79kd6630nkzzslsmmjir34-gnutar-1.35.drv
+  /nix/store/ma479p2ss57bs6afjmhhi1xg27vin41s-gcc-10.4.0.tar.xz.drv
+  /nix/store/q3px40945ahyqcfk1jd5i0ysarphz9dv-mpfr-4.2.2.tar.xz.drv
+  /nix/store/r1rf2p01za5ckcbz87fjvdnz2mpvy3bz-gmp-6.2.1.tar.xz.drv
+  /nix/store/wfpz7dbg98phhbiwfqc61fza4vidwcjy-gcc-cxx-4.6.4.drv
+  /nix/store/2qaw4ssg53d563r5r3j5awpzf3qazpim-gcc-10.4.0.drv
+  /nix/store/7phzalh1qn4zf6shvf2lna0c44a9h3b3-gcc-15.3.0.tar.xz.drv
+  /nix/store/9gsx86gz3hgynhcx7cxsif30zwq0qg80-gcc-15.3.0.drv
+  /nix/store/xqcgqpxrpcc99jq3775gz1f7s9i270am-binutils-static-2.46.0.drv
+  /nix/store/00syldfdjwn100yfpsk15mw78kbqw6vr-binutils-static-get-version-2.46.0.drv
+  /nix/store/0rjn4fs706rp2zf5xfyycf1pfqnkjmgg-linux-6.5.6.tar.xz.drv
+  /nix/store/1s96sa6kxf55hkdc362fl3xiy9mj0bjf-linux-headers-6.5.6.drv
+  /nix/store/haldh962ah38jwv0i8f72nr68nn7vw9r-Python-3.14.4.tar.xz.drv
+  /nix/store/3ff9aq5jx5hs2fdl2yfqpl1nh7dfkh68-zlib-1.3.2.tar.xz.drv
+  /nix/store/rxa4s2hzk608za4lhmrc1xhsd7y3g6ym-zlib-1.3.2.drv
+  /nix/store/6dhvprl7z4jx4rxs03kamxd8l9wa2d2g-python-3.14.4.drv
+  /nix/store/vsbymyzgxr2pbsbdk5zfn74nb73njni5-grep-3.12.tar.xz.drv
+  /nix/store/g1b9yjab5a5y7c56x1fp2i2im779bg2h-gnugrep-static-3.12.drv
+  /nix/store/m4pkby9pv0nwasab4jrr4l2z9qghmqjg-glibc-2.42.tar.xz.drv
+  /nix/store/0p6bbqs599hggq6xvxn67x91pxszgqil-bison-3.8.2.tar.xz.drv
+  /nix/store/gr7p5aghmkv93kv5vmq42nn0b3372k3c-m4-1.4.21.tar.xz.drv
+  /nix/store/w8cdm8vfh052f3k1lr1bdwd25cl53arl-gnum4-1.4.21.drv
+  /nix/store/vh2nnhgg0yl7l3hsz9z0ydpr1pjzxag1-bison-3.8.2.drv
+  /nix/store/q4xrmyhf5hhlzf0mzbpj2n8fmrb72xxd-glibc-2.42.drv
+  /nix/store/7xndndh5sjhkyz8hsra61cskr0vdvc8z-gcc-15.3.0.drv
+  /nix/store/0125xf966i68kcmd1pji22ylxs7llydh-gcc-simple-program-15.3.0.drv
+  /nix/store/mbfqb9y6ryn2axyvg797s3lw1w49liz5-gzip-1.14.tar.xz.drv
+  /nix/store/242nrb6pf54f98h1ng33lpv90l16sn21-gzip-static-1.14.drv
+  /nix/store/2jng0n8jhpbrzay20rsa44wm9k1w6ycs-xz-5.8.3.drv
+  /nix/store/fxhhf9vlwrvj4q9c5smk87kmk4h9k63b-patchelf-0.18.0.tar.gz.drv
+  /nix/store/4n45is8hydmjna6n1pki7gjhkw87ik61-patchelf-static-0.18.0.drv
+  /nix/store/h7ijrlrjxvy87frncwpqivqxn9zaqx5x-patch-2.8.tar.xz.drv
+  /nix/store/91201v9i67x37qgbvjz2f4dilr6s47lp-gnupatch-static-2.8.drv
+  /nix/store/9a6g0ibk85lg3l8j4xwm3haygjms9mr4-gawk-static-5.3.2.drv
+  /nix/store/i5dackpjdgv9fmq582dl9ff812925ivh-findutils-static-4.10.0.drv
+  /nix/store/iv3hf1ml1fdmiwipnbz2g6ijaxy0kss8-sed-4.9.tar.xz.drv
+  /nix/store/jafhvdhg3apr8ddm27nmb5j067h33sig-gnused-static-4.9.drv
+  /nix/store/jyjl1kd1sn2z641vmxpm1v44hl467fi2-coreutils-static-9.10.drv
+  /nix/store/m8i0nkm89bk77rmgrs34ni4n913yjpp7-gnumake-static-4.4.1.drv
+  /nix/store/mag3pq29n9f6jw0rb17crny8ilm4kfjy-diffutils-3.12.tar.xz.drv
+  /nix/store/mi1y7hn5ig9gpmq2ra20bxzlbijpjc9r-diffutils-static-3.12.drv
+  /nix/store/bamwxswxacs3cjdcydv0z7bj22d7g2kc-config.guess-948ae97.drv
+  /nix/store/nbsdqpfzh1jlpmh95s69b3iivfcvv3lh-config.sub-948ae97.drv
+  /nix/store/sd69m6diglvbz4jl0gdy6zgs76jr146z-bzip2-static-1.0.8.drv
+  /nix/store/y4c9n9w5pxfrz5pmg76wl039v7lcxgbk-gnutar-static-1.35.drv
+  /nix/store/6a6diq15i1w6piy38bf29s6y8sjfsxa5-bash-5.3.tar.gz.drv
+  /nix/store/zv2kqb8hbz2bhvsikii3cxh49gdsy1l9-bash-static-5.3.drv
+  /nix/store/vhqjrvjjrgnbmbiy0mh52q8ds45clky0-bootstrap-stage0-stdenv-linux.drv
+  /nix/store/irpj6jbra13y3zaj83ccg5d3r8655yhm-gnu-config-2024-01-01.drv
+  /nix/store/lgb9yv6lzghqg2pbsvcfjvmi52z222mv-update-autotools-gnu-config-scripts-hook.drv
+  /nix/store/sl1mhla865xwrjvlv6qv5dwa7kxl5842-bootstrap-stage1-stdenv-linux.drv
+  /nix/store/s50pk97f9bsn3x7sszrswxq15mf8ph25-bootstrap-stage0-glibc-minimal-bootstrap.drv
+  /nix/store/k1iddybq4w2k0amqz82p0rd1sq79bhbg-bootstrap-stage0-binutils-wrapper-2.46.0.drv
+  /nix/store/i5vdzi50awjn7zbi92rc7hbl5bxa2ci1-bootstrap-stage1-gcc-wrapper-15.3.0.drv
+  /nix/store/jack8zs70j98mqsfd8bwljrvx8jj4j6m-bootstrap-stage1-stdenv-linux.drv
+  /nix/store/vzchxz1khj4y61rc4z4fvfp5prcas04v-gnu-config-2024-01-01.drv
+  /nix/store/rrjsnqynybwh1dqi5jw0jxcyxj7rk82c-update-autotools-gnu-config-scripts-hook.drv
+  /nix/store/22qwqbmy2rmdy7mkk5xj790nqbp30zxk-bootstrap-stage-xgcc-stdenv-linux.drv
+  /nix/store/akag406i2x9yrv04yz1ydq9hnh63pkks-zlib-1.3.2.tar.gz.drv
+  /nix/store/b5aybdnbj5vd495wpc8v3iwsskhgpmby-zlib-1.3.2.drv
+  /nix/store/p0yc9xjrmp4xyhlghyc1y6w02wy7jlx0-perl-5.42.3.tar.gz.drv
+  /nix/store/i1gfrvdynwrvirci3q3bcmz2dwqpf45d-perl-5.42.3.drv
+  /nix/store/bkijx1mlrhppg2b1zandixpz9w2lxnvi-m4-1.4.21.tar.bz2.drv
+  /nix/store/q53n8c218pbjls7nvcj0bivqak4i0g71-gnum4-1.4.21.drv
+  /nix/store/vgjfnqbxgxa8a5575bhq07nm35b2l31m-bison-3.8.2.tar.gz.drv
+  /nix/store/6w2mcqh2vj5gz77v4v3kifhpb8qlwcg5-bison-3.8.2.drv
+  /nix/store/6m2s3r8dwglim8qh2iz6wpaybwvkjyxy-expand-response-params.drv
+  /nix/store/g0qa1djlsf4dghgnh58bl7926vsw0i6l-bootstrap-stage-xgcc-gcc-wrapper-15.3.0.drv
+  /nix/store/5m6vm7vkilsgas517yf8f321k5r3g1m3-bash53-003.drv
+  /nix/store/avf6vbj4jmpnn5cdsjyj2693samnvqsa-bash53-001.drv
+  /nix/store/avmqlilnsjmv8lg7442mjb21qx981d2j-bash53-007.drv
+  /nix/store/gz9irkx06fl1lavrwxkghxnmlm4h5fgh-bash53-008.drv
+  /nix/store/ii3jsqp9rrwv0g21lwbvb94ddg8c5m7n-bash53-002.drv
+  /nix/store/lw7n1gm9yimbrnr00h6l6pb4c9hkb6dc-bash53-009.drv
+  /nix/store/m1gq6x7srswfl66arij6spxqnrp7sdcl-bash53-006.drv
+  /nix/store/n9w1dvf9k6617mqdqj9vr74ajzpq2b3a-bash53-004.drv
+  /nix/store/sf7cx6m8hjb2f8m0fhq0d2lwndq61xbg-bash53-005.drv
+  /nix/store/52pm8hpq71xpsm43v7lbwa6gq5fh7543-bash-5.3p9.drv
+  /nix/store/zdbga6f8g5jysvhngmnjlwmj674bzds2-gettext-1.0.tar.gz.drv
+  /nix/store/myn01cg7978ws3ad15hvm7llsf37bbbj-gettext-1.0.drv
+  /nix/store/myn7xn63h24clmfkjlpvq5msz0slaw43-bootstrap-stage-xgcc-stdenv-linux.drv
+  /nix/store/vr93scipsw4jv37apjfhxy5nspn09y8i-binutils-with-gold-2.46.tar.bz2.drv
+  /nix/store/1kl8ax41wqrn9z08gc46jbxg0b4kxz0d-binutils-2.46.drv
+  /nix/store/kvvyhmnna1pq5fdb9ijvcmjgrwq2s0vy-gnu-config-2024-01-01.drv
+  /nix/store/hydgjaii6g1r9dc75y79ngi6xcwvnc87-update-autotools-gnu-config-scripts-hook.drv
+  /nix/store/nn2wajs1g00vfdmcbdpczvqhx0z9dlvk-bootstrap-stage2-stdenv-linux.drv
+  /nix/store/mg9s5ss8nlyx6cvhvyknznqqxwrhapxv-binutils-patchelfed-ld-2.46.drv
+  /nix/store/s9dxsq52lh3avpdkggzcfdf4475wpf1q-expand-response-params.drv
+  /nix/store/2zciswmds830c38mnbwnzc2j0p4ybqyw-binutils-patchelfed-ld-wrapper-2.46.drv
+  /nix/store/g39zbiv8d8qbgzkqk2s03zdfc39b1j4a-which-2.23.tar.gz.drv
+  /nix/store/2jnr3bxzn3pbxnr63d46cypw6l9lsfzk-which-2.23.drv
+  /nix/store/3x7gqc4p966bvwcc9j06i4knl62mv97v-nuke-refs.drv
+  /nix/store/0i89ydplmfyhw5rykihdpcr1ndki1bp3-patchelf-0.15.2.tar.bz2.drv
+  /nix/store/5khn1xnhnlap1fq5yf6vlba6ngx5cim3-patchelf-0.15.2.drv
+  /nix/store/896vsnl7w7rhd17b65j8sp3g4kc0zh35-texinfo-7.2.tar.xz.drv
+  /nix/store/a88dx9pb663i6xw2p1dkdb6n9m9005vg-texinfo-7.2.drv
+  /nix/store/z4x4wa4ahsc6xn40j847dsrnagxd41w0-gmp-6.3.0.tar.bz2.drv
+  /nix/store/ggrkbrjwl8ajd7bi928h80xvyl94zxpa-gmp-6.3.0.drv
+  /nix/store/qxz8v1gxrrw9j138k2ajl36vcajra8mb-isl-0.20.tar.xz.drv
+  /nix/store/h2mdlvh2sqr1arp7wchyyas9wm9gp45q-isl-0.20.drv
+  /nix/store/55d91flpk4776srkw66wdx69wll7b5zr-libxcrypt-4.5.2.tar.xz.drv
+  /nix/store/l42z9jg9qa48n8fcjcipk1v5vj87996h-libxcrypt-4.5.2.drv
+  /nix/store/6kxn0zj4ipzpg2p4csxzy64njknwydy6-autoconf-2.69.tar.xz.drv
+  /nix/store/m5d64anim0037s19l9djff3rl3zy6vzf-autoconf-2.69.drv
+  /nix/store/nvqjlc01wsnypr50ih2x6vsha3wjylgr-gcc-15.3.0.tar.xz.drv
+  /nix/store/ixwy12didmgk7j4z7ghlirpw46ahmhbd-mpfr-4.2.2.tar.xz.drv
+  /nix/store/r8pc0clh8di5wz0rn7p9s34435x3h019-mpfr-4.2.2.drv
+  /nix/store/r5yk7nin7qyfhnvd04pcvzmcwqadgrbs-mpc-1.4.0.tar.xz.drv
+  /nix/store/x4kb2864iply8afjv37pgqrbzsdmhwdz-libmpc-1.4.0.drv
+  /nix/store/zzgmir0k8xjr376i32v2f1smv41mg05d-bash-5.3p9.drv
+  /nix/store/1gww6q70xcxbyw14p69cb8angxpmk23p-xgcc-15.3.0.drv
+  /nix/store/14v0a0br9yd6k2q0r9hy979cfwih6qfb-binutils-wrapper-2.46.drv
+  /nix/store/p6mdwxa98m5amb4yfdpw3hc7532xbwwl-bootstrap-stage2-gcc-wrapper-15.3.0.drv
+  /nix/store/3spfv9vh59qjb27pni3mpywzx3xvg0dy-bootstrap-stage2-stdenv-linux.drv
+  /nix/store/y3dzbvyh818bjbx3wibz96zlm2hxccj8-expand-response-params.drv
+  /nix/store/f48912iiignl9av5vzwhrhy0s7371whf-bootstrap-stage3-gcc-wrapper-15.3.0.drv
+  /nix/store/b7gj7zar7fbcy08c827fm47p542qj7p9-patchelf-0.15.2.drv
+  /nix/store/plvwsbnw775svhhbynzkb3vrq4b8acqs-gnu-config-2024-01-01.drv
+  /nix/store/y5ji73nplvpm2pw0qh0y89bwv2q9wkj8-update-autotools-gnu-config-scripts-hook.drv
+  /nix/store/fw5f79gl63s396wam5wp5dllf7556yds-bootstrap-stage3-stdenv-linux.drv
+  /nix/store/q0zcc70h18lhrdcd8bqwkgn6yiiy4j66-bootstrap-stage3-stdenv-linux.drv
+  /nix/store/pgj4wi2fjb2ix1knqv3y4nsiqypziwy2-gnu-config-2024-01-01.drv
+  /nix/store/ifswadmidlism9w088ph7iiij3hhd02i-update-autotools-gnu-config-scripts-hook.drv
+  /nix/store/09x3qv2rn4ak5avcsa4i6cab3svl18wk-bash-5.3p9.drv
+  /nix/store/8hqwh1l702ls3azgw80hw3garykijzzi-autoconf-2.69.drv
+  /nix/store/9k8zs5mf6dqrxc9agpxpq46b31lhy41r-gmp-6.3.0.drv
+  /nix/store/b2v392qq89k85wnknzqm38ybknf7qkrj-nuke-refs.drv
+  /nix/store/crg8lj8n7z7gjdgadld5ccc2mfg9bh1d-libxcrypt-4.5.2.drv
+  /nix/store/lx3jvmzr4l02sj5hv3xq39qr4xw7kzhl-mpfr-4.2.2.drv
+  /nix/store/m8g2abpxy3406nf8dvfrrdmqbnsbs412-texinfo-7.2.drv
+  /nix/store/qlyypiwk4r06n0bf1hp1wwhmnp3wbsas-gettext-1.0.drv
+  /nix/store/vz9ri9j08jpg5jvac9lvdjisglws7cd6-zlib-1.3.2.drv
+  /nix/store/ch30cxysrfahk692kclhxbg6ggv5k0ws-gcc-15.3.0.drv
+  /nix/store/23abnrk8s91hf8hfrxprr82nshrs6h0v-bootstrap-stage4-gcc-wrapper-15.3.0.drv
+  /nix/store/29d9dpi20ybsh2f575cxjc5427llx7x0-xz-5.8.4.tar.xz.drv
+  /nix/store/x936a0sq8kzcima9ygqgcj2bfvsgfzg8-xz-5.8.4.drv
+  /nix/store/n7fk6ap4w3md3wrjcf1waai7lhb0xq3i-bootstrap-stage4-stdenv-linux.drv
+  /nix/store/hrgw9al643kmplvffgc5f59dwlx48sm7-bash-5.3p9.drv
+  /nix/store/4prhalr3hp4b3vdn576g22x2sfirh0za-curl-8.23.0.tar.xz.drv
+  /nix/store/ajxcz71qaly6274h48i32r4bg7av2ds6-add-flags.sh.drv
+  /nix/store/jihcpwrzc4yy99sfkc5j5zhm9bx9gy3z-pkg-config-role-hook.drv
+  /nix/store/0ibwnm5f9q4r7j2d6v3239wgk59yn0xx-heirloom-devtools-070527.tar.bz2.drv
+  /nix/store/6c9czp98fd8gahfd13lkqhpq30ygckqm-lex_remove_wchar.patch.drv
+  /nix/store/m7qhh4k03ymh4myrj8nnanzgr2pcx5pp-yacc_remove_wchar.patch.drv
+  /nix/store/bv9pjdxwgwphc534rna0d483wvjxcmwl-heirloom-devtools-070527-builder.drv
+  /nix/store/1x6yq984878wwl7xif86kj8z4i5fn6yv-heirloom-devtools-070527.drv
+  /nix/store/130xp3xbhxwms383bbf7wpcvc6ksjjnk-findutils-4.10.0.tar.xz.drv
+  /nix/store/2aqg268s1av5dsfga1ns5sah37gjvmza-findutils-4.10.0.drv
+  /nix/store/kxzvg327v044h162z0szp83b435cbdmw-sed-4.10.tar.xz.drv
+  /nix/store/2pvamf81zpaks956xb09kn2n9fm8l458-gnused-4.10.drv
+  /nix/store/3gjcyms0k2yqcml0cl3j4kar1nk3581a-xz-5.8.4.drv
+  /nix/store/b9bd2bl75650mdckkiqshw1bld86vn0r-heirloom-070715.tar.bz2.drv
+  /nix/store/4wl34cclbr0f19xnsfb2jfsr10xz28kj-heirloom-070715.drv
+  /nix/store/56cp3d041plb4a0fyj8y7saqcgqw00bf-pcre2-10.49.tar.bz2.drv
+  /nix/store/7khnbnby7f8q312nrlcaciq7b8rw7xw8-pcre2-10.49.drv
+  /nix/store/m6sapai1yb8bvhhn67j14dbd3bwf4vg1-gawk-5.4.1.tar.xz.drv
+  /nix/store/8i626qf2c7brpja4dj16wzyipg7i5s3s-autoconf-2.73.tar.xz.drv
+  /nix/store/8i58hgwy2jhdi56i54bis0pj8b14fqgc-autoconf-2.73.drv
+  /nix/store/hns58z1yxzzwz9r9bqnja1vcsh5fl17g-bootstrap-stage4-stdenv-linux.drv
+  /nix/store/izbfj3rckm6lyip0y99dw9hyyap52kg6-libtool-2.5.4.tar.gz.drv
+  /nix/store/zx5b0pppdvd1sja114g29zh80y1zn9f7-file-5.47.tar.gz.drv
+  /nix/store/k09m9wrz20y3dwx94yiz27g1m21bv6vd-file-5.47.drv
+  /nix/store/m59nnhx15q4rjbdq0rmj1a0si6gyli83-libtool-2.5.4.drv
+  /nix/store/2rmk35vbqb6q9r4aqmsz7iicmi44jx6d-automake-1.18.1.tar.xz.drv
+  /nix/store/n0b5pxjffisb7120q8sljkrgqcd64rjm-automake-1.18.1.drv
+  /nix/store/nb9sr99n0bk4xzzn7lry2004smhrzavj-autoreconf-hook.drv
+  /nix/store/cl3hgm0bxp6pfa64xjs85gdfvwhgbf5v-gawk-5.4.1.drv
+  /nix/store/fxyr2x20fgb4qhkp85mai4d65s2z5h4y-musl-1.2.6.drv
+  /nix/store/83hwhs7c53xn34wx79vpp1ivbs1qlx5v-nuke-refs.drv
+  /nix/store/qmffcq364zzf9kx7fd5dlxxvmk851d25-bootstrap-stage0-glibc-iconv-minimal-bootstrap.drv
+  /nix/store/z6v5624dkfqg57qjzg6fadpxp07axkhv-libunistring-1.4.2.tar.gz.drv
+  /nix/store/fz1y7yyav434wlpzq9xzqa31rs7znx4c-libunistring-1.4.2.drv
+  /nix/store/9rdcjdvbn3i58jki3bvrmyypl4vpaaph-acl-2.4.0.tar.gz.drv
+  /nix/store/bvzg0d622kybqjixak41y409cmwi6chp-attr-2.6.0.tar.gz.drv
+  /nix/store/ziiq5f3pxsgxdnkxnqm0xw5rzdhgl0aq-attr-2.6.0.drv
+  /nix/store/gcva4v8bmhswa70a5a03zf1gxmi8c8zc-acl-2.4.0.drv
+  /nix/store/hg7670x4r7riwapv68dg1929bi3ad1ln-binutils-2.46.drv
+  /nix/store/ch64wx8f1x7cgwlbbsd3ffdg5pzr2idi-locales-setup-hook.sh.drv
+  /nix/store/ig0g2nggxbcsh3bqf8fzz2dw4r6i5zvl-nuke-refs.drv
+  /nix/store/xcf26nqjm057ddj3kfv7r3ag30kmvrip-setup-hook.sh.drv
+  /nix/store/mnpga7aafmcjncfngd3c45zz3zb3hxdb-python-setup-hook.sh.drv
+  /nix/store/r450pk7nrq9lh9y57j9brbz8s7fr5f1p-Python-3.13.17.tar.xz.drv
+  /nix/store/d37i9sp6s9s87m1r3bx82hrnfqhb4fvq-python3-minimal-3.13.17.drv
+  /nix/store/imyy7rg9gyf2qyhg3jjnmal8grabvra9-glibc-2.42.tar.xz.drv
+  /nix/store/3xs5n9hmbbmc5qis9zzs764ilbjk0v72-libidn2-2.3.8.tar.gz.drv
+  /nix/store/n7338hh4fm6lhzik25k2w570nph7dzhb-libidn2-2.3.8.drv
+  /nix/store/7al20f2chhrh0hr7xyadvc14b86mavxy-glibc-locales-2.42-103.drv
+  /nix/store/x920fs11h94nbzz6c61n9jpq5zqy5mbk-glibc-iconv-2.42.drv
+  /nix/store/jkl4d74lr6pgvrwgs6lbbrv662piqbyc-gnugrep-3.12.drv
+  /nix/store/v29h4s54jiajkqc854d6mlznjcwcnrf3-die-hook.drv
+  /nix/store/b58pljs56gykzqkzbpiq4m9dcw0mdwib-make-shell-wrapper-hook.drv
+  /nix/store/makjqgpjz493xwzfy3qq0hyzkcfzsfrk-gzip-1.14.drv
+  /nix/store/mhrxc5w6drwi4m5ykbdrayz7869i9mx9-bzip2-1.0.8.tar.gz.drv
+  /nix/store/q5mf7pz78jrhn8qsr2y8b5yz0bbwhx9p-bzip2-1.0.8.drv
+  /nix/store/qcvqhyzrd18y3cyhxikkvkqidf9b6g36-diffutils-3.12.drv
+  /nix/store/0cfizkf89lijcfm96bvkz5g45k07546c-musl-simple-program-1.2.6.drv
+  /nix/store/25xm28w9xrk9kgn0wmb40g3fc4l2z2w4-bash-get-version-2.05b-builder.drv
+  /nix/store/0gy12dm9fs950k2pz0jjgwjr2whimg1v-bash-get-version-2.05b.drv
+  /nix/store/0zf4a3yq5fiiba86ksfjqii5pmpprs19-gcc-simple-program-10.4.0.drv
+  /nix/store/10mfksa3xsi57zlyaqr3np3l4r7nm0c9-gzip-static-get-version-1.14.drv
+  /nix/store/159wybvx1jzr4cfj81fn1qvhcdl8xxw0-gnutar-static-get-version-1.35.drv
+  /nix/store/1accm7zc9acis8qq72sidnkpnd4r49zm-bootstrap-coreutils-musl-get-version-9.10.drv
+  /nix/store/28incrmkqbjms8pb4i8qkplsisj49075-gawk-get-version-5.3.2.drv
+  /nix/store/30vp5c32rqb6zhishsl4jz4bphdyg4w9-gnumake-musl-get-version-4.4.1.drv
+  /nix/store/31012r9r9hwmcv99iviizdfhm0sjcxjl-bzip2-static-get-version-1.0.8.drv
+  /nix/store/42v2kyprk2gsp40xspc0ssxfi807qcim-gcc-cxx-simple-program-4.6.4.drv
+  /nix/store/5lviidinj71nws31r1c7gjlg5p80lkjs-gnutar-musl-get-version-1.12.drv
+  /nix/store/5qdc1kr8ljllm244bh0jy3bvmz462nv8-gnused-mes-get-version-4.0.9.drv
+  /nix/store/6mq3813sfp0vm3c9nxcj10lc26kg9rgz-tinycc-musl-simple-program-unstable-2025-12-03.drv
+  /nix/store/6vf6b238jhhc823w4gw569pbsrm02ryl-binutils-get-version-2.46.0.drv
+  /nix/store/793jv57r8l6sw0cxbl8zbygdgs8hbxsv-gnugrep-get-version-2.4.drv
+  /nix/store/83x5nz0d278f729kj1rmwmgqmrcx494x-gnused-get-version-4.2.drv
+  /nix/store/az1hahmwb7l2hzvgqy0w6rvqbln04769-xz-get-version-5.8.3.drv
+  /nix/store/c1vny2b5qmyiiw99b6gi9zjyfk8lqdf0-gawk-static-get-version-5.3.2.drv
+  /nix/store/cl25qbpqq0i235hdph8gnmwr3sl90qlb-bash-static-get-version-5.3.drv
+  /nix/store/0mqi9ydgdc6as1hw0ydm7gg1f3yjgkdp-mes-get-version-0.27.1-builder.drv
+  /nix/store/cs4lzs1qmk23nyzgf751a2a4kb7y667v-mes-get-version-0.27.1.drv
+  /nix/store/d62xkqviahq1jxaf985qqyk5qv72ykzv-gnused-static-get-version-4.9.drv
+  /nix/store/dpx3qn66di2g74234vi7xq4iizknmicd-gcc-get-version-4.6.4.drv
+  /nix/store/i8ss46xy764d9d593vn814niksfcriv6-tinycc-boot-mes-get-version-unstable-2024-07-07-builder.drv
+  /nix/store/ga1b8b5z58fbkr8v0xv59ivzir4wyjqv-tinycc-boot-mes-get-version-unstable-2024-07-07.drv
+  /nix/store/xxxl49qjg7gnwxfcr4sxfgpw4shq510g-tinycc-boot0-chain-unstable-2024-07-07-builder.drv
+  /nix/store/3yvphn5v3laa2qrvllg878ij47wx92xw-tinycc-boot0-chain-unstable-2024-07-07.drv
+  /nix/store/6r1diicimr9iaf3f7hxq0b0znqxv5rq9-tinycc-boot1-chain-unstable-2024-07-07-builder.drv
+  /nix/store/lmj4kyrya73pxb4l75kqvcy9wpw4ilzn-tinycc-boot1-chain-unstable-2024-07-07.drv
+  /nix/store/yfyk44frrhkfjh07xsgiiqvvaahdsk16-tinycc-boot2-chain-unstable-2024-07-07-builder.drv
+  /nix/store/jvxpzk8cr90bn2a19fdi3qbflvqf3cbs-tinycc-boot2-chain-unstable-2024-07-07.drv
+  /nix/store/d6dkk85sixrainacqixn91kap9z3z5n1-tinycc-boot3-chain-unstable-2024-07-07-builder.drv
+  /nix/store/ix2s33fi4nfh78rs59mdsdnq5dd5gs7g-tinycc-boot3-chain-unstable-2024-07-07.drv
+  /nix/store/9ihpw1hw617rlpx9mww1w1cs7ymaa3dv-tinycc-bootstrappable-chain-unstable-2024-07-07-builder.drv
+  /nix/store/8d25x0aas65p79rc5kzr92vlhgq1w2ra-tinycc-bootstrappable-chain-unstable-2024-07-07.drv
+  /nix/store/v2pk6avh3x1k3k29hkja9shvw97954n1-tinycc-mes-boot-chain-unstable-2025-12-03-builder.drv
+  /nix/store/waf4kczw67cway08qchwrcz38fih4y63-tinycc-mes-boot-chain-unstable-2025-12-03.drv
+  /nix/store/0978f9k46zgxwpc8lwzk9fxajma156kr-tinycc-mes-chain-unstable-2025-12-03-builder.drv
+  /nix/store/fl6mqjpa5193l28xwgdla6mj4i186568-tinycc-mes-chain-unstable-2025-12-03.drv
+  /nix/store/fwcwxkbajgkd3vljrgavpw0qzsca3v4l-gnupatch-static-get-version-2.8.drv
+  /nix/store/ihv8av4rfryg4r72ckilnapa80rvcrcx-findutils-static-get-version-4.10.0.drv
+  /nix/store/isxmry87mdhxx1g979v9wcr4m3wg4gpq-diffutils-get-version-3.8.drv
+  /nix/store/jfy5494hmk8wjkwlzyhpvxha3agx6kz9-gnugrep-static-get-version-3.12.drv
+  /nix/store/kg4582pc6z9sp747bm1z0gvvhgbffs59-glibc-simple-program-2.42.drv
+  /nix/store/kq40l5zlizl2nz5w2qz07vdsi79axxfy-heirloom-get-version-070715.drv
+  /nix/store/pjnk1yf8ddwaid84zbd4kwk0rgypcrp2-coreutils-static-get-version-9.10.drv
+  /nix/store/psn06pbp7vp4gmhdbh53jq90wkx77k4m-findutils-get-version-4.10.0.drv
+  /nix/store/q00djxdnx6fivlqp60l7l37yc42i1fhg-gnutar-get-version-1.35.drv
+  /nix/store/ql0nssy1bhgyf83zq0r4lrksd6zsgh7z-gzip-get-version-1.2.4.drv
+  /nix/store/rj5mmvwvgna925jpp4swk02blcdl8gyy-python-get-version-3.14.4.drv
+  /nix/store/sp7cjk6p7a8r8cvcczx78v63q5583b32-bzip2-get-version-1.0.8.drv
+  /nix/store/spp8py21s3p46x28rx1fw8sf24j6gxg4-bison-get-version-3.8.2.drv
+  /nix/store/sv1z4x04x9khz94vfm1n7j9djgy60ghq-bash-get-version-5.3.drv
+  /nix/store/wn4nf9pqapc89jz1lkvn7z3g6b9rnclv-gawk-mes-get-version-3.0.6.drv
+  /nix/store/x5wwz0vih6vxdwpvyq5dc0w2ih64rklg-gnutar-get-version-1.12.drv
+  /nix/store/xkkc1wasbqjqx7ysk0zbw4h1jm1yckbj-diffutils-static-get-version-3.12.drv
+  /nix/store/xx04fl7gqvk9q20qbn915r5fjavfv3bc-gcc-simple-program-15.3.0.drv
+  /nix/store/ylvdm4als7vgaqvjy5lp4xv6rqmkpy3j-patchelf-static-get-version-0.18.0.drv
+  /nix/store/yp6b9x9snx5xsk173z11d517ma7pkkvh-gnum4-get-version-1.4.21.drv
+  /nix/store/zg4yg0qvdgg30chi1mavili7wpcvdwzz-gnumake-static-get-version-4.4.1.drv
+  /nix/store/3sr3qjaaw6jk6xpl9619r1980x22dh9p-minimal-bootstrap-test-builder.drv
+  /nix/store/v7km9i7ix5ka0qqq44pcp7n2q9qgqqg7-minimal-bootstrap-test.drv
+  /nix/store/xhal618qb5gx0na1gq07mvvgxilg26c6-stdenv-linux.drv
+  /nix/store/xlbnkgkac0c7kkb2gqi87wvrdvpzvs5x-expand-response-params.drv
+  /nix/store/p5dlqi6kaqg9r6zlzrgld9qpsmnwjmkq-utils.bash.drv
+  /nix/store/p6dhl26frllw4mpz1sy1g38ylf47kb52-pkgs-config-setup-hook.drv
+  /nix/store/6b29gjz7rj4mw0ch0vy2m6qrqipz2bbb-pkg-config-0.29.2.tar.gz.drv
+  /nix/store/zgy69hnmfxjix558yi5mds9p368b24m3-glibc-iconv-2.42.drv
+  /nix/store/x1kb9j04a652ha7vvn059srahhq7lbfm-pkg-config-0.29.2.drv
+  /nix/store/a4196wmh6yavszx5mfzy6r3zcyy67l49-pkg-config-wrapper-0.29.2.drv
+  /nix/store/dhjhlihqj08f3fs1cvsja0fims0dqnlw-raw.drv
+  /nix/store/lkkzb8ybhp5jjgvb04b13n68i51lxwd9-keyutils-1.6.3.tar.gz.drv
+  /nix/store/9475g6s683p2ccb7a070arydhq8v83cp-keyutils-1.6.3.drv
+  /nix/store/c7v973kcvhyl92kmmhsi27b63iyh4myv-krb5-1.22.2.tar.gz.drv
+  /nix/store/b6yxpjizcj55gzmm8vpjzdxgl15246qv-byacc-20241231.tgz.drv
+  /nix/store/kf6s01glxayfiwybrlv1q8rdkvf7skwd-byacc-20241231.drv
+  /nix/store/gqm0l5qy26j47y2kqgxvggqvavjfn4ib-openssl-3.6.5.tar.gz.drv
+  /nix/store/0nrb3h17g2hhf8ijisi7frcfvqwhya3w-coreutils-9.11.tar.xz.drv
+  /nix/store/ki9ya5nshbfs3qr8zbd4gdc9ln9rh88q-coreutils-9.11.drv
+  /nix/store/rrbkb36xnq6jsdd2rgxzh1iq6s3r61zr-openssl-3.6.5.drv
+  /nix/store/jwjr7hcvaii0pigkx59g9ldz31g3mn3l-krb5-1.22.2.drv
+  /nix/store/axkmfgaz8nvjw8q0l0d1bhm7glqjjb7j-nghttp2-1.69.0.tar.bz2.drv
+  /nix/store/m2s0wb0zrg4wjbfhl9as9gq9c8qyx84j-nghttp2-1.69.0.drv
+  /nix/store/0i3qixpwn0qsbpmz6p415lk2qq6s639l-CVE-2026-55200.patch.drv
+  /nix/store/1j374gfxc0lslhnzzfaqpgf2i797ny9g-CVE-2026-66032.patch.drv
+  /nix/store/3im1j8lp9aqr9p2gx1y13wam9vjcv6qf-CVE-2026-66035.patch.drv
+  /nix/store/5drjfmp7pvlwfjn14kplw0nm0bwrl0m1-CVE-2026-66033.patch.drv
+  /nix/store/5v3vah4fpxm2jsyg3m93361s7m4y6c3s-CVE-2026-66034.patch.drv
+  /nix/store/aiqx6v0q66r8c6z138a62si4az8dd3nd-CVE-2026-58050.patch.drv
+  /nix/store/kadl3n1d1bx6dbdwh04r0x2lhn2w3d13-libssh-unconst-backport.patch.drv
+  /nix/store/l4q7jsk9n0ys3qb31zafgzwakpwq0360-libssh2-1.11.1.tar.gz.drv
+  /nix/store/my92mgwgr8dsjnawgb0xrw6zfpsh5yc3-CVE-2026-58051.patch.drv
+  /nix/store/r4y38sp3418wjshi369yqb4vsaligr35-CVE-2025-15661.patch.drv
+  /nix/store/zkahlx2yk2sdlfmcf3pjn62vzw91zy3b-CVE-2026-55199.patch.drv
+  /nix/store/w1i2jqhqkd14gi886y6h193il1433dwa-libssh2-1.11.1.drv
+  /nix/store/inqx82izvl20y130wza0ppq1vd9l2lxf-curl-8.23.0.drv
+  /nix/store/x8zrmig1j9ndp6a9xdfz8c3ycirrlvkl-mirrors-list.drv
+  /nix/store/rjz8f3cgwy2dpxvna9s32kvni6j5cijl-XML-SAX-Base-1.09.tar.gz.drv
+  /nix/store/d4bb87zqpn965j52v0yx7032bvr6m85g-perl5.42.3-XML-SAX-Base-1.09.drv
+  /nix/store/m41xh4r64fz58aqdaihrjcha5clv0lh7-XML-SAX-1.02.tar.gz.drv
+  /nix/store/0zm0ddj5wixa91sx5h6pmbisskjbdxfr-XML-NamespaceSupport-1.12.tar.gz.drv
+  /nix/store/rmyz7wj9n9m6s382xajzdjjra9xzs0g4-perl5.42.3-XML-NamespaceSupport-1.12.drv
+  /nix/store/2vccmcfzl2pjlnlswiisqlprdkmd6nkq-perl5.42.3-XML-SAX-1.02.drv
+  /nix/store/bzqd7idy48a7iq05acjxl6x3mil3px59-XML-LibXML-2.0213.tar.gz.drv
+  /nix/store/mx5d59rv987mz3c1qk33kfhr1g1bx2si-Capture-Tiny-0.48.tar.gz.drv
+  /nix/store/0ghww9g7gi6dhfad3hcxrq860m0xv3g6-perl5.42.3-Capture-Tiny-0.48.drv
+  /nix/store/ysw8bpn04phqkj04zi20fl68a4ialwi2-Path-Tiny-0.144.tar.gz.drv
+  /nix/store/4157wdkndld93rnbb0r44v6555ws4cn7-perl5.42.3-Path-Tiny-0.144.drv
+  /nix/store/ic2nim2w3i1a3mwfq7vzw6crpjvx8pyz-PkgConfig-0.25026.tar.gz.drv
+  /nix/store/4igvxk23fn5wc3si63zhh1awyriw0qzq-perl5.42.3-PkgConfig-0.25026.drv
+  /nix/store/v7rf91zq0jcnr5yd2mz6slp05njpml53-Devel-Hide-0.0015.tar.gz.drv
+  /nix/store/65gp0mwbqszj37m8rcd8g1syk6d5vj3k-perl5.42.3-Devel-Hide-0.0015.drv
+  /nix/store/idbz6yrzzx94l3mw1rvs2ji4rplq2pfz-Scope-Guard-0.21.tar.gz.drv
+  /nix/store/6d64cwpismkn7mkh1v7knzp34wayjvqj-perl5.42.3-Scope-Guard-0.21.drv
+  /nix/store/b1q8pf49ww4ck7iaals9d70vrfjr0mbb-Importer-0.026.tar.gz.drv
+  /nix/store/58qcm6xxj68hr0lpa7qfr0821lg3sj90-perl5.42.3-Importer-0.026.drv
+  /nix/store/c35hv64j8pgwl5x2aqqx9k8msg00v7gy-Sub-Info-0.002.tar.gz.drv
+  /nix/store/a7dh75kl9ggfa2f2caqi6nqfl998i63n-perl5.42.3-Sub-Info-0.002.drv
+  /nix/store/jbfmir0q4f54xv70hz65kgjlzpq41yng-Term-Table-0.017.tar.gz.drv
+  /nix/store/db8jm9zsfsw74yblxvbq6vjfirvasaxn-perl5.42.3-Term-Table-0.017.drv
+  /nix/store/7c262z7xkfyk5m59favv8xaacpclafpw-Module-Pluggable-5.2.tar.gz.drv
+  /nix/store/yyfv4afm42iwx1b6b0xb1kcxx4fdk2gx-App-FatPacker-0.010008.tar.gz.drv
+  /nix/store/hl7znpaxi8r3ypx48pif4afp383nqpwy-perl5.42.3-App-FatPacker-0.010008.drv
+  /nix/store/jwwd95j11bb5winfdlql5xql6dd1a3x0-perl5.42.3-Module-Pluggable-5.2.drv
+  /nix/store/x0fl2sjvs1xgymmcsgfkcs1i5i1qyhis-Test2-Suite-0.000156.tar.gz.drv
+  /nix/store/733z9r5xnd242mc6wa5ymf8f5c904pw5-perl5.42.3-Test2-Suite-0.000156.drv
+  /nix/store/micyv6ssyfnrirjrxg0j239sc07wcc7n-File-Which-1.27.tar.gz.drv
+  /nix/store/92rvxjxsy717sbja0czsxfsxgk8rbab0-perl5.42.3-File-Which-1.27.drv
+  /nix/store/hdwspxs9vjbs2ppmaikjidqkycmgy93m-Alien-Build-2.80.tar.gz.drv
+  /nix/store/6f1xk97imfgm1dh2p9d9psf6d76afg0b-FFI-CheckLib-0.31.tar.gz.drv
+  /nix/store/v3x9vf4gr25nzwvgw3y55pimjr3kycw9-perl5.42.3-FFI-CheckLib-0.31.drv
+  /nix/store/pfphkihpi233rry8mx9bai8wcz1hd4bv-File-chdir-0.1011.tar.gz.drv
+  /nix/store/y1kwd3chyxicw6714rnw1378xjxwmv9v-perl5.42.3-File-chdir-0.1011.drv
+  /nix/store/pkpjllwh0vwly2y352jqx3xbq3k1qn8y-perl5.42.3-Alien-Build-2.80.drv
+  /nix/store/6xnxqqb2dq1aq7akci82085p7fcdgxxc-Alien-Build-Plugin-Download-GitLab-0.01.tar.gz.drv
+  /nix/store/5p3pfgpqyh2q2gd1j5dq5x1ii93yjmz1-perl5.42.3-Alien-Build-Plugin-Download-GitLab-0.01.drv
+  /nix/store/mw5v700b4mbqnh560hcdy4lkda2d9r4z-pkg-config-0.29.2.tar.gz.drv
+  /nix/store/jdypdnj9zj1yrcwn31d683qy0w12s5mf-pkg-config-0.29.2.drv
+  /nix/store/6bh2y41c1b70015alvgrdsr01hls783h-pkg-config-wrapper-0.29.2.drv
+  /nix/store/brqlhkgp1awpk6i54j3m2zxzsbxa1m61-Sort-Versions-1.62.tar.gz.drv
+  /nix/store/pggvkfijwhn94gdnxk6dbx1nxzrkss5y-perl5.42.3-Sort-Versions-1.62.drv
+  /nix/store/2cc1g925r134jb3scqpqk3g30hm4sdsd-glibc-2.42.tar.xz.drv
+  /nix/store/nd2lrf0vhjh2zxxbf7j5ff7h5mxargrb-setup-hook.sh.drv
+  /nix/store/4s55qwissh8gvrh91j729gszyhj9yn1c-python-setup-hook.sh.drv
+  /nix/store/j0fbj6kqj7jr8p6ai63fv7iz6f71bnnh-nuke-refs.drv
+  /nix/store/q6jxyh8z5rd6rp144g3qznwzvsv2xyb9-Python-3.13.17.tar.xz.drv
+  /nix/store/2lm0iggkcsxyqpc5rd2h56g9frilkq35-python3-minimal-3.13.17.drv
+  /nix/store/85dvac1c5p9kb0z97ncar86cvkcpxfkq-bison-3.8.2.tar.gz.drv
+  /nix/store/46xhfaydm5flb9jifcqsv3vx71xakvss-m4-1.4.21.tar.bz2.drv
+  /nix/store/fr5s95i5fii62865cacih9snaq46k5zs-gnum4-1.4.21.drv
+  /nix/store/3v41l7mln0vvgzkkix9fragil6c98r1a-bison-3.8.2.drv
+  /nix/store/hbl37hl1abad7crmvnwlrr1vc62aqr6a-locales-setup-hook.sh.drv
+  /nix/store/6vwv77m6122nfv14c8ndgaby3fs5ibid-linux-6.18.7.tar.xz.drv
+  /nix/store/hhrrq9qn2zpaizd1pnglrbadryms008l-linux-headers-6.18.7.drv
+  /nix/store/3mdb6yn4z0rvmzpyvylnv9rlbps89dj0-glibc-locales-2.42-103.drv
+  /nix/store/1hivw5jmk9rx4qyfb903h63g642rg5ny-source.drv
+  /nix/store/fiqmhqvx9yay4jzndci4bp0g84k8kb13-find-xml-catalogs-hook.drv
+  /nix/store/f5svrl8nykxagmm4cmjm56y56izcag58-automake-1.18.1.tar.xz.drv
+  /nix/store/2mlzjvb07irjdsj85pljrjzam2dlmyjz-config.sub-948ae97.drv
+  /nix/store/m6xhiqzcrfmydrd3i54yrc5l5d14w8ff-config.guess-948ae97.drv
+  /nix/store/y0bhhvp8rdwwixy94x3ajynd5a7w64g6-gnu-config-2024-01-01.drv
+  /nix/store/fs1z9457ly1igjrmypfg7pnjhc2fjcyi-update-autotools-gnu-config-scripts-hook.drv
+  /nix/store/jnm96sy4knaqj07qs7blpak7d7x76mcq-texinfo-7.2.tar.xz.drv
+  /nix/store/f8wzxxgljskbqi0ap2i82hp852kpdk1x-texinfo-7.2.drv
+  /nix/store/hwi42y4qakd3kzsxzn74g5ynlwsify08-autoconf-2.73.tar.xz.drv
+  /nix/store/l9dnc237jghqvswn3ncgz1ynnl0xjpq8-autoconf-2.73.drv
+  /nix/store/1ga1g08874bq7zvvbkm8avw4azdg36c5-automake-1.18.1.drv
+  /nix/store/09gxyw45fxfg19w84agdwvvqqrjw9a7k-libtool-2.5.4.tar.gz.drv
+  /nix/store/v6jh57119lh9z810r9fd87wawfj96199-file-5.47.tar.gz.drv
+  /nix/store/r9llq22if3w9axgaqm9w7dcp4m7ppd7d-file-5.47.drv
+  /nix/store/v5h0k09jiwdyxyszpdfv2zh5r26ymjhj-libtool-2.5.4.drv
+  /nix/store/vqw7hhnnzybh1fdhckphw4ijqlsy6vsy-autoreconf-hook.drv
+  /nix/store/q9arayjazbvm80mda5vafz3jhlivznk5-libxml2-2.15.4.drv
+  /nix/store/v0pgr8yvafwfbxbvika0cjwr0a0s38mk-Alien-Libxml2-0.19.tar.gz.drv
+  /nix/store/vym8plqnw6d8p0nqkai5gjsdgfjyzf8i-Mojo-DOM58-3.001.tar.gz.drv
+  /nix/store/x09hfx0741wdz7gkyc8g24wakysahpvd-perl5.42.3-Mojo-DOM58-3.001.drv
+  /nix/store/wb36ckyxsj7mbwg72n0ll3dy06ksgbc3-perl5.42.3-Alien-Libxml2-0.19.drv
+  /nix/store/037dsxq3rgc87xcin5j59r1mk5ml2vy1-perl5.42.3-XML-LibXML-2.0213.drv
+  /nix/store/07n7qdny0xxds8k93njq6p0az1zyc9f3-buildcatrust-0.5.1.tar.gz.drv
+  /nix/store/lz9ksg02wj2sym4vpywyzykq3aa8xxi2-isl-0.20.tar.xz.drv
+  /nix/store/0rwf4qxmas0fcpraf55ffcydvylk6vx0-gmp-6.3.0.tar.bz2.drv
+  /nix/store/xm2s18zsz83r2jshyy9196qbadahwfbn-gmp-with-cxx-6.3.0.drv
+  /nix/store/9swj3zwcii9c0lgsq98012v6vpd3hs2m-isl-0.20.drv
+  /nix/store/7rb8wsmmqyv6sz2cv423zf9b7bahz8s9-mpfr-4.2.2.tar.xz.drv
+  /nix/store/hwicvf2hqj3342n9dx2kpvfwmffay7w5-mpfr-4.2.2.drv
+  /nix/store/nmyan1275db3cidaiqnq085664770na6-gcc-15.3.0.tar.xz.drv
+  /nix/store/v4zypzpvfvwb96zz53fpiqzzk3gdg2l2-mpc-1.4.0.tar.xz.drv
+  /nix/store/p215xj7kf67zxi95711xjvz6np7qxx3i-libmpc-1.4.0.drv
+  /nix/store/vk1lfqgvsa1pqsc4fpp5gqgsf0j7x6i3-autoconf-2.69.tar.xz.drv
+  /nix/store/pn11m9grj1a4bzzga6v5bi7snjqyl8j3-autoconf-2.69.drv
+  /nix/store/38nkcd4w2pggcyq41s4yr2bciq6468w5-which-2.23.tar.gz.drv
+  /nix/store/zqd5m2y3wpla68zpixja2760gwhwkdmn-which-2.23.drv
+  /nix/store/aw19rmn3frp40dd5993wknqick061wzc-gcc-15.3.0.drv
+  /nix/store/bd18crpnzl09l1ynkcdvd4zlqxgbxa1f-binutils-wrapper-2.46.drv
+  /nix/store/090230zv81li6fin08if9hbfrfwh6q7c-gcc-wrapper-15.3.0.drv
+  /nix/store/6rkfjij69rc0a9cwgi92q8r3bamdg42c-tzdata2026e.tar.gz.drv
+  /nix/store/ldv1ck08vljv68j93var8n9f3hj8rcrp-tzcode2026e.tar.gz.drv
+  /nix/store/ibvg1vl5f2vb5567jqgcysxqh1gfh1w5-tzdata-2026e.drv
+  /nix/store/y4aa4zfmjzrzrca0lvjd7f9k7nnw6g4p-builder.pl.drv
+  /nix/store/yi8dzjy9240kg58jmymb54mz5gfsvam9-console-env.drv
+  /nix/store/vargkig1fa900d0dqld4dcfmv6gk8vk8-X-Restart-Triggers-reload-systemd-vconsole-setup.drv
+  /nix/store/0a3ixvbgyv45zdj7fcg4qcvhspncrlnf-unit-reload-systemd-vconsole-setup.service.drv
+  /nix/store/lzxmai24942nrj96szhzhaypz9ig3ixg-libxslt-1.1.45.tar.xz.drv
+  /nix/store/iz05bc3bg39qylgpzza5pqa2rc8p6x8s-libxslt-1.1.45.drv
+  /nix/store/0b41q294nk1azikkjc9k1q13by5r4gqb-dbus-1.drv
+  /nix/store/0b8kxidfml1vvzmdv6i08av59042jrjx-python-namespaces-hook.sh.drv
+  /nix/store/0brshws0amp05sgvhfwxvldhqjmhpxhn-docutils-0.22.4.tar.gz.drv
+  /nix/store/gv753bs4mlj5z1pvhikfhb11bi2r3c8n-expat-2.9.0.tar.xz.drv
+  /nix/store/5liglg5dgmz38znadjjpnnimfv0rnxbf-expat-2.9.0.drv
+  /nix/store/6ijwgnw7z75ml4ndn1lwjx4xncax93xv-cmake-4.1.6.tar.gz.drv
+  /nix/store/0p72xzgg07frcpzv3vxi24f18pkjda4s-source.drv
+  /nix/store/7ckihpdn3r0m9rfrywcy9b9gxk1hjxhz-libuv-1.52.1.drv
+  /nix/store/40w3m01h9j0z1lhv3m3fkr64sjlg0l2i-cmake-minimal-4.1.6.drv
+  /nix/store/b8ni4kc1mdvkzzapdryjh2jv49k6709k-source.drv
+  /nix/store/ffgv34ih2clb1rn9n3ycnw020qvbrzng-make-shell-wrapper-hook.drv
+  /nix/store/fskv4i5m9wqd57jb5lpwniw87c7imh7q-patchutils-0.3.3.tar.xz.drv
+  /nix/store/jknsm7kgw2ksbqmk3z00bm3igfb88nmd-patchutils-0.3.3.drv
+  /nix/store/ga2fg2lkl0yfr3bygq28slk9v62xgwfa-man-fix.patch.drv
+  /nix/store/2ngcskbndvpacixi2wsbl0v9lhfnhc42-zstd-1.5.7.drv
+  /nix/store/6gyrq3gsfx049qpbhvbbg51zkpb7pjnb-lzo-2.10.tar.gz.drv
+  /nix/store/pq1sywplpdfzx996y576yyj5d3x453zd-lzo-2.10.drv
+  /nix/store/vlym6fw7bmyp8lj290gk5afwbkdmvadh-source.drv
+  /nix/store/7c9vabmll4j0g1ssiwbb9xj4mk4iv43q-openssl-3.6.5.tar.gz.drv
+  /nix/store/wb3dqhks5px2rxdsbhvrdfqv256al294-openssl-3.6.5.drv
+  /nix/store/caq9zsl334i057bk15cxj49lk567nc3r-libarchive-3.8.9.drv
+  /nix/store/5vqnvblr0wxlnnfccz4yhm2rgjfzpr4p-nghttp2-1.69.0.tar.bz2.drv
+  /nix/store/6xvz0f2brx6pwg8dvrg8yyfsk8z19gi5-install-shell-files.drv
+  /nix/store/mbi826s19l33xln2p060rvwks1yjg213-c-ares-1.34.9.tar.gz.drv
+  /nix/store/dmzsp0vzfq4xrc0v0yxys81nj6a4dfy7-c-ares-1.34.9.drv
+  /nix/store/70v3i4arfqdk2x0f4gfbhh0j6wfm9bl9-patch-ev.c.drv
+  /nix/store/blwfp21qnm4n903aa0gnivh4nabhfh0a-libev-4.33.tar.gz.drv
+  /nix/store/ph6vlss7zy6sn572azd8d96a92zxrm9g-libev-4.33.drv
+  /nix/store/vrga5i9b6w7nr1vnhmi7mvrli7kqlwhv-CUnit-2.1-3.tar.bz2.drv
+  /nix/store/zw3r4swdw1bzk26yhhnwp6fwga58kyl7-CUnit-2.1-3.drv
+  /nix/store/7k6sxqi305vv3i649j40vkabssy7w2fy-nghttp2-1.69.0.drv
+  /nix/store/808vmpp6fl9wx81g76qch1yfqz1qy19f-curl-8.23.0.tar.xz.drv
+  /nix/store/41m1cmqa2y6iq6074n04x6j2xf3g7nfi-krb5-1.22.2.tar.gz.drv
+  /nix/store/gagvpcvkka87ay25ssrv10z5fb7ar65m-libedit-20251016-3.1.tar.gz.drv
+  /nix/store/khp7l2gnldi5xg8wpzal22qsnpm7bmks-ncurses-6.6.tar.gz.drv
+  /nix/store/ii1d1m91zfnq8rawkiayyikywhb3xj8a-ncurses-6.6.drv
+  /nix/store/5f208sh6vbzsm9b7h07dc0kpckmj3a5w-libedit-20251016-3.1.drv
+  /nix/store/yiv6bmjx0l874w0qmq1sr8x0p0gdkiq5-byacc-20241231.tgz.drv
+  /nix/store/mspsgh1snkqhnqp0jjjd3zs9m1yvjixg-byacc-20241231.drv
+  /nix/store/ikkg6nn92jpn9nzrnb5i1m9yh5r29ala-keyutils-1.6.3.tar.gz.drv
+  /nix/store/y9p91srbdk51pdzv4h60z69r71iip59k-raw.drv
+  /nix/store/v1k1n144qxj2dacd003rahl6v0rf3nd9-keyutils-1.6.3.drv
+  /nix/store/9dmh93pzzgwn3l6876ribqbd4792kcy5-krb5-1.22.2.drv
+  /nix/store/0rliqy73mp90yg5fcypz9rwc5pzz0qmi-libssh2-1.11.1.tar.gz.drv
+  /nix/store/3k5rsz81b00iprfdm93sjrqzqhdpgka7-CVE-2026-66033.patch.drv
+  /nix/store/9c39q9904zzcnsn7v02qjzvlj3qky2xr-CVE-2026-66032.patch.drv
+  /nix/store/cnx511liaz5ys15lf2zagv5sd4iqipy6-CVE-2025-15661.patch.drv
+  /nix/store/fczyw9scagbjzk9pchs9v9sy3901vlxs-libssh-unconst-backport.patch.drv
+  /nix/store/i22gm1shm4kdh1ghbmv1bxqc3f0kd75z-CVE-2026-55199.patch.drv
+  /nix/store/la2a0yb61lhsyjl6kzbbslh6q3nd4vzd-CVE-2026-58051.patch.drv
+  /nix/store/m11i4kflml9pq07qhs3hvg5s30gknm8d-CVE-2026-55200.patch.drv
+  /nix/store/p1silcc7a57zrxpkjrp4qiy4llizymc7-CVE-2026-66034.patch.drv
+  /nix/store/qcman5l4hv8azb59hydpikj0acfzyvll-CVE-2026-66035.patch.drv
+  /nix/store/v266r0y9i15h5w24rddanf7y70kwsi3h-CVE-2026-58050.patch.drv
+  /nix/store/j9dsyk8h3g0lac7fvylhy6g8yjpqa6ch-libssh2-1.11.1.drv
+  /nix/store/m4jp8zijflcczfnri60w9bb2pasyxp28-curl-8.23.0.drv
+  /nix/store/rdcrwm0j85wx1c69lpzaglzdgsy5lzwp-source.drv
+  /nix/store/p19rzh4pk4dx90n65nzsclhi65xbqz51-rhash-1.4.6.drv
+  /nix/store/4rziyl4ysp7s3d6ilyyhpzif9lk1rwkd-cmake-4.1.6.drv
+  /nix/store/ans3bivg3ghs828bwyr35g0p9rvaz4bq-source.drv
+  /nix/store/0dmz43zlmyxadyixky8vsgv0c3bvrwkl-json-c-0.18.drv
+  /nix/store/0dphkdndaxkjhhvldsmxaxcc7ijmgv5z-c-ares-1.34.9.drv
+  /nix/store/j3a3802ck50x4lrz3kw8pa5by3bh56j2-cacert-blocklist.txt.drv
+  /nix/store/jv3vz3i8zl2hcnb0271x15rqwck2fa3b-cacert-extra-certificates-bundle.crt.drv
+  /nix/store/xc66d4gslbrailc6xa87g6c2hzrkf2qm-certdata.txt.drv
+  /nix/store/12my47n1ds0scmgd5p1y4v6wqfy580px-packaging-26.1.tar.gz.drv
+  /nix/store/i3sc50g1f61pdvy16m41njy06wgxh53l-source.drv
+  /nix/store/p33rng29hl20wsqvnl1n6b4600p79pdw-source.drv
+  /nix/store/qg7vy9f8nam5d7ck9hwpsy5p6wapkziz-python3.13-bootstrap-flit-core-3.12.0.drv
+  /nix/store/j0kibh40wi29wng3mklmvya763b7wmnw-python3.13-bootstrap-installer-1.0.0.drv
+  /nix/store/22b2r1r1bw16y0bg02s7k7nvl16pm9c3-python3.13-bootstrap-packaging-26.1.drv
+  /nix/store/0shpnvc27n0qzy4ri68s04znaf6zxcc2-python-runtime-deps-check-hook.sh.drv
+  /nix/store/1aqalkg527rn85d8d608sxhfgj0rx3wn-pypa-install-hook.drv
+  /nix/store/4n1xck6xrc3mviizz1xdv3fmvfsp8pg8-python-imports-check-hook.sh.drv
+  /nix/store/8cacpy9dl3cg8z9w1xa7z3wx5i51726i-python-output-dist-hook.drv
+  /nix/store/blw6fr9hwvghbjwgha52ixch3pmx7vdm-python-remove-tests-dir-hook.drv
+  /nix/store/z5g5yph5r55qmkzwjwbvincmkir1ciym-ensure-newer-sources-hook.sh.drv
+  /nix/store/grhysjlnszr34m4x9jajipdvzp1y4sj9-ensure-newer-sources-hook.drv
+  /nix/store/gv3cv9cdqbabwmbsvnrv1dryj60d6yph-python-remove-bin-bytecode-hook.drv
+  /nix/store/wiyqbb7zm8kxd29bir2nz0i4zs1igpxf-wrap-python-hook.drv
+  /nix/store/60rg45s3dc9vlqjxd6q12bw50nwry885-python3.13-bootstrap-packaging-26.1.drv
+  /nix/store/353vsvpz1shl4h1k24c8iqm6czscb9fv-source.drv
+  /nix/store/9k427rkk0qs07fn3lr6gs52dbngg6ky5-python3.13-bootstrap-tomli-2.4.0.drv
+  /nix/store/q9xs90vhqhxwx644nq76l3szgd245rd0-source.drv
+  /nix/store/4s0q7225kn093d0bcj5pr22nbnlmm4db-pyproject_hooks-1.2.0.tar.gz.drv
+  /nix/store/qb8fa7rfd1vx3k6icwrf3nzkkyicfpvc-python3.13-bootstrap-pyproject-hooks-1.2.0.drv
+  /nix/store/dbwld98zvn6clphzlasryrr3xm3wlyb6-python3.13-bootstrap-build-1.4.4.drv
+  /nix/store/wv467x188q24gbkkkkirxcmjwjplx0z9-pypa-build-hook.sh.drv
+  /nix/store/43yqyz2p4wmh8k75zgjgi5avsn2b707y-python3.13-flit-core-3.12.0.drv
+  /nix/store/rw9hq0n97ldnmsq4xlf5phx2cvjpgf0j-python3.13-installer-1.0.0.drv
+  /nix/store/4818nvhb3ixv36rc7ymam0fr2dxl9bsg-pypa-install-hook.drv
+  /nix/store/5dkaqvkqzr488f273yxs22l03i32pqdq-source.drv
+  /nix/store/gvf38x69r20666d5b5gq8s66bh0h5ap4-python3.13-packaging-26.1.drv
+  /nix/store/mjni4rnslybgbbhlcs47rdj7zhp9l173-python-runtime-deps-check-hook.sh.drv
+  /nix/store/915395v5gj2h6y4rzzz001xmr46q8hgk-source.drv
+  /nix/store/7cfj1f11cbhrycicjvaxicyhpifl6360-python3.13-wheel-0.46.1.drv
+  /nix/store/670q2lywgq0wr1hbj950s38mhrdqivq2-python-relax-deps-hook.drv
+  /nix/store/ni4dz984nabmbma4axj09z0l5i0zbg7x-python3.13-pyproject-hooks-1.2.0.drv
+  /nix/store/n7yddqrsmzar7rhs2xsqvhcz1va1yfzc-python3.13-build-1.4.4.drv
+  /nix/store/rp5wvqnrs3x9i408fr24cxl9695zv47q-pypa-build-hook.sh.drv
+  /nix/store/zn0wjk0qg21l0nwaadimq379q3d28v3d-python-catch-conflicts-hook.drv
+  /nix/store/b0qb423my0q0bq7q77k3g5wv73pmd0ln-python3.13-typing-extensions-4.16.0.drv
+  /nix/store/yyac8qk0mfiwbvmws8v46dwicc14485l-source.drv
+  /nix/store/gcgf7vg74nam8kpf9iybznlaxp0kjhmi-python3.13-setuptools-80.10.1.drv
+  /nix/store/m7w6ksamfdcycjpjlkimm81jfzy17mcj-setuptools_scm-9.2.2.tar.gz.drv
+  /nix/store/4gfqdq91lsph4cf0kw0inv2b74a7773m-python3.13-setuptools-scm-9.2.2.drv
+  /nix/store/chlsdhsgifkg825rnkhywqmlq7jpflzk-iniconfig-2.3.0.tar.gz.drv
+  /nix/store/2ngij3z8y4k42h5dn8z60l15l2g8rqiy-python3.13-iniconfig-2.3.0.drv
+  /nix/store/2rvzr3kybphamsq42yxkdf9jkffq5lfv-pygments-2.20.0.tar.gz.drv
+  /nix/store/5ixfnqfvhqk2d1f00pq01smcn08zp356-trove_classifiers-2026.4.28.13.tar.gz.drv
+  /nix/store/iafnwkj7vq21w00xmpi6m4lx0wixrk57-source.drv
+  /nix/store/k1qdfn7lhvi1lfgfsdx77z92qvrcvgyy-python3.13-calver-2025.10.20.drv
+  /nix/store/3vivhll4lwhhpv3wp7sar31jqv667a3n-python3.13-trove-classifiers-2026.4.28.13.drv
+  /nix/store/3jkcwjj3hp41ivrr93pvgl65hhrr0y7p-editables-0.5.tar.gz.drv
+  /nix/store/b7563zzph2kkkr1cgr3f9m4zqwgkklly-python3.13-editables-0.5.drv
+  /nix/store/k749dpcj7lrqqfla6cyd4aqpixcindlj-pathspec-1.0.4.tar.gz.drv
+  /nix/store/njzfijyqpypd93pyqcri7m4zqmj2b6n2-unittest-check-hook.drv
+  /nix/store/lnz21zw7d8fda6wh05nbn3aib7qxqnbw-python3.13-pathspec-1.0.4.drv
+  /nix/store/sx1bi2l7d32s1d6bvrg9wpql7nb43sjn-hatchling-1.29.0.tar.gz.drv
+  /nix/store/r5razjmbbvbalh2s2zad361935sncmvi-source.drv
+  /nix/store/wgz018ax1nf4ghc91163lvx8qy91jriw-python3.13-pluggy-1.6.0.drv
+  /nix/store/l19bhvcq871j9299npmwazsqbk2ry0r5-python3.13-hatchling-1.29.0.drv
+  /nix/store/mr5j3jwg4r6hlsr2izygv7imfv3sg5fl-python3.13-pygments-2.20.0.drv
+  /nix/store/yanfr8n2d4nxdyyvcmaz1y6s8j6qn119-pytest-9.0.3.tar.gz.drv
+  /nix/store/yvik0z28lfz49b66yv3cngz40lvj69hi-pytest-hook.drv
+  /nix/store/2j0i41jq05xbnrp4336qyn1n0sa4x4v5-python3.13-pytest-9.0.3.drv
+  /nix/store/18ck75gyv413zjj7nawdw6fxpvr7z4af-pytest-check-hook.drv
+  /nix/store/zpm1dx71cgm7rq06gn0d383khxqba064-python3.13-buildcatrust-0.5.1.drv
+  /nix/store/bnqxbfcc253vjwx5lj0vn4bc4fhibqyz-nss-cacert-3.131.1.drv
+  /nix/store/fqlhdxq1xcipjr58fmz5vicgn9gw97ns-source.drv
+  /nix/store/h85k6xdwwlq0vrarnp3bf8i8rr8x75sn-source.drv
+  /nix/store/anfk5fbd2qg01pxbwrwqn6pq9p9kwk6b-python3.13-pytest-asyncio-1.3.0.drv
+  /nix/store/ph88zywxv3qh5lj4whhaqd1zbf9jk0ma-source.drv
+  /nix/store/6n3467facb02vn21hif4y5043wna52yj-python3.13-pytest-mock-3.15.1.drv
+  /nix/store/dy3zc96k7d8qz68kccr6qi1bjmlhp5qc-source.drv
+  /nix/store/lzlqkpcjf5943bnzwbg3p741iygn9g38-07631601e6602bc49b8eac3aab9d2b35968d3e7a.patch.drv
+  /nix/store/nfmi59638ahh1kp1d0962cssw7wc0rkr-docbook-xsl-nons-1.79.2.tar.bz2.drv
+  /nix/store/yjf006b028n7iww4p61gb1ma2fj6swmb-catalog-legacy-uris.patch.drv
+  /nix/store/z274a5kzinwarkrdafv0dims1bbkifh2-docbook-style-xsl-non-recursive-string-subst.patch.drv
+  /nix/store/fwfyyhqldvcc7a271723iz0z54r66fqk-docbook-xsl-nons-1.79.2.drv
+  /nix/store/5prsm4q7vlivnr22vvs81jw6qi2gfakp-docbook-xml-4.5.zip.drv
+  /nix/store/mxicgj4zmh5bja8ngwg0x6jadkbjw382-docbook-xml-4.5.drv
+  /nix/store/kxyhdhqhynaz795sqqwa1zkcsy2cchln-docbook-xsl-1.79.2.tar.bz2.drv
+  /nix/store/nibxvigq5qqwx6va9scd9gk7w88dcxbg-catalog-legacy-uris.patch.drv
+  /nix/store/rmn4hr9k46z9dra5da1bkbzhszsdaf8s-docbook-xsl-ns-1.79.2.drv
+  /nix/store/bgc4av46r4lfcr3a8j6zbx41x719z8lk-asciidoc-10.2.1.drv
+  /nix/store/g34ycj8pf2fb42xqmv5z9cnnrxm4r8xy-source.drv
+  /nix/store/gnyalrv2k8idprb9qq37ynrhjqzh7zky-re2c-4.5.1.drv
+  /nix/store/lnbmnnyf0yf598s51svcdvx71kv2658q-source.drv
+  /nix/store/wq2k94awr45ll7sll1nnlmyz9jw1p9zp-ninja-1.13.2.drv
+  /nix/store/g36bm2wjwb93jw2f9nx78grqwk2f0dd1-gtest-1.17.0.drv
+  /nix/store/v8qpqi779li67prh9jqs50yybaq44m5r-source.drv
+  /nix/store/3vnpm4jhgz5990skyf7jir0ayihpg5dy-zlib-ng-2.3.3.drv
+  /nix/store/55kccn7c6sxs3fblhhq0xjh6fwz0755i-darwin-unicode-filename-fix.patch.drv
+  /nix/store/8f6yqif83348ys3cz3bsanzbl9kjxl48-getopt-1.1.6.tar.gz.drv
+  /nix/store/1fjhpvpwjzrswshdzg0a4n51nj8fa23n-getopt-1.1.6.drv
+  /nix/store/8niqikqsx6fnshmaz0xy7wy1f471dazx-uname.drv
+  /nix/store/dqwcq1hvda0r0adjxk1wjcmp68m9s22j-git-2.54.0.tar.xz.drv
+  /nix/store/k88dhxq0cwy4c08j769xrwxdpjrhyvzp-expect-gui--askyesno-failure-in-t1517.patch.drv
+  /nix/store/lv9zyghk9x6vsj4fy7gmgb0vfbqq2yvn-t7703-ignore-ls-total.patch.drv
+  /nix/store/6lrkj1krp6q47lfjbbka0804fmk2vyam-bash53-005.drv
+  /nix/store/8lrj48316ilyr02clvyqvcxai5fr4mfr-bash53-001.drv
+  /nix/store/abgb65n2zrzgzvpfrsik3vb9m69jjh54-bash53-009.drv
+  /nix/store/bhjxpagz5j393w09304bhi8gh824s2i8-bash-5.3.tar.gz.drv
+  /nix/store/fh48m8fwpjdisff4lc2dw53ackrxx8z5-bash53-007.drv
+  /nix/store/g45d7yh3kwyczgyz7ivlb2dlvi6brisy-bash53-008.drv
+  /nix/store/jji62r87n73yg70gpp0qhgm5416z9plr-bash53-004.drv
+  /nix/store/n1784nng278p3aqd6j7nn22bh1y56ddn-bash53-002.drv
+  /nix/store/ph0g695dz29d8laa6blplyw6s8xhf4gr-bash53-006.drv
+  /nix/store/x4bf9csq4sllkixsbvmlldindqjv6law-bash53-003.drv
+  /nix/store/8c3hlgw3hqvglg01h7a8hb30ig5sdy7y-readline83-003.drv
+  /nix/store/asdvwrjfajc24ra8pkfpqjk5im3f5s38-readline83-001.drv
+  /nix/store/kihh0k09mpiyh5cns6ivgp4l9a76dv6q-readline83-002.drv
+  /nix/store/q0wdjfb7mp28xxq4rln98jr3yyzaq6if-readline-8.3.tar.gz.drv
+  /nix/store/y1mdn2zykhzxl3gp2v66k7gggcc49kz9-readline-8.3p3.drv
+  /nix/store/ycs09rwqrl4bjv6jg3z307lwlpgwcg9f-bash-interactive-5.3p9.drv
+  /nix/store/1431586d9xwh9pbxqhb8i78j7m86nmp0-e230f474b87134e8c6c85b630084c612057f253e.patch.drv
+  /nix/store/spcxkjkrf55mj4l6zgzvanq8mqm2akk8-source.drv
+  /nix/store/8k6znj6k1gsc03g9fp0amicfrwhhw39k-brotli-1.2.1.drv
+  /nix/store/g1xnc96af2abhrsxn1gd8vg8s10f339n-nghttp3-1.15.0.tar.bz2.drv
+  /nix/store/q7aipyf6svaf3c01c7bgqrgn3y4ligy5-nghttp3-1.15.0.drv
+  /nix/store/wrdjqx3lf2mi0nb9s7m19bknhdl627i6-ngtcp2-1.22.1.tar.bz2.drv
+  /nix/store/24i5n7m24f9fmj80y8701wm5s69qw90w-ngtcp2-1.22.1.drv
+  /nix/store/9zdih4bbgqvhldy2qqma048ym8h04jlz-libidn2-2.3.8.drv
+  /nix/store/d4r63r24lqcja3m911vvi01063i0virv-docbook-xml-4.3.zip.drv
+  /nix/store/3knqslqkfbql300bxgm2iac2jncb77za-docbook-xml-4.3.drv
+  /nix/store/62sd2y3lbcf19zsa688khss5x1f9n0w9-static.patch.drv
+  /nix/store/yr3myw7hh225fmh49wyk9a6hxriqc2q7-lzip-1.26.tar.gz.drv
+  /nix/store/6r935prs3b6ibyi35fzqhwnp705zwyd5-lzip-1.26.drv
+  /nix/store/2lj91prz3hj1lyviwsykdw882wvyxjp0-setuptools-build-hook.drv
+  /nix/store/4vm5dy7c45f2skmi2xmc8nfadvk8sd46-source.drv
+  /nix/store/w70jknzk05i5ifn7kn2kdabc5z47cxgj-001-fix-rpath.patch.drv
+  /nix/store/5s6wm73740hfwjs0dbrciyx521jcy5c6-meson-1.10.2.drv
+  /nix/store/bn1n5ahllinfr0ay97vgpjmk1zlazcmk-source.drv
+  /nix/store/g0jbfjbg16zjxb26k6nbjblfl64havmj-source.drv
+  /nix/store/k5k7r45kwfs0djxg2r30w1xi6iz4lzpm-source.drv
+  /nix/store/w3ks6i713irifby1iyq40i0808nlk5fd-python3.13-cython-3.2.4.drv
+  /nix/store/if0zx8ffycbin898ys5sskrkyw4h37gl-python3.13-lxml-6.0.2.drv
+  /nix/store/dsrs7llldj7zfvzic2g03gkrv40sdvhg-gtk-doc-1.35.1.drv
+  /nix/store/mhnis5a536h0964vxl4mksf6c3cz9n7v-libpsl-0.21.5.tar.lz.drv
+  /nix/store/ri452dcfp7wr8a56h7f9kvabi513q3h9-libpsl-0.21.5.drv
+  /nix/store/z91rw1vallf67n1m44dv1g7ss2vf1g6r-curl-8.23.0.drv
+  /nix/store/f7405c2s8fjrm7kgz0pij1qrxzvppcq4-git-minimal-2.54.0.drv
+  /nix/store/0gccgl4wznzfji5i5yyw57dfzx6kqirg-systemtap.drv
+  /nix/store/0gfpxda5qm2gqpcjypblfqcxl4cf45a3-unit-container-getty-.service.drv
+  /nix/store/4hgii67fhci0srsnppj9q3bmcyrs0h0n-libevent-2.1.13-stable.tar.gz.drv
+  /nix/store/n9zhi5jzdkx6a7ikrf0h9xl0bgcw8l6i-883630f76cbf512003b81de25cd96cb75c6cf0f9.patch.drv
+  /nix/store/0jbpjmcyswq5hi1k7adqj0a1rdmx44nv-libevent-2.1.13.drv
+  /nix/store/g2qlf4nm8wyv2h0hzdcgs0bmb8sqmvzd-source.drv
+  /nix/store/0kikwj6klwlq0vj1c6wh48r10kjw9jp5-python3.13-roman-numerals-4.1.0.drv
+  /nix/store/35zavym8s9kf8c03fj3arsaif6y2qzhc-truetype-variation-handling-signednes-mismatch.patch.drv
+  /nix/store/axmlssibgqlk3i8854w1ap2x2inccgkz-libpng-1.6.58-apng.patch.gz.drv
+  /nix/store/wdz11y1wc7vc7n4d5fnnznynfvjc26q2-libpng-1.6.59.tar.xz.drv
+  /nix/store/66y8l58rjrjfji7y9g92hbagl17wvjdc-libpng-apng-1.6.59.drv
+  /nix/store/8mrwazm1w9yw62rxvcq6wgax16z4nc3y-truetype-iup-integer-overflow.patch.drv
+  /nix/store/dbbqj1qlk471hda6wmw1s44mim15aid2-freetype-2.14.3.tar.xz.drv
+  /nix/store/fgcbia5j09wmis3ah37bwica6gv24asy-truetype-shz-limit-heap-buffer-overflow-part2.patch.drv
+  /nix/store/l4hqqpnn1hgy5170hs05cqh56f5grjlg-ftobjs-formatting.patch.drv
+  /nix/store/ldd2n4iklk83bazmyw6fbgh11hf5839p-flatten-include-hack-hook.drv
+  /nix/store/qjkpril0rvlr6r4fkpk92jdky1j0qqxj-truetype-shz-limit-heap-buffer-overflow-part1.patch.drv
+  /nix/store/zc9znm4fvblgfyg4vy25294r0m41r0yb-sub-byte-bitmaps-heap-buffer-over-read.patch.drv
+  /nix/store/8cy7c5knj32j8ry8qar4cvpsay0jwkv0-freetype-2.14.3.drv
+  /nix/store/aqs361xw4bf4ai1v9294z5a4p0k7xb10-version-check-hook.drv
+  /nix/store/akg1r25vi5ax2zpi7w9vbjks9sv6wlsv-IO-String-1.08.tar.gz.drv
+  /nix/store/j44wnjji2112mik66hvwv9s28sqxscqs-perl5.42.3-IO-String-1.08.drv
+  /nix/store/lzg2gby8gjya8r2j9cryaim5x6khqhrz-Font-TTF-1.06.tar.gz.drv
+  /nix/store/96hj74vj36s54kzw1cx2yi1qs3wb910d-perl5.42.3-Font-TTF-1.06.drv
+  /nix/store/amhqc0cph5j8hcq1q9fwrj67a5pxpgw0-source.drv
+  /nix/store/5d4psizaa2zz45kdqhdw71qdsp503g61-CVE-2025-15269.patch.drv
+  /nix/store/2vclpxdvq7m7hfcvmivsgdgjcpd7b2av-source.drv
+  /nix/store/5ns5vwl78msjpbrlpm3y7yi6gq7yq83h-zeromq-fix-cmake-4-2.patch.drv
+  /nix/store/9zlra4nhff9s4df8jsc71spvsxjhxccz-source.drv
+  /nix/store/ykwyfj5qi00z0zwl0r8m8kwpkllbhgny-source.drv
+  /nix/store/kvrxqi1wws8ydrp3c4znsn93izwh9ys9-boehm-gc-8.2.12.drv
+  /nix/store/6f4v8rzhj2jmdqbskxpa334g0wdfb29w-w3m-0.5.6.drv
+  /nix/store/kxcj50hnfrwazly75mknxr4kfs7q39qx-xmlto.drv
+  /nix/store/b3i0r24yrd8bqn1ni241fbfjybk8s3a4-xmlto-0.0.29.drv
+  /nix/store/gc0qg709x8zld5b7kgn0f1lyddgh38sq-cacheline_undefined.patch.drv
+  /nix/store/rwqjalm71rf29wk59450x9844by4wkzf-zeromq-fix-cmake-4-1.patch.drv
+  /nix/store/h3k94xb61ibayjgbza5jbn1xk56r51f1-source.drv
+  /nix/store/wz5f8d6rymj1zp62n8dw62wmiaagpdwp-libsodium-1.0.22-unstable-2026-04-09.drv
+  /nix/store/71mxzlcjpljqbih88gw97sxnm4qw2lva-zeromq-4.3.5.drv
+  /nix/store/19bwkyvkr6i6frdgdja950h4vkj5i35l-bin.drv
+  /nix/store/xwr6rxbxyxq0gr9kw44vac54i4m07dqk-python3-3.13.17-env.drv
+  /nix/store/d22nkklg55drhlfm8clm4chhi8qrg8ff-set-python-sys-path.patch.drv
+  /nix/store/8jpmqmv3hb85lzrzj4pwa20d63bjynr8-source.drv
+  /nix/store/gkvqjya6q1nckjihic4rr4a8kl1d2svy-woff2-1.0.2.drv
+  /nix/store/j1d0qfd24y7q8c03z9wzakdlsr12m8ww-CVE-2025-15279_2.patch.drv
+  /nix/store/nbbjzh3bal2ygfhf2nhh0wlvl7p9b42i-CVE-2025-15275.patch.drv
+  /nix/store/qw482ijrjizi3dfm8nzpy928585jxfad-CVE-2025-15279_1.patch.drv
+  /nix/store/83hhxzcmn71gd90f9gmapbwi25kvq0fv-glib-2.88.3.tar.xz.drv
+  /nix/store/zqk8isa47sj0hs4yddwxjzwd912dxnzl-sysprof-50.0.tar.xz.drv
+  /nix/store/bazx2f6ndifiavr4psy9gn98751vpnn4-libsysprof-capture-50.0.drv
+  /nix/store/50kkjlgcwgacyfcxrljc0hmp45ksp7ib-fix-aarch64_fregs.patch.drv
+  /nix/store/7512im02asq200kcmmmnyx64y4bcaf3p-sqlite-src-3530300.zip.drv
+  /nix/store/ba6zqivf8jav0j8rx62lqsgsyf37cnfr-tcl8.6.16-src.tar.gz.drv
+  /nix/store/9hm9dr6axjfw2np6l1l1dxwajfhkqrzh-tcl-8.6.16.drv
+  /nix/store/hwdjkvpwrbdlr7p8rchds6vry7ykl2x4-0001-sqlite-testrunner-communicate-test-failure-to-make.patch.drv
+  /nix/store/lfs3bqarm3vq97wg7r42ja69hglckx2b-sqlite-doc-3530300.zip.drv
+  /nix/store/qzbc04867nk4h8al4p4dz1kiv9yfz7jg-sqlite-3.53.3-fix-fts3corrupt4-test.patch.drv
+  /nix/store/5dcphnl25njibh46bbabx7h6wjjwlz1x-sqlite-3.53.3.drv
+  /nix/store/0plfgc8fa529n4w55y152bdc966y2fmg-source.drv
+  /nix/store/5r1cbyywilp16kfqx5gvc7z39s9drrym-nettle-3.10.2.tar.gz.drv
+  /nix/store/k38mg4kh0smd2aiamw2ky7c2yj038cyy-nettle-3.10.2.drv
+  /nix/store/a0np6r0j2gwnvqrrdg7kbhhggw67nb7h-help2man-1.49.3.tar.xz.drv
+  /nix/store/rhgq24wr73s85fppmkf22klxhczksb47-gettext-1.07.tar.gz.drv
+  /nix/store/mcngjd82pp17n72mjz2jp0hynry4dica-perl5.42.3-gettext-1.07.drv
+  /nix/store/5x3p2xhhgxsw8afai0dygk61822640wx-help2man-1.49.3.drv
+  /nix/store/agrxihcdz8ni1mc2jyccw2ancwrk4a7l-gcc-15.patch.drv
+  /nix/store/fgs6mizbph4wp4jn52nqiq40a8qbaq9w-flex-2.6.4.tar.gz.drv
+  /nix/store/ymc5krjp55r8s3nrqa5yxj1mabsa6115-glibc-2.26.patch.drv
+  /nix/store/ry6djzipigxhmr5yyr93zndwjzyhf0a9-flex-2.6.4.drv
+  /nix/store/6l4ldzxvpwvbgnsfx9g8ygp6cspazmfy-unbound-1.26.2.drv
+  /nix/store/8lclm9asycp867pxcdd7vnp6ia9mnrwl-util-linux-2.42.4.tar.xz.drv
+  /nix/store/7qyhzgqkgyklxqnj4wrl6ind3k4s7xi7-automake-1.16.5.tar.xz.drv
+  /nix/store/g2amrdqngv0q8dqcw23akgls00a4nsjs-automake-1.16.5.drv
+  /nix/store/ch9c3ywg4ic7pvba55p0nqvansjb9q36-source.drv
+  /nix/store/3wbyn48vafycmidj9zrdhpnja4h5h69n-swig-4.4.1.drv
+  /nix/store/y1is1yw7g2gm7xvfid3627n59q4ys7v5-source.drv
+  /nix/store/zr241lcr0szf9cinc78nn01rsqk7ifdw-libcap-ng-0.9.3.drv
+  /nix/store/gvz5cnzd2d98w9dqzn7dbcyiyhcwpakb-util-linux-minimal-2.42.4.drv
+  /nix/store/wapbnvmvqskfwqbxscji7wb9sicdq85a-libtasn1-4.21.0.tar.gz.drv
+  /nix/store/gw3r49n0sppiawvf6v38i60v9wndirk5-libtasn1-4.21.0.drv
+  /nix/store/54k8qqn775pl3wvq096v0pqnvi4p0j7w-net-tools-2.10.tar.xz.drv
+  /nix/store/kmbk7ac5bx2n9j4h849zsskdzknpqjvx-CVE-2025-46836.patch.drv
+  /nix/store/jbl5zaqxrchkwsvg1dnhkly4xhnsx8cb-net-tools-2.10.drv
+  /nix/store/nw85a3gy749jqf4ci6nmgk16wbvrpgll-gnutls-3.8.13.tar.xz.drv
+  /nix/store/1n7s26bnidxzjvql2xbzv4739xpyhxrn-source.drv
+  /nix/store/1zjxl3lw3cfs8za0gl26z13fwzd08yij-expect-configure-c99.patch.drv
+  /nix/store/9kvhdhif7dmgf27xyk6473inzqb2m9w5-tcl-package-hook.drv
+  /nix/store/fbjgn0cjqypbkv2akhyvk3ym24yg6ra5-fix-build-time-run-tcl.patch.drv
+  /nix/store/ggsg48yzrz6wk9n2jfznjar0sncqmnvs-0001-Add-prototype-to-function-definitions.patch.drv
+  /nix/store/x0b1q9s5hr1vnrzi3yqmdxik1cam754k-tcl-requires-check-hook.drv
+  /nix/store/yjqyjyrhmijipb02giy7q6dmc2f9zk7b-expect5.45.4.tar.gz.drv
+  /nix/store/gj0v73z5q7a6l5mn2g23bff1qqrdq5sa-expect-5.45.4.drv
+  /nix/store/rpjz4xk075vlnhy4p5fk6srb7rfwwm8z-dejagnu-1.6.3.tar.gz.drv
+  /nix/store/7ds3s3kxyp9j1vz29lhaqgma30b1n0fs-dejagnu-1.6.3.drv
+  /nix/store/n1rp9rgb6bjziwsh8r8fvp4ip8iyb3yp-libffi-3.8.0.tar.gz.drv
+  /nix/store/wsvxnhcw2l22v5bgr2q6crh6hs17rmw1-libffi-3.8.0.drv
+  /nix/store/szpbkk01s5imxc7dx916gqvnsddnjj38-p11-kit-0.26.2.drv
+  /nix/store/0zxksgvx8vibgjl43m3ra0y7pwwfy3dv-gnutls-3.8.13.drv
+  /nix/store/kavrhvvii2pkf8m0f7x3z7kwawcwy0iv-libmicrohttpd-1.0.10.tar.gz.drv
+  /nix/store/j8layrmy6cpr1nk9jmabdyp4i31m29kj-libgcrypt-1.12.4.tar.bz2.drv
+  /nix/store/mm8y11fhpd7kcr5aa2nhjh7hki58l024-libgpg-error-1.59.tar.bz2.drv
+  /nix/store/raqwdflqirgqmvsks8b0xhra4f31r2ks-libgpg-error-1.59.drv
+  /nix/store/r5m9pjiqp8vwd8fhjr4f72bw8rjlnhvb-libgcrypt-1.12.4.drv
+  /nix/store/fs64xwpqr1n82vhfsl9l6n9a9k1g7cfr-libmicrohttpd-1.0.10.drv
+  /nix/store/gsmp54jp8sq93jw6m4pgq7ksmpc06b1h-setup-debug-info-dirs-hook.drv
+  /nix/store/i62xf0h4cf64sd0w0w7x3waqn8bh9bjk-elfutils-0.194.tar.bz2.drv
+  /nix/store/k67vmnnxy6r5cb45hqz7m02w1lrgg7ia-musl-macros.patch.drv
+  /nix/store/majyy9bhzrg4sf0hf3xd35287f7x4f11-musl-asm-ptrace-h.patch.drv
+  /nix/store/w6fnpar9mnjwir6lhl9nclcxfd3w5a6v-musl-strndupa.patch.drv
+  /nix/store/ydsd0vcswdpnzynrl11c2sd9pca70xy9-fix-aarch64_attributes.patch.drv
+  /nix/store/cvvdjxcbbcdks08sgv6ipg7rf2r732a7-elfutils-0.194.drv
+  /nix/store/3mjdh04rgzh0slp4sd203gdzjl5bwj9l-libselinux-3.10.tar.gz.drv
+  /nix/store/hvd6rrrn6r1yhwphf27rx8pgf84cxfcd-libsepol-3.10.tar.gz.drv
+  /nix/store/a18xv166ccd1pf2vdvnz5hn42iklh59n-libsepol-3.10.drv
+  /nix/store/azb6zvvr14cqfs2bfvlwqr5igsylfsv2-0003-libselinux-restore-drop-the-obsolete-LSF-transitiona.patch?id=62b9c816a5000dc01b28e78213bde26b58cbca9d.drv
+  /nix/store/hlf2xp0xs0lzk3mikq8q9lhc0k0cpkbb-libselinux-3.10.drv
+  /nix/store/wjwf35mriki3x9grljlw4ldpr48yaar2-icu4c-76_1-src.tgz.drv
+  /nix/store/c5lvy3nv5gdp7cnvcb0cykqizgili5bm-icu4c-76.1.drv
+  /nix/store/yd5h01m0nzdf3dzc8w35giphmi1gairg-boost_1_89_0.tar.bz2.drv
+  /nix/store/gbyvznh0dbq1qwhn7mfx9ipp8gkr66f0-boost-build-boost-1.89.0.drv
+  /nix/store/l119ilygiiri7pmm4pxf5zh8ncc7ic23-boost.pc.drv
+  /nix/store/ndkn5p1w46dmfaajwindyzwsri6x8jpq-0921b9fd5c776aec7748475c6c10807e0d51bc6d.patch.drv
+  /nix/store/qsc7pmlgn80xas6g0nw0njaaiprwgiyw-5883212311535a0046031d74d1568ae173c1e35b.patch.drv
+  /nix/store/x5ir0aaf5crcaf7n246hcm7yv3f5s20m-copy-pkg-config-items-hook.drv
+  /nix/store/r6jshwgj05qj2qvilk6mzja1l9qs8f3l-boost-1.89.0.drv
+  /nix/store/89iv6964njaixdds495a8andcik88nj6-systemtap-5.4.drv
+  /nix/store/yjbqa5gppi8mzl2krc6fqn5qa8h1vin9-source.drv
+  /nix/store/vha212lghbi21blwrfhi279bj7dnpf44-python3.13-pyparsing-3.3.2.drv
+  /nix/store/p8av933m64gnh633m2jcylzd0amj7903-systemtap-5.4.drv
+  /nix/store/cgdcdb5lyj69gm6rkdrdhl201krqy6v1-systemtap.drv
+  /nix/store/qf4y1kja9bm61gf7p9khdli1045k7jrv-libsystemtap-5.3.drv
+  /nix/store/y7nyv49pr7smvrlyiikc0zc7x7spf8nn-python3.13-docutils-0.22.4.drv
+  /nix/store/47v5dvhqd61a4x28557qcly4k7vxaj9l-glib-2.88.3.drv
+  /nix/store/8gar6vs7g61wzwqc4zz8a5021rrf1nyc-source.drv
+  /nix/store/70ssr9i71q8ln9qmh60p4dcs804px27q-python3.13-markupsafe-3.0.3.drv
+  /nix/store/7vxsm7ir4jc5bh4jmppkxmlwbcrszwj2-source.drv
+  /nix/store/15pj2l50msybjvm8dp60kjj1p8war82i-source.drv
+  /nix/store/jzkhh7azil0mhniha3cfcz7gzmg0yljx-source.drv
+  /nix/store/n3fbgblzpvyvrhajhq5yfjbv6fy1dxh3-libyaml-0.2.5.drv
+  /nix/store/b2mxh1qpbp90hzkq861w7j59b1nxhy5n-python3.13-pyyaml-6.0.3.drv
+  /nix/store/aydf4998zgvqh951jkq4kb859ka456dh-python3.13-markdown-3.10.2.drv
+  /nix/store/r9w9hkyhrzbg2pdws917xnkvv49sy7f1-pytz-2026.1.post1.tar.gz.drv
+  /nix/store/20cqi81bls0mk5ix0jsr9nvyc6ccp34f-python3.13-pytz-2026.1.post1.drv
+  /nix/store/3hip2y9p34jfxa6a7b52jyn1bvdk6c55-babel-2.17.0.tar.gz.drv
+  /nix/store/75zmzi1b8lvmffvwrl9bmz2dddxgnyvk-glibc-locales-2.42-103.drv
+  /nix/store/pgxwpi0ji2mcagqw1iinrq518qdbl9i1-source.drv
+  /nix/store/2mak19w6g1bc4l6zg64slfzfdjf8b310-python3.13-six-1.17.0.drv
+  /nix/store/lqbfiwwd7qvnqr3pwiar4743azp6131b-python-dateutil-2.9.0.post0.tar.gz.drv
+  /nix/store/qa4sdnylg8hp99czyyal1wwdaxc03fhf-python3.13-python-dateutil-2.9.0.post0.drv
+  /nix/store/xz48vd1mkdyyrh8bvispkmf4mv27sawk-freezegun-1.5.5.tar.gz.drv
+  /nix/store/n3v6znflyyk94wh2hq883d8myglbjl7f-python3.13-freezegun-1.5.5.drv
+  /nix/store/0sgp7ngf44sn25lj0p02fbp330kwd9dw-python3.13-babel-2.17.0.drv
+  /nix/store/hhq2pafcdkhlcgz39k0wa3jkcj9qzx8m-source.drv
+  /nix/store/cv4nyfwyif30xlhaxjdr3jz4l4677gj0-mock-5.2.0.tar.gz.drv
+  /nix/store/x1q9c88a746p1l0lw04ph5za3lld7zdj-python3.13-mock-5.2.0.drv
+  /nix/store/mh0vrdmd1cz82nkrsmn2qdyc40d5q1z1-source.drv
+  /nix/store/91xrkalfgn7mmbvhzv5dj1f3sgzys8x2-python3.13-click-8.3.1.drv
+  /nix/store/49hbklymkahyd68m7m6aa7fsmhclr3qc-polib-1.2.0.tar.gz.drv
+  /nix/store/d6akkibfgmfbjd690mam76dg8p0qqsnr-python3.13-polib-1.2.0.drv
+  /nix/store/rl3rcilkhhjxf2k3ksl2j1a83mw97rzn-lingua-4.15.0.tar.gz.drv
+  /nix/store/xi2cigvidh6wnip09pzkjdzcyalw4nbp-python3.13-lingua-4.15.0.drv
+  /nix/store/mk0bifckhj12kds54spkf4h86zmilzcp-source.drv
+  /nix/store/xm6d9ps0ik6khr7ji62mm2rxrxbj6sin-python3.13-chameleon-4.6.0.drv
+  /nix/store/f3sz190gcr8pj0k8jghxqcvwslbmgdl5-python3.13-mako-1.3.10.drv
+  /nix/store/cnh5317fsicq0jd01bplx6ml7l331bd4-python3-3.13.17-env.drv
+  /nix/store/31pb6w5gigv63w3k5ny3vdny31cbril6-lndir-1.0.5.tar.xz.drv
+  /nix/store/lmn2fhkr0anpxvcs82sgpi9cw6yn2qkr-lndir-1.0.5.drv
+  /nix/store/n531wd151813vgwi16s5f3y1r1yakmym-absolute_shlib_path.patch.drv
+  /nix/store/zv9qh8wb3l1m6nrlj6zd7nplkl476w2s-gobject-introspection-1.86.0.tar.xz.drv
+  /nix/store/s9chrxanh85i1a2y6vyr241kwgisdxwj-gobject-introspection-1.86.0.drv
+  /nix/store/5xd8mhiy3mrfkkx91ncjjx9hqg5cxz2f-gobject-introspection-wrapped-1.86.0.drv
+  /nix/store/bm9jh8igm55f9486np0kzm45ncjddk67-jinja2-3.1.6.tar.gz.drv
+  /nix/store/gpny3p7mpz7795pyhlig4cds7l4aapji-python3.13-jinja2-3.1.6.drv
+  /nix/store/i037ayx53hiv4ffn8b2c98fxg63z4l18-gi-docgen-2026.1.tar.xz.drv
+  /nix/store/hxnhgp5ms8jynsgqjm8pnin07qf7jx4s-typogrify-2.1.0.tar.gz.drv
+  /nix/store/496hz3wdxfaa2ncr6jbz48k9bx09nvgy-source.drv
+  /nix/store/nl8srxbx96jrgvc7zljbhy4ncdhgni2z-python3.13-smartypants-2.0.2.drv
+  /nix/store/sv1r6xwwnqsfl79da7p46rkd7naxb09j-python3.13-typogrify-2.1.0.drv
+  /nix/store/i8587jmqrkggpg6k4yjf7c882dzcfssz-gi-docgen-2026.1.drv
+  /nix/store/sxfcjc91f8nqvm88hhqpacw7wkqy1wx2-glib-2.88.3.drv
+  /nix/store/4cncibk4zrq0wpbj3f3ya6f3pqvv4cs9-nasm-3.02.tar.xz.drv
+  /nix/store/dawafsr6byqmzafhy3iqx6l57hxfr70z-output-oob-fix.patch.drv
+  /nix/store/jhkkdl1fbqfa71l4f3d85zsrxzpr61r8-nasm-3.02.drv
+  /nix/store/vpz0bkkwpz6rmia7nbrc2ifqvkck64z4-source.drv
+  /nix/store/vl4g9s17swf95wy5cvv47x7c57skgzqp-libjpeg-turbo-3.1.4.drv
+  /nix/store/xs78h7wsl7mdg43zxyng7bgj82v96nkr-source.drv
+  /nix/store/lfbr4i8zyyn343c77w12bcznwvsqan41-source.drv
+  /nix/store/0xwlzzalvql3akj0d3sdjhijgnn7w0x4-libdeflate-1.25.drv
+  /nix/store/r7rw3msci16ri18d14q8pmyzrqh8cnbv-source.drv
+  /nix/store/59n6qfpjkk7dclxbf0pff6bbqkjddglh-lerc-4.1.1.drv
+  /nix/store/0mjc96hp5ijg5gi2vbmlkw0xylnv9vmb-0001-libwebp-Fix-endianness-with-CMake.patch.drv
+  /nix/store/mjlzlma323g8b4k3zna23wghp81wasxl-source.drv
+  /nix/store/4r5yv6fxfxpmjvfcic40y5c8pm8znaci-giflib-5.2.2.tar.gz.drv
+  /nix/store/zs1x056f7a97gm8f64am8avi41h2qk57-giflib-5.2.2.drv
+  /nix/store/cyydip3s9mnwhav721ikklib4plg232v-libwebp-1.6.0.drv
+  /nix/store/5apms3h0m3m7rwmmm9f2p516yrlf11sv-source.drv
+  /nix/store/fss1shg49xjvgfsk6gymzx61khly6pbp-pytest9-compat-2.patch.drv
+  /nix/store/v9kmh61hsv1d49y9s6x3vpsgzqb0sxk7-source.drv
+  /nix/store/dqh115zy91z72mr32p1m1n8n902pxbh6-python3.13-pycparser-3.00.drv
+  /nix/store/sd8kq4lfb6ka8mp6gmjxikvjqd3mwwsd-source.drv
+  /nix/store/4yviljxxkdc838w27gqqr6k3iwq86g1h-python3.13-cffi-2.0.0.drv
+  /nix/store/3as142yg369q9p5w5xyfc625pygnw3lk-source.drv
+  /nix/store/bq3qzbrqi3d2qxjh71mpkzkw39n95aw2-python3.13-zipp-3.23.1.drv
+  /nix/store/dnsgjpjik8r130v8f252bd0jqsn3n5yj-importlib_metadata-9.0.0.tar.gz.drv
+  /nix/store/ciz6srhvr3mx4592lpbygw6mq99zg557-toml-0.10.2.tar.gz.drv
+  /nix/store/j3qifdnfh4lhhwkka74vqxw34gickpr7-python3.13-toml-0.10.2.drv
+  /nix/store/8vpphb9wx6inghr7xyk9w3rk8yp84642-python3.13-importlib-metadata-9.0.0.drv
+  /nix/store/wd8k2vqc8n6wlpvpxgy4j9g6b54kc4l9-greenlet-3.3.0.tar.gz.drv
+  /nix/store/jpqp39inj9d7mls6cchvnb88wr98n1if-python3.13-greenlet-3.3.0.drv
+  /nix/store/pxa26ga8k80b1ll360fpm9p0fm90iibb-gevent-25.9.1.tar.gz.drv
+  /nix/store/yg14vlaql3fqs5bqm8mqh9h540i20rix-source.drv
+  /nix/store/q9pablkc475jb8c9ys7sivqz4s9i5m13-python3.13-zope-event-6.1.drv
+  /nix/store/fwfl8pbw5k4nmr2cj2vxg89a8w1frd0n-source.drv
+  /nix/store/w39kg2a6jc96ivnk6zx4avihg8ynfrxi-python3.13-zope-interface-8.2.drv
+  /nix/store/0ywhrq8s9ncxdvadwzl4mixagax2bd16-python3.13-gevent-25.9.1.drv
+  /nix/store/gc09wwblhqxcaihcngx0cbff0vcj4i3j-hatch_vcs-0.5.0.tar.gz.drv
+  /nix/store/32z6njv93ndmhsnlvjglczly6q4gxwi0-python3.13-hatch-vcs-0.5.0.drv
+  /nix/store/8d3jxfj01wdpjs08wplbc3d4cmyqghpc-execnet-2.1.2.tar.gz.drv
+  /nix/store/kfq8fpg0bnyccsz11zzfvdzxvd1ys2vb-python3.13-execnet-2.1.2.drv
+  /nix/store/81q7b9c5hd2lxq71jpq1j9xl2ys3bfi8-filelock-3.20.3.tar.gz.drv
+  /nix/store/b5kqgs9gbi7gdms6yya0k9j5qp4bz53a-source.drv
+  /nix/store/9yrq4nl69xlwjkccslpxyrb255whj7pq-pexpect-4.9.0.tar.gz.drv
+  /nix/store/5rfhp6pbab5xjrzhl8vyl4zi0cif92sq-a44312974bd9084aa568d2e18ce5b2a7e0e45983.patch.drv
+  /nix/store/870kyv1w8hx6aasw5vkplpnp42v7azrd-ptyprocess-0.7.0.tar.gz.drv
+  /nix/store/98d9k3p94l6ndw2nbf38q2s4jnv2v55w-40c1ccf3432a6787be1801ced721540e34c6cd87.patch.drv
+  /nix/store/l704f72bhvkf0y7gf7y5p1r7jynlqnhm-python3.13-ptyprocess-0.7.0.drv
+  /nix/store/d74rvk3r7nrvxrnli3kzy7dsb84s95yg-python3.13-pexpect-4.9.0.drv
+  /nix/store/rkad8jqz7w7q8wzjmw871cbhjllp2im5-python3.13-pytest-timeout-2.4.0.drv
+  /nix/store/lagx0jjxkjcllj1bj0lslml0bfwa28ml-python3.13-filelock-3.20.3.drv
+  /nix/store/yqmwqcs971bvic2qdh7ff70pdzy5k4g3-pytest9-compat-1.patch.drv
+  /nix/store/4wnbv1j5nrr5qfk067lbpffkl0qpjncn-python3.13-pytest-xdist-3.8.0.drv
+  /nix/store/7aqbnbwzfzw8lh6a6wvb335ypvzwdnhg-sphinxcontrib_devhelp-2.0.0.tar.gz.drv
+  /nix/store/5g12jb07l30ywkv0vaa1gldzk9p9awg2-python3.13-sphinxcontrib-devhelp-2.0.0.drv
+  /nix/store/8da9py6wf4yqpgvm2lqpdjjklcxvki5p-sphinxcontrib_websupport-2.0.0.tar.gz.drv
+  /nix/store/fm66bmxmz2s71pf5mz1pwqzn34p53n4i-sphinxcontrib_serializinghtml-2.0.0.tar.gz.drv
+  /nix/store/nzqwh9q93fgp21qfc871gc6zmvfrqrwy-python3.13-sphinxcontrib-serializinghtml-2.0.0.drv
+  /nix/store/anbkb07cx9kjxnd1qwxxph8xkcf49ab6-python3.13-sphinxcontrib-websupport-2.0.0.drv
+  /nix/store/avgf3qab26vrcpaa5q0gam7y7iwgghy1-source.drv
+  /nix/store/7bhmfhpdl0wwfp9l43b5m0yqn3ril69j-sphinxcontrib-jsmath-1.0.1.tar.gz.drv
+  /nix/store/c3z14d134gi0skvp5zr8cz8lxzjkl16i-python3.13-sphinxcontrib-jsmath-1.0.1.drv
+  /nix/store/c0sg604pwnsnygmx7p50f21czrldk3pk-source.drv
+  /nix/store/48wivsw2phgpi31g694zazxfs2q3saxa-libstemmer-2.2.0.drv
+  /nix/store/x6vwx9s5s5lrcxlfb4rjpijl6jmnmqf8-source.drv
+  /nix/store/14psnchxplysdw74p1hih8wxsqlbsdp4-python3.13-pystemmer-3.0.0.drv
+  /nix/store/h2scx86hp7ryg1g72vy3kvwgcchbsgw5-snowballstemmer-3.0.1.tar.gz.drv
+  /nix/store/cf5m2k7k5wfy00gfnxazxxsmzxy1ch5h-python3.13-snowballstemmer-3.0.1.drv
+  /nix/store/a8xd8pl5351lr63y5rxl0dhil0g73r38-sphinxcontrib_htmlhelp-2.1.0.tar.gz.drv
+  /nix/store/f0na3ds80lwvga8sa3wsy3bpjjcq0662-python3.13-sphinxcontrib-htmlhelp-2.1.0.drv
+  /nix/store/hcjcqar4s6gg0l8bdj64iv4akgi668n6-writable-tmpdir-as-home-hook.drv
+  /nix/store/qpbqndj614h6vsr0s7h9zhr3wf45q1nz-sphinxcontrib_applehelp-2.0.0.tar.gz.drv
+  /nix/store/hhfj5bn3dp9dj9jfv84pzyb9zdhbr6yh-python3.13-sphinxcontrib-applehelp-2.0.0.drv
+  /nix/store/bgx71j9i8cngv1m1qcmxjla9kvfv33lr-source.drv
+  /nix/store/jk2b8pxdd37pg8j8127nivpfp9j8a78w-python3.13-defusedxml-0.8.0rc2.drv
+  /nix/store/362ijmy9zbnhc47akp3is64hfidr4b3v-sphinxcontrib_qthelp-2.0.0.tar.gz.drv
+  /nix/store/k2glw04zcm0cqjmb65kis8np6gy00qip-python3.13-sphinxcontrib-qthelp-2.0.0.drv
+  /nix/store/kzj4w4pkfwkjh8604mkqqh31qjcj3h2b-imagesize-1.4.1.tar.gz.drv
+  /nix/store/mccrknwc1bklqvp92c4fw13x0bxqp22i-python3.13-imagesize-1.4.1.drv
+  /nix/store/r11vrs2r08hxay32zpgi2z7xn5hii244-source.drv
+  /nix/store/mnq7mjf4qzz2kr0s915jl5kdbf19nlhi-python3.13-alabaster-1.0.0.drv
+  /nix/store/68ly9iq037zsbais79mphbq4whvv6plw-python3.13-tomli-2.4.0.drv
+  /nix/store/h6m1wjxyjhzkq2h1p7x5fy03fxm4jynx-source.drv
+  /nix/store/5xhds6k8g0pawcpx71kqlxd5g286k5b0-source.drv
+  /nix/store/l6ivc4ffc1xjw516f0zn128b05lkd7as-python3.13-mypy-extensions-1.1.0.drv
+  /nix/store/1w7a4g2c3jmr8j3gc3v6pwl0lhsxy77h-source.drv
+  /nix/store/jqvck17l4f38ih7lvcc5skrdyk584a47-pytest-instafail-0.5.0.tar.gz.drv
+  /nix/store/k5107shlmbaqs2h6vxrify3x2kxpca8b-python3.13-pytest-instafail-0.5.0.drv
+  /nix/store/q07c0cwn7wx64cj8lfa6z8imy1mvs6k2-python3.13-psutil-7.2.2.drv
+  /nix/store/m26vp7i1fm24pc5i4rmpq8f3dil83gnm-source.drv
+  /nix/store/rz05pskklfda97a8j4y580rg24iyy64c-python3.13-librt-0.9.0.drv
+  /nix/store/a25rd63w7pv42h75gci44zcxdina41rj-types_psutil-7.2.1.20260116.tar.gz.drv
+  /nix/store/svfabvhhglwg0lbmc528nmnqxpi310rq-python3.13-types-psutil-7.2.1.20260116.drv
+  /nix/store/zqkalyzs0mfzlxf53cf383xfbjvxdy02-types_setuptools-80.9.0.20251223.tar.gz.drv
+  /nix/store/xg0cx18pz1y1d676k0vjn5yvc3p4lwim-python3.13-types-setuptools-80.9.0.20251223.drv
+  /nix/store/glig5wrh1jkf50rrcx47aka0pp3yl2c0-attrs-26.1.0.tar.gz.drv
+  /nix/store/wkn816d9f4b1kxvm6ys7fpr0pn8ygnaf-remove-hatch-plugins.patch.drv
+  /nix/store/ympnhrijmjwqmqq659crk5scf84v4xjx-python3.13-attrs-26.1.0.drv
+  /nix/store/60anv37mh0bicd0f2zi2wj3dbv9yjs7y-python3.13-mypy-1.20.1.drv
+  /nix/store/r6z78lm3yh3x7ppmq6g296z35y0ygspw-source.drv
+  /nix/store/1a47qxs9k1b55mkz5mmw8cg8cx73l3vn-python3.13-charset-normalizer-3.4.7.drv
+  /nix/store/5h5idkkidxs79cp42v1zzvwkjzi8nlwh-source.drv
+  /nix/store/9c98n39jsngfrw7zk9f1z3pc6amxmafj-source.drv
+  /nix/store/9kgfpw81hpgqiyxnrbvd3504b35scrmr-python3.13-certifi-2026.01.04.drv
+  /nix/store/iy7304dh66vv3cmm9xna0lyv0pxjkg7y-PySocks-1.7.1.tar.gz.drv
+  /nix/store/cka532vr02rdm1m56lghf36mjv45w00d-python3.13-pysocks-1.7.1.drv
+  /nix/store/vh629q0kgg0a97gxj8p4jjr7g96qpn1n-source.drv
+  /nix/store/n98v3qra36camdyy60c2hq608wz41z3m-python3.13-idna-3.15.drv
+  /nix/store/9bmpm26ga64jczp5cb194fdlzgp6aq12-source.drv
+  /nix/store/whbb8d7dphyxkijkr1cjzr9dfygrm2fh-python3.13-urllib3-2.7.0.drv
+  /nix/store/nnjbd3yhs9qqz8vamhymfq112y6cgq5x-python3.13-requests-2.33.1.drv
+  /nix/store/qh0gb6nzpzwpp84rpds86cdnvzqlflr0-python3.13-sphinx-9.1.0.drv
+  /nix/store/wwpdhxdih14vmbsh28kbllfr2sbzb5yn-source.drv
+  /nix/store/yzvl9d6bbkp30qpsqbdnm2xfpav2v58d-libtiff-4.7.2.drv
+  /nix/store/gf13s97y44gbrd3rrp0g96li6li7lw23-fontforge-20251009.drv
+  /nix/store/dsxn4afs3wpr178i2wa79n2n4b64vny4-dejavu-fonts-full-2.37.drv
+  /nix/store/cv8yqk57b5rlpb0dl6xqrms175riiad0-dejavu-fonts-minimal-2.37.drv
+  /nix/store/y0276aqi384s5ch5pw9wgav9zy8l6q8k-fontconfig-2.17.1.tar.xz.drv
+  /nix/store/8ay2bbwgj8fjc7ivva83sc0s49vvl17g-gperf-3.3.tar.gz.drv
+  /nix/store/zwi174klks51pgi61zyqnx5n01h0i8l1-gperf-3.3.drv
+  /nix/store/4pak6z84w5aj87qflcfrdb0qc1i6frm7-fontconfig-2.17.1.drv
+  /nix/store/67acppqybzd70wak7wzhaldyjix9wg3y-fc-53-no-bitmaps.conf.drv
+  /nix/store/79qm7sxg6bpjbyq6kgfjwp92qgyxnv5y-fc-53-nixos-reject-type1.conf.drv
+  /nix/store/9ppw48pw9jwpw94flzcba9ybkmxgi14z-fc-52-nixos-default-fonts.conf.drv
+  /nix/store/cl11fm56bdl41mq6bbh88y8prh03lq7w-fc-10-nixos-rendering.conf.drv
+  /nix/store/73zc54nphkrr09qz4mryn08rqmqml1mf-font-dirs.drv
+  /nix/store/fjn8aal80l4h24s006vlgjkcqm53krhb-exec.drv
+  /nix/store/w7q02bdz1j6i30ka2ah8v6qcdqs0mq0x-fc-cache.drv
+  /nix/store/v0xn1skhdnn9gr5w3wnmcifmdzh38dvq-fc-00-nixos-cache.conf.drv
+  /nix/store/8y3q6xglxikgv7hmhdmdanaglgfhvj1f-fontconfig-conf.drv
+  /nix/store/0l22r6938v8j82kv148gbjzbms2v292a-fontconfig-etc.drv
+  /nix/store/hfj6pgs4qwc6ggvxz8snx2gg66hsnbkl-Test-Deep-1.204.tar.gz.drv
+  /nix/store/0rblyiwh7rincwgnf7k6bcjgvhcvgq1b-perl5.42.3-Test-Deep-1.204.drv
+  /nix/store/5zf9mqay1ipr6s008fg34lwjiydrvpgf-firmware.drv
+  /nix/store/31s7lvax1d81hrm8ax9w1c9w49g426ys-initrd-passwd.drv
+  /nix/store/gdkdi1vafh54a3lkjk0xz7i59w4vl8g0-source.drv
+  /nix/store/kxnmbz8izmnkrvlfd0rvlb8k7x9ial8j-udev-check-hook.drv
+  /nix/store/8jh49pf008nip18h7gzy9kk1ldps4f7b-fuse-3.17.4.drv
+  /nix/store/qk6rhrpb55yx4kj6vr0xi6lfqhjlinmv-e2fsprogs-1.47.4.tar.xz.drv
+  /nix/store/y58idnffz52vysnr4ccm5hjf9ywrpyyj-e2fsprogs-1.47.4.drv
+  /nix/store/4m7fw564iy0vbc84zm7wryw9q2pcwn93-initrd-bin-env.drv
+  /nix/store/78b5max2qqdd943mphcbn20z3f57x2z3-initrd-shells.drv
+  /nix/store/adgplp5mxg6d97ijapv80rhsswx7lym5-initrd-group.drv
+  /nix/store/453303s5ki73bxkihxig4fki14qh2zj9-unit-systemd-tmpfiles-setup-sysroot.service.drv
+  /nix/store/45izw8x2343j69mla4lzv148ahhf17fb-unit-modprobe-.service.drv
+  /nix/store/7f7z2dcc54cchvbsyc8i76cj55ikkrms-unit-sockets.target.drv
+  /nix/store/pk93x9k01s3fsdybphkqb24zhb6vgnam-unit-script-initrd-find-nixos-closure-start.drv
+  /nix/store/99a2dy138bwfq3hazx0chfz4dpjzzpdx-unit-initrd-find-nixos-closure.service.drv
+  /nix/store/9kgnjqvpg8a1fddjx952ixjk5piwk335-unit-initrd-switch-root.service.drv
+  /nix/store/m66g06cgv03d8fprni97jzjz3br8r04r-initrd-fstab.drv
+  /nix/store/cf07cjxf2gw26arnz77n4rxiapghl75q-unit-initrd-parse-etc.service.drv
+  /nix/store/sqyqzsd2xm016iqah7hb261hrkkzmyli-unit-script-initrd-nixos-activation-start.drv
+  /nix/store/pbd2djkzy4h3q331fmpgm55kq2nghngv-unit-initrd-nixos-activation.service.drv
+  /nix/store/pglc90d05lch6h08ws9b73wnyq3lfa5q-unit-panic-on-fail.service.drv
+  /nix/store/rsqh8j881hfa43gxgip0x36dgnansrj6-unit-systemd-tmpfiles-setup.service.drv
+  /nix/store/xnl8nfkyqhlkfg046sxabp6fah2hs3fx-unit-dbus.socket.drv
+  /nix/store/ynrivlcazanisjb5c0svxrlmdd2nrw8y-unit-initrd.target.drv
+  /nix/store/yywbxcj0j02m41sjay6cgvm802l97ffs-unit-sysroot-run.mount.drv
+  /nix/store/z997v57vjhphmk12vcmja2p8bzs38jqf-unit-dbus.service.drv
+  /nix/store/j42pdls3zkqgpac9qvdzlr8vxnjn78ww-initrd-units.drv
+  /nix/store/kp4vlpry4mvqlj6cr8j3xap200v92c2z-initrd-mdadm.conf.drv
+  /nix/store/l554v14xxsxbyram84qcyp9q7diyxl2p-initrd-nixos.conf.drv
+  /nix/store/mcpi7vwiimbd5ys6pxxzjg8wb0qj7cs9-initrd-shadow.drv
+  /nix/store/mk35s2kykp20z1blgs9q7fpnclsk0yz9-initrd-unit-env.drv
+  /nix/store/3c2f4vp6y4yg0md1843qpch9wwq67q0k-linux-6.18.60-modules.drv
+  /nix/store/pfriiwzyiplg21y311zn0zqpa8z7pq38-linux-6.18.60-modules-shrunk.drv
+  /nix/store/rxjgsy22ksm6h15q3w8v8d8v98l0n6sd-initrd-hostname.drv
+  /nix/store/vkklyb0kd27vlxfsr1rq0cr3rn3qyaz5-unit-10-lan.link.drv
+  /nix/store/wdy6baii7hsv973yl0n0zln9fhphgvmk-initrd-release.drv
+  /nix/store/wvgiw28zzp974fpbc5sblyqh0kxs295i-initrd-system.conf.drv
+  /nix/store/9pm351wsaixrwgclzxz9z0w4c1n5w62b-initrd-udev-rules.drv
+  /nix/store/rxyhb28ypi65j92y3abx7c37zwgdn9za-udev-fido2.drv
+  /nix/store/wxdhvfhm3xl6yawkp6hlm8c0rs86kmk9-initrd-udev-rules.drv
+  /nix/store/xrb6s82v0456dldspkpsjqigimdqihb0-initrd-udev-rules.drv
+  /nix/store/xvp43yghbvlhb91j801dvhjp8q2fqz77-initrd-nixos.conf.drv
+  /nix/store/p2ar0b21g0a0bjbs8swz5yk3qbbwmhdp-initrd-linux-6.18.60.drv
+  /nix/store/0vv92nr5ibjqjgf1x5nxlx4w392nf1zy-boot.json.drv
+  /nix/store/jsvbwmwzw309f29zzi903p9g422vcl15-source.drv
+  /nix/store/smpl805w0g1w10q6rg243ngcqwsdmrka-popt-1.19.tar.gz.drv
+  /nix/store/k8m3j62ypddlyq2vqv5a8n53xhy235wh-popt-1.19.drv
+  /nix/store/42wqy2aa5bmd2mv6cim6z9nzvk77faa3-logrotate-3.22.0.drv
+  /nix/store/vgzli6j45rzn900fyb86bmpywm2h5g0z-logrotate.conf.drv
+  /nix/store/15wfclg0ks52p2kr5f9g2669p60y0z4k-unit-logrotate.service.drv
+  /nix/store/1axzsk719im8wmnz9mp5bah9p7v3lyl7-users-groups.json.drv
+  /nix/store/1igynv51kq11gcv5m5hr6srmw5iwcqp1-time-1.10.tar.xz.drv
+  /nix/store/1j6zkqgccq7xsgjbrzbgszafvg844c0j-File-Copy-Recursive-0.45.tar.gz.drv
+  /nix/store/1q7dj2dyazlqixjwyn2zl8kaws56spax-sys-cdefs.h.drv
+  /nix/store/s0w60p5b9q65dqqz0h0sivzcs3k4dbnq-sshd.conf-settings.drv
+  /nix/store/g1ycx16n0qq29dh85k5v68z6fk07m40l-sshd.conf-final.drv
+  /nix/store/1qkcvgkmlacn30pk99lskilkchvhhi6c-check-sshd-config.drv
+  /nix/store/hqz7xlfic997ngjq3khb262z0gqp9pba-strace-7.3.tar.xz.drv
+  /nix/store/4j1r2zzsljp6394lmlldh5g4mxipsm3w-source.drv
+  /nix/store/j7h7a9n19hb6bkphy2cgphhqnwy1vg4w-libunwind-1.8.3.drv
+  /nix/store/1w5s63i1yprqz3iv7kbj3n45qjigsly1-strace-7.3.drv
+  /nix/store/xkaa80v7rg3c1xyk8lkyn9sry6qpmh9j-mtools-4.0.49.tar.bz2.drv
+  /nix/store/fcylfyg6f8xai6h5vir3b95ikbdg3hbb-mtools-4.0.49.drv
+  /nix/store/1x8m67x2mjsslm0w41pp0gbs29z4dgbs-etc-systemd-system.conf.drv
+  /nix/store/3nk8mqhycpdw3izggy4pfsj6xalm42qr-desktop-file-utils-0.28.tar.xz.drv
+  /nix/store/27f9hgbqzmnxkg9k4shc9z3iz1bvb573-desktop-file-utils-0.28.drv
+  /nix/store/2x2i07dv70vg2m8k756kaj6h7jgz412j-etc-mdadm.conf.drv
+  /nix/store/x4rwz9jpdvj34kgayjibnic3a3bg0md8-pre-nixos-network-report.drv
+  /nix/store/2xd673nj2ivlv6wiq6lrvkimcxcgl4p4-unit-script-pre-nixos-network-report-start.drv
+  /nix/store/3ps5024xd23j7yw7xdiy4hsyn6sszdrh-CVE-2026-107891.patch.drv
+  /nix/store/wh1n41b5wr37hxaa9fhdg9lhmhkkdch4-binutils-with-gold-2.46.tar.bz2.drv
+  /nix/store/c87jg1l0apqb2cwbr4n3lc2x3jxm4fvw-x86_64-unknown-linux-musl-binutils-2.46.drv
+  /nix/store/fg1a32a73p0fhf297fkc79q4lpd67q5v-x86_64-unknown-linux-musl-binutils-wrapper-2.46.drv
+  /nix/store/v609j93j5ldwfchygzmfpid6kgnm7ahr-x86_64-unknown-linux-musl-nolibc-gcc-15.3.0.drv
+  /nix/store/7j5zv0d7vza14hv8hv1fqm4y70cw76mp-x86_64-unknown-linux-musl-nolibc-gcc-wrapper-15.3.0.drv
+  /nix/store/5whibvrs88fjf36cnlrjkv7pqm87vbxi-stdenv-linux.drv
+  /nix/store/6w0g2wvqs2c6j9nxxwhl1sdhgh8xd5b4-CVE-2026-6042.patch.drv
+  /nix/store/f4ng1sydjk14cwhsfbkjrawb79gpgxz5-iconv.c.drv
+  /nix/store/i5ahx6rcxck62m1q2g97al1f766gkh81-CVE-2026-40200.patch.drv
+  /nix/store/laipz1gbjq6q30h8pbhmhp0cjgvbxgsn-300-relative.patch.drv
+  /nix/store/sg7s20rd1x4bgljswcvr1ma9zma0kqfp-CVE-2025-26519_1.patch.drv
+  /nix/store/vrdm53ahilngkmwh46nw3dbs8smd3ss8-musl-1.2.5.tar.gz.drv
+  /nix/store/wsk5myilcwydci0xawb1jym95fzvbk01-sys-queue.h.drv
+  /nix/store/x8zqahqd840zdzravalljkjbxflddnh8-sys-tree.h.drv
+  /nix/store/xjz0q1hdm398yava09gffv0ch9cyc2pm-CVE-2025-26519_0.patch.drv
+  /nix/store/5rbf8vg38kdksi49z62vv93slqnpdwz1-musl-static-x86_64-unknown-linux-musl-1.2.5.drv
+  /nix/store/2yv656lil941ngdyjv58kvz68zw2dvp1-x86_64-unknown-linux-musl-binutils-wrapper-2.46.drv
+  /nix/store/3jmv17cbqgwbbs8sx4prklfzcv5v0kxb-texinfo-interactive-7.2.drv
+  /nix/store/3njmqp5wy7skp03h0x6lv95p1g1yxw15-set-environment.drv
+  /nix/store/4vi4ycg65154zpybngvbvm4da606himr-extra-udev-rules.drv
+  /nix/store/lq0d4wr7mbm022h0vl4f90vli8n7cqcj-extra-hwdb-file.drv
+  /nix/store/gaqckwqpk1qg94giv7h2v6lzmafcz8f8-udev-rules.drv
+  /nix/store/g7zp55y1b0kx659f8qlvp2sm5wr8k8kk-X-Restart-Triggers-systemd-udevd.drv
+  /nix/store/3sgxhbzdyvqxl618zr00306azc8a5j9i-unit-systemd-udevd.service.drv
+  /nix/store/403as4w1y9i2p48yw8d8479mhl1k4zi1-issue.drv
+  /nix/store/436rw0ll8isv12gh2syyxs53dw8dwkvs-etc-nix-registry.json.drv
+  /nix/store/x304bbni8hi0v6xpc4vdybaxcai32gnx-List-Compare-0.55.tar.gz.drv
+  /nix/store/44vrjlv8l5b7gmb88hc1i5s039a819kh-perl5.42.3-List-Compare-0.55.drv
+  /nix/store/80j50av19ihwrzjrgaa72mi614b2pr2d-etc-sysctl.d-60-nixos.conf.drv
+  /nix/store/4fddkdgaj6m63n17rb9ndgp6sgmqqb8s-X-Restart-Triggers-systemd-sysctl.drv
+  /nix/store/4l9qiwdk5p75211gkl05lnkw3whg5ach-local-cmds.drv
+  /nix/store/mb38fz0vd8d3ih9an6r76m80m6m8nfpz-intltool-0.51.0.tar.gz.drv
+  /nix/store/qyfl9vyx8p4vg59alx0hryd4b3x9p5q2-XML-Parser-2.46.tar.gz.drv
+  /nix/store/nralk2ys5ykqnzxqbxqfzc9k0j098jmf-perl5.42.3-XML-Parser-2.46.drv
+  /nix/store/pxnl53axwgd8yd6vvbffhm4ihg5n652w-perl5.26-regex-fixes.patch.drv
+  /nix/store/rknh466iqr02bv9dkbydg804amy04b8w-intltool-0.51.0.drv
+  /nix/store/v9cv22r8w6rmd3i2zfjadv9hsviwaicy-sound-theme-freedesktop-0.8.tar.bz2.drv
+  /nix/store/c0izhw4bnpgqdf5xfqp9s2dzvjnfjfii-sound-theme-freedesktop-0.8.drv
+  /nix/store/crilwqkvybs2599avp9r0fcfz9wm2c8i-nixos-version.drv
+  /nix/store/m84cciqj163r08zy5y9jzd8jpkv140f5-time-1.10.drv
+  /nix/store/z61mzngmksd800qyq96mzcwss9p374rz-source.drv
+  /nix/store/s1z0icmia2mc8zfqg2kh77y01naynk06-hicolor-icon-theme-0.18.drv
+  /nix/store/s8628p01bjfh1dxai9fic9iimgjsl9gb-getconf-glibc-2.42-103.drv
+  /nix/store/7ws5zgyawpp15y8fpjalbdijzai17vj6-source.drv
+  /nix/store/hh8zr3bvpg2ihsw3krqvlza5vdfmb99g-nano-9.2.tar.xz.drv
+  /nix/store/w06npc6169k6k7x0j6asnpijsr3v28am-nano-9.2.drv
+  /nix/store/m5hxhajx206a8gb82kiri9nbvglvlfhi-coreutils-9.11.tar.xz.drv
+  /nix/store/wls6snxgxwbvzsql3ihw8g55w02qdikw-coreutils-full-9.11.drv
+  /nix/store/87qmkm0xl6q9yq7j6xvr82kg55qfnacc-source.drv
+  /nix/store/y1vxx18saza9i4wd08j02bvkkqrh0k67-shared-mime-info-2.4.drv
+  /nix/store/7nd4g7zcjdin0kx9qzwn8029rb0j3ard-tar-1.35.tar.xz.drv
+  /nix/store/zz739adzba7qv27250hnpj5ppv0iq7fp-gnutar-1.35.drv
+  /nix/store/q0b33z6vlwpqwvp6q78wpgf5vl22b7s2-system-path.drv
+  /nix/store/80zvk5bw5b2xqmdi68fggkw5x7j3znpj-dbus-1.drv
+  /nix/store/4n5ab9zqic6kmsi33709r5d1cvnqb5l1-X-Restart-Triggers-dbus-broker.drv
+  /nix/store/ziy3abrhlghlfb6cacpv2w9qbs7aapc4-etc-os-release.drv
+  /nix/store/59yr1j12i4f5a4y1x2w6lcqfgss71h8q-shutdown-ramfs-contents.json.drv
+  /nix/store/5lrjrjijw5130pck3cbr30y85wglw5kq-X-Restart-Triggers-sshd.drv
+  /nix/store/7krm8y0d29pl9lwmn40n9cmaxays3n5c-CPAN-Meta-Check-0.018.tar.gz.drv
+  /nix/store/ixp1wmq0qnixngx98364lp2fqclakrpd-perl5.42.3-CPAN-Meta-Check-0.018.drv
+  /nix/store/s21fzks0r1hxjz8aynncbna9lhdyw3qz-Test-Warnings-0.032.tar.gz.drv
+  /nix/store/bdzpy1frrg0i1wljn64q75jngfq0kx48-PadWalker-2.5.tar.gz.drv
+  /nix/store/vka2c1syzjcqw5hqyjy67ap9hinkyg66-perl5.42.3-PadWalker-2.5.drv
+  /nix/store/8qw7nnxzd7fmh656rlgrxa6344pwjrcl-perl5.42.3-Test-Warnings-0.032.drv
+  /nix/store/dl35jyflx2v4xqmwk8w2fczn9vck85kh-Test-File-1.993.tar.gz.drv
+  /nix/store/zsdh2vmfmwinb7xxgbd37ha7b40m72gj-perl5.42.3-Test-File-1.993.drv
+  /nix/store/5m62v146krr9cl339ldq9dszb60abib4-perl5.42.3-File-Copy-Recursive-0.45.drv
+  /nix/store/lbbaf56z4g51gy795msjn0wchk1rgdbz-nix-wallpaper-simple-dark-gray_bootloader.png.drv
+  /nix/store/5q8k9qyk3b9g3clq1lc2562aj4ykhgim-simple-dark-gray-bootloader-2018-08-28.drv
+  /nix/store/cyx8zrf3pizdmyd1qa07r0vbv9dwj9x7-getty.drv
+  /nix/store/8z56ammp2lmy23p2i35m5h3kmxag9wq3-getty.drv
+  /nix/store/5whnav53ca9vvxkpmm4cl6hcaf3p8qd9-unit-getty-.service.drv
+  /nix/store/67f1xjx0v3f7f6av6x412y9dbmmgk7gz-perl-5.42.3-env.drv
+  /nix/store/jjxiv6nb6kq2mkdx4cisidgpaljmj8vk-source.drv
+  /nix/store/67mj5ajxsans39npk6qgjdwxvqylh9dk-tinyxxd-1.3.15.drv
+  /nix/store/d3brxcmnyagnm8s4j3qncpns5w1gcw5w-unit-script-suid-sgid-wrappers-start.drv
+  /nix/store/6cb933fkb033rf5qx575ixv4gw5nq4bk-unit-suid-sgid-wrappers.service.drv
+  /nix/store/liqzb5p5dq9aafaa2jf96y9ll3hxq803-nix.conf.drv
+  /nix/store/r1dxpyal8c1c2k5q9cidy660z1g8ifk8-X-Restart-Triggers-nix-daemon.drv
+  /nix/store/74g1l190xrci2hjpq45iicfl3s2n0s1v-unit-nix-daemon.service.drv
+  /nix/store/7mh65d3qamp5l6x60sd6dcwzlf72fcla-unit-logrotate.timer.drv
+  /nix/store/d3ll8zkw2b2k65czwmil4a62g6nxn4wk-stdenv-linux.drv
+  /nix/store/nryyr9frwrlqrxiv4g03sdgiamah842y-x86_64-unknown-linux-musl-gcc-15.3.0.drv
+  /nix/store/jqfyl7dgw1izdzc2pmmlv2y37azs3qks-3.0.1.tar.gz.drv
+  /nix/store/sj0cqzqklhv3in9pyvp3sci8f8vql3qv-fortify-headers-3.0.1.drv
+  /nix/store/jskc88nd409jzwpys4v9v4a346wdd702-x86_64-unknown-linux-musl-gcc-wrapper-15.3.0.drv
+  /nix/store/7z38kdp6iqiczjmw5qwa7iic0p2kjxli-stdenv-linux.drv
+  /nix/store/dch17fy5dhsk6mn00cm34bja5qkbizlf-xxd-tinyxxd-1.3.15.drv
+  /nix/store/cpfsnc98nb88sqjm6d7g0fpfvgjkaakj-stub-ld-x86_64-unknown-linux-musl.drv
+  /nix/store/lb9vnx77ybdr8s61yfjglh35310jfs4m-nixos-tmpfiles.d.drv
+  /nix/store/nkgnfwza1lv6zbrj7hcb2d7d1cr44nyq-systemd-default-tmpfiles.drv
+  /nix/store/i9igcs3w8wmlbl1j0zjjya6fbdmjvq5a-tmpfiles.d.drv
+  /nix/store/7vsyg83ykhh50pw9sir5dwnpvbayj92z-X-Restart-Triggers-systemd-tmpfiles-resetup.drv
+  /nix/store/81jj98pa5di04i1l5jfh0v4r440qj3kg-unit-systemd-sysctl.service.drv
+  /nix/store/8cy4cxz1z6dyp40xxqnmmn61m9y59kak-unit-serial-getty-.service.drv
+  /nix/store/bci85bb1wz6md50nkl5lb2zjrdl3k6hi-perl-5.42.3-env.drv
+  /nix/store/9czcrdmwpby6pkx8rhlbczz6519i1rzb-etc-profile.drv
+  /nix/store/9avygqw0vl2ja8hd4j0bh24d0hhb7rvj-unit-systemd-makefs-.service.drv
+  /nix/store/9m20y5jbsxy9jnba6asvqh1c1jiyb0fg-unit-sshd.service.drv
+  /nix/store/bmr429skcizi30wgsd205ynvych5wy9j-unit-systemd-tmpfiles-resetup.service.drv
+  /nix/store/kppd72p0mqi4l2wp4ivm3grp6p6apn7m-nixos.conf.drv
+  /nix/store/dczli4q7rym0mwdjbsbk0l2pzqvvvsr0-X-Restart-Triggers-systemd-modules-load.drv
+  /nix/store/dnf2qy4xkgqrzy7lg45vg6dfx3bh3j0l-unit-systemd-modules-load.service.drv
+  /nix/store/frzk07dvlk7jziqbgxzkf3jymz1bzy8r-unit-logrotate-checkconf.service.drv
+  /nix/store/g4kaaldvkgdgv6hd30diadzi5pr1hgay-unit-console-getty.service-disabled.drv
+  /nix/store/dbjla8f11q0rqg11ivz33r9f32z8czcg-pre-nixos-announce-lan-ip.drv
+  /nix/store/hzajz9vvs7ksifgs7xh4jpfxk58nnlcp-unit-script-pre-nixos-auto-install-ip-start.drv
+  /nix/store/hsnkpy32nl51d03l104cqgpxip42ybnh-unit-pre-nixos-auto-install-ip.service.drv
+  /nix/store/j38dnr5zzrv444pryiv6xs886zfibdaf-unit-generate-shutdown-ramfs.service.drv
+  /nix/store/p3hf6mfnk5krxn0klk5igncyl90jd8zm-unit-dbus-broker.service.drv
+  /nix/store/mpf34vrq181iwzvkx6hpg9y33dbhxw39-X-Restart-Triggers-systemd-networkd.drv
+  /nix/store/gn4ap65cwb5f5r6qm4hishiabn9lrrma-unit-40-lan.network.drv
+  /nix/store/j3kgkjljdn36zgl24y2shgbiw4vc1vpr-unit-lan.network.drv
+  /nix/store/s345bwij2lrda8x2r35iih19icdymypw-X-Reload-Triggers-systemd-networkd.drv
+  /nix/store/p756nm9xm66ghdafh240yd500pf5rxm7-unit-systemd-networkd.service.drv
+  /nix/store/q1nwj588b3cqpppc7ir86brz6yj3yqbi-unit-systemd-fsck-.service.drv
+  /nix/store/rs2pqh7ds0mcfv137mc46kazfiyqim5m-unit-pre-nixos-network-report.service.drv
+  /nix/store/9r22hxcgqfw30cq9pddlbczcvmyibmcx-system-units.drv
+  /nix/store/a7b4gmpy526im81nsnhkkk1nr9b224db-system-shutdown.drv
+  /nix/store/b3cn2ayv0i2b46xk74hs92k18g8j8bap-system-generators.drv
+  /nix/store/bll0rix87vhc62ys9xm14d4ydqfbvmf7-sshd.pam.drv
+  /nix/store/dkq4fqdrj04snbg3cfccm75hdz73d6k6-etc-pam-environment.drv
+  /nix/store/q132kgsb59xq48cd2np36fm22wcry0bl-hwdb.bin.drv
+  /nix/store/wp0a48kghxf45354i6lrlqm6mzgpp5xy-unit-dbus-broker.service.drv
+  /nix/store/q9af902wpqj4yi6l1ds6a78rkmva4ib8-user-units.drv
+  /nix/store/qdwfpl42hhvv4ml79zdlbc3hw9x5yma7-etc-bashrc.drv
+  /nix/store/rl7zkhwss120wxlb78csm5nq5196zbx0-etc-fstab.drv
+  /nix/store/srdfgwadvmyy65hmh0lxgkj920nnnw81-user-generators.drv
+  /nix/store/vcn955h70zd0ln1f4azzcrnqnxjg7g1q-root-authorized_keys.drv
+  /nix/store/aa6kb2b7syg3gn2bvamg3xjc53yjldq5-sudoers-in.drv
+  /nix/store/w8kjbqq0hpnl4646gwydcmkj5y1cl3ln-sudoers.drv
+  /nix/store/xqfq31ljcg0dgy0mmz14xnll45i07343-etc-modprobe.d-firmware.conf.drv
+  /nix/store/z9hh15rps83s8w5z21hnr62acakc0qym-systemd-generator-environment.json.drv
+  /nix/store/c1ms7ykvn4rbwv3qd19zv7vp4bk8ak2w-etc.drv
+  /nix/store/lvjy4b8adrs12fnapg0ali1c8hmk01wd-ensure-all-wrappers-paths-exist.drv
+  /nix/store/ps4w9jd0ksf8d7kf66xbay6ynznkxl8g-install-grub.pl.drv
+  /nix/store/q92xqvrg3mc1bfb2xk2qq6v5g9045218-grub-config.xml.drv
+  /nix/store/mg72mhpk71zzbwi4gly3fpnb1qx885sq-install-grub.sh.drv
+  /nix/store/nr51yn87p3mckkgb49d1qk5zg9rwzm0k-stage-2-init.sh.drv
+  /nix/store/rlb14p9j7qz3nj9k9lrgb9jnvjy6fjmv-activate.drv
+  /nix/store/swmpn72i6231l1119rpismicibmw7zwh-dry-activate.drv
+  /nix/store/93gwh97rqzgdynba6iwgn5s8dm86lxsk-nixos-system-nixos-26.05pre-git.drv
+dry-run-exit=0
+[?2004hPRE-NIXOS> poweroff
+poweroff
+[?2004l
+Broadcast message from root@nixos on pts/0 (Mon 2026-11-09 00:52:35 UTC):
+
+The system will power off now!
+
+[?2004hPRE-NIXOS> [!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;end=0a6f9527c35f4beea6bb52746a89a8f1\[  400.430678] reboot: Power down

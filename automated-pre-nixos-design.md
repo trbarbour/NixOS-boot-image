@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.32
+**Doc status:** Draft v0.33
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -167,6 +167,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - Select top candidate; persist rename to `lan` via udev/systemd.
 - Bring `lan` up with DHCP; log assigned IP.
 - This runs once per boot. A manual `pre-nixos` or `pre-nixos-tui` run later in the same boot reuses the result, recorded in `/run/pre-nixos/lan-configuration.json`, while `lan` still exists with the recorded MAC address and the recorded files exist. It does not bounce the link or wait again for DHCP (up to 60 s on a network that gives no lease). Nothing is recorded when no NIC had a carrier, so a later run looks for a link again.
+
+### 7.7.1 Install waits for the network [R-I1]
+- `network.installer_network()` reads `lan`'s IPv4 address and default gateway (`NetworkReadiness`).
+- `install.auto_install` takes an `InstallTrigger`. `AUTOMATIC`, the default (boot service, `pre-nixos`, TUI Apply), is skipped with `REASON=no-network` unless both are present. It runs after the execution checks and before anything on `/mnt` is touched. `REQUESTED` (`--install-now`, TUI `N`) prints a warning and proceeds.
+- The login notice and the TUI's Apply summary say what is missing and how to continue. A cache is not probed: reachability depends on DNS and firewall policy at that moment (user decision, option b, 2026-11-09).
 
 ### 7.8 SSH exposure
 - Install built-in `authorized_keys` for root and harden `sshd_config` to disable password logins while preserving the root password for console access.

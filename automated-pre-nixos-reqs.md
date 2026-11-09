@@ -154,6 +154,18 @@ The system must automate the hardware setup process on new servers prior to NixO
   must **refuse to install** if the installed system would not be booted.
   [R-B2]
 
+### 2.11 Installation
+
+- Like the stock NixOS installer, installing NixOS needs a working network
+  (the NixOS manual: "Networking is necessary for the installer").
+- An **automatic** install (after provisioning, when auto-install is enabled:
+  the boot service, `pre-nixos`, the TUI's Apply) starts only when the
+  installer has an **IPv4 address and a default route** on `lan`. Otherwise
+  it is skipped (`no-network`) and the operator is told what is missing and
+  how to continue; provisioning itself is not held back.
+- An **explicit** install request (`pre-nixos --install-now`, the TUI's `N`)
+  runs regardless, with a warning when the network is not ready. [R-I1]
+
 ---
 
 ## 3. ⚙️ Non-Functional Requirements

@@ -457,6 +457,42 @@ def get_ipv4_details(iface: str = "lan") -> Optional[IPv4Details]:
     )
 
 
+@dataclass(frozen=True)
+class NetworkReadiness:
+    """Whether the installer can reach beyond its link (task queue item 44).
+
+    An automatic install needs an IPv4 address and a default route on
+    ``lan`` (user decision, 2026-11-09).  Reachability of a cache is not
+    probed: that depends on DNS and firewall policy at the time.
+    """
+
+    address: Optional[str]
+    gateway: Optional[str]
+
+    @property
+    def ready(self) -> bool:
+        return self.address is not None and self.gateway is not None
+
+    @property
+    def problem(self) -> str:
+        """What is missing, for messages; empty when ready."""
+
+        if self.address is None:
+            return "the installer has no IPv4 address on lan"
+        if self.gateway is None:
+            return f"the installer has an IPv4 address ({self.address}) but no default route"
+        return ""
+
+
+def installer_network(iface: str = "lan") -> NetworkReadiness:
+    """The installer's IPv4 address and default gateway on ``iface``."""
+
+    details = get_ipv4_details(iface)
+    if details is None:
+        return NetworkReadiness(address=None, gateway=None)
+    return NetworkReadiness(address=details.address, gateway=details.gateway)
+
+
 def get_lan_status(authorized_key: Optional[Path] = None, iface: str = "lan") -> str:
     """Return the LAN IP address or diagnostic message for the TUI.
 

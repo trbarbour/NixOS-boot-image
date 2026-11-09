@@ -1287,6 +1287,12 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     follow_up_required = auto_result.status != "success"
     if auto_result.status == "success":
         summary_parts.append("Auto-install completed.")
+    elif auto_result.status == "skipped" and auto_result.reason == "no-network":
+        # Task queue item 44: waiting for an address and a default route.
+        problem = network.installer_network().problem or "the network was not ready"
+        summary_parts.append(
+            f"Auto-install skipped: {problem}. Configure the network, then press 'n'."
+        )
     elif auto_result.status == "skipped" and auto_result.reason:
         summary_parts.append(f"Auto-install skipped ({auto_result.reason}).")
     else:
@@ -1326,6 +1332,7 @@ def _handle_manual_install(stdscr: curses.window, state: TUIState) -> bool:
                 state.lan_config,
                 None,
                 enabled=True,
+                trigger=install.InstallTrigger.REQUESTED,
                 dry_run=not execute,
                 install_network=state.install_network,
             )
