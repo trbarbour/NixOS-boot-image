@@ -424,6 +424,8 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Storage provisioning now works on the hardware (#338 fixed). `nixos-install` then planned 1907 derivations from `stage0-posix`/`hex0-seed` up, and failed on the first source download (no network).
     - Suspect: the installed system's configuration-specific derivations need build-time tools (a C compiler stdenv) that 26.05's installer no longer ships; same pattern as disko on 2026-10-18 (`tests/vm/offline_closure.py`).
     - Reproduction: `tests/vm/test_offline_install_closure_vm.py` (dry-run build with substituters disabled, in the VM). Part of item 12.
+    - **Root cause** (host, isolated store; `notes/*-offline-install-closure.md`): the installed system needs packages the minimal ISO lacks (`info` outputs and texinfo, a few packages, GRUB's Perl modules) and builder tools for per-machine configuration derivations. Each missing output forces a rebuild from source, which ends in the compiler bootstrap. The VM test passed wrongly twice (parser), fixed.
+    - **Fix (0.27.0):** `modules/pre-nixos/reference-installed.nix`, two reference installed systems plus six builder tools in the x86 image (about 100 MiB unpacked). A differing configuration: 1247 → 63 derivations to build offline, none of the toolchain.
 
 44. **Auto-install must wait for the network** *(user, 2026-11-09)*.
     - The TUI's Apply started `nixos-install` on a machine with no IPv4 address (no DHCP server; the user meant to set a static address next).
