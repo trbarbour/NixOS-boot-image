@@ -435,6 +435,16 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Implemented: `network.installer_network`, `install.InstallTrigger`, the gate in `auto_install`, TUI and login-notice messages. Tests: `tests/test_install_network_gate.py`, `test_apply_without_network_explains_the_skipped_install`, `test_login_notice_explains_an_install_waiting_for_the_network`.
     - Correction recorded: "installs must work offline" (BIOS plan D5) was never a requirement; the stock NixOS installer needs the network too.
 
+45. **Optional hashed root password for the installed system** *(user, 2026-11-09)*.
+    - The installed system has no root password, so the serial console cannot log in; reqs §2.7 says root login must be possible over the serial console (if functional).
+    - Agreed: an optional site setting `rootHashedPassword` (e.g. `mkpasswd -m yescrypt`), kept in the site file like `rootKey`, never in the repo; pre-nixos writes it as `users.users.root.hashedPassword` on the installed system. Unset by default. The installer keeps its empty console password.
+    - Needs: site option and validation (a crypt hash, not a plain password), the managed block, tests, README (strong password: the hash ships in the image).
+
+46. **The installed system with a static address is unreachable (no ping, no SSH)** *(user report, 2026-11-09, 0.26.2 image, first BIOS PC)*.
+    - Install with a static address (TUI `C`, 10.137.3.9/24) succeeded and the system boots; its `pre-nixos-auto-install-ip` service reports "LAN IPv4 address unavailable".
+    - The managed block is rewritten on each install (the "not overwriting existing configuration.nix" warning is not the cause). The user is collecting the installed config and the networkd/udev journal.
+    - Plan: an end-to-end VM test (item 12): install with a static address, boot the installed disk, SSH in.
+
 ## Recently Completed
 - 2026-11-09T14-21-45Z - Merged trbarbour/NixOS-boot-image#341 (0.27.0): R-I1, an automatic install waits for an IPv4 address and a default route (item 44); the x86 image carries reference installed systems and builder tools, fixing #340 (item 43; offline dry run 1751 → 78 configuration derivations). CI green, no Codex findings. Awaits the user's install on the PC.
 - 2026-11-08T18-17-10Z - Merged trbarbour/NixOS-boot-image#339 (0.26.2): fixes #338 (cleanup wipes each LV/array while active, then deactivates) and item 40 (only the question while a disk is unconfirmed; messages announced once at a terminal). CI green, no Codex findings. Awaits the user's apply on the PC.
