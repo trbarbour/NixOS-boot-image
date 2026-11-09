@@ -171,3 +171,36 @@
 [2026-11-09T04:28:54.318715+00:00]   sdc 10485760
 [2026-11-09T04:28:54.373199+00:00] Running command: printf '__UID_MARK__1794198534318__%s__UID_MARK__1794198534318__\n' "$(id -u)"
 [2026-11-09T04:28:54.479159+00:00] Running command: { printf '\n__BEGIN__\n'; pre-nixos --ssd sda --no-auto-install > /tmp/provision.log 2>&1; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-09T04:30:34.042327+00:00] Checked command exited with status 0: pre-nixos --ssd sda --no-auto-install > /tmp/provision.log 2>&1
+[2026-11-09T04:30:34.042327+00:00]   <no output>
+[2026-11-09T04:30:34.099511+00:00] Running command: printf '__UID_MARK__1794198634042__%s__UID_MARK__1794198634042__\n' "$(id -u)"
+[2026-11-09T04:30:34.237530+00:00] Running command: { printf '\n__BEGIN__\n'; findmnt -n /mnt/boot; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-09T04:30:34.367956+00:00] Checked command exited with status 0: findmnt -n /mnt/boot
+[2026-11-09T04:30:34.367956+00:00]   /mnt/boot
+[2026-11-09T04:30:34.367956+00:00]   /dev/sda2
+[2026-11-09T04:30:34.367956+00:00]   v rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=iso8859-1,shortna
+[2026-11-09T04:30:34.429633+00:00] Running command: printf '__UID_MARK__1794198634368__%s__UID_MARK__1794198634368__\n' "$(id -u)"
+[2026-11-09T04:30:34.538908+00:00] Running command: { printf '\n__BEGIN__\n'; mkdir -p /root/shim && cat > /root/shim/nixos-install <<'EOF'
+#!/bin/sh
+# Stand-in for nixos-install (tests/vm/test_offline_install_closure_vm.py).
+nix-build '<nixpkgs/nixos>' -A system -I nixos-config=/mnt/etc/nixos/configuration.nix \
+  --dry-run --option substituters '' > /tmp/offline-dry-run.txt 2>&1
+echo "dry-run-exit=$?" >> /tmp/offline-dry-run.txt
+exit 1
+EOF
+chmod +x /root/shim/nixos-install; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-09T04:30:34.727399+00:00] Checked command exited with status 0: mkdir -p /root/shim && cat > /root/shim/nixos-install <<'EOF'
+#!/bin/sh
+# Stand-in for nixos-install (tests/vm/test_offline_install_closure_vm.py).
+nix-build '<nixpkgs/nixos>' -A system -I nixos-config=/mnt/etc/nixos/configuration.nix \
+  --dry-run --option substituters '' > /tmp/offline-dry-run.txt 2>&1
+echo "dry-run-exit=$?" >> /tmp/offline-dry-run.txt
+exit 1
+EOF
+chmod +x /root/shim/nixos-install
+[2026-11-09T04:30:34.727399+00:00]   <no output>
+[2026-11-09T04:30:34.786064+00:00] Running command: printf '__UID_MARK__1794198634727__%s__UID_MARK__1794198634727__\n' "$(id -u)"
+[2026-11-09T04:30:34.887127+00:00] Running command: PATH=/root/shim:$PATH pre-nixos --install-now > /tmp/install.log 2>&1; true
+[2026-11-09T04:32:28.820918+00:00] Running command: printf '__UID_MARK__1794198748765__%s__UID_MARK__1794198748765__\n' "$(id -u)"
+[2026-11-09T04:32:28.909957+00:00] Running command: cat /tmp/offline-dry-run.txt
+[2026-11-09T04:32:29.060738+00:00] Disk free at VM teardown: 3.7 GiB
