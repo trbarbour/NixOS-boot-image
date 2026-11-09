@@ -444,6 +444,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Install with a static address (TUI `C`, 10.137.3.9/24) succeeded and the system boots; its `pre-nixos-auto-install-ip` service reports "LAN IPv4 address unavailable".
     - The managed block is rewritten on each install (the "not overwriting existing configuration.nix" warning is not the cause). The user is collecting the installed config and the networkd/udev journal.
     - Plan: an end-to-end VM test (item 12): install with a static address, boot the installed disk, SSH in.
+    - 2026-11-09: `tests/vm/test_installed_system_vm.py` (new; item 12) **passed**: installed with 10.0.2.15/24 via `--install-now` flags on the BIOS VM, booted the installed disks without the ISO, SSH worked and `lan` had the address and default route. Not reproduced in the VM: the difference is on the PC (hardware/firmware, or the TUI's `C`/`N` path). Waiting for the user's journal.
 
 ## Recently Completed
 - 2026-11-09T14-21-45Z - Merged trbarbour/NixOS-boot-image#341 (0.27.0): R-I1, an automatic install waits for an IPv4 address and a default route (item 44); the x86 image carries reference installed systems and builder tools, fixing #340 (item 43; offline dry run 1751 → 78 configuration derivations). CI green, no Codex findings. Awaits the user's install on the PC.
