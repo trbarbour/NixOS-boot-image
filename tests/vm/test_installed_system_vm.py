@@ -1,0 +1,131 @@
+"""End to end: install with a static address, boot the installed disks, SSH in.
+
+Task queue items 12 and 46 (trbarbour/NixOS-boot-image#342).  On the first
+BIOS PC (no DHCP server) the user installed with a static address; the
+installed system booted but answered neither ping nor SSH, and its
+``pre-nixos-auto-install-ip`` service reported "LAN IPv4 address
+unavailable".  No test had booted an installed system before.
+
+1. The installer VM (SSD plus an HDD pair, SeaBIOS, so a legacy-BIOS GRUB
+   install) provisions its disks at boot; ``pre-nixos --install-now`` then
+   installs with a static address.  QEMU's user network forwards to
+   10.0.2.15, so that is the address, with gateway 10.0.2.2.  pre-nixos's
+   reboot after the install is swallowed (``-no-reboot`` would end QEMU), and
+   the VM is powered off.
+2. A second QEMU boots the same disks, without the ISO, with the same NIC
+   (QEMU's default MAC, which the installed system matches to rename it to
+   ``lan``).  The test SSHes in through the port forward with the image's
+   root key, and reads the address and route of ``lan``.
+"""
+
+from __future__ import annotations
+
+import subprocess
+import time
+from pathlib import Path
+from typing import List
+
+import pytest
+
+from tests.vm.controller import BootImageVM
+from tests.vm.scsi_disks import ScsiDisk, scsi_disk_args
+
+pytestmark = [pytest.mark.vm, pytest.mark.slow]
+
+INSTALL_TIMEOUT = 5400
+BOOT_TIMEOUT = 900
+STATIC_ADDRESS = "10.0.2.15"
+
+# pre-nixos reboots after a successful install; under -no-reboot that would
+# end QEMU in the middle of the command, so the stand-in only swallows it.
+SYSTEMCTL_SHIM = """#!/bin/sh
+if [ "$1" = reboot ]; then echo "systemctl reboot (skipped by the test)"; exit 0; fi
+exec /run/current-system/sw/bin/systemctl "$@"
+"""
+
+
+def _free_port() -> int:
+    import socket
+
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+def _ssh(ssh_executable: str, key: Path, port: int, command: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [
+            ssh_executable, "-i", str(key),
+            "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null", "-o", "ConnectTimeout=10",
+            "-p", str(port), "root@127.0.0.1", command,
+        ],
+        capture_output=True, text=True, timeout=120,
+    )
+
+
+def test_installed_system_with_a_static_address_is_reachable(
+    boot_image_vm_with_raid_disks: BootImageVM,
+    raid_scsi_disks: List[ScsiDisk],
+    qemu_executable: str,
+    ssh_executable: str,
+    boot_ssh_key_pair,
+    tmp_path: Path,
+) -> None:
+    vm = boot_image_vm_with_raid_disks
+    status = vm.wait_for_storage_status()
+    assert status.get("STATE") == "applied", status
+
+    vm.run_as_root_checked(
+        "mkdir -p /root/shim && cat > /root/shim/systemctl <<'EOF'\n"
+        + SYSTEMCTL_SHIM
+        + "EOF\nchmod +x /root/shim/systemctl",
+        timeout=60,
+    )
+    out = vm.run_as_root(
+        "PATH=/root/shim:$PATH pre-nixos --install-now"
+        f" --install-ip-address {STATIC_ADDRESS} --install-netmask 255.255.255.0"
+        " --install-gateway 10.0.2.2 > /tmp/install.log 2>&1; echo install-exit=$?",
+        timeout=INSTALL_TIMEOUT,
+    )
+    log_tail = vm.run_as_root("grep -v '^copying path' /tmp/install.log | tail -n 40", timeout=120)
+    assert "install-exit=0" in out, f"{out}\n{log_tail}"
+    block = vm.run_as_root(
+        "sed -n '/auto-install start/,/auto-install end/p' /mnt/etc/nixos/configuration.nix",
+        timeout=60,
+    )
+    vm.shutdown()
+
+    # Boot the installed disks: no ISO, same disks and NIC.
+    port = _free_port()
+    serial = tmp_path / "installed-serial.log"
+    cmd = [
+        qemu_executable, "-m", "2048", "-smp", "2", "-display", "none", "-no-reboot",
+        "-serial", f"file:{serial}",
+        *scsi_disk_args(raid_scsi_disks),
+        "-netdev", f"user,id=net0,hostfwd=tcp:127.0.0.1:{port}-:22",
+        "-device", "virtio-net-pci,netdev=net0",
+    ]
+    installed = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    try:
+        deadline = time.monotonic() + BOOT_TIMEOUT
+        result = None
+        while time.monotonic() < deadline and installed.poll() is None:
+            result = _ssh(ssh_executable, boot_ssh_key_pair.private_key, port,
+                          "ip -4 -o addr show lan; ip -4 route show default")
+            if result.returncode == 0:
+                break
+            time.sleep(10)
+        serial_tail = serial.read_text(errors="replace")[-6000:] if serial.exists() else ""
+        assert result is not None and result.returncode == 0, (
+            "no SSH to the installed system\n--- managed block ---\n"
+            f"{block}\n--- serial (tail) ---\n{serial_tail}"
+        )
+        assert f"inet {STATIC_ADDRESS}/24" in result.stdout, result.stdout
+        assert "default via 10.0.2.2" in result.stdout, result.stdout
+    finally:
+        installed.terminate()
+        try:
+            installed.wait(timeout=60)
+        except subprocess.TimeoutExpired:
+            installed.kill()
