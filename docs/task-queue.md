@@ -427,6 +427,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - **Root cause** (host, isolated store; `notes/*-offline-install-closure.md`): the installed system needs packages the minimal ISO lacks (`info` outputs and texinfo, a few packages, GRUB's Perl modules) and builder tools for per-machine configuration derivations. Each missing output forces a rebuild from source, which ends in the compiler bootstrap. The VM test passed wrongly twice (parser), fixed.
     - **Fix (0.27.0):** `modules/pre-nixos/reference-installed.nix`, two reference installed systems plus six builder tools in the x86 image (about 100 MiB unpacked). A differing configuration: 1247 → 63 derivations to build offline, none of the toolchain.
       - VM `test_offline_install_closure_vm.py` **passed** on 0.27.0 (`notes/2026-11-09T042722Z-vm-run`): 78 derivations to build offline (was 1751), all configuration; checked against the raw transcript.
+      - Regression on 0.27.0: VM `test_pre_nixos_vm.py` (3), `test_disk_class_vm.py`, `test_reprovision_vm.py`, `test_pre_nixos_cleanup.py`, `test_raid_provisioning.py` passed (7/7); `nix flake check` passed.
 
 44. **Auto-install must wait for the network** *(user, 2026-11-09)*.
     - The TUI's Apply started `nixos-install` on a machine with no IPv4 address (no DHCP server; the user meant to set a static address next).
