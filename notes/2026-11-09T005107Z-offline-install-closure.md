@@ -1,0 +1,23 @@
+# Offline nixos-install: what the installed system needs that the ISO lacks (#340)
+
+_2026-11-09. Task queue item 43; user report from the first BIOS PC (0.26.2)._
+
+## Reproduction
+- **VM** (`tests/vm/test_offline_install_closure_vm.py`, run `notes/2026-11-09T003327Z-vm-run`): after provisioning, a dry-run build of the configuration pre-nixos wrote, with every substituter disabled, planned **1751** derivations, including `stage0-posix` and `hex0-seed` (the user's PC: 1907).
+  - The first run passed wrongly: the parser missed the header (terminal escapes, `\r\r\n`). That parser is now fixed and unit-tested.
+- **Host, isolated:**
+  - copied exactly the ISO's closure (`closure-info`, 781 paths, 3.2 GB) into an empty store;
+  - instantiated an installed configuration there (the GRUB fixture plus pre-nixos's BIOS loader and network modules, with `nixpkgs.hostPlatform` forced to x86_64: the fixture's hardware file says aarch64);
+  - `nix-store -r --dry-run --option substituters ''` listed **1766** derivations, matching the user's failure.
+
+## Analysis
+- **H1, rejected:** the installed system uses the same nixpkgs as the ISO. Its `gawk` is `xj3xxr99…-gawk-5.4.1`, the ISO's, in the user's log and here.
+- **The dry run over-reports.** It lists every partly-present multi-output derivation. The exact set (walk from the top; build a derivation only when an output a dependant needs is missing) is **1266** derivations.
+- **The final `stdenv-linux` (`zifs9cd5…`) is in the ISO** (via `makeBinaryWrapper`). The configuration derivations (`/etc` files, units, initrd parts) can be built with it. The other six `stdenv-linux` derivations are bootstrap stages, reached only by rebuilding packages.
+- **What the configuration needs that the ISO lacks:**
+  - `info` outputs, for `system-path` (gawk, coreutils, sed, grep, tar, gzip, diffutils, findutils, which, time, nano, mtools, bash-interactive, e2fsprogs), plus `texinfo` and `texinfo-interactive`;
+  - packages absent from the ISO: `dhcpcd`, `openresolv`, `logrotate`, `strace`, `fontconfig` (bin), `shared-mime-info`, `desktop-file-utils`, `hicolor-icon-theme`, `sound-theme-freedesktop`, `getconf`;
+  - GRUB's installer (`install-grub.pl`): `perl-5.42.3-env` with XML-LibXML, XML-SAX, XML-SAX-Base, XML-NamespaceSupport, File-Copy-Recursive and List-Compare (for any GRUB install, BIOS or EFI);
+  - `dbus-1`: configuration-specific, built on the target.
+- Each missing package output forces a rebuild from source. That needs build inputs (`dev` outputs, tarballs) the ISO lacks, and ends in the compiler bootstrap.
+- **Size of the missing runtime packages:** 52 paths, about 50 MiB unpacked (binary cache NAR sizes); texinfo is 28 MiB of it.
