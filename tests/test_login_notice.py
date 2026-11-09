@@ -50,3 +50,17 @@ def test_login_notice_explains_an_unconfirmed_disk(tmp_path):
 
     assert "A disk named SSD is reported as rotating" in result.stdout
     assert "pre-nixos-tui" in result.stdout and "--ssd DISK" in result.stdout
+
+
+def test_login_notice_explains_an_install_waiting_for_the_network(tmp_path):
+    """Task queue item 44: the automatic install was skipped for no-network."""
+
+    state_dir = tmp_path / "run/pre-nixos"
+    state_dir.mkdir(parents=True)
+    (state_dir / "auto-install-status").write_text("STATE=skipped\nREASON=no-network\n", encoding="utf-8")
+    login_notice = Path(__file__).resolve().parents[1] / "modules" / "pre-nixos" / "login-notice.sh"
+    env = os.environ.copy()
+    env["PRE_NIXOS_STATE_DIR"] = str(state_dir)
+    result = subprocess.run(["bash", str(login_notice)], check=True, capture_output=True, text=True, env=env)
+    assert "waiting for the network" in result.stdout
+    assert "pre-nixos --install-now" in result.stdout

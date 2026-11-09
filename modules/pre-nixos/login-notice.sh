@@ -56,6 +56,12 @@ if [ -r "$status_file" ]; then
   esac
 fi
 
+auto_status_file=$state_dir/auto-install-status
+if [ -r "$auto_status_file" ] && grep -qx 'REASON=no-network' "$auto_status_file"; then
+  printf '%s\n' "pre-nixos: Auto-install is waiting for the network (an IPv4 address and a default route on lan)."
+  printf '%s\n' "             Configure it, then run 'pre-nixos --install-now' or press N in 'pre-nixos-tui'."
+fi
+
 network_status_file=$state_dir/network-status
 if [ -r "$network_status_file" ]; then
   ipv4=""

@@ -425,6 +425,12 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Suspect: the installed system's configuration-specific derivations need build-time tools (a C compiler stdenv) that 26.05's installer no longer ships; same pattern as disko on 2026-10-18 (`tests/vm/offline_closure.py`).
     - Reproduction: `tests/vm/test_offline_install_closure_vm.py` (dry-run build with substituters disabled, in the VM). Part of item 12.
 
+44. **Auto-install must wait for the network** *(user, 2026-11-09)*.
+    - The TUI's Apply started `nixos-install` on a machine with no IPv4 address (no DHCP server; the user meant to set a static address next).
+    - User decision: option (b), an IPv4 address **and** a default route on `lan`; explicit requests still run, with a warning. Requirement R-I1 (§2.11).
+    - Implemented: `network.installer_network`, `install.InstallTrigger`, the gate in `auto_install`, TUI and login-notice messages. Tests: `tests/test_install_network_gate.py`, `test_apply_without_network_explains_the_skipped_install`, `test_login_notice_explains_an_install_waiting_for_the_network`.
+    - Correction recorded: "installs must work offline" (BIOS plan D5) was never a requirement; the stock NixOS installer needs the network too.
+
 ## Recently Completed
 - 2026-11-08T18-17-10Z - Merged trbarbour/NixOS-boot-image#339 (0.26.2): fixes #338 (cleanup wipes each LV/array while active, then deactivates) and item 40 (only the question while a disk is unconfirmed; messages announced once at a terminal). CI green, no Codex findings. Awaits the user's apply on the PC.
 - 2026-11-08T04-04-13Z - Merged trbarbour/NixOS-boot-image#337 (0.26.1): fixes #336, the model now comes from ATA IDENTIFY (`device/vpd_pg89`), so a SATA disk's full model (`G.SKILL 128GB SSD`) reaches the R-S3 rule. CI green, no Codex findings. Item 34 awaits the user's try on the PC.

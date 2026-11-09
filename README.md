@@ -44,6 +44,12 @@ built from a site with `autoInstall = true` ([Site settings](#site-settings)); o
 disabled by default so you can adjust settings first. Toggle auto-install at
 runtime with `--auto-install/--no-auto-install`.
 
+An automatic install (after the storage plan is applied) waits for the
+installer's network: it needs an IPv4 address and a default route on `lan`.
+Without them the install is skipped, and the login notice and the TUI say what
+is missing; configure the network, then run `pre-nixos --install-now` (or press
+`N` in `pre-nixos-tui`), which installs regardless, with a warning.
+
 For systems that should not use DHCP after installation, supply static network
 details with `--install-ip-address`, `--install-netmask`, and
 `--install-gateway`. Netmask and gateway default to the DHCP values obtained by

@@ -396,6 +396,7 @@ def main(argv: list[str] | None = None) -> None:
                 None,
                 install_network=install_network,
                 enabled=True,
+                trigger=install.InstallTrigger.REQUESTED,
                 dry_run=args.dry_run,
             )
             if result.status == "failed":

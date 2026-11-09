@@ -47,6 +47,16 @@ def _keep_tests_out_of_host_paths(
     # /sys/firmware/efi (a container, or SeaBIOS), which would read as BIOS.
     from pre_nixos import boot_platform
 
+    # The installer's network (task queue item 44): ready (an address and a
+    # default route) unless a test says otherwise; the test host has no lan.
+    from pre_nixos import network
+
+    monkeypatch.setattr(
+        network,
+        "installer_network",
+        lambda iface="lan": network.NetworkReadiness(address="192.0.2.10", gateway="192.0.2.1"),
+    )
+
     efi_dir = host_paths / "sys-firmware-efi"
     efi_dir.mkdir()
     monkeypatch.setattr(boot_platform, "_SYSFS_EFI", efi_dir)
