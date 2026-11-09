@@ -70,7 +70,10 @@ def _to_build(dry_run: str) -> list[str]:
         if re.search(r"(these \d+ derivations|this derivation) will be built:", line):
             collecting = True
             continue
-        if collecting and line.startswith("  /nix/store/"):
+        # BootImageVM.run returns lines stripped of their indent
+        # (clean_command_output), so accept "/nix/store/" with or without it:
+        # the second run on 2026-11-09 passed wrongly on the indented form.
+        if collecting and line.strip().startswith("/nix/store/"):
             built.append(line.strip())
             continue
         if collecting and not line.strip():
@@ -105,6 +108,8 @@ def test_installed_system_builds_offline(boot_image_vm_with_ambiguous_ssd: BootI
     bootstrap = [drv for drv in built if any(marker in drv for marker in BOOTSTRAP_MARKERS)]
     summary = f"{len(built)} derivations to build offline; first 40:\n" + "\n".join(built[:40])
     assert "dry-run-exit=0" in dry_run, dry_run[-4000:]
+    if re.search(r"will be built:", dry_run):
+        assert built, f"a build list was printed but not parsed:\n{dry_run[:2000]}"
     if bootstrap:
         # Evidence for #340: which nixpkgs nixos-install evaluates, and whether
         # its gawk is the ISO's.

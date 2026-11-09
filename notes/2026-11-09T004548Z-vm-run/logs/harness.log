@@ -207,3 +207,6 @@ chmod +x /root/shim/nixos-install
 [2026-11-09T00:50:04.058776+00:00]   <no output>
 [2026-11-09T00:50:04.114410+00:00] Running command: printf '__UID_MARK__1794185404059__%s__UID_MARK__1794185404059__\n' "$(id -u)"
 [2026-11-09T00:50:04.226319+00:00] Running command: PATH=/root/shim:$PATH pre-nixos --install-now > /tmp/install.log 2>&1; true
+[2026-11-09T00:52:34.228494+00:00] Running command: printf '__UID_MARK__1794185554173__%s__UID_MARK__1794185554173__\n' "$(id -u)"
+[2026-11-09T00:52:34.331334+00:00] Running command: cat /tmp/offline-dry-run.txt
+[2026-11-09T00:52:35.881482+00:00] Disk free at VM teardown: 5.4 GiB

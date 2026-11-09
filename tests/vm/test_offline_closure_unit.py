@@ -61,3 +61,7 @@ def test_dry_run_list_from_a_serial_transcript() -> None:
     assert _to_build(transcript) == expected
     # The same text after a text-mode read (each "\r" becomes a newline).
     assert _to_build(transcript.replace("\r\n", "\n").replace("\r", "\n")) == expected
+    # As BootImageVM.run returns it: escapes removed and every line stripped.
+    from tests.vm.controller import clean_command_output
+
+    assert _to_build(clean_command_output(transcript, "cat /tmp/offline-dry-run.txt")) == expected

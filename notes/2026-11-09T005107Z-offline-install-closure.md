@@ -21,3 +21,9 @@ _2026-11-09. Task queue item 43; user report from the first BIOS PC (0.26.2)._
   - `dbus-1`: configuration-specific, built on the target.
 - Each missing package output forces a rebuild from source. That needs build inputs (`dev` outputs, tarballs) the ISO lacks, and ends in the compiler bootstrap.
 - **Size of the missing runtime packages:** 52 paths, about 50 MiB unpacked (binary cache NAR sizes); texinfo is 28 MiB of it.
+
+## Correction: the VM test passed twice, wrongly
+- **Run 1** (`notes/2026-11-09T003327Z-vm-run`): the parser missed the header behind terminal escapes and `\r\r\n`.
+- **Run 2** (`notes/2026-11-09T004548Z-vm-run`): the serial log again shows 1751 derivations including `stage0-posix`, but `BootImageVM.run` (`clean_command_output`) strips every line, and the parser required the two-space indent, so it collected nothing.
+- **Fixed:** the parser accepts both forms, and the test now fails if a build list was printed but none was parsed. `test_dry_run_list_from_a_serial_transcript` covers the controller-cleaned form; it fails with the previous parser.
+- The host-side isolated-store reproduction above does not depend on this parser.
