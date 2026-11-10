@@ -6,7 +6,6 @@ import ipaddress
 import os
 import re
 import enum
-import shutil
 import subprocess
 import sys
 import time
@@ -944,19 +943,29 @@ def _rewrite_hardware_configuration(root_path: Path) -> None:
     config_path.write_text(text, encoding="utf-8")
 
 
-def _copy_unit(source: Optional[Path], target_dir: Path) -> Optional[Path]:
-    """Copy ``source`` into ``target_dir`` preserving contents."""
+# The names network.configure_lan gives the installer's units; older
+# pre-nixos versions copied them into the target.
+_INSTALLER_UNIT_NAMES = ("10-lan.link", "20-lan.network")
 
-    if source is None:
-        return None
-    if not source.exists():
-        raise FileNotFoundError(f"Missing network artifact: {source}")
 
-    target_dir.mkdir(parents=True, exist_ok=True)
-    destination = target_dir / source.name
-    shutil.copyfile(source, destination)
-    os.chmod(destination, 0o644)
-    return destination
+def _remove_installer_units(target_dir: Path, lan: LanConfiguration) -> list[Path]:
+    """Remove copies of the installer's network units from the target.
+
+    Only pre-nixos's own names (and those of ``lan``'s files) are touched;
+    other files in ``target_dir`` are kept.  Returns the removed paths.
+    """
+
+    names = set(_INSTALLER_UNIT_NAMES)
+    for source in (lan.rename_rule, lan.network_unit):
+        if source is not None:
+            names.add(source.name)
+    removed: list[Path] = []
+    for name in sorted(names):
+        candidate = target_dir / name
+        if candidate.is_file() and not candidate.is_symlink():
+            candidate.unlink()
+            removed.append(candidate)
+    return removed
 
 
 def _format_timestamp(moment: datetime) -> str:
@@ -1339,31 +1348,23 @@ def auto_install(
             reason="configuration-write",
         )
 
+    # #342: the target's network comes from the managed block alone, which
+    # declares the rename (systemd.network.links) and the network.  The
+    # installer's own units are not copied, and copies an earlier attempt
+    # left are removed: NixOS does not manage these names, and "20-lan.network"
+    # (the installer's DHCP unit) sorts before the declared units, so a
+    # leftover silently overrode a static address.
     try:
-        target_dir = root_path / "etc/systemd/network"
-        copied_units = {}
-        for label, source in {
-            "rename_rule": lan.rename_rule,
-            "network_unit": lan.network_unit,
-        }.items():
-            if source is None:
-                continue
-            if label == "network_unit" and install_network is not None:
-                continue
-            destination = _copy_unit(source, target_dir)
-            copied_units[label] = str(destination)
-        if copied_units:
-            log_event(
-                "pre_nixos.install.network_units_copied",
-                files=copied_units,
-            )
-    except Exception as exc:
-        log_event("pre_nixos.install.network_unit_copy_failed", error=str(exc))
+        removed = _remove_installer_units(root_path / "etc/systemd/network", lan)
+    except OSError as exc:
+        log_event("pre_nixos.install.network_unit_cleanup_failed", error=str(exc))
         return _record_result(
             "failed",
             status_dir=status_dir,
-            reason="network-unit-copy",
+            reason="network-unit-cleanup",
         )
+    if removed:
+        log_event("pre_nixos.install.stale_network_units_removed", files=[str(p) for p in removed])
 
     try:
         boot_files = boot_platform.install_boot_files(boot_setup, root_path)

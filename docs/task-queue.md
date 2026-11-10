@@ -389,10 +389,11 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Found when the build ran out of disk (`xorriso : FAILURE : Image size 769296s exceeds free space on media 485468s`), seen only by rerunning the build by hand.
     - Plan: capture the build's stderr and include its tail in the failure (and the run's harness log).
 
-38. **Test ISOs fill the cloud session's disk allowance.** *(recurring: 2026-10-18, 2026-10-19, 2026-11-07, 2026-11-08)*
+38. **Test ISOs fill the cloud session's disk allowance.** *(recurring: 2026-10-18, 2026-10-19, 2026-11-07, 2026-11-08, 2026-11-10)*
     - Each VM run builds a ~1.5 GB ISO into the Nix store; they are not GC roots but stay until collected, and a session's writable disk is a fixed allowance.
     - Plan: before building, delete this repo's older `pre-nixos-*.iso` store paths (unreferenced ones only, `nix-store --delete`), or have the fixture warn when free space is below ~3 GB.
     - 2026-11-08: also the VM disk images. A RAID-1 resync writes the whole member, so sparse images become fully allocated: the reprovision test (`test_reprovision_vm.py`, two array creations on 4+5+5 GiB) needs ~14 GB. Run `notes/2026-11-08T165915Z-vm-run` was stopped by a free-space watchdog (< 1.5 GB). `nix-store --gc` freed 18.7 GiB (the nixpkgs closure from before the flake update, and old builds).
+    - 2026-11-10 (03:20Z): the end-to-end run on the unfixed `install.py` (`notes/2026-11-10T020935Z-vm-run`) died with ENOSPC during `nixos-install`, although `df` still showed 6.2 GB free: `df` does not show the session's allowance, so the df-based watchdog never fired. The SSD and HDD images had grown to 2.5 GB and 5.0 GB. Freed by deleting the images and `nix-store --gc` (11.9 GiB). A watchdog must measure the allowance some other way (e.g. the sizes of the VM images plus the store growth), not `df`.
     - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
 
 39. **Re-provisioning over an earlier layout fails; the disks are wiped three times** *(user report, 2026-11-08, 0.26.1, first BIOS PC; trbarbour/NixOS-boot-image#338)*.
@@ -435,7 +436,24 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Implemented: `network.installer_network`, `install.InstallTrigger`, the gate in `auto_install`, TUI and login-notice messages. Tests: `tests/test_install_network_gate.py`, `test_apply_without_network_explains_the_skipped_install`, `test_login_notice_explains_an_install_waiting_for_the_network`.
     - Correction recorded: "installs must work offline" (BIOS plan D5) was never a requirement; the stock NixOS installer needs the network too.
 
+45. **Optional hashed root password for the installed system** *(user, 2026-11-09)*.
+    - The installed system has no root password, so the serial console cannot log in; reqs §2.7 says root login must be possible over the serial console (if functional).
+    - Agreed: an optional site setting `rootHashedPassword` (e.g. `mkpasswd -m yescrypt`), kept in the site file like `rootKey`, never in the repo; pre-nixos writes it as `users.users.root.hashedPassword` on the installed system. Unset by default. The installer keeps its empty console password.
+    - Needs: site option and validation (a crypt hash, not a plain password), the managed block, tests, README (strong password: the hash ships in the image).
+
+46. **The installed system with a static address is unreachable (no ping, no SSH)** *(user report, 2026-11-09, 0.26.2 image, first BIOS PC)*.
+    - Install with a static address (TUI `C`, 10.137.3.9/24) succeeded and the system boots; its `pre-nixos-auto-install-ip` service reports "LAN IPv4 address unavailable".
+    - The managed block is rewritten on each install (the "not overwriting existing configuration.nix" warning is not the cause). The user is collecting the installed config and the networkd/udev journal.
+    - Plan: an end-to-end VM test (item 12): install with a static address, boot the installed disk, SSH in.
+    - 2026-11-09: `tests/vm/test_installed_system_vm.py` (new; item 12) **passed**: installed with 10.0.2.15/24 via `--install-now` flags on the BIOS VM, booted the installed disks without the ISO, SSH worked and `lan` had the address and default route. Not reproduced in the VM: the difference is on the PC (hardware/firmware, or the TUI's `C`/`N` path). Waiting for the user's journal.
+    - **2026-11-10, root cause (user's journal):** `lan: Configuring with /etc/systemd/network/20-lan.network`, the installer's DHCP unit. The earlier failed DHCP install on the same root file system had copied it into the target; the static install skipped the copy but left the old file. NixOS does not manage that name, and `20-` sorts before the declared `40-lan.network` and `lan.network`. The rename and the carrier were fine.
+    - The VM test passed wrongly: its static address was 10.0.2.15, which QEMU's DHCP server also hands out. Now 10.0.2.20, and the test plants the earlier attempt's unit.
+    - **Fix (0.27.1):** the installer's units are no longer copied into the target (the managed block declares the rename and the network); copies an earlier attempt left under pre-nixos's names are removed. Tests: `tests/test_install_network_units.py`; two `test_install.py` tests that pinned the copy are updated.
+    - User workaround on the existing install: from the installer, `rm /mnt/etc/systemd/network/20-lan.network`, then reboot.
+    - **2026-11-10, confirmed (user):** after removing the leftover `20-lan.network` and rebooting, SSH to the installed system works.
+
 ## Recently Completed
+- 2026-11-09T14-21-45Z - Merged trbarbour/NixOS-boot-image#341 (0.27.0): R-I1, an automatic install waits for an IPv4 address and a default route (item 44); the x86 image carries reference installed systems and builder tools, fixing #340 (item 43; offline dry run 1751 → 78 configuration derivations). CI green, no Codex findings. Awaits the user's install on the PC.
 - 2026-11-08T18-17-10Z - Merged trbarbour/NixOS-boot-image#339 (0.26.2): fixes #338 (cleanup wipes each LV/array while active, then deactivates) and item 40 (only the question while a disk is unconfirmed; messages announced once at a terminal). CI green, no Codex findings. Awaits the user's apply on the PC.
 - 2026-11-08T04-04-13Z - Merged trbarbour/NixOS-boot-image#337 (0.26.1): fixes #336, the model now comes from ATA IDENTIFY (`device/vpd_pg89`), so a SATA disk's full model (`G.SKILL 128GB SSD`) reaches the R-S3 rule. CI green, no Codex findings. Item 34 awaits the user's try on the PC.
 - 2026-11-07T20-14-14Z - Merged trbarbour/NixOS-boot-image#335 (0.26.0): item 34, R-S3/R-S4. A disk named SSD but reported as rotating waits for the user's answer (TUI or `--ssd`/`--hdd`) before anything touches the disks; the TUI's `T` sets any disk's class. Fixes #334 (VM tests assumed sd names follow attach order). Codex found four issues over two reviews (forced cleanup, explicit partitioning, `T` unreachable disks, `T` list overflow), each reproduced and fixed. CI green. Not yet tried on the user's PC.
