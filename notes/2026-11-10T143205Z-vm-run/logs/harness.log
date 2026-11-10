@@ -221,3 +221,8 @@ chmod +x /root/shim/systemctl
 [2026-11-10T14:36:57.013535+00:00]   <no output>
 [2026-11-10T14:36:57.072265+00:00] Running command: printf '__UID_MARK__1794321417013__%s__UID_MARK__1794321417013__\n' "$(id -u)"
 [2026-11-10T14:36:57.219218+00:00] Running command: PATH=/root/shim:$PATH pre-nixos --install-now --install-ip-address 10.0.2.20 --install-netmask 255.255.255.0 --install-gateway 10.0.2.2 > /tmp/install.log 2>&1; echo install-exit=$?
+[2026-11-10T15:10:28.896974+00:00] Running command: printf '__UID_MARK__1794323428830__%s__UID_MARK__1794323428830__\n' "$(id -u)"
+[2026-11-10T15:10:29.035597+00:00] Running command: grep -v '^copying path' /tmp/install.log | tail -n 40
+[2026-11-10T15:10:29.289351+00:00] Running command: printf '__UID_MARK__1794323429231__%s__UID_MARK__1794323429231__\n' "$(id -u)"
+[2026-11-10T15:10:29.404593+00:00] Running command: sed -n '/auto-install start/,/auto-install end/p' /mnt/etc/nixos/configuration.nix
+[2026-11-10T15:12:24.747930+00:00] Disk free at VM teardown: 6.7 GiB

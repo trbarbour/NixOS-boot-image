@@ -181,3 +181,151 @@ printf '__UID_MARK__1794321417013__%s__UID_MARK__1794321417013__\n' "$(id -u)"
 [?2004hPRE-NIXOS> PATH=/root/shim:$PATH pre-nixos --install-now --install-ip-address 10.0.2.20 --install-netmask 255.255.255.0 --install-gateway 10.0.2.2 > /tmp/install.log 2>&1; echo install-exit=$?
 PATH=/root/shim:$PATH pre-nixos --install-now --install-ip-address 10.0.2.20 --install-netmask 255.255.255.0 --install-gateway 10.0.2.2 > /tmp/install.log 2>&1; echo install-exit=$?
 [?2004lStarting automatic NixOS installation at 2026-11-10 14:36:59Z UTC.
+Automatic NixOS installation completed at 2026-11-10 15:10:26Z UTC.
+install-exit=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794323428830__%s__UID_MARK__1794323428830__\n' "$(id -u)"
+printf '__UID_MARK__1794323428830__%s__UID_MARK__1794323428830__\n' "$(id -u)"
+[?2004l__UID_MARK__1794323428830__0__UID_MARK__1794323428830__
+[?2004hPRE-NIXOS> grep -v '^copying path' /tmp/install.log | tail -n 40
+grep -v '^copying path' /tmp/install.log | tail -n 40
+[?2004l/etc/os-release -> /nix/store/l36pgw76hikkvc7pyzkba8c5ryrclz31-initrd-release
+/etc/passwd -> /nix/store/hsfwcn7b6nn49k5awpxsb5zgkjscpxhs-initrd-passwd
+/etc/shadow -> /nix/store/wf003ip6539xhlcn9r3kflirdgk8qqby-initrd-shadow
+/etc/shells -> /nix/store/rb7fliyhfzqi92hrrhkqiab0dqk966fg-initrd-shells
+/etc/sysctl.d/nixos.conf -> /nix/store/brnrw4mhbrmik33mhp5jar29pfx1xjxc-initrd-nixos.conf
+/etc/systemd/network/10-lan.link -> /nix/store/0km89f8kbc6nglf53vh4z0iy5mxdffas-unit-10-lan.link/10-lan.link
+/etc/systemd/system -> /nix/store/hg3sp4x9ymj7z6284m36c8lmlp4c6b32-initrd-units
+/etc/systemd/system.conf -> /nix/store/4bbkbgjfiwravpvpaby6n59k968mzdia-initrd-system.conf
+/etc/terminfo/l/linux -> /nix/store/4whvlsd07mc0rrkpdinhnhgixrzk7lkv-ncurses-6.6/share/terminfo/l/linux
+/etc/terminfo/v/vt100 -> /nix/store/4whvlsd07mc0rrkpdinhnhgixrzk7lkv-ncurses-6.6/share/terminfo/v/vt100
+/etc/terminfo/v/vt102 -> /nix/store/4whvlsd07mc0rrkpdinhnhgixrzk7lkv-ncurses-6.6/share/terminfo/v/vt102
+/etc/terminfo/v/vt220 -> /nix/store/4whvlsd07mc0rrkpdinhnhgixrzk7lkv-ncurses-6.6/share/terminfo/v/vt220
+/etc/udev/rules.d -> /nix/store/fpyr79g42cvb977c7ry2qp93iiv8az13-initrd-udev-rules
+/etc/vconsole.conf -> /nix/store/ihja9krbywmrzhl72aggx39cll57hivz-vconsole.conf
+/init -> /nix/store/y3fqx697649kqv1a9c0z1jsk4wy2zlqa-systemd-260.5/lib/systemd/systemd
+/lib -> /nix/store/3ggljipgppbwb7nq8vg9hnypn0wx5vcb-linux-6.18.60-modules-shrunk/lib
+/sbin -> /nix/store/6k48w0dbzvfiflhg0dizyvzmnn1cm08b-initrd-bin-env/sbin
+/usr/bin -> /nix/store/6k48w0dbzvfiflhg0dizyvzmnn1cm08b-initrd-bin-env/bin
+/usr/sbin -> /nix/store/6k48w0dbzvfiflhg0dizyvzmnn1cm08b-initrd-bin-env/sbin
+Warning: Couldn't satisfy dependency libcrypt.so.1 for "/nix/store/y3fqx697649kqv1a9c0z1jsk4wy2zlqa-systemd-260.5/lib/systemd/libsystemd-shared-260.so"
+Warning: Couldn't satisfy dependency libcrypt.so.1.1 for "/nix/store/y3fqx697649kqv1a9c0z1jsk4wy2zlqa-systemd-260.5/lib/systemd/libsystemd-shared-260.so"
+building '/nix/store/yqcfzk38gr51hf44zkv44lscx0fcvsz0-system-units.drv'...
+building '/nix/store/fjc5m0rrml7fwa04hp2qpkf9fdzr467v-etc.drv'...
+building '/nix/store/lxi63sbdvsjmqnz57fjjwh0119kw2asi-activate.drv'...
+building '/nix/store/0vv92nr5ibjqjgf1x5nxlx4w392nf1zy-boot.json.drv'...
+building '/nix/store/687xg7nkkap2y7f9kcl87xpxn7vsxdx0-nixos-system-nixos-26.05pre-git.drv'...
+structuredAttrs is enabled
+/nix/store/3fvmxy7mxvipk7a3fbdsmw6q9khcbaa2-nixos-system-nixos-26.05pre-git
+installing the boot loader...
+setting up /etc...
+Not checking switch inhibitors (action = boot)
+updating GRUB 2 menu...
+installing the GRUB 2 boot loader on /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_ssd...
+Installing for i386-pc platform.
+Installation finished. No error reported.
+installation finished!
+systemctl reboot (skipped by the test)
+Starting automatic NixOS installation at 2026-11-10 14:36:59Z UTC.
+Automatic NixOS installation completed at 2026-11-10 15:10:26Z UTC.
+Install completed successfully.
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794323429231__%s__UID_MARK__1794323429231__\n' "$(id -u)"
+printf '__UID_MARK__1794323429231__%s__UID_MARK__1794323429231__\n' "$(id -u)"
+[?2004l__UID_MARK__1794323429231__0__UID_MARK__1794323429231__
+[?2004hPRE-NIXOS> sed -n '/auto-install start/,/auto-install end/p' /mnt/etc/nixos/configuration.nix
+sed -n '/auto-install start/,/auto-install end/p' /mnt/etc/nixos/configuration.nix
+[?2004l  # pre-nixos auto-install start
+  networking.firewall = {
+    enable = true;
+    allowPing = true;
+    allowedTCPPorts = [ 22 ];
+    allowedUDPPorts = [ ];
+  };
+
+  networking.useDHCP = false;
+  networking.useNetworkd = true;
+  networking.interfaces.lan = {
+    useDHCP = false;
+    ipv4.addresses = [ { address = "10.0.2.20"; prefixLength = 24; } ];
+  };
+
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      PermitRootLogin = "prohibit-password";
+    };
+  };
+
+  users.users.root.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ/TI17752sQc+uwC3JcT5c+p5f3iY1VIUuoNeK+nHY9 boot-image-vm-test"
+  ];
+
+  users.users.root.hashedPassword = "$y$j9T$Y5LoFQB1W5dkf/fSia4AG0$RT34fdiAmo.qsfnbxOlakOqbBf5uAPh6JCLP2JLgC..";
+
+  systemd.network.enable = true;
+  systemd.network.networks."lan" = {
+    matchConfig.MACAddress = "52:54:00:12:34:56";
+    networkConfig.DHCP = "no";
+    networkConfig.Address = [ "10.0.2.20/24" ];
+    networkConfig.Gateway = "10.0.2.2";
+  };
+
+  networking.defaultGateway = { address = "10.0.2.2"; interface = "lan"; };
+
+  systemd.network.links."10-lan" = {
+    matchConfig.MACAddress = "52:54:00:12:34:56";
+    linkConfig.Name = "lan";
+  };
+
+  boot.swraid.mdadmConf = ''
+    MAILADDR root
+  '';
+
+  fileSystems = {
+    "/" = {
+      label = "slash";
+      fsType = "ext4";
+      options = [ "relatime" ];
+      neededForBoot = true;
+    };
+    "/boot" = {
+      label = "EFI";
+      fsType = "vfat";
+      options = [ "umask=0077" ];
+      neededForBoot = true;
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /boot 000 root root -"
+  ];
+
+  swapDevices = [
+    {
+      label = "swap";
+    }
+  ];
+
+  boot.swraid.enable = true;
+  boot.initrd.services.lvm.enable = true;
+  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
+  boot.loader.grub.extraConfig = ''
+    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
+    terminal_input serial console
+    terminal_output serial console
+  '';
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # pre-nixos auto-install end
+[?2004hPRE-NIXOS> poweroff
+poweroff
+[?2004l
+Broadcast message from root@nixos on pts/0 (Tue 2026-11-10 15:10:29 UTC):
+
+The system will power off now!
+
+[?2004hPRE-NIXOS> [!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;end=9911ed1005c945aba730e43b777ff341\[ 2298.260574] reboot: Power down
