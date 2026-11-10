@@ -12,6 +12,9 @@ unavailable".  No test had booted an installed system before.
    10.0.2.15, so that is the address, with gateway 10.0.2.2.  pre-nixos's
    reboot after the install is swallowed (``-no-reboot`` would end QEMU), and
    the VM is powered off.
+   Before installing, the test plants the DHCP unit an earlier attempt left
+   on the user's disk; the static address is not the one QEMU's DHCP server
+   hands out, so a DHCP fallback fails the test.
 2. A second QEMU boots the same disks, without the ISO, with the same NIC
    (QEMU's default MAC, which the installed system matches to rename it to
    ``lan``).  The test SSHes in through the port forward with the image's
@@ -34,7 +37,14 @@ pytestmark = [pytest.mark.vm, pytest.mark.slow]
 
 INSTALL_TIMEOUT = 5400
 BOOT_TIMEOUT = 900
-STATIC_ADDRESS = "10.0.2.15"
+# Not 10.0.2.15, the address QEMU's DHCP server hands out: if the installed
+# system fell back to DHCP it would get .15, and SSH to .20 would fail.  The
+# first version used .15 and passed although the static configuration was
+# overridden (#342).
+STATIC_ADDRESS = "10.0.2.20"
+# The installer's DHCP unit, as an earlier, failed DHCP install on the user's
+# PC left it in the target (#342).
+STALE_DHCP_UNIT = "[Match]\nName=lan\n\n[Network]\nDHCP=yes\n"
 
 # pre-nixos reboots after a successful install; under -no-reboot that would
 # end QEMU in the middle of the command, so the stand-in only swallows it.
@@ -82,6 +92,13 @@ def test_installed_system_with_a_static_address_is_reachable(
         + "EOF\nchmod +x /root/shim/systemctl",
         timeout=60,
     )
+    # The user's disk: an earlier DHCP attempt left the installer's unit.
+    vm.run_as_root_checked(
+        "mkdir -p /mnt/etc/systemd/network && printf '"
+        + STALE_DHCP_UNIT.replace("\n", "\\n")
+        + "' > /mnt/etc/systemd/network/20-lan.network",
+        timeout=60,
+    )
     out = vm.run_as_root(
         "PATH=/root/shim:$PATH pre-nixos --install-now"
         f" --install-ip-address {STATIC_ADDRESS} --install-netmask 255.255.255.0"
@@ -103,7 +120,7 @@ def test_installed_system_with_a_static_address_is_reachable(
         qemu_executable, "-m", "2048", "-smp", "2", "-display", "none", "-no-reboot",
         "-serial", f"file:{serial}",
         *scsi_disk_args(raid_scsi_disks),
-        "-netdev", f"user,id=net0,hostfwd=tcp:127.0.0.1:{port}-:22",
+        "-netdev", f"user,id=net0,hostfwd=tcp:127.0.0.1:{port}-{STATIC_ADDRESS}:22",
         "-device", "virtio-net-pci,netdev=net0",
     ]
     installed = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)

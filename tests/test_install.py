@@ -263,9 +263,14 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     announce_script = (root / "etc/nixos/pre-nixos-announce-lan-ip.sh").read_text()
     assert "preferred interface" in announce_script
 
+    # #342: the installer's own units are not copied into the target; the
+    # managed block declares the rename and the network.
     network_dir = root / "etc/systemd/network"
-    assert (network_dir / "10-lan.link").read_text() == lan.rename_rule.read_text()
-    assert (network_dir / "20-lan.network").read_text() == lan.network_unit.read_text()
+    assert not (network_dir / "10-lan.link").exists()
+    assert not (network_dir / "20-lan.network").exists()
+    content = (root / "etc/nixos/configuration.nix").read_text()
+    assert 'systemd.network.links."10-lan" = {' in content
+    assert 'networkConfig.DHCP = "yes";' in content
 
     start_stamp = start_time.strftime("%Y-%m-%d %H:%M:%SZ")
     completion_stamp = completion_time.strftime("%Y-%m-%d %H:%M:%SZ")
@@ -364,7 +369,7 @@ def test_auto_install_static_network_skips_dhcp_unit(
     assert reboot_called == [True]
 
     network_dir = root / "etc/systemd/network"
-    assert (network_dir / "10-lan.link").exists()
+    assert not (network_dir / "10-lan.link").exists()
     assert not (network_dir / "20-lan.network").exists()
 
     content = (root / "etc/nixos/configuration.nix").read_text()
