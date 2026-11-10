@@ -191,3 +191,33 @@
 [2026-11-10T14:36:18.970949+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
 [2026-11-10T14:36:24.079486+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
 [2026-11-10T14:36:29.173214+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-10T14:36:34.391523+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-10T14:36:39.721634+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-10T14:36:44.853512+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-10T14:36:50.013708+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-10T14:36:55.327713+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-10T14:36:55.455699+00:00] Running command: :
+[2026-11-10T14:36:55.582368+00:00] Running command: printf '__UID_MARK__1794321415523__%s__UID_MARK__1794321415523__\n' "$(id -u)"
+[2026-11-10T14:36:55.765164+00:00] Running command: { printf '\n__BEGIN__\n'; mkdir -p /root/shim && cat > /root/shim/systemctl <<'EOF'
+#!/bin/sh
+if [ "$1" = reboot ]; then echo "systemctl reboot (skipped by the test)"; exit 0; fi
+exec /run/current-system/sw/bin/systemctl "$@"
+EOF
+chmod +x /root/shim/systemctl; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-10T14:36:56.296997+00:00] Checked command exited with status 0: mkdir -p /root/shim && cat > /root/shim/systemctl <<'EOF'
+#!/bin/sh
+if [ "$1" = reboot ]; then echo "systemctl reboot (skipped by the test)"; exit 0; fi
+exec /run/current-system/sw/bin/systemctl "$@"
+EOF
+chmod +x /root/shim/systemctl
+[2026-11-10T14:36:56.296997+00:00]   <no output>
+[2026-11-10T14:36:56.358806+00:00] Running command: printf '__UID_MARK__1794321416297__%s__UID_MARK__1794321416297__\n' "$(id -u)"
+[2026-11-10T14:36:56.520989+00:00] Running command: { printf '\n__BEGIN__\n'; mkdir -p /mnt/etc/systemd/network && printf '[Match]\nName=lan\n\n[Network]\nDHCP=yes\n' > /mnt/etc/systemd/network/20-lan.network; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-10T14:36:56.695603+00:00] Checked command exited with status 0: mkdir -p /mnt/etc/systemd/network && printf '[Match]\nName=lan\n\n[Network]\nDHCP=yes\n' > /mnt/etc/systemd/network/20-lan.network
+[2026-11-10T14:36:56.695603+00:00]   <no output>
+[2026-11-10T14:36:56.756422+00:00] Running command: printf '__UID_MARK__1794321416695__%s__UID_MARK__1794321416695__\n' "$(id -u)"
+[2026-11-10T14:36:56.891597+00:00] Running command: { printf '\n__BEGIN__\n'; printf 'root:!:1::::::\n' > /mnt/etc/shadow && chmod 640 /mnt/etc/shadow; printf '\n__EXIT__=%s\n' $?; }
+[2026-11-10T14:36:57.013535+00:00] Checked command exited with status 0: printf 'root:!:1::::::\n' > /mnt/etc/shadow && chmod 640 /mnt/etc/shadow
+[2026-11-10T14:36:57.013535+00:00]   <no output>
+[2026-11-10T14:36:57.072265+00:00] Running command: printf '__UID_MARK__1794321417013__%s__UID_MARK__1794321417013__\n' "$(id -u)"
+[2026-11-10T14:36:57.219218+00:00] Running command: PATH=/root/shim:$PATH pre-nixos --install-now --install-ip-address 10.0.2.20 --install-netmask 255.255.255.0 --install-gateway 10.0.2.2 > /tmp/install.log 2>&1; echo install-exit=$?

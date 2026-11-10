@@ -113,4 +113,71 @@ cat /run/pre-nixos/storage-status 2>/dev/null || true
 cat /run/pre-nixos/storage-status 2>/dev/null || true
 [?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
 cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004lSTATE=applied
+DETAIL=auto-applied
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disabled
+[?2004hPRE-NIXOS> :
+:
 [?2004l[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794321415523__%s__UID_MARK__1794321415523__\n' "$(id -u)"
+printf '__UID_MARK__1794321415523__%s__UID_MARK__1794321415523__\n' "$(id -u)"
+[?2004l__UID_MARK__1794321415523__0__UID_MARK__1794321415523__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; mkdir -p /root/shim && cat > /root/shim/systemctl <<'EOF'
+#!/bin/sh
+if [ "$1" = reboot ]; then echo "systemctl reboot (skipped by the test)"; exit 0; fi
+exec /run/current-system/sw/bin/systemctl "$@"
+EOF
+chmod +x /root/shim/systemctl; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; mkdir -p /root/shim && cat > /root/shim/systemctl <<'EOF'
+[?2004l[?2004h> #!/bin/sh
+[?2004l[?2004h> if [ "$1" = reboot ]; then echo "systemctl reboot (skipped by the test)"; exit 0; fi
+[?2004l[?2004h> exec /run/current-system/sw/bin/systemctl "$@"
+[?2004l[?2004h> EOF
+[?2004l[?2004h> chmod +x /root/shim/systemctl; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794321416297__%s__UID_MARK__1794321416297__\n' "$(id -u)"
+LAN IPv4 address: 10.0.2.15
+printf '__UID_MARK__1794321416297__%s__UID_MARK__1794321416297__\n' "$(id -u)"
+[?2004l__UID_MARK__1794321416297__0__UID_MARK__1794321416297__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; mkdir -p /mnt/etc/systemd/network && printf '[Match]\nName=lan\n\n[Network]\nDHCP=yes\n' > /mnt/etc/systemd/network/20-lan.network; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; mkdir -p /mnt/etc/systemd/network && printf '[Match]\nName=lan\n\n[Network]\nDHCP=yes\n' > /mnt/etc/systemd/network/20-lan.network; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794321416695__%s__UID_MARK__1794321416695__\n' "$(id -u)"
+printf '__UID_MARK__1794321416695__%s__UID_MARK__1794321416695__\n' "$(id -u)"
+[?2004l__UID_MARK__1794321416695__0__UID_MARK__1794321416695__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; printf 'root:!:1::::::\n' > /mnt/etc/shadow && chmod 640 /mnt/etc/shadow; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; printf 'root:!:1::::::\n' > /mnt/etc/shadow && chmod 640 /mnt/etc/shadow; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+
+__EXIT__=0
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794321417013__%s__UID_MARK__1794321417013__\n' "$(id -u)"
+printf '__UID_MARK__1794321417013__%s__UID_MARK__1794321417013__\n' "$(id -u)"
+[?2004l__UID_MARK__1794321417013__0__UID_MARK__1794321417013__
+[?2004hPRE-NIXOS> PATH=/root/shim:$PATH pre-nixos --install-now --install-ip-address 10.0.2.20 --install-netmask 255.255.255.0 --install-gateway 10.0.2.2 > /tmp/install.log 2>&1; echo install-exit=$?
+PATH=/root/shim:$PATH pre-nixos --install-now --install-ip-address 10.0.2.20 --install-netmask 255.255.255.0 --install-gateway 10.0.2.2 > /tmp/install.log 2>&1; echo install-exit=$?
+[?2004lStarting automatic NixOS installation at 2026-11-10 14:36:59Z UTC.
