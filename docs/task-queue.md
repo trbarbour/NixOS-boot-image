@@ -449,6 +449,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - The VM test passed wrongly: its static address was 10.0.2.15, which QEMU's DHCP server also hands out. Now 10.0.2.20, and the test plants the earlier attempt's unit.
     - **Fix (0.27.1):** the installer's units are no longer copied into the target (the managed block declares the rename and the network); copies an earlier attempt left under pre-nixos's names are removed. Tests: `tests/test_install_network_units.py`; two `test_install.py` tests that pinned the copy are updated.
     - User workaround on the existing install: from the installer, `rm /mnt/etc/systemd/network/20-lan.network`, then reboot.
+    - **2026-11-10, confirmed (user):** after removing the leftover `20-lan.network` and rebooting, SSH to the installed system works.
 
 ## Recently Completed
 - 2026-11-09T14-21-45Z - Merged trbarbour/NixOS-boot-image#341 (0.27.0): R-I1, an automatic install waits for an IPv4 address and a default route (item 44); the x86 image carries reference installed systems and builder tools, fixing #340 (item 43; offline dry run 1751 → 78 configuration derivations). CI green, no Codex findings. Awaits the user's install on the PC.
