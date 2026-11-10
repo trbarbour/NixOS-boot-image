@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
-from . import boot_order, boot_platform, console, disk_class, network, state
+from . import boot_order, boot_platform, console, disk_class, network, root_password, state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -648,10 +648,12 @@ def _inject_configuration(
     console_kernel_params: Optional[Sequence[str]] = None,
     boot_setup: boot_platform.BootSetup = boot_platform.NIXOS_DEFAULT_SETUP,
     boot_devices: Sequence[str] = (),
+    root_hash: Optional[root_password.RootHash] = None,
 ) -> None:
     """Rewrite ``configuration.nix`` with the managed auto-install block.
 
     ``boot_devices``: GRUB's target disks for ``X86_BIOS_GRUB`` (stable paths).
+    ``root_hash``: the site's hashed root password, if any (reqs R-A1).
     """
 
     config_dir = root_path / "etc/nixos"
@@ -742,6 +744,7 @@ def _inject_configuration(
             f'    "{_escape_nix_string(key_text)}"',
             "  ];",
             "",
+            *root_password.nix_lines(root_hash),
             "  systemd.network.enable = true;",
             '  systemd.network.networks."lan" = {',
         ]
@@ -1186,8 +1189,13 @@ def auto_install(
     status_dir: Path = Path("/run/pre-nixos"),
     mount_attempts: int = 30,
     mount_delay: float = 1.0,
+    root_password_file: Path = root_password.EMBEDDED_FILE,
 ) -> AutoInstallResult:
-    """Automatically install NixOS when prerequisites are satisfied."""
+    """Automatically install NixOS when prerequisites are satisfied.
+
+    ``root_password_file``: the image's hashed root password (reqs R-A1); a
+    missing file means the site set none.
+    """
 
     log_event(
         "pre_nixos.install.start",
@@ -1249,6 +1257,19 @@ def auto_install(
             status_dir=status_dir,
             reason="empty-authorized-key",
         )
+
+    # R-A2: nix/site.nix validated the hash when the image was built; a bad
+    # one here means a broken image, so nothing on /mnt is touched.
+    try:
+        root_hash = root_password.load_embedded(root_password_file)
+    except (root_password.InvalidRootHash, OSError, UnicodeDecodeError) as exc:
+        log_event("pre_nixos.install.root_password_invalid", error=type(exc).__name__)
+        return _record_result(
+            "failed",
+            status_dir=status_dir,
+            reason="root-password-invalid",
+        )
+    log_event("pre_nixos.install.root_password", set=root_hash is not None)
 
     try:
         boot_setup = boot_platform.current_setup()
@@ -1338,6 +1359,7 @@ def auto_install(
             [_stable_disk_path(disk) for disk in _plan_boot_disks(storage_plan)]
             if boot_setup.kind is boot_platform.InstalledBoot.X86_BIOS_GRUB
             else (),
+            root_hash,
         )
         _rewrite_hardware_configuration(root_path)
     except Exception as exc:  # pragma: no cover - unexpected filesystem errors
@@ -1365,6 +1387,20 @@ def auto_install(
         )
     if removed:
         log_event("pre_nixos.install.stale_network_units_removed", files=[str(p) for p in removed])
+
+    # Design D4: with mutable users NixOS applies hashedPassword only to a new
+    # shadow entry, so an earlier attempt's /etc/shadow would keep root locked.
+    if root_hash is not None:
+        try:
+            shadow_changed = root_password.apply_to_shadow_file(root_path / "etc/shadow", root_hash)
+        except OSError as exc:
+            log_event("pre_nixos.install.root_password_shadow_failed", error=str(exc))
+            return _record_result(
+                "failed",
+                status_dir=status_dir,
+                reason="root-password-shadow",
+            )
+        log_event("pre_nixos.install.root_password_shadow", changed=shadow_changed)
 
     try:
         boot_files = boot_platform.install_boot_files(boot_setup, root_path)

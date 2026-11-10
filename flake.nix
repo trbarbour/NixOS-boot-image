@@ -73,7 +73,7 @@
       preNixosModule = import ./modules/pre-nixos.nix;
       requiredToolNames = [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" "kmod" ];
 
-      makePreNixosPackage = { system, rootKey ? null }:
+      makePreNixosPackage = { system, rootKey ? null, rootHashedPassword ? null }:
         let
           pkgs = pkgsFor system;
           requiredToolPackages = pkgs.lib.attrVals requiredToolNames pkgs;
@@ -91,9 +91,15 @@
           '';
           postInstall = pkgs.lib.optionalString (rootKey != null) ''
             install -Dm0644 ${rootKey} "$out/${pkgs.python3.sitePackages}/pre_nixos/root_key.pub"
+          '' + pkgs.lib.optionalString (rootHashedPassword != null) ''
+            install -Dm0644 ${pkgs.writeText "pre-nixos-root-hashed-password" rootHashedPassword} \
+              "$out/${pkgs.python3.sitePackages}/pre_nixos/root_hashed_password"
           '';
-          # The embedded key, for the site-* flake checks.
+          # The embedded key and hash, for the site-* flake checks.
           passthru.rootKey = rootKey;
+          # The installed system's hashed root password (reqs R-A1; design
+          # plans/2026-11-10T140423Z-root-password-design.md D3).
+          passthru.rootHashedPassword = rootHashedPassword;
           postFixup = ''
             for prog in pre-nixos pre-nixos-detect-storage pre-nixos-tui; do
               wrapProgram "$out/bin/$prog" --prefix PATH : ${requiredToolBinPath}
@@ -108,7 +114,7 @@
       # login notice and its behaviour cannot disagree (design D4).
       mkPreInstaller = { system, imageModules, settings, console, consoleTag ? null }:
         let
-          package = makePreNixosPackage { inherit system; inherit (settings) rootKey; };
+          package = makePreNixosPackage { inherit system; inherit (settings) rootKey rootHashedPassword; };
         in
         nixpkgs.lib.nixosSystem {
           inherit system;
@@ -228,6 +234,8 @@
       # Flake checks for the site settings (design §2).  They pass an empty
       # environment explicitly, so they are deterministic even under --impure.
       noEnv = { rootKey = ""; autoInstall = ""; };
+      # Resolved settings with nothing set, as the default site gives.
+      noSettings = { rootKey = null; autoInstall = false; primaryConsole = null; rootHashedPassword = null; };
       fixtureSite = ./tests/fixtures/site-example;
       otherKey = ./tests/fixtures/other_root_key.pub;
       fails = value: !(builtins.tryEval (builtins.deepSeq value value)).success;
@@ -239,12 +247,13 @@
             settings = siteLib.resolveSettings { site = siteLib.readSite fixtureSite; env = noEnv; };
             ok = format:
               let c = mkBootConfigurationWith { inherit format settings; }; in
-              c.pkgs.pre-nixos.rootKey != null
+              c.pkgs.pre-nixos.rootHashedPassword == (import (fixtureSite + "/pre-nixos-site.nix")).rootHashedPassword
+              && c.pkgs.pre-nixos.rootKey != null
               && builtins.readFile c.pkgs.pre-nixos.rootKey == want
               && builtins.readFile c.config.services.pre-nixos.rootKey == want
               && c.config.systemd.services.pre-nixos.environment.PRE_NIXOS_AUTO_INSTALL == "1";
           in
-          assert lib.assertMsg (ok "iso" && ok "sd") "a site's rootKey/autoInstall did not reach both images";
+          assert lib.assertMsg (ok "iso" && ok "sd") "a site's rootKey/autoInstall/rootHashedPassword did not reach both images";
           true;
         # The repo's own default site embeds nothing and does not auto-install.
         site-default =
@@ -253,8 +262,9 @@
             c = mkBootConfigurationWith { format = "iso"; inherit settings; };
           in
           assert lib.assertMsg
-            (settings == { rootKey = null; autoInstall = false; primaryConsole = null; }
+            (settings == noSettings
               && c.pkgs.pre-nixos.rootKey == null
+              && c.pkgs.pre-nixos.rootHashedPassword == null
               && !(c.config.systemd.services.pre-nixos.environment ? PRE_NIXOS_AUTO_INSTALL))
             "the default site must embed no key and leave auto-install off";
           true;
@@ -266,6 +276,15 @@
               && fails (siteLib.validateSite "t" { rootKey = ./tests/fixtures/no-such.pub; })
               && fails (siteLib.validateSite "t" { autoInstall = "yes"; })
               && fails (siteLib.validateSite "t" { primaryConsole = "hdmi"; })
+              # R-A2: only a crypt hash NixOS accepts; never a plain password.
+              && fails (siteLib.validateSite "t" { rootHashedPassword = "hunter2"; })
+              && fails (siteLib.validateSite "t" { rootHashedPassword = ""; })
+              && fails (siteLib.validateSite "t" { rootHashedPassword = "!"; })
+              && fails (siteLib.validateSite "t" { rootHashedPassword = "$1$salt$md5hashnotenabled"; })
+              && fails (siteLib.validateSite "t" { rootHashedPassword = "$y$j9T$salt$hash:extra"; })
+              && fails (siteLib.validateSite "t" { rootHashedPassword = "$y$j9T$salt$hash\n"; })
+              && fails (siteLib.validateSite "t" { rootHashedPassword = ./tests/fixtures/other_root_key.pub; })
+              && !(fails (siteLib.validateSite "t" { rootHashedPassword = "$6$rounds=5000$saltsalt$hash/hash.hash"; }))
               && fails (formatOf "dvd")
               && fails (siteLib.readSite ./tests/fixtures)
               && fails (siteLib.resolveSettings { site = siteLib.validateSite "t" { }; env = noEnv // { autoInstall = "maybe"; }; })
@@ -280,7 +299,7 @@
               let
                 c = mkBootConfigurationWith {
                   inherit format;
-                  settings = { rootKey = null; autoInstall = false; inherit primaryConsole; };
+                  settings = noSettings // { inherit primaryConsole; };
                 };
               in
               lib.last (builtins.filter (lib.hasPrefix "console=") c.config.boot.kernelParams);
@@ -304,7 +323,7 @@
           let
             chosen = format: (mkBootConfigurationWith {
               inherit format;
-              settings = { rootKey = null; autoInstall = false; primaryConsole = null; };
+              settings = noSettings;
             }).config.services.pre-nixos.serialConsole;
             stockSd = consolesOf stockAarch64Config.config.boot.kernelParams;
           in
@@ -317,6 +336,16 @@
               && fails (serialConsoleFor { format = "t"; consoles = stockSd; named = "ttyS1,115200n8"; })
               && fails (serialConsoleFor { format = "t"; consoles = [ "tty0" ]; named = null; }))
             "serial console choice: iso=${chosen "iso"} sd=${chosen "sd"} stock=${builtins.toJSON stockSd}";
+          true;
+        # R-A2 (design D2): nix/site.nix repeats NixOS's accepted crypt schemes,
+        # since it has no pkgs; a nixpkgs update that changes them fails here.
+        crypt-schemes =
+          let
+            enabled = system: (pkgsFor system).libxcrypt.enabledCryptSchemeIds;
+          in
+          assert lib.assertMsg
+            (lib.all (system: enabled system == siteLib.cryptSchemeIds) [ "x86_64-linux" aarch64System ])
+            "nix/site.nix cryptSchemeIds ${builtins.toJSON siteLib.cryptSchemeIds} differ from libxcrypt's ${builtins.toJSON (enabled "x86_64-linux")}";
           true;
         # The legacy environment only fills unset settings; disagreement is an error.
         site-env-conflict =
@@ -407,6 +436,22 @@
               (missingTools == [])
               "pre-nixos must propagate required tools: ${builtins.toString missingTools}";
             pkgs.runCommand "pre-nixos-propagates-required-tools" {} ''
+              touch $out
+            '';
+          # R-A1 (design D3): the site's hash is installed where
+          # pre_nixos/root_password.py reads it, byte for byte; no site, no file.
+          root-hashed-password-embedded =
+            let
+              hash = (siteLib.readSite fixtureSite).rootHashedPassword;
+              withHash = makePreNixosPackage { inherit system; rootHashedPassword = hash; };
+              without = makePreNixosPackage { inherit system; };
+              rel = "${pkgs.python3.sitePackages}/pre_nixos/root_hashed_password";
+            in
+            pkgs.runCommand "root-hashed-password-embedded" {
+              expected = pkgs.writeText "expected-hash" hash;
+            } ''
+              cmp ${withHash}/${rel} "$expected"
+              test ! -e ${without}/${rel}
               touch $out
             '';
         } // pkgs.lib.optionalAttrs (system == preInstallerSystem) (
@@ -702,7 +747,7 @@
               stock = bootSettings stockAarch64Config.config;
               withConsole = primaryConsole: bootSettings (mkBootConfigurationWith {
                 format = "sd";
-                settings = { rootKey = null; autoInstall = false; inherit primaryConsole; };
+                settings = noSettings // { inherit primaryConsole; };
               }).config;
               serialStock = stock // { kernelParams = stock.kernelParams ++ [ "console=${aarch64Config.config.services.pre-nixos.serialConsole}" ]; };
               ours = bootSettings aarch64Config.config;

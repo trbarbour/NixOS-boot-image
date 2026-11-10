@@ -151,3 +151,6 @@
 
 ### v0.33 — 2026-11-09
 - §7.7.1: an automatic install waits for an IPv4 address and a default route on `lan` (R-I1, task queue item 44); an explicit request runs with a warning.
+
+### v0.34 — 2026-11-10
+- §7.8.1: the optional site setting `rootHashedPassword` gives the installed system's root a console password (R-A1, R-A2; task queue item 45).

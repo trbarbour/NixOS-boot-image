@@ -68,5 +68,6 @@ files = [
   "pre_nixos/logging_utils.py",
   "pre_nixos/network.py",
   "pre_nixos/partition.py",
+  "pre_nixos/root_password.py",
   "pre_nixos/storage_detection.py",
 ]
