@@ -68,6 +68,7 @@
     "port": 50533
   },
   "timings": {
+    "boot_to_login_seconds": 111.613,
     "build_seconds": 321.596,
     "start": "2026-11-10T14:32:05.667437+00:00"
   }
