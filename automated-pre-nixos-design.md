@@ -185,7 +185,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - One resolved value builds the package (the embedded key) and sets the module options, so the two cannot disagree.
 - The legacy `PRE_NIXOS_ROOT_KEY` / `PRE_NIXOS_AUTO_INSTALL` (with `--impure`) only fill unset settings. A conflict is an error.
 - Design: `plans/2026-10-21T135252Z-site-settings-pure-images-design.md`.
-- `rootHashedPassword` (R-A1, R-A2): a crypt hash, validated against NixOS's Modular Crypt Format pattern at evaluation. It is embedded in the package and written as `users.users.root.hashedPassword`. Before `nixos-install`, root's field in an existing `/mnt/etc/shadow` is set to it too: with mutable users NixOS applies the hash only to a new entry, so a reinstall would keep root locked. The installer keeps its empty console password. Design: `plans/2026-11-10T140423Z-root-password-design.md`.
+- `rootHashedPassword` (R-A1, R-A2): a crypt hash, validated against NixOS's Modular Crypt Format pattern at evaluation, and by libxcrypt itself when the package is built (parameters and digest length). It is embedded in the package and written as `users.users.root.hashedPassword`. Before `nixos-install`, root's field in an existing `/mnt/etc/shadow` is set to it too: with mutable users NixOS applies the hash only to a new entry, so a reinstall would keep root locked. The installer keeps its empty console password. Design: `plans/2026-11-10T140423Z-root-password-design.md`.
 
 ### 7.9 Outputs
 - `/var/log/pre‑nixos/plan.json` — full machine‑readable plan.

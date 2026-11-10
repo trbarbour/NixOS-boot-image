@@ -73,6 +73,14 @@
       preNixosModule = import ./modules/pre-nixos.nix;
       requiredToolNames = [ "disko" "gptfdisk" "mdadm" "lvm2" "ethtool" "util-linux" "kmod" ];
 
+      # The site's hash, accepted only if libxcrypt can use it (reqs R-A2):
+      # site.nix checks the MCF shape at evaluation, this checks parameters and
+      # digest length at build time (nix/check-crypt-hash.pl; Codex on #345).
+      checkedRootHash = pkgs: hash:
+        pkgs.runCommand "pre-nixos-root-hashed-password" { nativeBuildInputs = [ pkgs.perl ]; } ''
+          perl ${./nix/check-crypt-hash.pl} ${pkgs.writeText "pre-nixos-root-hash-unchecked" hash} > $out
+        '';
+
       makePreNixosPackage = { system, rootKey ? null, rootHashedPassword ? null }:
         let
           pkgs = pkgsFor system;
@@ -92,7 +100,7 @@
           postInstall = pkgs.lib.optionalString (rootKey != null) ''
             install -Dm0644 ${rootKey} "$out/${pkgs.python3.sitePackages}/pre_nixos/root_key.pub"
           '' + pkgs.lib.optionalString (rootHashedPassword != null) ''
-            install -Dm0644 ${pkgs.writeText "pre-nixos-root-hashed-password" rootHashedPassword} \
+            install -Dm0644 ${checkedRootHash pkgs rootHashedPassword} \
               "$out/${pkgs.python3.sitePackages}/pre_nixos/root_hashed_password"
           '';
           # The embedded key and hash, for the site-* flake checks.
@@ -454,6 +462,33 @@
               test ! -e ${without}/${rel}
               touch $out
             '';
+          # R-A2: nix/check-crypt-hash.pl accepts hashes libxcrypt can use and
+          # rejects shapes the MCF pattern lets through (Codex on #345).
+          crypt-hash-usable =
+            let
+              accept = [
+                (siteLib.readSite fixtureSite).rootHashedPassword
+                "$6$rounds=5000$saltsalt$Cb2cFdzqHzhfXGK9LDJBFSw0erBCBypAab../U6Ky4whArPjT0OCN.qCRgScdLxYLiQErHAwk5qRp6RD8VzsQ."
+                "$2b$12$abcdefghijklmnopqrstuuoO1mim.4lLs/wxhKSFc0CfSI8Qw29Gy"
+              ];
+              reject = [
+                "$y$invalid$salt$hash"
+                "$y$j9T$Y5LoFQB1W5dkf/fSia4AG0$RT34fdiAmo.qsfnbxOlakOqbBf5uAPh6JCLP2JL"
+                "$6$rounds=5000$saltsalt$hash/hash.hash"
+                "$7$abc$def"
+                "$2b$12$abcdefghijklmnopqrstuv$abc"
+              ];
+              run = expect: hash:
+                let file = pkgs.writeText "hash" hash; in ''
+                  if perl ${./nix/check-crypt-hash.pl} ${file} > /dev/null; then got=accept; else got=reject; fi
+                  if [ "$got" != ${expect} ]; then echo "expected ${expect}, got $got, for:"; cat ${file}; echo; exit 1; fi
+                '';
+            in
+            pkgs.runCommand "crypt-hash-usable" { nativeBuildInputs = [ pkgs.perl ]; } (
+              lib.concatMapStrings (run "accept") accept
+              + lib.concatMapStrings (run "reject") reject
+              + "touch $out\n"
+            );
         } // pkgs.lib.optionalAttrs (system == preInstallerSystem) (
           builtins.mapAttrs (name: passed: assert passed; pkgs.runCommand name { } "touch $out") siteChecks
         ) // pkgs.lib.optionalAttrs (system == preInstallerSystem) {

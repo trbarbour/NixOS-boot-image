@@ -105,7 +105,7 @@ A **site** is a directory with a `pre-nixos-site.nix` file. It supplies the sett
 
 `rootHashedPassword` lets root log in on the installed system's console (serial or screen). This matters when the network does not come up. SSH stays key-only.
 - Make the hash with `mkpasswd -m yescrypt` (in nixpkgs' `mkpasswd`).
-- A plain password, or a hash NixOS does not accept, is a build error.
+- A plain password, or a hash that NixOS or libxcrypt cannot use (bad parameters, a truncated digest), is a build error.
 - The hash ends up in the image and in the installed system's Nix store, which anyone can read. Use a strong password.
 - Without the setting, root has no password on the installed system, as before. The installer itself always has an empty console password.
 
