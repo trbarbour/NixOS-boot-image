@@ -159,6 +159,9 @@ def main(
     helper_cmd = [
         sys.executable, "-I", "-c", BOOTSTRAP.format(libdir=LIBDIR),
         "--device", target.name, "--image", str(img.path),
+        # The helper refuses another disk that took this name meanwhile.
+        "--expect-model", target.model, "--expect-serial", target.serial,
+        "--expect-size", str(target.size_bytes),
     ]
     if args.verify:
         helper_cmd.append("--verify")

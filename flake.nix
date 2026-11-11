@@ -411,6 +411,10 @@
         } (''
           mkdir -p $out/lib $out/bin
           cp -r ${./write_image} $out/lib/write_image
+          chmod -R u+w $out/lib/write_image
+          # sudo's secure_path drops PATH: the root helper runs tools by
+          # absolute store path (Codex on #350).
+          echo 'ZSTD = "${pkgs.zstd}/bin/zstd"' > $out/lib/write_image/_tools.py
         '' + lib.concatMapStrings ({ name, module }: ''
           cat > $out/bin/${name} <<EOF
           #!${pkgs.python3}/bin/python3 -I
@@ -459,6 +463,10 @@
             grep -q -- "--site" help.txt
             ${pkgs.python3}/bin/python3 -I -c "import sys; sys.path.insert(0, '${writeImage}/lib'); from write_image.helper import main; sys.exit(main(sys.argv[1:]))" --help > helper.txt
             grep -q -- "--device" helper.txt
+            # The helper decompresses with an empty PATH, as under sudo's secure_path.
+            echo pre-nixos > card.img && ${pkgs.zstd}/bin/zstd -q card.img
+            env -i ${pkgs.python3}/bin/python3 -I -c "import sys; sys.path.insert(0, '${writeImage}/lib'); from write_image import image; print(image.digest(image.image_at(__import__('pathlib').Path('card.img.zst'))))" > digest.txt
+            grep -q "^(10, " digest.txt
             touch $out
           '';
           pre-nixos-propagates-required-tools =

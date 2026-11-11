@@ -55,6 +55,10 @@ class Recorder:
         return self.helper_status, ""
 
 
+def _flag(cmd: List[str], name: str) -> str:
+    return cmd[cmd.index(name) + 1]
+
+
 def _cli(fake: FakeSys, runner: Recorder, argv: List[str], answers: List[str], euid: int = 1000) -> Tuple[int, str]:
     out = io.StringIO()
     replies = iter(answers)
@@ -76,7 +80,8 @@ def test_build_as_the_user_then_write_through_sudo(fake: FakeSys, iso_output: Pa
         "--override-input", "site", f"path:{site}",
     ] and captured
     assert write[:2] == ["sudo", "--"] and write[2] == sys.executable and write[3] == "-I"
-    assert write[-5:] == ["--device", "sdb", "--image", str(iso_output / "iso/pre-nixos-0.30.0-x86_64-linux.iso"), "--verify"]
+    assert _flag(write, "--device") == "sdb" and write[-1] == "--verify"
+    assert _flag(write, "--image") == str(iso_output / "iso/pre-nixos-0.30.0-x86_64-linux.iso")
     assert "SanDisk Ultra" in out
 
 
@@ -111,7 +116,7 @@ def test_device_chosen_from_a_numbered_list(fake: FakeSys, iso_output: Path) -> 
     status, out = _cli(fake, runner, ["--format", "iso", "--image", iso], ["1", "sdb"])
     assert status == 0, out
     assert "1) /dev/sdb" in out and "2) /dev/mmcblk0" in out  # USB first for the ISO
-    assert runner.calls[0][0][-3:] == ["sdb", "--image", iso]
+    assert _flag(runner.calls[0][0], "--device") == "sdb" and _flag(runner.calls[0][0], "--image") == iso
 
 
 def test_as_root_the_helper_runs_without_sudo(fake: FakeSys, iso_output: Path) -> None:
@@ -184,3 +189,44 @@ def test_tui_choices_become_cli_arguments() -> None:
     argv = tui.cli_argv(plain)
     assert argv == ["--format", "iso", "--image", "/tmp/x.iso", "--device", "sdb"]
     assert "--yes" not in argv  # the CLI asks for the typed confirmation
+
+
+# --- Codex on #350 ------------------------------------------------------------
+
+
+def test_cli_passes_the_confirmed_identity(fake: FakeSys, iso_output: Path) -> None:
+    runner = Recorder(iso_output)
+    iso = str(next(iso_output.glob("iso/*.iso")))
+    status, _ = _cli(fake, runner, ["--format", "iso", "--image", iso, "--device", "sdb", "--yes"], [])
+    assert status == 0
+    cmd = runner.calls[0][0]
+    for flag, value in (("--expect-model", "SanDisk Ultra"), ("--expect-serial", "SER123"), ("--expect-size", str(GIB))):
+        assert cmd[cmd.index(flag) + 1] == value
+
+
+def test_helper_refuses_a_replacement_disk_with_the_same_name(fake: FakeSys, tmp_path: Path) -> None:
+    """Finding 1: the confirmed stick was swapped during the build; the new disk
+    got the same kernel name.  It must not be written."""
+
+    img = tmp_path / "image.iso"
+    img.write_bytes(b"x")
+    argv = ["--device", "sdb", "--image", str(img),
+            "--expect-model", "Kingston DataTraveler", "--expect-serial", "OTHER", "--expect-size", str(GIB)]
+    status = helper.main(argv, view=fake.view, open_device=lambda path: pytest.fail("opened a replacement disk"))
+    assert status == helper.EXIT_REFUSED
+
+
+def test_helper_refuses_when_the_opened_file_is_another_device(fake: FakeSys, tmp_path: Path) -> None:
+    """The name could change between the check and the open: the opened block
+    device must be the one sysfs describes."""
+
+    (fake.block / "sdb" / "dev").write_text("8:16\n")
+    img = tmp_path / "image.iso"
+    img.write_bytes(b"x")
+    calls: List[str] = []
+    status = helper.main(
+        ["--device", "sdb", "--image", str(img)], view=fake.view,
+        open_device=lambda path: calls.append(path) or os.open(img, os.O_RDONLY),
+        device_number=lambda fd: (8, 32),
+    )
+    assert calls == ["/dev/sdb"] and status == helper.EXIT_REFUSED

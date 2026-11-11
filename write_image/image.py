@@ -13,8 +13,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, Iterator, Tuple
 
+from write_image import _tools
 from write_image.devices import Format
 
+# An absolute store path in the flake's package, so it survives sudo.
+ZSTD = _tools.ZSTD
 CHUNK = 4 * 1024 * 1024
 _PATTERNS = {"iso": ("iso/*.iso",), "sd": ("sd-image/*.img.zst", "sd-image/*.img")}
 
@@ -56,7 +59,7 @@ def open_stream(img: Image) -> Iterator[BinaryIO]:
             yield handle
         return
     proc = subprocess.Popen(
-        ["zstd", "-dc", "--", str(img.path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        [ZSTD, "-dc", "--", str(img.path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     assert proc.stdout is not None and proc.stderr is not None
     stdout: BinaryIO = proc.stdout  # type: ignore[assignment]  # a binary pipe

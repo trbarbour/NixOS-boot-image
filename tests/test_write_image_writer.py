@@ -100,3 +100,22 @@ def test_a_failing_decompressor_is_an_error(tmp_path: Path) -> None:
     bogus.write_bytes(b"not zstd at all")
     with pytest.raises(image.ImageError):
         image.digest(image.image_at(bogus))
+
+
+def test_decompressor_is_found_without_path(tmp_path: Path, monkeypatch) -> None:
+    """Codex on #350: sudo's secure_path drops the store's zstd from PATH, so the
+    helper uses an absolute path (written into write_image/_tools.py by the flake)."""
+
+    data = _payload(1024)
+    raw = tmp_path / "card.img"
+    raw.write_bytes(data)
+    subprocess.run([ZSTD, "-q", "-o", str(tmp_path / "card.img.zst"), str(raw)], check=True)
+    monkeypatch.setattr(image, "ZSTD", shutil.which("zstd"))
+    monkeypatch.setenv("PATH", "")
+    assert image.digest(image.image_at(tmp_path / "card.img.zst"))[0] == len(data)
+
+
+def test_zstd_default_comes_from_the_tools_file() -> None:
+    from write_image import _tools
+
+    assert image.ZSTD == _tools.ZSTD

@@ -12,12 +12,13 @@ from __future__ import annotations
 
 import argparse
 import os
+import stat
 import sys
 from pathlib import Path
-from typing import Callable, List, Optional, Sequence, TextIO
+from typing import Callable, List, Optional, Sequence, TextIO, Tuple
 
 from write_image import devices, image, writer
-from write_image.devices import Refusal, SystemView
+from write_image.devices import Candidate, Refusal, SystemView
 
 EXIT_OK = 0
 EXIT_ERROR = 1
@@ -25,10 +26,41 @@ EXIT_REFUSED = 2
 EXIT_VERIFY_FAILED = 3
 
 OpenDevice = Callable[[str], int]
+DeviceNumber = Callable[[int], Optional[Tuple[int, int]]]
 
 
 def _open_device(path: str) -> int:
     return os.open(path, os.O_RDWR | os.O_EXCL | os.O_CLOEXEC)
+
+
+def _device_number(fd: int) -> Optional[Tuple[int, int]]:
+    """``(major, minor)`` of an open block device, or ``None`` for anything else."""
+
+    info = os.fstat(fd)
+    if not stat.S_ISBLK(info.st_mode):
+        return None
+    return os.major(info.st_rdev), os.minor(info.st_rdev)
+
+
+def _sysfs_number(sys_block: Path, name: str) -> Optional[Tuple[int, int]]:
+    try:
+        major, minor = (sys_block / name / "dev").read_text().strip().split(":")
+        return int(major), int(minor)
+    except (OSError, ValueError):
+        return None
+
+
+def _identity_mismatch(target: Candidate, model: Optional[str], serial: Optional[str], size: Optional[int]) -> List[str]:
+    """What differs from the device the user confirmed (Codex on #350)."""
+
+    differences = []
+    if model is not None and target.model != model:
+        differences.append(f"model {target.model!r}, confirmed {model!r}")
+    if serial is not None and target.serial != serial:
+        differences.append(f"serial {target.serial!r}, confirmed {serial!r}")
+    if size is not None and target.size_bytes != size:
+        differences.append(f"size {target.size_bytes}, confirmed {size}")
+    return differences
 
 
 def _progress(err: TextIO, total: int) -> Callable[[int], None]:
@@ -49,17 +81,28 @@ def main(
     *,
     view: Callable[[], SystemView] = devices.live_view,
     open_device: OpenDevice = _open_device,
+    device_number: DeviceNumber = _device_number,
     err: TextIO = sys.stderr,
 ) -> int:
     parser = argparse.ArgumentParser(prog="write-image-helper", description=__doc__.splitlines()[0])
     parser.add_argument("--device", required=True, help="whole-disk kernel name, e.g. sdb")
     parser.add_argument("--image", required=True, type=Path)
     parser.add_argument("--verify", action="store_true")
+    # The device the user confirmed: a disk that has taken its kernel name
+    # since (it was unplugged during the build) is refused (Codex on #350).
+    parser.add_argument("--expect-model")
+    parser.add_argument("--expect-serial")
+    parser.add_argument("--expect-size", type=int)
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    verdict = devices.check(view(), args.device)
+    system = view()
+    verdict = devices.check(system, args.device)
     if isinstance(verdict, Refusal):
         err.write(f"refusing /dev/{verdict.name}: {verdict.reason}\n")
+        return EXIT_REFUSED
+    differences = _identity_mismatch(verdict, args.expect_model, args.expect_serial, args.expect_size)
+    if differences:
+        err.write(f"refusing {verdict.path}: not the device you confirmed ({'; '.join(differences)})\n")
         return EXIT_REFUSED
     img = image.image_at(args.image)
     try:
@@ -78,6 +121,12 @@ def main(
         fd = open_device(verdict.path)
     except OSError as exc:
         err.write(f"cannot open {verdict.path} exclusively (in use?): {exc}\n")
+        return EXIT_REFUSED
+    # The name could have moved between the check and the open.
+    opened, expected = device_number(fd), _sysfs_number(system.sys_block, verdict.name)
+    if opened is not None and expected is not None and opened != expected:
+        os.close(fd)
+        err.write(f"refusing {verdict.path}: the opened device is {opened}, sysfs says {expected}\n")
         return EXIT_REFUSED
     try:
         err.write(f"writing {img.path.name} to {verdict.describe()}\n")
