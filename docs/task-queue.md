@@ -414,6 +414,11 @@ _Last updated: 2026-10-30T12-35-13Z_
       3. `--plan-only` with explicit partitioning skipped the check;
       4. TUI `[R]` kept answers by name, not by disk.
     - The second review was clean. VM run 3 on cbb7805 (`notes/2026-11-11T203130Z-vm-run`): **passed**; it saw "added vdb" and settled after 22.0559 s.
+    - CI stall (anomaly, recorded 2026-11-11 22:17:13Z): runs 72–74 for #352, from 20:21 UTC, never started. They had no jobs, and the API refused to cancel them ("has not been queued yet").
+      - Cause, per the user: the account's free Actions minutes were exhausted.
+      - The user subscribed to GitHub Pro around 22:20 UTC, but the held runs stayed held.
+      - This commit gives CI a fresh trigger; the workflow's `cancel-in-progress` clears the old runs.
+      - Watch for this again: tier-1 CI takes about 4 minutes per push. If minutes run short, consider fewer notes-only pushes per PR, or path filters for `notes/` and `docs/`.
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
