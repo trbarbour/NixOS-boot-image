@@ -1,0 +1,58 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/9a03gjhhsa99xvasif6jm0fl56pwrmjw-pre-nixos-0.31.0-20261111192350-s49a575a7-26.05.20261031.fa13731-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/yjbzk1n90f0r6959hngdnjqfqbrn30pf-pre-nixos-0.31.0-20261111192350-s49a575a7-26.05.20261031.fa13731-x86_64-linux.iso/iso/pre-nixos-0.31.0-20261111192350-s49a575a7-26.05.20261031.fa13731-x86_64-linux.iso",
+    "nar_hash": "sha256-lCXJN4nh9af6Ou7+eWbgztiGYa+46m1TKobSlcHR/M4=",
+    "root_key_fingerprint": "256 SHA256:jK76/seht0dc2Em5f0v87x2wU9mbIB4VdbjmIfDMxas boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/yjbzk1n90f0r6959hngdnjqfqbrn30pf-pre-nixos-0.31.0-20261111192350-s49a575a7-26.05.20261031.fa13731-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-11-11T192844Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-11-11T19:28:45.271671+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-11-11T192844Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-11-11T192844Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/usr/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-serial",
+      "stdio",
+      "-boot",
+      "d",
+      "-cdrom",
+      "/nix/store/yjbzk1n90f0r6959hngdnjqfqbrn30pf-pre-nixos-0.31.0-20261111192350-s49a575a7-26.05.20261031.fa13731-x86_64-linux.iso/iso/pre-nixos-0.31.0-20261111192350-s49a575a7-26.05.20261031.fa13731-x86_64-linux.iso",
+      "-drive",
+      "file=/tmp/pytest-of-root/pytest-190/boot-image-disk-primary0/disk.img,if=virtio,format=raw",
+      "-qmp",
+      "unix:/tmp/qmp-5zibiz8a/qmp.sock,server=on,wait=off",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:54607-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/pytest-of-root/pytest-190/boot-image-disk-primary0/disk.img",
+    "version": "QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 54607
+  },
+  "timings": {
+    "boot_to_login_seconds": 134.33,
+    "build_seconds": 285.25,
+    "start": "2026-11-11T19:28:44.590539+00:00"
+  }
+}
