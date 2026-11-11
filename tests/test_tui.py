@@ -440,3 +440,65 @@ def test_apply_without_network_explains_the_skipped_install(monkeypatch, tmp_pat
     shown = " ".join(win.lines.values())
     assert "the installer has no IPv4 address on lan" in shown
     assert "press 'n'" in shown
+
+
+# --- item 41: [C] also configures the installer ------------------------------
+
+
+def _configure(monkeypatch, tmp_path, inputs, keys, readiness):
+    """Run [C] with typed ``inputs`` and pressed ``keys``; return what happened."""
+
+    from pre_nixos import installer_network
+
+    monkeypatch.setattr(tui.curses, "echo", lambda: None)
+    monkeypatch.setattr(tui.curses, "noecho", lambda: None)
+    monkeypatch.setattr(tui.network, "get_ipv4_details", lambda iface="lan": None)
+    monkeypatch.setattr(tui.network, "installer_network", lambda iface="lan": readiness)
+    monkeypatch.setattr(tui.state_store, "record_install_network_config", lambda payload: tmp_path / "n.json")
+    monkeypatch.setattr(tui.state_store, "clear_install_network_config", lambda: None)
+    calls: list = []
+    monkeypatch.setattr(installer_network, "apply",
+                        lambda config, *, mac_address, **kw: calls.append(("apply", config, mac_address)))
+    monkeypatch.setattr(installer_network, "remove", lambda **kw: calls.append(("remove",)) or True)
+    state = tui._initial_state({}, [], None)
+    state.lan_config = LanConfiguration(authorized_key=tmp_path / "k", interface="lan", mac_address="52:54:00:12:34:56")
+    win = PromptWindow(inputs)
+    win.key_queue = list(keys)
+    tui._configure_install_network(win, state)
+    return state, calls, win
+
+
+STATIC_INPUTS = [b"10.0.2.20", b"255.255.255.0", b"10.0.2.2", b"10.0.2.3"]
+
+
+def test_c_offers_the_settings_to_an_installer_without_address(monkeypatch, tmp_path):
+    no_address = tui.network.NetworkReadiness(None, None)
+    state, calls, _ = _configure(monkeypatch, tmp_path, STATIC_INPUTS, ["\n", "x"], no_address)
+    assert state.install_network is not None and state.install_network.dns == ("10.0.2.3",)
+    ((kind, config, mac),) = calls
+    assert (kind, config.address, mac) == ("apply", "10.0.2.20", "52:54:00:12:34:56")
+
+
+def test_c_offer_can_be_declined(monkeypatch, tmp_path):
+    no_address = tui.network.NetworkReadiness(None, None)
+    _, calls, _ = _configure(monkeypatch, tmp_path, STATIC_INPUTS, ["n", "x"], no_address)
+    assert calls == []
+
+
+def test_c_does_not_touch_an_installer_with_dhcp(monkeypatch, tmp_path):
+    has_address = tui.network.NetworkReadiness("10.0.2.15", "10.0.2.2")
+    _, calls, _ = _configure(monkeypatch, tmp_path, STATIC_INPUTS, ["x"], has_address)
+    assert calls == []
+
+
+def test_c_dns_defaults_to_the_gateway(monkeypatch, tmp_path):
+    has_address = tui.network.NetworkReadiness("10.0.2.15", "10.0.2.2")
+    state, _, _ = _configure(monkeypatch, tmp_path, [b"10.0.2.20", b"255.255.255.0", b"10.0.2.2", b""], ["x"], has_address)
+    assert state.install_network is not None and state.install_network.dns == ("10.0.2.2",)
+
+
+def test_c_blank_address_returns_the_installer_to_dhcp(monkeypatch, tmp_path):
+    has_address = tui.network.NetworkReadiness("10.0.2.20", "10.0.2.2")
+    state, calls, _ = _configure(monkeypatch, tmp_path, [b""], ["x"], has_address)
+    assert state.install_network is None
+    assert calls == [("remove",)]

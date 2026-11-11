@@ -388,17 +388,13 @@ _Last updated: 2026-10-30T12-35-13Z_
 41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
     - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.
     - Proposal (user): when the installer has no address from DHCP, adopt the same static configuration, unless told otherwise. Needs a short design.
-
-42. **A target to write an image to removable media** *(user request, 2026-11-08)*.
-    - Build the chosen image and write it to a chosen device, perhaps as a TUI.
-    - Must refuse non-removable devices; default to a USB stick for the ISO and an (u)SD card for the SD image.
-    - Needs a design (debate) first.
-    - 2026-11-11, user decisions: D1 a CLI and a TUI ("DRY implies that the TUI calls the CLI"); D2 the device rules; D3 build from a site (or `--image`); D4 optional verification; D5 build as the user and write through a `sudo` helper that re-checks the device; D6 Linux only. Design `plans/2026-11-11T181058Z-image-writer-design.md` (R-W1–R-W6).
-    - Implemented (0.30.0):
-      - `write_image/` (`devices`, `image`, `writer`, `helper`, `cli`, `tui`), with flake apps `write-image` and `write-image-tui` and the package `writeImage`.
-      - Tests first: `tests/test_write_image_{devices,writer,cli}.py` (26), plus the flake check `write-image-app`.
-      - Smoke run of the built app on the cloud host: all virtio disks refused, exit 2 for `--device vda`.
-      - A write to real media is untested here (no removable device); it awaits the user.
+    - 2026-11-11, user decisions: D1 (when it has no address; the TUI asks, defaulting to yes; CLI `--installer-network`), D2(a) a runtime networkd unit, D3(a) DNS in the static settings (default: the gateway), D4 undo. Design `plans/2026-11-11T183853Z-installer-static-network-design.md` (R-N1–R-N3).
+    - Implemented (0.31.0):
+      - `pre_nixos/installer_network.py`;
+      - DNS in `InstallNetworkConfig` and the managed block;
+      - CLI `--install-dns` and `--installer-network`;
+      - TUI `[C]`: a DNS prompt, the offer, and the undo.
+    - Tests first: `tests/test_installer_network.py`, `test_cli.py` (3), `test_tui.py` (5), and `test_install_network_units.py` (DNS in the block). VM test `tests/vm/test_installer_static_network_vm.py` pending.
 
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
@@ -410,6 +406,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-11T18-37Z - Merged trbarbour/NixOS-boot-image#350 (0.30.0): item 42, `write-image` (a CLI and a TUI: build as the user, write to removable media through a `sudo` helper that re-checks the device and its identity, optional verification; the TUI presents architecture, image type and console with defaults). Codex's reviews found five issues over two rounds, each fixed with tests first; the third review was clean. CI green. A write to real media awaits the user's hardware.
 - 2026-11-11T15-03Z - Merged trbarbour/NixOS-boot-image#349 (0.29.2): item 38, the VM harness's disk-space handling. After each build it deletes unreferenced older images, keeping every image the session holds. A VM does not start below `PRE_NIXOS_VM_MIN_FREE_GIB`, and a guard stops QEMU below `PRE_NIXOS_VM_FLOOR_GIB`, both watching the logs' and every VM disk's filesystem. Codex found three issues, each fixed with a test first; its re-review was clean. CI green.
 - 2026-11-11T14-41Z - Merged trbarbour/NixOS-boot-image#348 (0.29.1): item 37, a failed image build shows the tail of Nix's stderr. CI green, no Codex findings.
 - 2026-11-11T14-21-08Z - Merged trbarbour/NixOS-boot-image#347 (0.29.0): item 48, SAS/RAID controller drivers in the x86 initrd (R-S6; the HBA disk is now found in the initrd, and the test fails on the unfixed image); item 49, degraded arrays reported at login and through mdadm's PROGRAM hook instead of `MAILADDR root` (R-S7; the installed-system VM test fails a member and sees the crit entry and the login warning). CI green, no Codex findings. Follow-ups: items 50 and 51.

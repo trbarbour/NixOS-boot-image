@@ -83,6 +83,8 @@ def test_static_install_over_an_earlier_dhcp_attempt(tmp_path, target) -> None:
     assert not (network_dir / "10-lan.link").exists()
     content = (target / "etc/nixos/configuration.nix").read_text()
     assert 'networkConfig.Address = [ "10.137.3.9/24" ];' in content
+    # Item 41 (R-N2): DNS reaches the installed system; it defaults to the gateway.
+    assert 'networkConfig.DNS = [ "10.137.3.254" ];' in content
 
 
 def test_dhcp_install_copies_no_unit_and_clears_leftovers(tmp_path, target) -> None:

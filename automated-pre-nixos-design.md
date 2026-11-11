@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.37
+**Doc status:** Draft v0.38
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -186,6 +186,13 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - `network.installer_network()` reads `lan`'s IPv4 address and default gateway (`NetworkReadiness`).
 - `install.auto_install` takes an `InstallTrigger`. `AUTOMATIC`, the default (boot service, `pre-nixos`, TUI Apply), is skipped with `REASON=no-network` unless both are present. It runs after the execution checks and before anything on `/mnt` is touched. `REQUESTED` (`--install-now`, TUI `N`) prints a warning and proceeds.
 - The login notice and the TUI's Apply summary say what is missing and how to continue. A cache is not probed: reachability depends on DNS and firewall policy at that moment (user decision, option b, 2026-11-09).
+
+### 7.7.2 The installer adopts the static settings [R-N1, R-N2, R-N3]
+- `pre_nixos/installer_network.py` writes `/run/systemd/network/10-lan-static.network` (matched by MAC address, else `Name=lan`; `DHCP=no`, `Address`, `Gateway`, `DNS`), then runs `networkctl reload` and `networkctl reconfigure lan`. The name sorts before the boot's `20-lan.network`, so networkd prefers it, and it is gone at reboot.
+- `decide(mode, readiness)`: `auto` applies only when `lan` has no IPv4 address; `yes` always; `no` never. The TUI's `[C]` asks in `auto`'s case (default yes). The CLI takes `--installer-network auto|yes|no`.
+- `InstallNetworkConfig.dns` defaults to the gateway (`--install-dns`, a DNS prompt in `[C]`). The managed block writes `networkConfig.DNS`. Saved settings from before have none, and load with the gateway.
+- A blank address in `[C]` (DHCP) removes the unit and reconfigures `lan`.
+- Design: `plans/2026-11-11T183853Z-installer-static-network-design.md` (task queue item 41).
 
 ### 7.8 SSH exposure
 - Install built-in `authorized_keys` for root and harden `sshd_config` to disable password logins while preserving the root password for console access.

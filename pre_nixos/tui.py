@@ -11,6 +11,7 @@ import contextlib
 import curses
 import json
 import os
+import subprocess
 from typing import Any, Iterable, Iterator, Optional, Sequence, Tuple
 
 from . import (
@@ -18,6 +19,7 @@ from . import (
     boot_platform,
     disk_class,
     install,
+    installer_network,
     inventory,
     lan_reuse,
     network,
@@ -1024,6 +1026,26 @@ def _load_plan(stdscr: curses.window, plan: dict[str, Any]) -> dict[str, Any]:
     return plan
 
 
+def _ask_yes_no(stdscr: curses.window, lines: Sequence[str]) -> bool:
+    """Show *lines* and a [Y/n] prompt; Enter or y means yes."""
+
+    stdscr.clear()
+    height, width = stdscr.getmaxyx()
+    for idx, line in enumerate(lines):
+        stdscr.addstr(idx, 0, _trim(line, width - 1))
+    stdscr.addstr(len(lines), 0, _trim("[Y/n] ", width - 1))
+    stdscr.refresh()
+    while True:
+        try:
+            key = stdscr.getkey()
+        except curses.error:
+            continue
+        if key in ("\n", "\r", "y", "Y", "KEY_ENTER"):
+            return True
+        if key in ("n", "N"):
+            return False
+
+
 def _show_modal(stdscr: curses.window, lines: Sequence[str]) -> None:
     """Display *lines* and wait for a key press."""
 
@@ -1146,18 +1168,18 @@ def _configure_install_network(stdscr: curses.window, state: TUIState) -> None:
 
     if not address_value:
         state.install_network = None
+        lines = ["Using DHCP for installation."]
         try:
             state_store.clear_install_network_config()
         except OSError as exc:  # pragma: no cover - rare filesystem issues
-            _show_modal(
-                stdscr,
-                [
-                    "Using DHCP for installation.",
-                    f"Warning: failed to clear saved config: {exc}",
-                ],
-            )
-            return
-        _show_modal(stdscr, ["Using DHCP for installation."])
+            lines.append(f"Warning: failed to clear saved config: {exc}")
+        # Item 41 (R-N3): the installer goes back to DHCP too.
+        try:
+            if installer_network.remove():
+                lines.append("The installer's lan is back on DHCP.")
+        except (OSError, subprocess.CalledProcessError) as exc:
+            lines.append(f"Warning: could not return the installer to DHCP: {exc}")
+        _show_modal(stdscr, lines)
         return
 
     curses.echo()
@@ -1170,6 +1192,14 @@ def _configure_install_network(stdscr: curses.window, state: TUIState) -> None:
     netmask_value = raw_netmask or netmask_hint
     gateway_value = raw_gateway or gateway_hint
 
+    # Item 41 (R-N2): DNS servers, defaulting to the gateway.
+    dns_hint = ", ".join(state.install_network.dns) if state.install_network else gateway_value
+    curses.echo()
+    stdscr.addstr(5, 0, _trim(f"DNS servers [{dns_hint}]: ", width - 1))
+    raw_dns = stdscr.getstr().decode().strip()
+    curses.noecho()
+    dns_value = installer_network.parse_dns(raw_dns) or installer_network.parse_dns(dns_hint) or None
+
     iface = state.lan_config.interface if state.lan_config else "lan"
     try:
         install_network = install.build_install_network_config_with_defaults(
@@ -1177,6 +1207,7 @@ def _configure_install_network(stdscr: curses.window, state: TUIState) -> None:
             netmask=netmask_value or None,
             gateway=gateway_value or None,
             iface=iface,
+            dns=dns_value,
         )
     except ValueError as exc:
         _show_modal(stdscr, [f"Invalid network settings: {exc}"])
@@ -1192,8 +1223,22 @@ def _configure_install_network(stdscr: curses.window, state: TUIState) -> None:
         )
         return
 
-    summary = f"Saved {install_network.address}/{install_network.prefix_length}"
-    _show_modal(stdscr, [summary])
+    lines = [f"Saved {install_network.address}/{install_network.prefix_length}, DNS {', '.join(install_network.dns)}"]
+    # Item 41 (R-N1): an installer without an address adopts the settings,
+    # unless the user declines.
+    if installer_network.decide(installer_network.Mode.AUTO, network.installer_network(iface)):
+        if _ask_yes_no(
+            stdscr,
+            lines + ["", f"The installer's {iface} has no IPv4 address (no DHCP).",
+                     "Configure it with these settings too (until reboot)?"],
+        ):
+            mac = state.lan_config.mac_address if state.lan_config else None
+            try:
+                installer_network.apply(install_network, mac_address=mac)
+                lines.append(f"The installer's {iface} now uses these settings.")
+            except (OSError, subprocess.CalledProcessError) as exc:
+                lines.append(f"Warning: could not configure the installer: {exc}")
+    _show_modal(stdscr, lines)
 
 
 def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
