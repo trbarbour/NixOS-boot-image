@@ -190,8 +190,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ### 7.7.2 The installer adopts the static settings [R-N1, R-N2, R-N3]
 - `pre_nixos/installer_network.py` writes `/run/systemd/network/10-lan-static.network` (matched by MAC address, else `Name=lan`; `DHCP=no`, `Address`, `Gateway`, `DNS`), then runs `networkctl reload` and `networkctl reconfigure lan`. The name sorts before the boot's `20-lan.network`, so networkd prefers it, and it is gone at reboot.
 - `decide(mode, readiness)`: `auto` applies only when `lan` has no IPv4 address; `yes` always; `no` never. The TUI's `[C]` asks in `auto`'s case (default yes). The CLI takes `--installer-network auto|yes|no`.
-- `InstallNetworkConfig.dns` defaults to the gateway (`--install-dns`, a DNS prompt in `[C]`). The managed block writes `networkConfig.DNS`. Saved settings from before have none, and load with the gateway.
+- `InstallNetworkConfig.dns` defaults to the gateway (`--install-dns`, a DNS prompt in `[C]`). Saved settings from before have none, and load with the gateway.
+  - The managed block writes `networking.nameservers`, which reaches `systemd-resolved`'s `resolved.conf`.
+  - Not `networkConfig.DNS`: NixOS turns `networking.interfaces.lan` into `40-lan.network`, which shadows the declared `lan` unit (task queue item 52).
 - A blank address in `[C]` (DHCP) removes the unit and reconfigures `lan`.
+- `apply` and `remove` act only with `PRE_NIXOS_EXEC=1`, and `--dry-run` only prints; otherwise the CLI and the TUI say the installer is unchanged.
 - Design: `plans/2026-11-11T183853Z-installer-static-network-design.md` (task queue item 41).
 
 ### 7.8 SSH exposure

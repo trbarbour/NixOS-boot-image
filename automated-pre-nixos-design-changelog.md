@@ -166,3 +166,4 @@
 
 ### v0.38 — 2026-11-11
 - §7.7.2: the installer adopts the static network settings when it has no address, and the static settings gain DNS servers (R-N1–R-N3, task queue item 41).
+- §7.7.2 (same draft, after review): the installed system's DNS goes in `networking.nameservers`, since the declared `lan` unit is shadowed by NixOS's `40-lan.network`; `PRE_NIXOS_EXEC` and `--dry-run` guard the installer's reconfiguration.
