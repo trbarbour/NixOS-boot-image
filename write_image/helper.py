@@ -95,39 +95,52 @@ def main(
     parser.add_argument("--expect-size", type=int)
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    system = view()
-    verdict = devices.check(system, args.device)
-    if isinstance(verdict, Refusal):
-        err.write(f"refusing /dev/{verdict.name}: {verdict.reason}\n")
-        return EXIT_REFUSED
-    differences = _identity_mismatch(verdict, args.expect_model, args.expect_serial, args.expect_size)
-    if differences:
-        err.write(f"refusing {verdict.path}: not the device you confirmed ({'; '.join(differences)})\n")
-        return EXIT_REFUSED
+    # The image first: reading (and decompressing) it can take minutes, and
+    # the device must be checked after that, not before (Codex on #350).
     img = image.image_at(args.image)
     try:
         size, sha256 = image.digest(img)
     except (OSError, image.ImageError) as exc:
         err.write(f"cannot read {img.path}: {exc}\n")
         return EXIT_ERROR
-    if size > verdict.size_bytes:
-        err.write(
-            f"refusing {verdict.path}: the image ({size} bytes) is larger than the device"
-            f" ({verdict.size_bytes} bytes)\n"
-        )
-        return EXIT_REFUSED
 
+    def confirmed(system: SystemView) -> "Candidate | str":
+        verdict = devices.check(system, args.device)
+        if isinstance(verdict, Refusal):
+            return f"refusing /dev/{verdict.name}: {verdict.reason}"
+        differences = _identity_mismatch(verdict, args.expect_model, args.expect_serial, args.expect_size)
+        if differences:
+            return f"refusing {verdict.path}: not the device you confirmed ({'; '.join(differences)})"
+        if size > verdict.size_bytes:
+            return (f"refusing {verdict.path}: the image ({size} bytes) is larger than the device"
+                    f" ({verdict.size_bytes} bytes)")
+        return verdict
+
+    first = confirmed(view())
+    if isinstance(first, str):
+        err.write(first + "\n")
+        return EXIT_REFUSED
     try:
-        fd = open_device(verdict.path)
+        fd = open_device(first.path)
     except OSError as exc:
-        err.write(f"cannot open {verdict.path} exclusively (in use?): {exc}\n")
+        err.write(f"cannot open {first.path} exclusively (in use?): {exc}\n")
         return EXIT_REFUSED
-    # The name could have moved between the check and the open.
-    opened, expected = device_number(fd), _sysfs_number(system.sys_block, verdict.name)
+    # Check again for the device actually opened: the opened block device must
+    # be the one sysfs now describes under that name, and that one must still
+    # be eligible and the confirmed disk.
+    system = view()
+    opened, expected = device_number(fd), _sysfs_number(system.sys_block, first.name)
+    again = confirmed(system)
+    problem = None
     if opened is not None and expected is not None and opened != expected:
+        problem = f"refusing {first.path}: the opened device is {opened}, sysfs says {expected}"
+    elif isinstance(again, str):
+        problem = again
+    if problem is not None:
         os.close(fd)
-        err.write(f"refusing {verdict.path}: the opened device is {opened}, sysfs says {expected}\n")
+        err.write(problem + "\n")
         return EXIT_REFUSED
+    verdict = first
     try:
         err.write(f"writing {img.path.name} to {verdict.describe()}\n")
         with image.open_stream(img) as stream:

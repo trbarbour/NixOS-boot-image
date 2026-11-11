@@ -6,8 +6,10 @@ the TUI (menus, defaults, summary), so they cannot disagree.
 * Architecture: the machine the image boots.
 * Image type: what the flake builds for that architecture (an ISO for a USB
   stick on x86_64; an SD-card image on AArch64).
-* Console: the image's primary console (reqs R-C2), by default display on
-  x86_64 and serial on AArch64; the other is a variant package.
+* Console: the image's primary console (reqs R-C2).  "default" builds the
+  plain package, which follows the site's ``primaryConsole`` and else the
+  format's default (display on x86_64, serial on AArch64).  An explicit display
+  or serial builds a forced variant, overriding the site (Codex on #350).
 """
 
 from __future__ import annotations
@@ -56,12 +58,16 @@ _CONSOLE_TEXT: Dict[str, Tuple[str, str]] = {
     "serial": ("Serial", "serial port (ttyS0, 115200 baud); the screen still gets a login"),
 }
 
-# (format, console) -> flake attribute; "default" means the format's default.
+# (format, console) -> flake attribute, as a full path: a short name resolves
+# under the host's own packages.<system> (Codex on #350).  "default" is the
+# plain package, which follows the site; the others force the console.
 _ATTRIBUTES: Dict[Tuple[str, str], str] = {
-    ("iso", "display"): "bootImage",
-    ("iso", "serial"): "bootImageSerial",
-    ("sd", "serial"): "bootImageSd",
-    ("sd", "display"): "bootImageSdDisplay",
+    ("iso", "default"): "packages.x86_64-linux.bootImage",
+    ("iso", "display"): "packages.x86_64-linux.bootImageDisplay",
+    ("iso", "serial"): "packages.x86_64-linux.bootImageSerial",
+    ("sd", "default"): "packages.aarch64-linux.bootImageSd",
+    ("sd", "serial"): "packages.aarch64-linux.bootImageSdSerial",
+    ("sd", "display"): "packages.aarch64-linux.bootImageSdDisplay",
 }
 _FORMAT_ARCH: Dict[str, str] = {"iso": "x86_64", "sd": "aarch64"}
 
@@ -71,11 +77,14 @@ def image_types(arch: str) -> List[Option]:
 
 
 def consoles(arch: str) -> List[Option]:
-    """The two consoles, the architecture's default first."""
+    """"As the site says" (the default), then explicit display and serial."""
 
-    default = _DEFAULT_CONSOLE[arch]
-    order = [default] + [c for c in ("display", "serial") if c != default]
-    return [Option(c, _CONSOLE_TEXT[c][0], _CONSOLE_TEXT[c][1], default=(c == default)) for c in order]
+    fallback = _DEFAULT_CONSOLE[arch]
+    return [
+        Option("default", "As the site says",
+               f"the site's primaryConsole if set, else {fallback} for this image", default=True),
+        *(Option(c, _CONSOLE_TEXT[c][0], _CONSOLE_TEXT[c][1] + "; overrides the site") for c in ("display", "serial")),
+    ]
 
 
 def default_index(options: Sequence[Option]) -> int:
@@ -87,25 +96,26 @@ def menu_label(option: Option) -> str:
     return f"{option.label}{' (default)' if option.default else ''}: {option.detail}"
 
 
-def resolved_console(fmt: str, console: str) -> str:
-    return _DEFAULT_CONSOLE[_FORMAT_ARCH[fmt]] if console == "default" else console
-
-
 def attribute(fmt: str, console: str) -> str:
     """The flake attribute that builds ``fmt`` with ``console`` primary."""
 
-    return _ATTRIBUTES[(fmt, resolved_console(fmt, console))]
+    return _ATTRIBUTES[(fmt, console)]
+
+
+def console_text(fmt: str, console: str) -> str:
+    if console == "default":
+        return f"as the site says ({_DEFAULT_CONSOLE[_FORMAT_ARCH[fmt]]} unless it sets primaryConsole)"
+    return f"{console} primary (overrides the site)"
 
 
 def summary(selection: Selection, *, device_description: str) -> List[str]:
     arch = next(o for o in ARCHITECTURES if o.value == selection.arch)
     kind = next(o for o in image_types(selection.arch) if o.value == selection.fmt)
-    console = resolved_console(selection.fmt, selection.console)
     source = f"build from site {selection.site}" if selection.site else f"image file {selection.image}"
     return [
         f"Architecture: {arch.label}",
         f"Image type:   {kind.label}",
-        f"Console:      {_CONSOLE_TEXT[console][0].lower()} primary",
+        f"Console:      {console_text(selection.fmt, selection.console)}",
         f"Source:       {source}",
         f"Device:       {device_description}",
         f"Verify:       {'yes, read back and compare SHA-256' if selection.verify else 'no'}",
@@ -123,6 +133,6 @@ __all__ = [
     "default_index",
     "image_types",
     "menu_label",
-    "resolved_console",
+    "console_text",
     "summary",
 ]

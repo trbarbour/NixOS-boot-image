@@ -32,7 +32,9 @@ _2026-11-11T18:10:58Z. Task queue item 42._
   - Typed; the same function serves the list, the CLI's check and the helper's re-check.
 - `image.py`: finds the image file in a build output (`iso/*.iso`, `sd-image/*.img.zst`). It reports the decompressed size and SHA-256 by streaming, through `zstd -dc` for `.zst`.
 - `writer.py`: copies a byte stream to a device in 4 MiB blocks with a progress callback, then calls `fsync`. Verification flushes the device's cache (`BLKFLSBUF`, plus `posix_fadvise(DONTNEED)`) and hashes exactly the image's length read back.
-- `helper.py` (runs as root through `sudo`): `--device`, `--image`, `--verify`.
+- `helper.py` (runs as root through `sudo`): `--device`, `--image`, `--verify`, and the confirmed `--expect-model`, `--expect-serial` and `--expect-size` (Codex on #350).
+  - It reads the image first, since that can take minutes.
+  - Then it checks the device: eligible, the confirmed disk, large enough. It opens it, and checks again for the device actually opened: its device number must be the one sysfs shows for that name, and that disk must still pass every check.
   - It re-runs the eligibility check, opens the device with `O_EXCL` (Linux refuses if it is in use), then writes and verifies.
   - Exit codes: 0 written, 2 refused, 3 verification failed, 1 other error.
 - `cli.py` (`write-image`):
@@ -56,8 +58,8 @@ _2026-11-11T18:10:58Z. Task queue item 42._
 - `write_image/choices.py` (pure) is the single description, used by both the CLI and the TUI:
   - architectures: x86_64 PC (default), AArch64 Raspberry Pi 4/CM4;
   - image types per architecture: ISO, SD-card image;
-  - consoles, with the R-C2 default per architecture (display on x86_64, serial on AArch64);
-  - the flake attribute for each (format, console): `bootImage`, `bootImageSerial`, `bootImageSd`, `bootImageSdDisplay`;
+  - consoles: "as the site says" by default (its `primaryConsole`, else R-C2's display on x86_64 and serial on AArch64), or an explicit display or serial that overrides the site (Codex on #350);
+  - the flake attribute for each (format, console), as a full path, since a short name resolves under the host's own system (Codex on #350): `packages.x86_64-linux.bootImage|bootImageDisplay|bootImageSerial` and `packages.aarch64-linux.bootImageSd|bootImageSdSerial|bootImageSdDisplay`. `bootImageDisplay` and `bootImageSdSerial` are new forced variants;
   - the summary text.
 - The CLI takes `--console default|display|serial`.
 - The TUI's menus open on the default, mark it "(default)", and explain each option in one line. A summary screen comes before the CLI runs.

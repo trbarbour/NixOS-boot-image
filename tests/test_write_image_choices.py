@@ -27,27 +27,44 @@ def test_image_types_follow_the_architecture(arch: str, fmt: str) -> None:
     assert choices.default_index(types) == 0
 
 
-@pytest.mark.parametrize("arch,default", [("x86_64", "display"), ("aarch64", "serial")])
-def test_console_default_follows_r_c2(arch: str, default: str) -> None:
+@pytest.mark.parametrize("arch,fallback", [("x86_64", "display"), ("aarch64", "serial")])
+def test_console_default_is_the_site_then_r_c2(arch: str, fallback: str) -> None:
+    """Codex on #350: "default" (the site's primaryConsole, else R-C2's) differs
+    from an explicit choice, which must override the site."""
+
     consoles = choices.consoles(arch)
-    assert {c.value for c in consoles} == {"display", "serial"}
-    assert consoles[choices.default_index(consoles)].value == default
-    assert "(default)" in choices.menu_label(consoles[choices.default_index(consoles)])
+    assert [c.value for c in consoles] == ["default", "display", "serial"]
+    default = consoles[choices.default_index(consoles)]
+    assert default.value == "default" and fallback in default.detail
+    assert "(default)" in choices.menu_label(default)
 
 
 @pytest.mark.parametrize(
     "fmt,console,attribute",
     [
-        ("iso", "default", "bootImage"),
-        ("iso", "display", "bootImage"),
-        ("iso", "serial", "bootImageSerial"),
-        ("sd", "default", "bootImageSd"),
-        ("sd", "serial", "bootImageSd"),
-        ("sd", "display", "bootImageSdDisplay"),
+        ("iso", "default", "packages.x86_64-linux.bootImage"),
+        ("iso", "display", "packages.x86_64-linux.bootImageDisplay"),
+        ("iso", "serial", "packages.x86_64-linux.bootImageSerial"),
+        ("sd", "default", "packages.aarch64-linux.bootImageSd"),
+        ("sd", "serial", "packages.aarch64-linux.bootImageSdSerial"),
+        ("sd", "display", "packages.aarch64-linux.bootImageSdDisplay"),
     ],
 )
 def test_flake_attribute_for_format_and_console(fmt: str, console: str, attribute: str) -> None:
+    """Full paths (Codex on #350): a short name resolves under the host's own
+    packages.<system>, so the ISO could not be built from an AArch64 host."""
+
     assert choices.attribute(fmt, console) == attribute
+
+
+def test_every_attribute_is_defined_by_the_flake() -> None:
+    from pathlib import Path
+
+    flake = (Path(__file__).resolve().parents[1] / "flake.nix").read_text()
+    for fmt in ("iso", "sd"):
+        for console in ("default", "display", "serial"):
+            name = choices.attribute(fmt, console).rsplit(".", 1)[1]
+            assert f"{name} =" in flake, name
 
 
 def test_summary_lists_every_choice() -> None:

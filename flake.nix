@@ -437,6 +437,10 @@
             bootImage = preInstallerConfig.config.system.build.isoImage;
             # The same ISO with the serial console primary (R-C2; "-serial" in its name).
             bootImageSerial = consoleVariant "iso" "serial";
+            # Forced to the format's default console, overriding the site
+            # (write-image's explicit --console; Codex on #350).
+            bootImageDisplay = consoleVariant "iso" "display";
+            bootImageSdSerial = consoleVariant "sd" "serial";
             bootImageSdDisplay = consoleVariant "sd" "display";
             # The AArch64 image again, so `nix build .#bootImageSd` works on an
             # x86_64 build host (built under emulation); short attribute names
@@ -449,6 +453,7 @@
             bootImageSd = aarch64Config.config.system.build.sdImage;
             # The SD image with the display primary (R-C2; "-display" in its name).
             bootImageSdDisplay = consoleVariant "sd" "display";
+            bootImageSdSerial = consoleVariant "sd" "serial";
             ubootRpi4Nvme = aarch64Config.pkgs.callPackage ./nix/uboot-rpi4-nvme.nix { };
             rpi4NvmeFirmware = aarch64Config.config.services.pre-nixos.rpiFirmware;
           } else {

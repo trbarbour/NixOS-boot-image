@@ -76,7 +76,7 @@ def test_build_as_the_user_then_write_through_sudo(fake: FakeSys, iso_output: Pa
     assert status == 0, out
     (build, captured), (write, _) = runner.calls
     assert build == [
-        "nix", "build", ".#bootImage", "--no-link", "--print-out-paths",
+        "nix", "build", ".#packages.x86_64-linux.bootImage", "--no-link", "--print-out-paths",
         "--override-input", "site", f"path:{site}",
     ] and captured
     assert write[:2] == ["sudo", "--"] and write[2] == sys.executable and write[3] == "-I"
@@ -92,7 +92,7 @@ def test_sd_format_builds_the_sd_image(fake: FakeSys, tmp_path: Path) -> None:
     runner = Recorder(out_dir)
     status, _ = _cli(fake, runner, ["--format", "sd", "--site", str(tmp_path), "--device", "mmcblk0", "--yes"], [])
     assert status == 0
-    assert runner.calls[0][0][2] == ".#bootImageSd"
+    assert runner.calls[0][0][2] == ".#packages.aarch64-linux.bootImageSd"
 
 
 def test_wrong_confirmation_writes_nothing(fake: FakeSys, iso_output: Path) -> None:
@@ -243,4 +243,22 @@ def test_console_variant_selects_the_flake_attribute(fake: FakeSys, iso_output: 
     status, _ = _cli(fake, runner, ["--format", "iso", "--console", "serial", "--site", str(tmp_path),
                                     "--device", "sdb", "--yes"], [])
     assert status == 0
-    assert runner.calls[0][0][2] == ".#bootImageSerial"
+    assert runner.calls[0][0][2] == ".#packages.x86_64-linux.bootImageSerial"
+
+
+def test_helper_refuses_a_disk_swapped_while_opening(fake: FakeSys, tmp_path: Path) -> None:
+    """Codex on #350: the identity must hold for the device actually opened, not
+    only before the (long) image read: here the disk changes during the open."""
+
+    img = tmp_path / "image.iso"
+    img.write_bytes(b"x")
+    argv = ["--device", "sdb", "--image", str(img),
+            "--expect-model", "SanDisk Ultra", "--expect-serial", "SER123", "--expect-size", str(GIB)]
+
+    def swap_then_open(path: str) -> int:
+        target = (fake.block / "sdb").resolve() / "device"
+        (target / "model").write_text("Kingston DataTraveler\n")
+        (target / "serial").write_text("OTHER\n")
+        return os.open(img, os.O_RDONLY)
+
+    assert helper.main(argv, view=fake.view, open_device=swap_then_open) == helper.EXIT_REFUSED

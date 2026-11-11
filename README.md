@@ -175,8 +175,9 @@ nix run .#write-image -- --list                                # what it would a
 - **Root only for the write:** a small helper runs under `sudo`. It checks the device again itself, refuses an image larger than the device, and opens the device exclusively.
 - **Verification:** `--verify` reads the image's length back from the medium, bypassing caches, and compares SHA-256.
 - **An image already built:** `--image PATH` writes it instead of building.
-- **The TUI** asks for the machine architecture (x86_64 PC or AArch64 Raspberry Pi 4/CM4), the image type (ISO or SD-card image) and the primary console (`--console`).
-  - Each menu opens on its default, which is marked: x86_64, its image type, and the display console on x86_64 or the serial console on AArch64.
+- **The console:** `--console default` (the default) builds the image as the site says: its `primaryConsole`, else display for the ISO and serial for the SD image. `--console display` or `--console serial` forces that console, overriding the site.
+- **The TUI** asks for the machine architecture (x86_64 PC or AArch64 Raspberry Pi 4/CM4), the image type (ISO or SD-card image) and the primary console.
+  - Each menu opens on its default, which is marked: x86_64, its image type, and "as the site says".
   - Then it asks for the source, the device and verification, and shows a summary before running `write-image` itself.
 
 Design: `plans/2026-11-11T181058Z-image-writer-design.md`.
