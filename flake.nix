@@ -492,6 +492,23 @@
         } // pkgs.lib.optionalAttrs (system == preInstallerSystem) (
           builtins.mapAttrs (name: passed: assert passed; pkgs.runCommand name { } "touch $out") siteChecks
         ) // pkgs.lib.optionalAttrs (system == preInstallerSystem) {
+          # Item 48 (reqs R-S6): the ISO's initrd carries the storage
+          # controller drivers of modules/pre-nixos/initrd-storage-drivers.nix,
+          # so their disks appear before the real root starts.
+          initrd-storage-drivers =
+            let
+              modulesDir = preInstallerConfig.config.boot.initrd.systemd.contents."/lib".source;
+              drivers = import ./modules/pre-nixos/initrd-storage-drivers.nix;
+            in
+            pkgs.runCommand "initrd-storage-drivers" { } (
+              "failed=0\n"
+              + lib.concatMapStrings (driver: ''
+                if [ -z "$(find ${modulesDir}/modules -name '${driver}.ko*' | head -n 1)" ]; then
+                  echo "the initrd lacks ${driver}"; failed=1
+                fi
+              '') drivers
+              + "[ $failed = 0 ]\ntouch $out\n"
+            );
           # #344: neither the image's initrd nor its system may start an md
           # array degraded on its own.  mdadm's last-resort timer (30 s) runs
           # `mdadm --run` on an incomplete array, which marks the late member

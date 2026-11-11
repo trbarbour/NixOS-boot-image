@@ -65,3 +65,17 @@ def test_sata_disks_on_ahci_with_full_ata_model(tmp_path: Path) -> None:
     assert not any(a.startswith("virtio-scsi") for a in args)
     with pytest.raises(AssertionError):
         ScsiDisk(tmp_path / "x.img", rotational=None, serial="x", model="A" * 41, bus=Bus.SATA)
+
+
+def test_mptsas_disks_attach_to_an_lsi_sas1068(tmp_path: Path) -> None:
+    """Task queue item 48: the user's late HDD sits behind an LSI SAS1068."""
+
+    disks = [
+        ScsiDisk(tmp_path / "ssd.img", rotational=False, serial="ssd"),
+        ScsiDisk(tmp_path / "hba.img", rotational=True, serial="hba", bus=Bus.MPTSAS),
+    ]
+    args = scsi_disk_args(disks)
+    assert args.count("-device") == 4
+    assert "mptsas1068,id=mptsas0" in args
+    assert "scsi-hd,bus=mptsas0.0,drive=sasdisk0,rotation_rate=7200,serial=hba,scsi-id=0" in args
+    assert f"file={tmp_path / 'hba.img'},if=none,id=sasdisk0,format=raw" in args
