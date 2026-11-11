@@ -140,3 +140,33 @@ def hotplug_virtio_disk(
             "serial": serial,
         },
     )
+
+
+def unplug_device(client: QmpClient, device_id: str) -> None:
+    """Ask QEMU to unplug ``device_id``; the guest completes it asynchronously.
+
+    A ``-drive if=none`` backend is deleted with its device, so a later
+    re-plug needs a new ``blockdev-add`` (:func:`plug_scsi_disk`).
+    """
+
+    client.execute("device_del", {"id": device_id})
+
+
+def plug_scsi_disk(
+    client: QmpClient, *, image: Path, node_name: str, properties: Dict[str, Any]
+) -> None:
+    """Attach raw ``image`` as a ``scsi-hd`` with ``properties``.
+
+    ``properties`` come from tests.vm.scsi_disks.scsi_hd_properties; their
+    ``drive`` is replaced by the new block node.
+    """
+
+    client.execute(
+        "blockdev-add",
+        {
+            "driver": "raw",
+            "node-name": node_name,
+            "file": {"driver": "file", "filename": str(image)},
+        },
+    )
+    client.execute("device_add", {"driver": "scsi-hd", **properties, "drive": node_name})

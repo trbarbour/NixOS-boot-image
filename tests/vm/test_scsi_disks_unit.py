@@ -22,8 +22,8 @@ def test_rotation_rates_and_order(tmp_path: Path) -> None:
     assert args[:2] == ["-device", "virtio-scsi-pci,id=scsi0"]
     devices = [a for a in args if a.startswith("scsi-hd")]
     assert devices == [
-        "scsi-hd,bus=scsi0.0,drive=scsidisk0,rotation_rate=1,serial=ssd,scsi-id=0",
-        "scsi-hd,bus=scsi0.0,drive=scsidisk1,rotation_rate=7200,serial=hdd1,scsi-id=1",
+        "scsi-hd,bus=scsi0.0,drive=scsidisk0,rotation_rate=1,serial=ssd,scsi-id=0,id=scsihd0",
+        "scsi-hd,bus=scsi0.0,drive=scsidisk1,rotation_rate=7200,serial=hdd1,scsi-id=1,id=scsihd1",
     ]
     assert f"file={tmp_path / 'ssd.img'},if=none,id=scsidisk0,format=raw" in args
 
@@ -39,7 +39,7 @@ def test_unreported_rotation_and_product(tmp_path: Path) -> None:
     disk = ScsiDisk(tmp_path / "x.img", rotational=None, serial="ssd", model="TEST SSD")
     (device,) = [a for a in scsi_disk_args([disk]) if a.startswith("scsi-hd")]
     assert device == (
-        "scsi-hd,bus=scsi0.0,drive=scsidisk0,rotation_rate=0,product=TEST SSD,serial=ssd,scsi-id=0"
+        "scsi-hd,bus=scsi0.0,drive=scsidisk0,rotation_rate=0,product=TEST SSD,serial=ssd,scsi-id=0,id=scsihd0"
     )
 
 

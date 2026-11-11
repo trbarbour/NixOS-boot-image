@@ -15,7 +15,10 @@ from tests.vm.qmp import (
     QmpError,
     allocate_qmp_socket_path,
     hotplug_virtio_disk,
+    plug_scsi_disk,
+    unplug_device,
 )
+from tests.vm.scsi_disks import ScsiDisk, scsi_hd_properties
 
 # Maps a request to the replies to send; ``None`` closes the connection.
 Handler = Callable[[Dict[str, Any]], Optional[List[Dict[str, Any]]]]
@@ -128,5 +131,33 @@ def test_hotplug_issues_blockdev_add_then_device_add(qmp_server: Any, tmp_path: 
             "id": "dev-hp1",
             "drive": "hp1",
             "serial": "residue1",
+        },
+    }
+
+
+def test_unplug_and_replug_a_scsi_disk(qmp_server: Any, tmp_path: Path) -> None:
+    """#344: a RAID member that appears late is unplugged, then plugged back."""
+
+    path = qmp_server(lambda request: [{"return": {}}])
+    disk = ScsiDisk(tmp_path / "hddb.img", rotational=True, serial="hddb")
+    properties = scsi_hd_properties(disk, index=2, drive="scsidisk2")
+    with QmpClient(path) as client:
+        unplug_device(client, "scsihd2")
+        plug_scsi_disk(client, image=disk.path, node_name="late-hddb", properties=properties)
+
+    unplug, blockdev, device = qmp_server.received[1:]
+    assert unplug == {"execute": "device_del", "arguments": {"id": "scsihd2"}}
+    assert blockdev["execute"] == "blockdev-add"
+    assert blockdev["arguments"]["node-name"] == "late-hddb"
+    assert device == {
+        "execute": "device_add",
+        "arguments": {
+            "driver": "scsi-hd",
+            "bus": "scsi0.0",
+            "drive": "late-hddb",
+            "rotation_rate": 7200,
+            "serial": "hddb",
+            "scsi-id": 2,
+            "id": "scsihd2",
         },
     }
