@@ -385,25 +385,6 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Reproduce in a unit test, then fix (for example, skip the console copy when stdout is the console).
     - **2026-11-06: fixed in 0.25.1** (user request). The console copy is written only when stdout is not a terminal, i.e. the boot-time service. `test_cli_at_a_terminal_prints_the_plan_once` failed before the fix.
 
-37. **The VM fixture hides `nix build` errors.** *(anomaly, 2026-11-08)*
-    - When the ISO build fails, the test reports only `CalledProcessError` with the command; Nix's stderr (the actual error) is not in the pytest output or the run log.
-    - Found when the build ran out of disk (`xorriso : FAILURE : Image size 769296s exceeds free space on media 485468s`), seen only by rerunning the build by hand.
-    - Plan: capture the build's stderr and include its tail in the failure (and the run's harness log).
-    - 2026-11-11 (0.29.1): `build_boot_artifact` now fails with the last 60 lines of Nix's stderr. Test first: `tests/vm/test_build_errors_unit.py` (a fake `nix` printing the 2026-11-08 xorriso error) failed with the bare `CalledProcessError` and passes now.
-
-38. **Test ISOs fill the cloud session's disk allowance.** *(recurring: 2026-10-18, 2026-10-19, 2026-11-07, 2026-11-08, 2026-11-10)*
-    - Each VM run builds a ~1.5 GB ISO into the Nix store; they are not GC roots but stay until collected, and a session's writable disk is a fixed allowance.
-    - Plan: before building, delete this repo's older `pre-nixos-*.iso` store paths (unreferenced ones only, `nix-store --delete`), or have the fixture warn when free space is below ~3 GB.
-    - 2026-11-08: also the VM disk images. A RAID-1 resync writes the whole member, so sparse images become fully allocated: the reprovision test (`test_reprovision_vm.py`, two array creations on 4+5+5 GiB) needs ~14 GB. Run `notes/2026-11-08T165915Z-vm-run` was stopped by a free-space watchdog (< 1.5 GB). `nix-store --gc` freed 18.7 GiB (the nixpkgs closure from before the flake update, and old builds).
-    - **Correction (2026-11-11, experiment):** `df`'s Avail *is* the limit, root included. `/` is ext4 with `resv_strict` and a large reserved pool. A `fallocate` just over Avail fails with ENOSPC, and one 2 GiB under it succeeds. The 2026-11-10 watchdog most likely never ran: it exited as soon as its `pgrep -f "pytest tests/vm"` did not match. The claim below that "`df` does not show the session's allowance" is wrong.
-    - 2026-11-10 (03:20Z): the end-to-end run on the unfixed `install.py` (`notes/2026-11-10T020935Z-vm-run`) died with ENOSPC during `nixos-install`, although `df` still showed 6.2 GB free: `df` does not show the session's allowance, so the df-based watchdog never fired. The SSD and HDD images had grown to 2.5 GB and 5.0 GB. Freed by deleting the images and `nix-store --gc` (11.9 GiB). A watchdog must measure the allowance some other way (e.g. the sizes of the VM images plus the store growth), not `df`.
-    - 2026-11-11 (0.29.2): `tests/vm/disk_space.py`.
-      - After a build, this repo's other unreferenced image store paths are deleted (`PRE_NIXOS_VM_KEEP_IMAGES=1` keeps them).
-      - A VM does not start below `PRE_NIXOS_VM_MIN_FREE_GIB` (default 4).
-      - A guard stops QEMU below `PRE_NIXOS_VM_FLOOR_GIB` (default 1), and the failure leads with the reason.
-      - Tests first: `tests/vm/test_disk_space_unit.py` (7). VM smoke run (`test_hba_disk_vm`) passed: the 3 older ISOs were deleted and the new one kept; free space went from 17 to 20 GiB.
-    - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
-
 41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
     - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.
     - Proposal (user): when the installer has no address from DHCP, adopt the same static configuration, unless told otherwise. Needs a short design.
@@ -423,6 +404,8 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-11T15-03Z - Merged trbarbour/NixOS-boot-image#349 (0.29.2): item 38, the VM harness's disk-space handling. After each build it deletes unreferenced older images, keeping every image the session holds. A VM does not start below `PRE_NIXOS_VM_MIN_FREE_GIB`, and a guard stops QEMU below `PRE_NIXOS_VM_FLOOR_GIB`, both watching the logs' and every VM disk's filesystem. Codex found three issues, each fixed with a test first; its re-review was clean. CI green.
+- 2026-11-11T14-41Z - Merged trbarbour/NixOS-boot-image#348 (0.29.1): item 37, a failed image build shows the tail of Nix's stderr. CI green, no Codex findings.
 - 2026-11-11T14-21-08Z - Merged trbarbour/NixOS-boot-image#347 (0.29.0): item 48, SAS/RAID controller drivers in the x86 initrd (R-S6; the HBA disk is now found in the initrd, and the test fails on the unfixed image); item 49, degraded arrays reported at login and through mdadm's PROGRAM hook instead of `MAILADDR root` (R-S7; the installed-system VM test fails a member and sees the crit entry and the login warning). CI green, no Codex findings. Follow-ups: items 50 and 51.
 - 2026-11-11T02-55-39Z - Merged trbarbour/NixOS-boot-image#346 (0.28.1): fixes #344 (item 47). The boot image masks mdadm's last-resort units (initrd and system), so an array whose member appears late (an HBA disk at 67.8 s on the user's PC) is no longer started degraded, which had dropped that member for good. R-S5, design §7.2.1. Tests first: `tests/vm/test_late_raid_member_vm.py` fails on the unfixed image and passes on 0.28.1, and the flake check `no-degraded-md-start` does the same. RAID regression passes. CI green, no Codex findings. The user still has to re-add `sdc1` on the PC. Follow-ups: items 48 and 49.
 - 2026-11-11T01-06-16Z - Merged trbarbour/NixOS-boot-image#345 (0.28.0): item 45, the optional site setting `rootHashedPassword` (R-A1, R-A2), checked by libxcrypt at build time after Codex's finding.
