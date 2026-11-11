@@ -492,6 +492,30 @@
         } // pkgs.lib.optionalAttrs (system == preInstallerSystem) (
           builtins.mapAttrs (name: passed: assert passed; pkgs.runCommand name { } "touch $out") siteChecks
         ) // pkgs.lib.optionalAttrs (system == preInstallerSystem) {
+          # #344: neither the image's initrd nor its system may start an md
+          # array degraded on its own.  mdadm's last-resort timer (30 s) runs
+          # `mdadm --run` on an incomplete array, which marks the late member
+          # missing for good; on the user's PC an HBA disk appears at 68 s.
+          # Both units must be masked (/dev/null) in both unit directories.
+          no-degraded-md-start =
+            let
+              units = [ "mdadm-last-resort@.timer" "mdadm-last-resort@.service" ];
+              dirs = {
+                system = preInstallerConfig.config.environment.etc."systemd/system".source;
+                initrd = preInstallerConfig.config.boot.initrd.systemd.contents."/etc/systemd/system".source;
+              };
+              checkDir = name: dir: lib.concatMapStrings (unit: ''
+                target=$(readlink ${dir}/${unit} || echo missing)
+                if [ "$target" != /dev/null ]; then
+                  echo "${name}: ${unit} is not masked (-> $target)"; failed=1
+                fi
+              '') units;
+            in
+            pkgs.runCommand "no-degraded-md-start" { } (
+              "failed=0\n"
+              + lib.concatStrings (lib.mapAttrsToList checkDir dirs)
+              + "[ $failed = 0 ]\ntouch $out\n"
+            );
           # #320: the configuration pre-nixos writes on the target must parse
           # when it starts from nixos-generate-config's real output (fixtures
           # for each loader the generator can pick).

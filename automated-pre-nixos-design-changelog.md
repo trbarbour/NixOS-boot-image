@@ -154,3 +154,6 @@
 
 ### v0.34 — 2026-11-10
 - §7.8.1: the optional site setting `rootHashedPassword` gives the installed system's root a console password (R-A1, R-A2; task queue item 45).
+
+### v0.35 — 2026-11-11
+- §7.2.1: the boot image never starts a degraded md array on its own (R-S5, #344). mdadm's last-resort units are masked in its initrd and system.

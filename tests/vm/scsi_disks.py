@@ -25,7 +25,7 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Union
 
 SSD_ROTATION_RATE = 1
 HDD_ROTATION_RATE = 7200
@@ -67,6 +67,31 @@ class ScsiDisk:
         return HDD_ROTATION_RATE if self.rotational else SSD_ROTATION_RATE
 
 
+def scsi_device_id(index: int) -> str:
+    """The QEMU device id of the SCSI disk at ``index`` (for QMP ``device_del``)."""
+
+    return f"scsihd{index}"
+
+
+def scsi_hd_properties(disk: ScsiDisk, *, index: int, drive: str) -> Dict[str, Union[str, int]]:
+    """``scsi-hd`` properties, shared by the command line and QMP hot-plug.
+
+    The order is the command line's; ``id`` lets a test unplug the disk
+    (#344: a RAID member that appears late).
+    """
+
+    assert disk.bus is Bus.SCSI, disk
+    properties: Dict[str, Union[str, int]] = {
+        "bus": f"{CONTROLLER_ID}.0",
+        "drive": drive,
+        "rotation_rate": disk.rotation_rate,
+    }
+    if disk.model:
+        properties["product"] = disk.model
+    properties.update({"serial": disk.serial, "scsi-id": index, "id": scsi_device_id(index)})
+    return properties
+
+
 def scsi_disk_args(disks: Sequence[ScsiDisk]) -> List[str]:
     """QEMU arguments attaching ``disks``: SCSI ones to one virtio-scsi
     controller, SATA ones to one AHCI controller, each in list order."""
@@ -79,13 +104,12 @@ def scsi_disk_args(disks: Sequence[ScsiDisk]) -> List[str]:
         args += ["-device", f"virtio-scsi-pci,id={CONTROLLER_ID}"]
     for index, disk in enumerate(scsi):
         drive = f"scsidisk{index}"
-        product = f"product={disk.model}," if disk.model else ""
+        properties = scsi_hd_properties(disk, index=index, drive=drive)
         args += [
             "-drive",
             f"file={disk.path},if=none,id={drive},format=raw",
             "-device",
-            f"scsi-hd,bus={CONTROLLER_ID}.0,drive={drive},rotation_rate={disk.rotation_rate},"
-            f"{product}serial={disk.serial},scsi-id={index}",
+            "scsi-hd," + ",".join(f"{key}={value}" for key, value in properties.items()),
         ]
     if sata:
         args += ["-device", f"ich9-ahci,id={SATA_CONTROLLER_ID}"]
@@ -108,5 +132,7 @@ __all__ = [
     "SSD_ROTATION_RATE",
     "UNREPORTED_ROTATION_RATE",
     "ScsiDisk",
+    "scsi_device_id",
     "scsi_disk_args",
+    "scsi_hd_properties",
 ]

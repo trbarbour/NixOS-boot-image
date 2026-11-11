@@ -33,6 +33,10 @@ The system must automate the hardware setup process on new servers prior to NixO
       with `pre-nixos --ssd DISK` / `--hdd DISK`. [R-S3]
     - The user may set any disk's class (SSD or HDD) in the TUI or on the
       command line; the plan records the answers (`disk_classes`). [R-S4]
+    - The boot image never starts a RAID array with members missing on its
+      own. An incomplete array stays inactive, and nothing is written to it,
+      until its members appear or the user starts it. A member that appears
+      late (a slow controller) must not be dropped from an existing array. [R-S5]
   - For each group of (approximately) same-sized rotating disks:
     - If exactly two → use for swap on RAID-1.
     - If three or more → use for bulk storage on RAID-5 or RAID-6, depending on count.
