@@ -13,6 +13,7 @@ prefers it.  It lives in ``/run`` and is gone at reboot.
 from __future__ import annotations
 
 import enum
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -34,6 +35,13 @@ class Mode(enum.Enum):
     AUTO = "auto"  # only when the installer has no IPv4 address
     YES = "yes"
     NO = "no"
+
+
+def enabled() -> bool:
+    """Whether system commands run: ``PRE_NIXOS_EXEC=1``, as for every other
+    system change pre-nixos makes (Codex on #351)."""
+
+    return os.environ.get("PRE_NIXOS_EXEC") == "1"
 
 
 def _run(cmd: List[str]) -> None:
@@ -85,9 +93,14 @@ def apply(
     mac_address: Optional[str],
     unit_dir: Path = UNIT_DIR,
     run: Runner = _run,
-) -> Path:
-    """Give the installer's ``lan`` the static settings; return the unit's path."""
+) -> Optional[Path]:
+    """Give the installer's ``lan`` the static settings; return the unit's path.
 
+    ``None`` when execution is disabled: nothing is written, since a unit left
+    in ``/run`` would take effect at networkd's next reload."""
+
+    if not enabled():
+        return None
     unit_dir.mkdir(parents=True, exist_ok=True)
     path = unit_dir / UNIT_NAME
     path.write_text(render_unit(config, mac_address=mac_address), encoding="utf-8")
@@ -96,8 +109,11 @@ def apply(
 
 
 def remove(*, unit_dir: Path = UNIT_DIR, run: Runner = _run) -> bool:
-    """Return the installer to DHCP (R-N3); ``False`` if there was nothing to undo."""
+    """Return the installer to DHCP (R-N3); ``False`` if there was nothing to
+    undo, or execution is disabled."""
 
+    if not enabled():
+        return False
     path = unit_dir / UNIT_NAME
     if not path.exists():
         return False
@@ -106,4 +122,6 @@ def remove(*, unit_dir: Path = UNIT_DIR, run: Runner = _run) -> bool:
     return True
 
 
-__all__ = ["INTERFACE", "Mode", "UNIT_DIR", "UNIT_NAME", "apply", "decide", "parse_dns", "remove", "render_unit"]
+__all__ = [
+    "INTERFACE", "Mode", "UNIT_DIR", "UNIT_NAME", "apply", "decide", "enabled", "parse_dns", "remove", "render_unit",
+]

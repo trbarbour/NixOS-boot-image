@@ -24,7 +24,9 @@ _2026-11-11T18:38:53Z. Task queue item 41._
   - The name sorts before `20-lan.network`, so it wins. It is gone at reboot (`/run`).
 - **D3(a), DNS:** `InstallNetworkConfig.dns` is a tuple of IPv4 addresses, defaulting to `(gateway,)`.
   - Saved settings without DNS load with the gateway as DNS.
-  - The managed block writes `networkConfig.DNS`, which `systemd-resolved` on the installed system uses (NixOS enables it with networkd).
+  - The managed block writes `networking.nameservers`, which goes into `systemd-resolved`'s `resolved.conf` on the installed system (NixOS enables resolved with networkd).
+  - Not `networkConfig.DNS` in the declared `lan` unit (Codex on #351). NixOS turns `networking.interfaces.lan` and `networking.defaultGateway` into `40-lan.network`. That sorts before the declared `lan.network`, so it wins and DNS there is ignored. Evaluated 2026-11-11; see task queue item 52.
+- **Execution guard (Codex on #351):** `apply` and `remove` do nothing unless `PRE_NIXOS_EXEC=1`, like every other system change pre-nixos makes. A unit left in `/run` would take effect at networkd's next reload, so nothing is written either. `--dry-run` only prints what would be done.
 - **D1, when:** `installer_network.decide(mode, readiness)` (pure) returns apply or skip.
   - `auto` applies only when the installer has no IPv4 address; `yes` always applies; `no` never does.
   - The TUI asks in `auto`'s case, defaulting to yes.
@@ -38,7 +40,8 @@ _2026-11-11T18:38:53Z. Task queue item 41._
 - `tests/test_install*.py`:
   - DNS validation, the default and the payload round trip;
   - an old payload without DNS;
-  - the managed block's `networkConfig.DNS`.
+  - the managed block's `networking.nameservers`, and no `networkConfig.DNS`.
+- `PRE_NIXOS_EXEC` unset: `apply` and `remove` write and run nothing; the CLI and the TUI say so.
 - The CLI: `--install-dns` and `--installer-network`.
 - A VM test: `pre-nixos --install-ip-address 10.0.2.20 … --install-dns 10.0.2.53 --installer-network yes --plan-only` in the booted image.
   - `lan` must then have 10.0.2.20/24, a default route via 10.0.2.2, and DNS 10.0.2.53 in `resolvectl dns lan` (not QEMU's DHCP DNS server, 10.0.2.3, which must be gone). `--dry-run` only prints what it would do.

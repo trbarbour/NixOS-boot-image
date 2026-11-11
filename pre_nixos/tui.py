@@ -1234,8 +1234,10 @@ def _configure_install_network(stdscr: curses.window, state: TUIState) -> None:
         ):
             mac = state.lan_config.mac_address if state.lan_config else None
             try:
-                installer_network.apply(install_network, mac_address=mac)
-                lines.append(f"The installer's {iface} now uses these settings.")
+                if installer_network.apply(install_network, mac_address=mac) is None:
+                    lines.append(f"PRE_NIXOS_EXEC is not 1: the installer's {iface} is unchanged.")
+                else:
+                    lines.append(f"The installer's {iface} now uses these settings.")
             except (OSError, subprocess.CalledProcessError) as exc:
                 lines.append(f"Warning: could not configure the installer: {exc}")
     _show_modal(stdscr, lines)

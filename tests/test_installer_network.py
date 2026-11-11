@@ -52,6 +52,11 @@ def test_unit_sorts_before_the_dhcp_unit() -> None:
     assert installer_network.UNIT_DIR == Path("/run/systemd/network")
 
 
+@pytest.fixture(autouse=True)
+def _executing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+
+
 def test_apply_writes_the_unit_and_reconfigures(tmp_path: Path) -> None:
     run = Runner()
     path = installer_network.apply(STATIC, mac_address=None, unit_dir=tmp_path, run=run)
@@ -69,6 +74,23 @@ def test_remove_restores_dhcp(tmp_path: Path) -> None:
     assert run.calls == [["networkctl", "reload"], ["networkctl", "reconfigure", "lan"]]
     run.calls.clear()
     assert not installer_network.remove(unit_dir=tmp_path, run=run)  # nothing to undo
+    assert run.calls == []
+
+
+@pytest.mark.parametrize("value", [None, "0", ""])
+def test_nothing_happens_unless_pre_nixos_exec(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, value) -> None:
+    """Codex on #351: like every other system command, only with PRE_NIXOS_EXEC=1."""
+
+    if value is None:
+        monkeypatch.delenv("PRE_NIXOS_EXEC", raising=False)
+    else:
+        monkeypatch.setenv("PRE_NIXOS_EXEC", value)
+    run = Runner()
+    assert installer_network.apply(STATIC, mac_address=None, unit_dir=tmp_path, run=run) is None
+    assert not (tmp_path / installer_network.UNIT_NAME).exists()
+    (tmp_path / installer_network.UNIT_NAME).write_text("left by an earlier run\n")
+    assert not installer_network.remove(unit_dir=tmp_path, run=run)
+    assert (tmp_path / installer_network.UNIT_NAME).exists()
     assert run.calls == []
 
 

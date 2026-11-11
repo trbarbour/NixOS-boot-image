@@ -396,6 +396,16 @@ _Last updated: 2026-10-30T12-35-13Z_
       - TUI `[C]`: a DNS prompt, the offer, and the undo.
     - Tests first: `tests/test_installer_network.py`, `test_cli.py` (3), `test_tui.py` (5), and `test_install_network_units.py` (DNS in the block). VM test `tests/vm/test_installer_static_network_vm.py`.
     - First VM run (`notes/2026-11-11T184913Z-vm-run`) failed with an ImportError: the image was built before `pre_nixos/installer_network.py` was `git add`ed, and a flake's source is the tracked files only. That was a process slip, not a code fault. Rule: `git add` new files before a VM run. Rerun on the committed tree: **passed**. `lan` took 10.0.2.20/24, the default route via 10.0.2.2 and DNS 10.0.2.3, and QEMU's DHCP address was gone.
+    - Codex on #351 found four issues, each fixed with tests first:
+      1. `--dry-run` reconfigured the installer;
+      2. the VM test's DNS check could pass from the unit file, and used QEMU's own server (now 10.0.2.53, checked only in `resolvectl`);
+      3. the installed system's DNS sat in the shadowed `lan.network` (now `networking.nameservers`; see item 52);
+      4. `apply` and `remove` ignored `PRE_NIXOS_EXEC`.
+52. **The managed block's `systemd.network.networks."lan"` unit is never used** *(anomaly, 2026-11-11 19:30:56Z, found while checking Codex's DNS finding on #351)*.
+    - Evaluated: NixOS turns `networking.interfaces.lan` (and `networking.defaultGateway`) into `40-lan.network`, matching `Name=lan`. It sorts before the declared `lan.network`, which networkd therefore never applies.
+    - So that unit's `matchConfig.MACAddress` and its `networkConfig` are dead. The working settings come from `networking.interfaces.lan` and `networking.defaultGateway`, matched by the name the link unit gives.
+    - Statics still work (the address and gateway are in `40-lan`), but the duplication misleads, and caused item 41's DNS slip.
+    - Proposal: keep one declaration. Either drop the `lan` unit, or drop `networking.interfaces.lan` and `defaultGateway` and name the unit `40-lan`. Needs a design debate, plus a test that evaluates the generated units.
 
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.

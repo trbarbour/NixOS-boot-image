@@ -793,9 +793,6 @@ def _inject_configuration(
             '    networkConfig.DHCP = "no";',
             f'    networkConfig.Address = [ "{install_network.cidr}" ];',
             f'    networkConfig.Gateway = "{_escape_nix_string(install_network.gateway)}";',
-            "    networkConfig.DNS = [ "
-            + " ".join(f'"{_escape_nix_string(server)}"' for server in install_network.dns)
-            + " ];",
         ]
 
     block_lines.extend(network_block + ["  };", ""])
@@ -806,6 +803,14 @@ def _inject_configuration(
             f' address = "{_escape_nix_string(install_network.gateway)}";'
             ' interface = "lan";'
             " };"
+        )
+        # Item 41 (R-N2).  Not ``networkConfig.DNS`` in the unit above: NixOS
+        # turns ``networking.interfaces.lan`` into ``40-lan.network``, which
+        # sorts first and wins (Codex on #351; evaluated 2026-11-11).
+        block_lines.append(
+            "  networking.nameservers = [ "
+            + " ".join(f'"{_escape_nix_string(server)}"' for server in install_network.dns)
+            + " ];"
         )
         block_lines.append("")
 

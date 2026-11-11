@@ -687,7 +687,7 @@ def test_cli_uefi_plans_the_x86_uefi_layout(monkeypatch, tmp_path):
     assert plan["boot"] == {"layout": "x86-uefi", "disks": ["nvme0n1"]}
 
 
-def _static_cli(monkeypatch, tmp_path, readiness, argv):
+def _static_cli(monkeypatch, tmp_path, readiness, argv, *, executes=True):
     """Run the CLI with static settings; return the installer-network calls."""
 
     monkeypatch.setattr(pre_nixos.inventory, "enumerate_disks", lambda: [Disk(name="sda", size=1000, rotational=False)])
@@ -702,7 +702,7 @@ def _static_cli(monkeypatch, tmp_path, readiness, argv):
     applied = []
     monkeypatch.setattr(
         pre_nixos.installer_network, "apply",
-        lambda config, *, mac_address, **kw: applied.append((config, mac_address)) or tmp_path / "unit",
+        lambda config, *, mac_address, **kw: applied.append((config, mac_address)) or (tmp_path / "unit" if executes else None),
     )
     pre_nixos.main(["--plan-only", *argv])
     return applied
@@ -729,6 +729,16 @@ def test_cli_leaves_a_dhcp_installer_alone_unless_told(monkeypatch, tmp_path):
 def test_cli_installer_network_no_declines(monkeypatch, tmp_path):
     no_address = pre_nixos.network.NetworkReadiness(None, None)
     assert _static_cli(monkeypatch, tmp_path, no_address, [*STATIC_ARGS, "--installer-network", "no"]) == []
+
+
+def test_cli_says_when_execution_is_disabled(monkeypatch, tmp_path, capsys):
+    """Codex on #351: without PRE_NIXOS_EXEC=1, apply() does nothing; say so."""
+
+    no_address = pre_nixos.network.NetworkReadiness(None, None)
+    _static_cli(monkeypatch, tmp_path, no_address, STATIC_ARGS, executes=False)
+    out = capsys.readouterr().out
+    assert "now uses" not in out
+    assert "PRE_NIXOS_EXEC" in out
 
 
 def test_cli_dry_run_does_not_touch_the_installer_network(monkeypatch, tmp_path, capsys):

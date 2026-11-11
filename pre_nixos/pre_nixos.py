@@ -269,9 +269,12 @@ def _configure_installer_network(
         return
     mac = lan_config.mac_address if lan_config else None
     try:
-        installer_network.apply(config, mac_address=mac)
+        unit = installer_network.apply(config, mac_address=mac)
     except (OSError, subprocess.CalledProcessError) as exc:
         print(f"Warning: could not configure the installer's {iface}: {exc}", file=sys.stderr)
+        return
+    if unit is None:
+        print(f"PRE_NIXOS_EXEC is not 1: the installer's {iface} is unchanged.")
         return
     print(
         f"The installer's {iface} now uses {config.cidr} via {config.gateway},"
