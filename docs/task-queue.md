@@ -397,6 +397,11 @@ _Last updated: 2026-10-30T12-35-13Z_
     - 2026-11-08: also the VM disk images. A RAID-1 resync writes the whole member, so sparse images become fully allocated: the reprovision test (`test_reprovision_vm.py`, two array creations on 4+5+5 GiB) needs ~14 GB. Run `notes/2026-11-08T165915Z-vm-run` was stopped by a free-space watchdog (< 1.5 GB). `nix-store --gc` freed 18.7 GiB (the nixpkgs closure from before the flake update, and old builds).
     - **Correction (2026-11-11, experiment):** `df`'s Avail *is* the limit, root included. `/` is ext4 with `resv_strict` and a large reserved pool. A `fallocate` just over Avail fails with ENOSPC, and one 2 GiB under it succeeds. The 2026-11-10 watchdog most likely never ran: it exited as soon as its `pgrep -f "pytest tests/vm"` did not match. The claim below that "`df` does not show the session's allowance" is wrong.
     - 2026-11-10 (03:20Z): the end-to-end run on the unfixed `install.py` (`notes/2026-11-10T020935Z-vm-run`) died with ENOSPC during `nixos-install`, although `df` still showed 6.2 GB free: `df` does not show the session's allowance, so the df-based watchdog never fired. The SSD and HDD images had grown to 2.5 GB and 5.0 GB. Freed by deleting the images and `nix-store --gc` (11.9 GiB). A watchdog must measure the allowance some other way (e.g. the sizes of the VM images plus the store growth), not `df`.
+    - 2026-11-11 (0.29.2): `tests/vm/disk_space.py`.
+      - After a build, this repo's other unreferenced image store paths are deleted (`PRE_NIXOS_VM_KEEP_IMAGES=1` keeps them).
+      - A VM does not start below `PRE_NIXOS_VM_MIN_FREE_GIB` (default 4).
+      - A guard stops QEMU below `PRE_NIXOS_VM_FLOOR_GIB` (default 1), and the failure leads with the reason.
+      - Tests first: `tests/vm/test_disk_space_unit.py` (7). VM smoke run (`test_hba_disk_vm`) passed: the 3 older ISOs were deleted and the new one kept; free space went from 17 to 20 GiB.
     - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
 
 41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
