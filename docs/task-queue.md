@@ -401,6 +401,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       2. the VM test's DNS check could pass from the unit file, and used QEMU's own server (now 10.0.2.53, checked only in `resolvectl`);
       3. the installed system's DNS sat in the shadowed `lan.network` (now `networking.nameservers`; see item 52);
       4. `apply` and `remove` ignored `PRE_NIXOS_EXEC`.
+    - VM run on 64c7e03 (`notes/2026-11-11T193539Z-vm-run`): **passed** in 9 min. With DNS 10.0.2.53 (not QEMU's), `resolvectl dns lan` showed only 10.0.2.53, `lan` had 10.0.2.20/24 and the default route via 10.0.2.2, and QEMU's DHCP address was gone. `PRE_NIXOS_EXEC=1` reaches the root login shell, so the new guard let it run. An earlier run on 06f0557 (`notes/2026-11-11T192844Z-vm-run`) was stopped by hand for these changes.
 52. **The managed block's `systemd.network.networks."lan"` unit is never used** *(anomaly, 2026-11-11 19:30:56Z, found while checking Codex's DNS finding on #351)*.
     - Evaluated: NixOS turns `networking.interfaces.lan` (and `networking.defaultGateway`) into `40-lan.network`, matching `Name=lan`. It sorts before the declared `lan.network`, which networkd therefore never applies.
     - So that unit's `matchConfig.MACAddress` and its `networkConfig` are dead. The working settings come from `networking.interfaces.lan` and `networking.defaultGateway`, matched by the name the link unit gives.
