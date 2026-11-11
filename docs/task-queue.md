@@ -437,13 +437,6 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Implemented: `network.installer_network`, `install.InstallTrigger`, the gate in `auto_install`, TUI and login-notice messages. Tests: `tests/test_install_network_gate.py`, `test_apply_without_network_explains_the_skipped_install`, `test_login_notice_explains_an_install_waiting_for_the_network`.
     - Correction recorded: "installs must work offline" (BIOS plan D5) was never a requirement; the stock NixOS installer needs the network too.
 
-45. **Optional hashed root password for the installed system** *(user, 2026-11-09)*.
-    - The installed system has no root password, so the serial console cannot log in; reqs §2.7 says root login must be possible over the serial console (if functional).
-    - Agreed: an optional site setting `rootHashedPassword` (e.g. `mkpasswd -m yescrypt`), kept in the site file like `rootKey`, never in the repo; pre-nixos writes it as `users.users.root.hashedPassword` on the installed system. Unset by default. The installer keeps its empty console password.
-    - Needs: site option and validation (a crypt hash, not a plain password), the managed block, tests, README (strong password: the hash ships in the image).
-    - 2026-11-10: design `plans/2026-11-10T140423Z-root-password-design.md` (R-A1, R-A2). Found by reading nixpkgs: with mutable users NixOS applies `hashedPassword` only to a new `/etc/shadow` entry, so a reinstall over an earlier attempt would keep root locked; pre-nixos also sets root's field in an existing `/mnt/etc/shadow` (D4).
-    - Implemented (0.28.0): `nix/site.nix` validates with NixOS's MCF pattern (flake checks `site-validation`, `crypt-schemes`, `root-hashed-password-embedded`); `pre_nixos/root_password.py`; `install.py` writes the hash and edits the shadow before `nixos-install`; `tests/test_root_password.py` (a mutation without the shadow edit fails). VM images are now built from a test site (key and test hash) instead of `PRE_NIXOS_ROOT_KEY`. The end-to-end VM test checks root's hash on the installed system after planting a locked shadow: **passed** 2026-11-10 15:12Z (45 min, `notes/2026-11-10T143205Z-vm-run`).
-
 48. **The x86 image's initrd lacks SAS HBA drivers (`mptsas`)** *(found 2026-11-11, #344)*.
     - On the user's PC the HBA disk appears at 67.8 s in the installer, but at about 15 s on the installed system, whose generated configuration has `mptsas` in the initrd.
     - Since #344's fix a late member no longer degrades an array. Adding common HBA drivers (`mptsas`, `mpt3sas`) to the ISO's initrd would still make such disks appear sooner, for pre-nixos's inventory too. Check first whether disks that appear late are missed by the boot-time plan.
