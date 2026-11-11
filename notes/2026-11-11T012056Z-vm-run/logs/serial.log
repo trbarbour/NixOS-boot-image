@@ -62,4 +62,9 @@ cat /run/pre-nixos/storage-status 2>/dev/null || true
 cat /run/pre-nixos/storage-status 2>/dev/null || true
 [?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
 cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+LAN IPv4 address: 10.0.2.15
+cat /run/pre-nixos/storage-status 2>/dev/null || true
 [?2004l[?2004hPRE-NIXOS> 
