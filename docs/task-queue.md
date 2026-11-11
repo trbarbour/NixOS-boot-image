@@ -448,6 +448,8 @@ _Last updated: 2026-10-30T12-35-13Z_
     - dmesg: `md0` starts with one member at 3.46 s, 0.24 s after `sda` (AHCI). The other HDD sits behind an LSI SAS1068E HBA (`mptsas`) and appears only at 15.47 s. Nothing re-adds it, and there are no I/O errors.
     - Hypotheses H1–H4 are on the issue. Waiting for the user's `mdadm --examine`/`--detail`, the journals of earlier boots, and `smartctl`.
     - 2026-11-10 diagnostics: `sdc1` was last written Nov 9 14:56:37 with both members active (`AA`), and `sda1` now records it missing. The installed system's boot -1 waited (last-resort timer) and ran 2 of 2. SMART is clean, with no CRC errors. New hypothesis H5: the installer assembled `md0` without the HBA disk when the user mounted the installed root (Nov 9 and 10). Asked for `journalctl --list-boots` and the installer's md journal.
+    - 2026-11-11, cause (inferred, consistent with all data): boot -1 ended Nov 9 14:56:37, which is `sdc1`'s last update. In the installer, the HBA disk appears at 67.8 s. mdadm's `mdadm-last-resort@.timer` (30 s) then runs `mdadm --run`, which starts `md0` degraded and drops the late member for good. Every boot of the current installer on that PC will do it again.
+    - Proposed fix (a): mask the last-resort units in the boot image, with a VM test first (hot-add a member after more than 30 s). Waiting for the user's decision. Open unknown: why the HBA takes 68 s in the installer and 15 s on the installed system.
     - Separate anomaly: mdadm's monitor mails `root`, but there is no sendmail, so degraded arrays go unreported. To be handled after #344.
 
 ## Recently Completed
