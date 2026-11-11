@@ -1,6 +1,7 @@
 { pkgs }:
 let
   detectStorageCmd = "${pkgs.pre-nixos}/bin/pre-nixos-detect-storage";
+  waitDisksCmd = "${pkgs.pre-nixos}/bin/pre-nixos-wait-disks";
   preNixosCmd = "${pkgs.pre-nixos}/bin/pre-nixos";
   broadcastConsoleCmd = "${pkgs.pre-nixos}/bin/pre-nixos-console broadcast";
   announceLanIpScript = pkgs.writeShellScript "pre-nixos-announce-lan-ip"
@@ -67,6 +68,13 @@ in ''
     fi
   fi
 
+  # Task queue item 50 (R-D1): before detection and the plan, which both read
+  # the disks, wait until the set of disks has settled.
+  wait_msg="pre-nixos: waiting for the disks to settle"
+  ${broadcastConsoleCmd} "$wait_msg" || true
+  wait_status=0
+  ${waitDisksCmd} || wait_status=$?
+
   plan_flag=""
   status_state="applied"
   status_detail="auto-applied"
@@ -91,6 +99,21 @@ in ''
     fi
   fi
 
+  # R-D2: disks still changing at the bound, or the wait failed: plan only.
+  # A forced cleanup would wipe on an incomplete view of the disks, so it is
+  # dropped too.
+  if [ "$wait_status" -ne 0 ]; then
+    unset PRE_NIXOS_FORCE_CLEANUP
+    plan_flag="--plan-only"
+    status_state="plan-only"
+    if [ "$wait_status" -eq 2 ]; then
+      status_detail="disks-unsettled"
+    else
+      echo "pre-nixos: the disk wait failed (exit $wait_status), defaulting to plan-only" >&2
+      status_detail="disk-wait-error"
+    fi
+  fi
+
   set +e
   ${preNixosCmd} $plan_flag
   pre_status=$?
@@ -104,6 +127,14 @@ in ''
     pre_status=0
     status_state="plan-only"
     status_detail="disk-class-unconfirmed"
+  fi
+
+  # Task queue item 50 (R-D3): the disks changed between the plan and the
+  # first write, so pre-nixos wrote nothing (pre_nixos.EXIT_DISKS_CHANGED).
+  if [ "$pre_status" -eq 4 ]; then
+    pre_status=0
+    status_state="plan-only"
+    status_detail="disks-changed"
   fi
 
   if [ "$pre_status" -eq 0 ]; then

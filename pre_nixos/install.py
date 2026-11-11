@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 
-from . import boot_order, boot_platform, console, disk_class, network, root_password, state
+from . import boot_order, boot_platform, console, disk_class, kernel_cmdline, network, root_password, state
 from .console import broadcast_to_consoles
 from .logging_utils import log_event
 from .network import LanConfiguration
@@ -311,14 +311,8 @@ def _extract_label(extra_args: Iterable[str]) -> Optional[str]:
     return None
 
 
-def _read_kernel_cmdline_tokens() -> tuple[str, ...]:
-    """Return kernel command-line tokens from ``/proc/cmdline``."""
-
-    try:
-        with open("/proc/cmdline", "r", encoding="utf-8") as fp:
-            return tuple(fp.read().split())
-    except OSError:
-        return ()
+# Module-level name, so tests can substitute it.
+_read_kernel_cmdline_tokens = kernel_cmdline.tokens
 
 
 _VIRTUAL_TERMINAL = re.compile(r"tty\d+")
@@ -1122,17 +1116,26 @@ def _refuse_legacy_bios(
 def refuse_unconfirmed_disks(
     message: str, *, status_dir: Optional[Path] = None
 ) -> AutoInstallResult:
-    """Record and announce that disks need the user's answer first (R-S3).
+    """Record and announce that disks need the user's answer first (R-S3)."""
+
+    return refuse_before_writing(message, disk_class.UNCONFIRMED_REASON, status_dir=status_dir)
+
+
+def refuse_before_writing(
+    message: str, reason: str, *, status_dir: Optional[Path] = None
+) -> AutoInstallResult:
+    """Record and announce a run stopped before any disk was written.
 
     Nothing was provisioned or installed; the run waits for the user, so the
-    install is ``skipped``, not ``failed``.
+    install is ``skipped``, not ``failed``.  Used for R-S3's unanswered disks
+    and item 50's changed disks (R-D3).
     """
 
     _announce(message, to_stderr=True)
     return _record_result(
         "skipped",
         status_dir=status_dir if status_dir is not None else state.default_state_dir(),
-        reason=disk_class.UNCONFIRMED_REASON,
+        reason=reason,
         details={"message": message},
     )
 

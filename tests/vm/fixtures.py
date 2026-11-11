@@ -35,6 +35,7 @@ from tests.vm.metadata import (
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from tests.vm.controller import BootImageVM
+    from tests.vm.late_disk import LateDiskPlugger
 
 DEFAULT_SPAWN_TIMEOUT = 900
 DEFAULT_LOGIN_TIMEOUT = 300
@@ -528,6 +529,7 @@ def _launch_boot_image_vm(
     request: pytest.FixtureRequest,
     log_dir: Optional[Path] = None,
     scsi_disks: Sequence[ScsiDisk] = (),
+    before_login: Optional[Callable[[Path, Path], None]] = None,
 ) -> Iterator["BootImageVM"]:
     from tests.vm.controller import BootImageVM
 
@@ -617,6 +619,10 @@ def _launch_boot_image_vm(
         timeout=VM_SPAWN_TIMEOUT,
     )
     child.logfile = log_handle
+    if before_login is not None:
+        # Called with the serial log and the QMP socket, while the VM boots
+        # and before the controller logs in (item 50: a disk plugged late).
+        before_login(log_path, qmp_socket)
     debug_enabled = bool(request.config.getoption("boot_image_debug"))
     initial_failures = request.session.testsfailed
     vm: Optional[BootImageVM] = None
@@ -784,6 +790,63 @@ def boot_image_vm_for_hotplug(
         )
     finally:
         _remove_disk_images([vm_disk_image])
+
+
+# Item 50: the late disk, distinct in size from the 4 GiB primary.
+LATE_DISK_BYTES = 6 * 1024 * 1024 * 1024
+LATE_DISK_SERIAL = "LATE50"
+# After the console notice, before the 15 s quiet period ends; late enough
+# that the wait's first inventory has been taken.
+LATE_DISK_DELAY_SECONDS = 5.0
+
+
+@pytest.fixture
+def boot_image_vm_with_late_disk(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    vm_disk_image_factory: Callable[..., Path],
+    ssh_executable: str,
+    request: pytest.FixtureRequest,
+) -> Iterator[tuple["BootImageVM", "LateDiskPlugger"]]:
+    """A VM whose second disk is plugged while the boot service waits for
+    the disks to settle (task queue item 50, R-D1)."""
+
+    from pre_nixos.disk_settle import CONSOLE_NOTICE
+    from tests.vm.late_disk import LateDiskPlugger
+    from tests.vm.qmp import QmpClient, hotplug_virtio_disk
+
+    primary = vm_disk_image_factory(prefix="boot-image-disk-primary-late")
+    late = vm_disk_image_factory(prefix="boot-image-disk-late", size_bytes=LATE_DISK_BYTES)
+    plugger: Optional[LateDiskPlugger] = None
+
+    def start_plugger(serial_log: Path, qmp_socket: Path) -> None:
+        nonlocal plugger
+
+        def plug() -> None:
+            with QmpClient(qmp_socket) as client:
+                hotplug_virtio_disk(client, image=late, node_name="hp-late", serial=LATE_DISK_SERIAL)
+
+        plugger = LateDiskPlugger(
+            serial_log=serial_log, trigger=CONSOLE_NOTICE, plug=plug, delay=LATE_DISK_DELAY_SECONDS
+        )
+        plugger.start()
+
+    try:
+        for vm in _launch_boot_image_vm(
+            _pexpect=_pexpect,
+            machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
+            boot_image_build=boot_image_build,
+            vm_disk_image=primary,
+            extra_disks=[],
+            ssh_executable=ssh_executable,
+            request=request,
+            before_login=start_plugger,
+        ):
+            assert plugger is not None
+            yield vm, plugger
+    finally:
+        _remove_disk_images([primary, late])
 
 
 @pytest.fixture(scope="module")

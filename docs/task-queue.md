@@ -385,23 +385,6 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Reproduce in a unit test, then fix (for example, skip the console copy when stdout is the console).
     - **2026-11-06: fixed in 0.25.1** (user request). The console copy is written only when stdout is not a terminal, i.e. the boot-time service. `test_cli_at_a_terminal_prints_the_plan_once` failed before the fix.
 
-41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
-    - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.
-    - Proposal (user): when the installer has no address from DHCP, adopt the same static configuration, unless told otherwise. Needs a short design.
-    - 2026-11-11, user decisions: D1 (when it has no address; the TUI asks, defaulting to yes; CLI `--installer-network`), D2(a) a runtime networkd unit, D3(a) DNS in the static settings (default: the gateway), D4 undo. Design `plans/2026-11-11T183853Z-installer-static-network-design.md` (R-N1–R-N3).
-    - Implemented (0.31.0):
-      - `pre_nixos/installer_network.py`;
-      - DNS in `InstallNetworkConfig` and the managed block;
-      - CLI `--install-dns` and `--installer-network`;
-      - TUI `[C]`: a DNS prompt, the offer, and the undo.
-    - Tests first: `tests/test_installer_network.py`, `test_cli.py` (3), `test_tui.py` (5), and `test_install_network_units.py` (DNS in the block). VM test `tests/vm/test_installer_static_network_vm.py`.
-    - First VM run (`notes/2026-11-11T184913Z-vm-run`) failed with an ImportError: the image was built before `pre_nixos/installer_network.py` was `git add`ed, and a flake's source is the tracked files only. That was a process slip, not a code fault. Rule: `git add` new files before a VM run. Rerun on the committed tree: **passed**. `lan` took 10.0.2.20/24, the default route via 10.0.2.2 and DNS 10.0.2.3, and QEMU's DHCP address was gone.
-    - Codex on #351 found four issues, each fixed with tests first:
-      1. `--dry-run` reconfigured the installer;
-      2. the VM test's DNS check could pass from the unit file, and used QEMU's own server (now 10.0.2.53, checked only in `resolvectl`);
-      3. the installed system's DNS sat in the shadowed `lan.network` (now `networking.nameservers`; see item 52);
-      4. `apply` and `remove` ignored `PRE_NIXOS_EXEC`.
-    - VM run on 64c7e03 (`notes/2026-11-11T193539Z-vm-run`): **passed** in 9 min. With DNS 10.0.2.53 (not QEMU's), `resolvectl dns lan` showed only 10.0.2.53, `lan` had 10.0.2.20/24 and the default route via 10.0.2.2, and QEMU's DHCP address was gone. `PRE_NIXOS_EXEC=1` reaches the root login shell, so the new guard let it run. An earlier run on 06f0557 (`notes/2026-11-11T192844Z-vm-run`) was stopped by hand for these changes.
 52. **The managed block's `systemd.network.networks."lan"` unit is never used** *(anomaly, 2026-11-11 19:30:56Z, found while checking Codex's DNS finding on #351)*.
     - Evaluated: NixOS turns `networking.interfaces.lan` (and `networking.defaultGateway`) into `40-lan.network`, matching `Name=lan`. It sorts before the declared `lan.network`, which networkd therefore never applies.
     - So that unit's `matchConfig.MACAddress` and its `networkConfig` are dead. The working settings come from `networking.interfaces.lan` and `networking.defaultGateway`, matched by the name the link unit gives.
@@ -412,12 +395,20 @@ _Last updated: 2026-10-30T12-35-13Z_
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
     - Options: wait until the device set has been stable for some seconds (bounded), or wait for each controller's scan to complete. Needs a design and a test (a disk hot-plugged during the boot service). On the user's PC the boot run started at 121 s, after the HBA disk (67.8 s).
     - 2026-11-11, user decision: options 1 and 3. (1) Before the inventory, wait until the disk set has been unchanged for a quiet period (about 15 s), with an upper bound (about 2 min), both settable on the kernel command line. (3) Take the inventory again just before anything is written; if it differs from the plan's, stop (plan-only) and name the change. Tests: unit tests with a simulated clock and device list, and a VM test that hot-plugs a disk shortly after the boot service starts. Queued after items 38, 42 and 41.
+    - Implemented (0.32.0), design `plans/2026-11-11T194943Z-disk-settle-design.md` (R-D1–R-D4):
+      - `pre_nixos/disk_settle.py` (`pre-nixos-wait-disks`), run first by the boot service;
+      - `plan["inventory"]`, recorded by the planner and re-checked by the CLI (exit 4) and the TUI (`[R]` rescans) before the first write;
+      - a plan without the record is refused;
+      - `pre_nixos/kernel_cmdline.py` replaces two private copies of the `/proc/cmdline` reader.
+    - Tests first: `tests/test_disk_settle.py`, `test_inventory.py`, `test_cli_disk_settle.py`, `test_tui_disk_class.py` (refusal, rescan), the `boot-service-status` flake check (six cases), and VM test `tests/vm/test_disk_settle_vm.py` (a disk hot-plugged 5 s into the wait, through `tests/vm/late_disk.py`).
+    - No VM run of the unfixed image: there the service prints no wait notice, so the test could only time out, which would reproduce nothing.
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-11T19-48Z - Merged trbarbour/NixOS-boot-image#351 (0.31.0): item 41, the installer adopts the static network settings when it has no address, and the static settings carry DNS servers. Codex's reviews found four issues over two rounds, each fixed with tests first; the third review was clean. The VM test passed on the final code. Found item 52 along the way.
 - 2026-11-11T18-37Z - Merged trbarbour/NixOS-boot-image#350 (0.30.0): item 42, `write-image` (a CLI and a TUI: build as the user, write to removable media through a `sudo` helper that re-checks the device and its identity, optional verification; the TUI presents architecture, image type and console with defaults). Codex's reviews found five issues over two rounds, each fixed with tests first; the third review was clean. CI green. A write to real media awaits the user's hardware.
 - 2026-11-11T15-03Z - Merged trbarbour/NixOS-boot-image#349 (0.29.2): item 38, the VM harness's disk-space handling. After each build it deletes unreferenced older images, keeping every image the session holds. A VM does not start below `PRE_NIXOS_VM_MIN_FREE_GIB`, and a guard stops QEMU below `PRE_NIXOS_VM_FLOOR_GIB`, both watching the logs' and every VM disk's filesystem. Codex found three issues, each fixed with a test first; its re-review was clean. CI green.
 - 2026-11-11T14-41Z - Merged trbarbour/NixOS-boot-image#348 (0.29.1): item 37, a failed image build shows the tail of Nix's stderr. CI green, no Codex findings.

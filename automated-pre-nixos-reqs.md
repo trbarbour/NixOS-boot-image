@@ -39,6 +39,18 @@ The system must automate the hardware setup process on new servers prior to NixO
       late (a slow controller) must not be dropped from an existing array. [R-S5]
     - The x86 image's initrd carries the drivers of common SAS and RAID
       controllers, so their disks appear before the real root starts. [R-S6]
+    - At boot, before storage detection and the plan, pre-nixos waits until
+      the set of disks has been unchanged for a quiet period (15 s by
+      default, `pre-nixos-disk-quiet=SECONDS`; 0 skips the wait), for at most
+      120 s (`pre-nixos-disk-wait-max=SECONDS`). [R-D1]
+    - If the disks are still changing at the bound, or the wait fails, the
+      boot run only plans; it does not provision or install. [R-D2]
+    - A plan records the disks it was made from. Before the first write to
+      storage, the disks are inventoried again; if they differ, nothing is
+      written, and the run stops (plan-only at boot) naming each disk added,
+      removed or changed. [R-D3]
+    - A plan that does not record its disks (an older version's, or one
+      written by hand) is not applied; the user re-plans on the machine. [R-D4]
     - The installed system reports a degraded or inactive RAID array where the
       user will see it: at every login (console and SSH), and, when mdadm
       detects a failure, at high priority in the journal and on logged-in

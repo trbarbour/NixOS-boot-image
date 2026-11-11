@@ -772,6 +772,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         "[N] Install now",
         "[I] Auto-install toggle",
         "[T] SSD/HDD",
+        "[R]escan disks",
         "[Q]uit",
     ]
     footer = "  ".join(footer_parts)
@@ -827,6 +828,21 @@ def _ask_disk_classes(stdscr: curses.window, state: TUIState) -> None:
     if pending:
         _replan(state)
     assert not disk_class.unconfirmed(state.kernel_disks, state.class_answers)
+
+
+def _rescan(stdscr: curses.window, state: TUIState) -> None:
+    """Take the inventory again and re-plan (task queue item 50, D5).
+
+    Answers about disks still present are kept; a new disk named SSD but
+    reported as rotating is asked about (R-S3).  Replaces the plan, as
+    :func:`_replan` does.
+    """
+
+    state.kernel_disks = inventory.exclude_disks(inventory.enumerate_disks(), state.protected_disks)
+    present = {disk.name for disk in state.kernel_disks}
+    state.class_answers = {name: answer for name, answer in state.class_answers.items() if name in present}
+    _replan(state)
+    _ask_disk_classes(stdscr, state)
 
 
 # Keys for the disks on one page; n, p and q page and cancel.
@@ -1253,6 +1269,16 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     if unconfirmed:
         _show_modal(stdscr, [disk_class.refusal_message(unconfirmed)])
         return False
+    # Item 50 (R-D3): write only to the disks the plan was made from.  The
+    # first write is the cleanup below, so this comes before it.
+    changes = inventory.verify_plan_disks(state.plan, state.protected_disks)
+    if changes:
+        _show_modal(
+            stdscr,
+            inventory.changed_disks_message(changes).splitlines()
+            + ["", "Press [R] to rescan the disks and re-plan."],
+        )
+        return False
     try:
         devices = storage_detection.detect_existing_storage()
     except Exception as exc:
@@ -1494,6 +1520,9 @@ def run() -> None:
                 continue
             if key_lower == "t":
                 _toggle_disk_class(stdscr, state)
+                continue
+            if key_lower == "r":
+                _rescan(stdscr, state)
                 continue
             if key_lower in {"KEY_UP", "k"}:
                 _move_focus(state, render, -1)

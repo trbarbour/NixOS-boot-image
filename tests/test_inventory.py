@@ -112,3 +112,103 @@ def test_user_pc_drive_page_gives_the_full_model() -> None:
     assert ata_model_from_vpd_pg89(page) == "G.SKILL 128GB SSD"
     # IDENTIFY word 217, nominal media rotation rate: 0, not reported.
     assert page[60 + 2 * 217 : 60 + 2 * 218] == b"\x00\x00"
+
+
+# --- the plan's disks (task queue item 50, R-D3, R-D4) -----------------------
+# Design: plans/2026-11-11T194943Z-disk-settle-design.md (D2, D5, D6).
+
+import pytest
+
+from pre_nixos import inventory
+from pre_nixos.inventory import Disk, DiskIdentity
+
+GIB = 1024**3
+SDA = Disk(name="sda", model="SSD", size=128 * GIB, serial="A", rotational=False)
+SDB = Disk(name="sdb", model="HDD", size=750 * GIB, serial="B", rotational=True)
+
+
+def test_identity_is_name_size_and_serial() -> None:
+    assert inventory.disk_identities([SDA]) == frozenset({DiskIdentity("sda", 128 * GIB, "A")})
+    # The model and rotational flag are not identity (D2).
+    other_model = Disk(name="sda", model="late VPD", size=128 * GIB, serial="A", rotational=True)
+    assert inventory.disk_identities([other_model]) == inventory.disk_identities([SDA])
+
+
+def test_changes_are_named() -> None:
+    before = inventory.disk_identities([SDA, SDB])
+    swapped = Disk(name="sdb", size=750 * GIB, serial="C")
+    sdc = Disk(name="sdc", size=3 * GIB // 2, serial="")
+    after = inventory.disk_identities([swapped, sdc])
+    assert inventory.describe_changes(before, after) == [
+        "removed sda (128 GiB, serial A)",
+        "changed sdb: was 750 GiB, serial B; now 750 GiB, serial C",
+        "added sdc (1.5 GiB, no serial)",
+    ]
+    assert inventory.describe_changes(before, before) == []
+
+
+def test_plan_records_its_disks() -> None:
+    plan: dict = {"disko": {}}
+    inventory.record_disks(plan, [SDB, SDA])
+    assert plan[inventory.PLAN_KEY] == [
+        {"name": "sda", "size": 128 * GIB, "serial": "A"},
+        {"name": "sdb", "size": 750 * GIB, "serial": "B"},
+    ]
+
+
+def _verify(monkeypatch, plan, present, protected=frozenset()):
+    monkeypatch.setattr(inventory, "enumerate_disks", lambda: list(present))
+    return inventory.verify_plan_disks(plan, protected)
+
+
+def test_unchanged_disks_pass(monkeypatch) -> None:
+    plan: dict = {}
+    inventory.record_disks(plan, [SDA, SDB])
+    assert _verify(monkeypatch, plan, [SDB, SDA]) == []
+
+
+def test_a_disk_added_after_planning_is_reported(monkeypatch) -> None:
+    plan: dict = {}
+    inventory.record_disks(plan, [SDA])
+    assert _verify(monkeypatch, plan, [SDA, SDB]) == ["added sdb (750 GiB, serial B)"]
+
+
+def test_protected_disks_are_left_out_as_when_planning(monkeypatch) -> None:
+    """The plan was made without the running system's disks (D2)."""
+
+    plan: dict = {}
+    inventory.record_disks(plan, [SDA])
+    assert _verify(monkeypatch, plan, [SDA, SDB], protected={"/dev/sdb"}) == []
+
+
+def test_a_plan_without_a_record_is_refused(monkeypatch) -> None:
+    """D6 (R-D4): a plan from an older version, or written by hand."""
+
+    (change,) = _verify(monkeypatch, {"disko": {}}, [SDA])
+    assert "does not record its disks" in change and "re-plan" in change
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        "sda",
+        [{"name": "sda"}],
+        [{"name": "sda", "size": "big", "serial": "A"}],
+        [{"name": 3, "size": 1, "serial": "A"}],
+    ],
+)
+def test_a_malformed_record_is_refused(monkeypatch, record) -> None:
+    (change,) = _verify(monkeypatch, {inventory.PLAN_KEY: record}, [SDA])
+    assert "malformed" in change
+
+
+def test_the_planner_records_its_disks() -> None:
+    """Every plan records the disks it was made from (D5), wherever it is made."""
+
+    from pre_nixos.planner import plan_storage
+
+    plan = plan_storage("fast", [SDA, SDB], ram_gb=16)
+    assert plan[inventory.PLAN_KEY] == [
+        {"name": "sda", "size": 128 * GIB, "serial": "A"},
+        {"name": "sdb", "size": 750 * GIB, "serial": "B"},
+    ]

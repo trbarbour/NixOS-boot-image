@@ -245,6 +245,9 @@ def _handle_existing_storage(
 # Exit status of a run that stopped for the user's answer (R-S3); the boot
 # service reports it as plan-only, not as a failure.
 EXIT_NEEDS_ANSWER = 3
+# Item 50 (R-D3): the disks changed between planning and writing; nothing was
+# written.  The boot service reports it as plan-only (DETAIL=disks-changed).
+EXIT_DISKS_CHANGED = 4
 
 
 def _configure_installer_network(
@@ -543,6 +546,18 @@ def main(argv: list[str] | None = None) -> None:
                 install.refuse_unconfirmed_disks(message)
                 sys.exit(EXIT_NEEDS_ANSWER)
             print(message, file=sys.stderr)
+
+        # Item 50 (R-D3): write only to the disks the plan was made from.  The
+        # first write to them is the cleanup of existing storage, so this
+        # comes before it.
+        writes_plan_disks = not args.plan_only or forced_cleanup_action is not None
+        if writes_plan_disks and not args.dry_run:
+            changes = inventory.verify_plan_disks(plan, protected_disks)
+            if changes:
+                install.refuse_before_writing(
+                    inventory.changed_disks_message(changes), inventory.CHANGED_REASON
+                )
+                sys.exit(EXIT_DISKS_CHANGED)
 
         # Explicit partitioning (after the R-S3 stop: it erases the disks).
         if args.partition_boot:

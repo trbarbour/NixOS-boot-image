@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.38
+**Doc status:** Draft v0.39
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -75,6 +75,15 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 ## 7) Discovery & Heuristics (Core logic)
 ### 7.1 Disk inventory
 - **Controllers [R-S6]:** the x86 image's initrd adds the SAS/RAID drivers listed in `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`) to NixOS's all-hardware list, whose SCSI part is incomplete. On the user's PC an LSI SAS1068E disk otherwise appeared only at 67.8 s, once the real root's udev loaded `mptsas` (task queue item 48, #344). udev loads them only for matching hardware.
+- **Settling [R-D1, R-D2]** (`disk_settle.py`, `pre-nixos-wait-disks`; plans/2026-11-11T194943Z-disk-settle-design.md, task queue item 50):
+  - The boot service runs `pre-nixos-wait-disks` first, before storage detection, which reads the same disks. It polls the inventory every second until the set has been unchanged for the quiet period, restarting it at each change, for at most the bound. It shows "pre-nixos: waiting for the disks to settle" on the consoles.
+  - A disk is identified by `(name, size, serial)`: not by its model, which a slow device can report late, nor its rotational flag.
+  - Exit 0 settled; 2 still changing at the bound; 1 an error. On 2 or 1 the service runs `pre-nixos --plan-only` (`DETAIL=disks-unsettled` or `disk-wait-error`) and drops a forced cleanup, which would otherwise wipe on an incomplete view.
+- **The plan's disks [R-D3, R-D4]:** `planner.plan_storage` records the disks it planned for as `plan["inventory"]`.
+  - Before the first write, which is the cleanup of existing storage, the CLI and the TUI call `inventory.verify_plan_disks` (the inventory again, without the protected disks, as when planning).
+  - On a difference, the CLI records `REASON=disks-changed` and exits 4, which the boot service reports as `STATE=plan-only`, `DETAIL=disks-changed`.
+  - The TUI shows the changes and offers `R`, which rescans and re-plans; it keeps the answers about disks still present, and asks about a new unconfirmed one.
+  - A plan without a record is refused.
 - Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
 - For each disk: gather `model` (the full ATA model from `device/vpd_pg89` when present, since a SATA disk's `device/model` is cut to 16 characters, #336; else `device/model`), `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
 - Group disks into **SSDs** and **HDDs**, then bucket them by approximate size (≤1% tolerance).

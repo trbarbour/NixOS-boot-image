@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Set
 
-from .inventory import Disk
+from .inventory import Disk, record_disks
 from .block_names import partition_name
 from .boot_layout import BIOS_BOOT_PARTITION_SIZE, BootLayout, choose_boot_disks
 
@@ -568,6 +568,8 @@ def plan_storage(
     if post_commands:
         plan["post_apply_commands"] = post_commands
     _assert_has_root(plan, disks)
+    # Item 50 (R-D3): the disks the plan is for, re-checked before writing.
+    record_disks(plan, disks)
     return plan
 
 

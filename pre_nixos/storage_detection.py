@@ -9,6 +9,7 @@ import subprocess
 import sys
 from typing import Callable, Collection, Iterable, Optional, Sequence
 
+from . import kernel_cmdline
 from .block_names import is_non_candidate_device
 from .logging_utils import log_event
 
@@ -73,12 +74,7 @@ class DetectionEnvironment:
 
     @staticmethod
     def _default_read_cmdline() -> Sequence[str]:
-        try:
-            with open("/proc/cmdline", "r", encoding="utf-8") as fp:
-                data = fp.read()
-        except OSError:
-            return []
-        return data.split()
+        return kernel_cmdline.tokens()
 
 
 _BOOT_ARG_PREFIXES = {

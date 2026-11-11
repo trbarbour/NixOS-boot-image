@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Collection, List, Optional
+from typing import Any, Collection, Dict, FrozenSet, Iterable, List, Mapping, Optional
 import math
 
 from .block_names import is_non_candidate_device
@@ -123,6 +123,108 @@ def exclude_disks(disks: List[Disk], protected: Collection[str]) -> List[Disk]:
     """
 
     return [disk for disk in disks if f"/dev/{disk.name}" not in protected]
+
+
+# --- the plan's disks (task queue item 50, R-D3, R-D4) -----------------------
+# Design: plans/2026-11-11T194943Z-disk-settle-design.md (D2, D5, D6).
+
+# Where a plan records the disks it was made from.
+PLAN_KEY = "inventory"
+# auto-install-status REASON and storage-status DETAIL for a stopped run.
+CHANGED_REASON = "disks-changed"
+
+_GIB = 1024**3
+
+
+@dataclass(frozen=True, order=True)
+class DiskIdentity:
+    """What makes a disk the same disk (D2): not its model or rotational flag."""
+
+    name: str
+    size: int
+    serial: str
+
+    def describe(self) -> str:
+        serial = f"serial {self.serial}" if self.serial else "no serial"
+        return f"{round(self.size / _GIB, 1):g} GiB, {serial}"
+
+
+def disk_identities(disks: Iterable[Disk]) -> FrozenSet[DiskIdentity]:
+    return frozenset(DiskIdentity(d.name, d.size, d.serial) for d in disks)
+
+
+def describe_changes(
+    before: FrozenSet[DiskIdentity], after: FrozenSet[DiskIdentity]
+) -> List[str]:
+    """Each disk added, removed or changed between two sets, by name."""
+
+    old = {identity.name: identity for identity in before}
+    new = {identity.name: identity for identity in after}
+    changes: List[str] = []
+    for name in sorted(old.keys() | new.keys()):
+        was, now = old.get(name), new.get(name)
+        if was == now:
+            continue
+        if now is None:
+            assert was is not None
+            changes.append(f"removed {name} ({was.describe()})")
+        elif was is None:
+            changes.append(f"added {name} ({now.describe()})")
+        else:
+            changes.append(f"changed {name}: was {was.describe()}; now {now.describe()}")
+    return changes
+
+
+def record_disks(plan: Dict[str, Any], disks: Iterable[Disk]) -> None:
+    """Record in *plan* the disks it is made from."""
+
+    plan[PLAN_KEY] = [
+        {"name": i.name, "size": i.size, "serial": i.serial}
+        for i in sorted(disk_identities(disks))
+    ]
+
+
+def _recorded(plan: Mapping[str, Any]) -> Optional[FrozenSet[DiskIdentity]]:
+    """The plan's recorded disks; ``None`` when the record is malformed."""
+
+    record = plan[PLAN_KEY]
+    if not isinstance(record, list):
+        return None
+    identities = set()
+    for entry in record:
+        if not isinstance(entry, dict):
+            return None
+        name, size, serial = entry.get("name"), entry.get("size"), entry.get("serial")
+        if not (isinstance(name, str) and isinstance(size, int) and isinstance(serial, str)):
+            return None
+        identities.add(DiskIdentity(name, size, serial))
+    return frozenset(identities)
+
+
+def verify_plan_disks(plan: Mapping[str, Any], protected: Collection[str]) -> List[str]:
+    """Why *plan* must not be applied to the disks present now (R-D3, R-D4);
+    empty when they are the disks it was made from.
+
+    The inventory is taken as when planning: without the *protected* disks
+    backing the running system.
+    """
+
+    if PLAN_KEY not in plan:
+        return ["this plan does not record its disks (made by an older version, or by hand); re-plan on this machine"]
+    recorded = _recorded(plan)
+    if recorded is None:
+        return ["this plan's record of its disks is malformed; re-plan on this machine"]
+    current = disk_identities(exclude_disks(enumerate_disks(), protected))
+    return describe_changes(recorded, current)
+
+
+def changed_disks_message(changes: List[str]) -> str:
+    """The message for a run stopped by :func:`verify_plan_disks`."""
+
+    assert changes
+    return "The disks are not the ones the plan was made from; nothing was written:\n" + "\n".join(
+        f"  - {change}" for change in changes
+    )
 
 
 def detect_ram_gb(meminfo: Path = Path("/proc/meminfo")) -> int:
