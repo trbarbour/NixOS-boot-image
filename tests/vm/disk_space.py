@@ -29,7 +29,7 @@ import subprocess
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Sequence
+from typing import AbstractSet, Callable, Iterable, List, Optional, Sequence, Union
 
 GIB = 1024**3
 DEFAULT_MIN_FREE_GIB = 4.0
@@ -45,6 +45,16 @@ STORE = Path("/nix/store")
 _IMAGE_NAME = re.compile(r"^[0-9a-z]{32}-pre-nixos-.+-linux\.(iso|img|img\.zst)$")
 
 FreeBytes = Callable[[Path], int]
+Keep = Union[Path, AbstractSet[Path]]
+Paths = Union[Path, Sequence[Path]]
+
+
+def _as_set(keep: Keep) -> AbstractSet[Path]:
+    return {keep} if isinstance(keep, Path) else keep
+
+
+def _as_list(paths: Paths) -> List[Path]:
+    return [paths] if isinstance(paths, Path) else list(paths)
 Runner = Callable[[List[str]], "subprocess.CompletedProcess[str]"]
 
 
@@ -83,13 +93,18 @@ def floor_bytes() -> int:
     return _gib_from_env(FLOOR_ENV, DEFAULT_FLOOR_GIB)
 
 
-def stale_image_paths(names: Iterable[str], *, keep: Path, store: Path = STORE) -> List[Path]:
-    """This repository's image store paths other than ``keep``, in ``names``' order."""
+def stale_image_paths(names: Iterable[str], *, keep: Keep, store: Path = STORE) -> List[Path]:
+    """This repository's image store paths not in ``keep``, in ``names``' order.
 
+    ``keep`` is every image the test session still holds: the session-scoped
+    builds are not GC roots (Codex on #349).
+    """
+
+    kept = _as_set(keep)
     return [
         store / name
         for name in names
-        if _IMAGE_NAME.match(name) and store / name != keep
+        if _IMAGE_NAME.match(name) and store / name not in kept
     ]
 
 
@@ -100,7 +115,7 @@ def _run(cmd: List[str]) -> "subprocess.CompletedProcess[str]":
 def delete_stale_images(
     nix_store: str,
     *,
-    keep: Path,
+    keep: Keep,
     names: Optional[Sequence[str]] = None,
     store: Path = STORE,
     run: Runner = _run,
@@ -119,12 +134,21 @@ def delete_stale_images(
     return deleted
 
 
-def require_free_space(
-    path: Path, *, minimum_bytes: int, purpose: str, free: FreeBytes = free_bytes
-) -> None:
-    """Raise :class:`InsufficientSpace` unless ``path`` has ``minimum_bytes`` free."""
+def least_free(paths: Paths, free: FreeBytes = free_bytes) -> "tuple[Path, int]":
+    """The path among ``paths`` whose filesystem has the least space, and that space."""
 
-    available = free(path)
+    readings = [(path, free(path)) for path in _as_list(paths)]
+    assert readings, "no paths to check"
+    return min(readings, key=lambda reading: reading[1])
+
+
+def require_free_space(
+    paths: Paths, *, minimum_bytes: int, purpose: str, free: FreeBytes = free_bytes
+) -> None:
+    """Raise :class:`InsufficientSpace` unless every filesystem of ``paths`` has
+    ``minimum_bytes`` free: the log directory and each VM disk's (Codex on #349)."""
+
+    path, available = least_free(paths, free)
     if available < minimum_bytes:
         raise InsufficientSpace(
             f"only {available / GIB:.1f} GiB free on {path}'s filesystem, below the"
@@ -136,9 +160,10 @@ def require_free_space(
 
 @dataclass
 class FreeSpaceGuard:
-    """Polls free space and calls ``on_low`` once when it drops below the floor."""
+    """Polls free space and calls ``on_low`` once when the fullest of ``path``'s
+    filesystems drops below the floor."""
 
-    path: Path
+    path: Paths
     floor_bytes: int
     on_low: Callable[[int], None]
     poll_seconds: float = 10.0
@@ -160,7 +185,7 @@ class FreeSpaceGuard:
     def _watch(self) -> None:
         while not self._stop.is_set():
             try:
-                available = self.free(self.path)
+                _, available = least_free(self.path, self.free)
             except OSError:
                 available = None
             if available is not None and available < self.floor_bytes:
@@ -178,6 +203,7 @@ __all__ = [
     "delete_stale_images",
     "floor_bytes",
     "free_bytes",
+    "least_free",
     "min_free_bytes",
     "require_free_space",
     "stale_image_paths",

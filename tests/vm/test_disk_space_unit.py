@@ -131,3 +131,86 @@ def test_failure_message_leads_with_the_abort_reason() -> None:
         "VM stopped by the harness: the disk allowance ran low (0.8 GiB free)",
         "Unexpected EOF",
     ]
+
+
+# --- Codex on #349 ----------------------------------------------------------
+
+
+def test_every_image_held_by_the_session_is_kept() -> None:
+    """Finding 1: the session-scoped x86 and AArch64 builds are not GC roots
+    (--no-link), so cleaning after one build must keep the other's image."""
+
+    calls: List[List[str]] = []
+
+    def runner(cmd: List[str]) -> subprocess.CompletedProcess[str]:
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    deleted = disk_space.delete_stale_images(
+        "nix-store", keep={STORE / ISO, STORE / SD}, names=[ISO, OLD_ISO, SD], store=STORE, run=runner
+    )
+    assert deleted == [STORE / OLD_ISO]
+    assert calls == [["nix-store", "--delete", str(STORE / OLD_ISO)]]
+
+
+def test_fixture_registers_each_build_before_cleaning(monkeypatch, tmp_path: Path) -> None:
+    from tests.vm import fixtures
+
+    kept: List[frozenset] = []
+    monkeypatch.delenv(disk_space.KEEP_IMAGES_ENV, raising=False)
+    monkeypatch.setattr(fixtures, "_SESSION_IMAGES", set())
+    monkeypatch.setattr(
+        disk_space, "delete_stale_images", lambda nix_store, *, keep, **kw: kept.append(frozenset(keep)) or []
+    )
+    fixtures._delete_stale_images("nix", keep=STORE / ISO)
+    fixtures._delete_stale_images("nix", keep=STORE / SD)
+    assert kept == [frozenset({STORE / ISO}), frozenset({STORE / ISO, STORE / SD})]
+
+
+def test_guard_watches_the_fullest_filesystem() -> None:
+    """Finding 2: VM disks may live on another filesystem than the logs."""
+
+    free = {Path("/logs"): 50 * GIB, Path("/tmp/disks"): int(0.5 * GIB)}
+    fired = threading.Event()
+    guard = FreeSpaceGuard(
+        [Path("/logs"), Path("/tmp/disks")], floor_bytes=GIB, poll_seconds=0.01,
+        on_low=lambda available: fired.set(), free=lambda p: free[p],
+    )
+    guard.start()
+    assert fired.wait(5)
+    guard.stop()
+
+
+def test_require_free_space_checks_every_filesystem(tmp_path: Path) -> None:
+    free = {Path("/logs"): 50 * GIB, Path("/tmp/disks"): 2 * GIB}
+    with pytest.raises(InsufficientSpace) as info:
+        disk_space.require_free_space(
+            [Path("/logs"), Path("/tmp/disks")], minimum_bytes=4 * GIB, purpose="starting a VM",
+            free=lambda p: free[p],
+        )
+    assert "/tmp/disks" in str(info.value)
+
+
+def test_low_space_handler_stops_qemu_even_if_logging_fails() -> None:
+    """Finding 3: an ENOSPC while logging must not stop the termination."""
+
+    from tests.vm.fixtures import _low_space_handler
+
+    class Child:
+        terminated = False
+
+        def terminate(self, force: bool = False) -> bool:
+            Child.terminated = True
+            return True
+
+    class Vm:
+        abort_reason = None
+
+    def log(message: str) -> None:
+        raise OSError(28, "No space left on device")
+
+    vm = Vm()
+    handler = _low_space_handler(vm, Child(), log)
+    handler(int(0.5 * GIB))
+    assert Child.terminated
+    assert vm.abort_reason and "ran low" in vm.abort_reason
