@@ -177,6 +177,12 @@ The system must automate the hardware setup process on new servers prior to NixO
   how to continue; provisioning itself is not held back.
 - An **explicit** install request (`pre-nixos --install-now`, the TUI's `N`)
   runs regardless, with a warning when the network is not ready. [R-I1]
+- When static settings are saved for the installed system and the installer's
+  `lan` has no IPv4 address, the installer adopts the same settings, unless the
+  operator declines (the TUI asks; the CLI takes `--installer-network no`). [R-N1]
+- The static settings include DNS servers, defaulting to the gateway, for the
+  installer and the installed system alike. [R-N2]
+- Going back to DHCP also returns the installer to DHCP. [R-N3]
 
 ---
 

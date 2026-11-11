@@ -4,6 +4,7 @@ import argparse
 import io
 import json
 import os
+import subprocess
 import sys
 from typing import Collection, Iterable, Sequence, Set
 
@@ -12,6 +13,7 @@ from . import (
     boot_platform,
     disk_class,
     install,
+    installer_network,
     inventory,
     lan_reuse,
     network,
@@ -245,6 +247,41 @@ def _handle_existing_storage(
 EXIT_NEEDS_ANSWER = 3
 
 
+def _configure_installer_network(
+    config: install.InstallNetworkConfig,
+    lan_config: network.LanConfiguration | None,
+    mode: installer_network.Mode,
+    *,
+    dry_run: bool = False,
+) -> None:
+    """Item 41 (R-N1): give the installer the static settings when it has no
+    address (``auto``), or when asked (``yes``).  ``--dry-run`` only says so
+    (Codex on #351)."""
+
+    iface = lan_config.interface if lan_config and lan_config.interface else "lan"
+    if not installer_network.decide(mode, network.installer_network(iface)):
+        return
+    if dry_run:
+        print(
+            f"Dry run: would give the installer's {iface} {config.cidr} via {config.gateway},"
+            f" DNS {', '.join(config.dns)}."
+        )
+        return
+    mac = lan_config.mac_address if lan_config else None
+    try:
+        unit = installer_network.apply(config, mac_address=mac)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        print(f"Warning: could not configure the installer's {iface}: {exc}", file=sys.stderr)
+        return
+    if unit is None:
+        print(f"PRE_NIXOS_EXEC is not 1: the installer's {iface} is unchanged.")
+        return
+    print(
+        f"The installer's {iface} now uses {config.cidr} via {config.gateway},"
+        f" DNS {', '.join(config.dns)} (until reboot)."
+    )
+
+
 def main(argv: list[str] | None = None) -> None:
     """Run the pre-nixos tool."""
     parser = argparse.ArgumentParser(description="Pre-NixOS setup")
@@ -311,6 +348,19 @@ def main(argv: list[str] | None = None) -> None:
         help="Default gateway for the installed system's static IPv4 configuration.",
     )
     parser.add_argument(
+        "--install-dns",
+        help="DNS servers for the static configuration, comma-separated (default: the gateway).",
+    )
+    parser.add_argument(
+        "--installer-network",
+        choices=[mode.value for mode in installer_network.Mode],
+        default=installer_network.Mode.AUTO.value,
+        help=(
+            "Also give the installer's lan the static settings: auto (when it has no "
+            "IPv4 address, the default), yes, or no."
+        ),
+    )
+    parser.add_argument(
         "--ssd",
         metavar="DISK",
         action="append",
@@ -339,6 +389,7 @@ def main(argv: list[str] | None = None) -> None:
         args.install_ip_address,
         args.install_netmask,
         args.install_gateway,
+        args.install_dns,
     )
     if any(ip_args):
         if not args.install_ip_address:
@@ -369,6 +420,7 @@ def main(argv: list[str] | None = None) -> None:
                     netmask=install_network_args[1],
                     gateway=install_network_args[2],
                     iface=iface,
+                    dns=installer_network.parse_dns(args.install_dns or "") or None,
                 )
             except ValueError as exc:
                 parser.error(str(exc))
@@ -381,6 +433,9 @@ def main(argv: list[str] | None = None) -> None:
                     f"Warning: failed to record install network configuration: {exc}",
                     file=sys.stderr,
                 )
+            _configure_installer_network(
+                install_network, lan_config, installer_network.Mode(args.installer_network), dry_run=args.dry_run
+            )
 
         if args.install_now:
             if args.plan_only or args.partition_boot or args.partition_lvm or class_answers:

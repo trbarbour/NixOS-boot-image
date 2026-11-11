@@ -1,0 +1,717 @@
+[2026-11-11T18:49:16.131552+00:00] Disk free at VM start: 19.2 GiB
+[2026-11-11T18:49:16.131846+00:00] Boot image artifact metadata
+[2026-11-11T18:49:16.131846+00:00]   ISO: /nix/store/ipj9md6sm4ksvwy8bbfgfvifvaskc7mr-pre-nixos-0.31.0-gbb2e865-dirty-26.05.20261031.fa13731-x86_64-linux.iso/iso/pre-nixos-0.31.0-gbb2e865-dirty-26.05.20261031.fa13731-x86_64-linux.iso
+[2026-11-11T18:49:16.131846+00:00]   Store path: /nix/store/ipj9md6sm4ksvwy8bbfgfvifvaskc7mr-pre-nixos-0.31.0-gbb2e865-dirty-26.05.20261031.fa13731-x86_64-linux.iso
+[2026-11-11T18:49:16.131846+00:00]   Deriver: /nix/store/avx0z510b5l57j8c8cj7bpckz17swn3i-pre-nixos-0.31.0-gbb2e865-dirty-26.05.20261031.fa13731-x86_64-linux.iso.drv
+[2026-11-11T18:49:16.131846+00:00]   NAR hash: sha256-/nvnHj6pHwY6W59h06ivWjS2mTP/3kjK7E3NEskGH8o=
+[2026-11-11T18:49:16.131846+00:00]   Embedded root key fingerprint: 256 SHA256:JzMSigRNSi/IqfFCeZcah4pVr12YP0yVoQRDDVgvhwA boot-image-vm-test (ED25519)
+[2026-11-11T18:49:16.131846+00:00]   QEMU version: QEMU emulator version 10.2.4
+[2026-11-11T18:49:16.131846+00:00]   Disk image: /tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-disk-primary0/disk.img
+[2026-11-11T18:49:16.131846+00:00]   QEMU command: /nix/store/xz24bm2725bh2alz510gqxa9lbjxasqb-qemu-10.2.4/bin/qemu-system-x86_64 -m 2048 -smp 2 -display none -no-reboot -serial stdio -boot d -cdrom /nix/store/ipj9md6sm4ksvwy8bbfgfvifvaskc7mr-pre-nixos-0.31.0-gbb2e865-dirty-26.05.20261031.fa13731-x86_64-linux.iso/iso/pre-nixos-0.31.0-gbb2e865-dirty-26.05.20261031.fa13731-x86_64-linux.iso -drive file=/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-disk-primary0/disk.img,if=virtio,format=raw -qmp unix:/tmp/boot-image-shared-tmp/qmp-xw98gil_/qmp.sock,server=on,wait=off -device virtio-rng-pci -netdev user,id=net0,hostfwd=tcp:127.0.0.1:59899-:22 -device virtio-net-pci,netdev=net0
+[2026-11-11T18:49:16.131956+00:00] Harness metadata written to /home/user/NixOS-boot-image/notes/2026-11-11T184913Z-vm-run/logs/metadata.json
+[2026-11-11T18:49:16.131983+00:00] Starting login sequence
+[2026-11-11T18:49:16.132411+00:00] Awaiting patterns: login: , \[nixos@[^]]+\]\$ ?, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=300s)
+[2026-11-11T18:49:16.625404+00:00] Serial output: ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+[2026-11-11T18:49:16.625539+00:00] Serial output: e%@)0(B
+[2026-11-11T18:49:16.631933+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2026-11-11T18:49:16.632066+00:00] Serial output: x
+[2026-11-11T18:49:16.632297+00:00] Serial output: NixOS
+[2026-11-11T18:49:16.632330+00:00] Serial output: x
+[2026-11-11T18:49:16.635566+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2026-11-11T18:49:16.635652+00:00] Serial output: x
+[2026-11-11T18:49:16.638776+00:00] Serial output: NixOS 26.05.20261031.fa13731 Installer
+[2026-11-11T18:49:16.639623+00:00] Serial output: x
+[2026-11-11T18:49:16.639665+00:00] Serial output: x
+[2026-11-11T18:49:16.642102+00:00] Serial output: Options                                                                                      >
+[2026-11-11T18:49:16.642136+00:00] Serial output: x
+[2026-11-11T18:49:16.642410+00:00] Serial output: x
+[2026-11-11T18:49:16.645756+00:00] Serial output: Memtest86+
+[2026-11-11T18:49:16.646219+00:00] Serial output: x
+[2026-11-11T18:49:16.646450+00:00] Serial output: x
+[2026-11-11T18:49:16.647896+00:00] Serial output: x
+[2026-11-11T18:49:16.648172+00:00] Serial output: x
+[2026-11-11T18:49:16.649626+00:00] Serial output: x
+[2026-11-11T18:49:16.649745+00:00] Serial output: x
+[2026-11-11T18:49:16.652237+00:00] Serial output: x
+[2026-11-11T18:49:16.656087+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2026-11-11T18:49:16.656478+00:00] Serial output: Press [Tab] to edit options
+[2026-11-11T18:49:16.659015+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:16.659094+00:00] Serial output: 10
+[2026-11-11T18:49:17.672100+00:00] Serial output: seconds...
+[2026-11-11T18:49:17.672277+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:17.672305+00:00] Serial output: 9
+[2026-11-11T18:49:18.720935+00:00] Serial output: seconds...
+[2026-11-11T18:49:18.721362+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:18.721399+00:00] Serial output: 8
+[2026-11-11T18:49:19.758834+00:00] Serial output: seconds...
+[2026-11-11T18:49:19.759100+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:19.759135+00:00] Serial output: 7
+[2026-11-11T18:49:20.802549+00:00] Serial output: seconds...
+[2026-11-11T18:49:20.802791+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:20.803435+00:00] Serial output: 6
+[2026-11-11T18:49:21.846129+00:00] Serial output: seconds...
+[2026-11-11T18:49:21.846324+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:21.846700+00:00] Serial output: 5
+[2026-11-11T18:49:22.889392+00:00] Serial output: seconds...
+[2026-11-11T18:49:22.889604+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:22.889637+00:00] Serial output: 4
+[2026-11-11T18:49:23.933605+00:00] Serial output: seconds...
+[2026-11-11T18:49:23.933817+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:23.933964+00:00] Serial output: 3
+[2026-11-11T18:49:24.976918+00:00] Serial output: seconds...
+[2026-11-11T18:49:24.977095+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:24.977123+00:00] Serial output: 2
+[2026-11-11T18:49:26.020564+00:00] Serial output: seconds...
+[2026-11-11T18:49:26.021033+00:00] Serial output: Automatic boot in
+[2026-11-11T18:49:26.021094+00:00] Serial output: 1
+[2026-11-11T18:49:27.064317+00:00] Serial output: second...
+[2026-11-11T18:49:27.070024+00:00] Serial output: lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk
+[2026-11-11T18:49:27.070175+00:00] Serial output: x
+[2026-11-11T18:49:27.070440+00:00] Serial output: NixOS
+[2026-11-11T18:49:27.070751+00:00] Serial output: x
+[2026-11-11T18:49:27.075533+00:00] Serial output: tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu
+[2026-11-11T18:49:27.075659+00:00] Serial output: x
+[2026-11-11T18:49:27.078233+00:00] Serial output: NixOS 26.05.20261031.fa13731 Installer
+[2026-11-11T18:49:27.078623+00:00] Serial output: x
+[2026-11-11T18:49:27.078671+00:00] Serial output: x
+[2026-11-11T18:49:27.081876+00:00] Serial output: Options                                                                                      >
+[2026-11-11T18:49:27.082197+00:00] Serial output: x
+[2026-11-11T18:49:27.082250+00:00] Serial output: x
+[2026-11-11T18:49:27.086175+00:00] Serial output: Memtest86+
+[2026-11-11T18:49:27.086836+00:00] Serial output: x
+[2026-11-11T18:49:27.087004+00:00] Serial output: x
+[2026-11-11T18:49:27.088423+00:00] Serial output: x
+[2026-11-11T18:49:27.088531+00:00] Serial output: x
+[2026-11-11T18:49:27.089984+00:00] Serial output: x
+[2026-11-11T18:49:27.090123+00:00] Serial output: x
+[2026-11-11T18:49:27.093199+00:00] Serial output: x
+[2026-11-11T18:49:27.096838+00:00] Serial output: mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+[2026-11-11T18:49:27.097253+00:00] Serial output: Press [Tab] to edit options
+[2026-11-11T18:49:27.126377+00:00] Serial output: e%@)0(B
+[2026-11-11T18:50:54.500050+00:00] Serial output: Loading /boot//nix/store/jyb28mnqm5vaxfggp513xkivabwqvkpy-linux-6.18.60/bzImage... ok
+[2026-11-11T18:50:54.500351+00:00] Serial output: Loading /boot//nix/store/a1j103jp4waf1m7c47d90d9nvp8y6ign-initrd-linux-6.18.60/initrd...ok
+[2026-11-11T18:50:54.523809+00:00] Serial output: 7
+[2026-11-11T18:50:54.900456+00:00] Serial output: 8
+[2026-11-11T18:50:54.909002+00:00] Serial output: 7
+[2026-11-11T18:50:55.244241+00:00] Serial output: 8
+[2026-11-11T18:50:55.246370+00:00] Serial output: 3008;start=277b739457d94b8ba3a23a4761247cb2;user=root;hostname=nixos;machineid=97940492cc9440f98587ac403f7416b5;bootid=160739b601fb43129b19ecae548d065c;pid=664;pidfdid=665;comm=(agetty);servicename=serial-getty@ttyS0.service;invocationid=a190bb36712d4e0eb44fdab50b60190b;type=service
+[2026-11-11T18:50:55.954232+00:00] Serial output: <<< Welcome to the pre-nixos auto-install boot image (26.05.20261031.fa13731, x86_64) - ttyS0 >>>
+[2026-11-11T18:50:55.954366+00:00] Serial output: Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+[2026-11-11T18:50:55.954382+00:00] Serial output: (PRE_NIXOS_AUTO_INSTALL=)
+[2026-11-11T18:50:55.954393+00:00] Serial output: The "nixos" and "root" accounts have empty passwords for console logins.
+[2026-11-11T18:50:55.954404+00:00] Serial output: SSH access:
+[2026-11-11T18:50:55.954414+00:00] Serial output: - Use the matching private key for the embedded root SSH key to log in as root.
+[2026-11-11T18:50:55.954423+00:00] Serial output: - Add additional public keys to /root/.ssh/authorized_keys if needed.
+[2026-11-11T18:50:55.954434+00:00] Serial output: Networking starts automatically; verify connectivity with ip addr or networkctl.
+[2026-11-11T18:50:55.954444+00:00] Serial output: Run "nixos-help" for the NixOS manual.
+[2026-11-11T18:50:55.954453+00:00] Serial output: nixos
+[2026-11-11T18:50:55.954466+00:00] Matched pattern: 'login: '
+[2026-11-11T18:50:55.954643+00:00] Awaiting patterns: \(automatic login\) (timeout=1s)
+[2026-11-11T18:50:55.954677+00:00] Serial output: nixos
+[2026-11-11T18:50:55.954689+00:00] Matched pattern: '\\(automatic login\\)'
+[2026-11-11T18:50:55.954702+00:00] Automatic login banner observed
+[2026-11-11T18:50:56.005338+00:00] Awaiting patterns: __PROMPT_READY__1794423055954__ (timeout=120s)
+[2026-11-11T18:50:56.009063+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-11T18:50:56.009196+00:00] Matched pattern: '__PROMPT_READY__1794423055954__'
+[2026-11-11T18:50:56.009329+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-11T18:51:04.159614+00:00] Serial output: \n'
+[2026-11-11T18:51:04.159731+00:00] Serial output: pre-nixos boot image version 0.31.0
+[2026-11-11T18:51:04.160323+00:00] Serial output: 3008;start=75eae00f426f4aa2b660ba054ebe5ea8;user=root;hostname=nixos;machineid=97940492cc9440f98587ac403f7416b5;bootid=160739b601fb43129b19ecae548d065c;pid=664;pidfdid=665;comm=login;targetuser=nixos;sessionid=2;type=session
+[2026-11-11T18:51:05.933174+00:00] Serial output: pre-nixos boot image version 0.31.0
+[2026-11-11T18:51:05.941029+00:00] Serial output: [
+[2026-11-11T18:51:05.941387+00:00] Serial output: nixos@nixos:~]$
+[2026-11-11T18:51:05.955077+00:00] Serial output: export PS1='
+[2026-11-11T18:51:05.955239+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-11T18:51:05.955276+00:00] Shell prompt configured for interaction
+[2026-11-11T18:51:05.955276+00:00]   context=initial login
+[2026-11-11T18:51:06.005968+00:00] Running command: printf '__UID_MARK__1794423065955__%s__UID_MARK__1794423065955__\n' "$(id -u)"
+[2026-11-11T18:51:06.057380+00:00] Failed to parse id -u output; resynchronising prompt before retry
+[2026-11-11T18:51:06.057380+00:00]   attempt=1, error=UID marker not found in output block: '', block=UID marker not found in output block: ''
+[2026-11-11T18:51:06.108035+00:00] Awaiting patterns: __PROMPT_READY__1794423066057__ (timeout=120s)
+[2026-11-11T18:51:06.108526+00:00] Serial output: printf '__UID_MARK__1794423065955__%s__UID_MARK__1794423065955__\n' "$(id -u)"
+[2026-11-11T18:51:06.111799+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-11T18:51:06.111928+00:00] Matched pattern: '__PROMPT_READY__1794423066057__'
+[2026-11-11T18:51:06.111995+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-11T18:51:06.295078+00:00] Serial output: \n'
+[2026-11-11T18:51:06.295232+00:00] Serial output: __UID_MARK__1794423065955__1000__UID_MARK__1794423065955__
+[2026-11-11T18:51:06.295295+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-11T18:51:06.295320+00:00] Shell prompt configured for interaction
+[2026-11-11T18:51:06.295320+00:00]   context=uid validation resync
+[2026-11-11T18:51:06.345907+00:00] Running command: printf '__UID_MARK__1794423065955__%s__UID_MARK__1794423065955__\n' "$(id -u)"
+[2026-11-11T18:51:06.396721+00:00] Recovered UID marker after parse failure
+[2026-11-11T18:51:06.396721+00:00]   attempt=2, source=serial log tail, uid=2004
+[2026-11-11T18:51:06.396810+00:00] Initial shell lacks root privileges
+[2026-11-11T18:51:06.396835+00:00] Attempting to escalate with sudo -i
+[2026-11-11T18:51:06.447383+00:00] Awaiting patterns: \[sudo\] password for nixos:, root@.*# ?, (?:^|[\r\n])(?:sh-[0-9.]+)?# ? (timeout=120s)
+[2026-11-11T18:51:06.447809+00:00] Serial output: PRE-NIXOS> printf '__UID_MARK__1794423065955__%s__UID_MARK__1794423065955__\n' "$(id -u)"
+[2026-11-11T18:51:06.593048+00:00] Serial output: sudo -i
+[2026-11-11T18:51:06.593180+00:00] Serial output: __UID_MARK__1794423065955__1000__UID_MARK__1794423065955__
+[2026-11-11T18:51:06.598103+00:00] Serial output: PRE-NIXOS> sudo -i
+[2026-11-11T18:51:08.438177+00:00] Serial output: pre-nixos boot image version 0.31.0
+[2026-11-11T18:51:08.438437+00:00] Serial output: [
+[2026-11-11T18:51:08.438487+00:00] Matched pattern: 'root@.*# ?'
+[2026-11-11T18:51:08.488925+00:00] Awaiting patterns: __PROMPT_READY__1794423068438__ (timeout=120s)
+[2026-11-11T18:51:08.505082+00:00] Serial output: export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '
+[2026-11-11T18:51:08.505201+00:00] Matched pattern: '__PROMPT_READY__1794423068438__'
+[2026-11-11T18:51:08.505246+00:00] Awaiting patterns: PRE-NIXOS>  (timeout=120s)
+[2026-11-11T18:51:08.505278+00:00] Serial output: \n'
+[2026-11-11T18:51:08.505298+00:00] Serial output: __PROMPT_READY__1794423068438__
+[2026-11-11T18:51:08.505314+00:00] Matched pattern: 'PRE-NIXOS> '
+[2026-11-11T18:51:08.505325+00:00] Shell prompt configured for interaction
+[2026-11-11T18:51:08.505325+00:00]   context=sudo -i
+[2026-11-11T18:51:08.561227+00:00] Running command: printf '__UID_MARK__1794423068505__%s__UID_MARK__1794423068505__\n' "$(id -u)"
+[2026-11-11T18:51:08.683264+00:00] id -u after sudo -i returned: '0'
+[2026-11-11T18:51:08.683416+00:00] Successfully escalated privileges with sudo -i
+[2026-11-11T18:51:08.703806+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-11T18:51:13.898327+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-11T18:51:19.236850+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-11T18:51:24.361070+00:00] Running command: cat /run/pre-nixos/storage-status 2>/dev/null || true
+[2026-11-11T18:51:24.459032+00:00] Running command: :
+[2026-11-11T18:51:24.574151+00:00] Running command: printf '__UID_MARK__1794423084517__%s__UID_MARK__1794423084517__\n' "$(id -u)"
+[2026-11-11T18:51:24.699054+00:00] Running command: pre-nixos --plan-only --install-ip-address 10.0.2.20 --install-netmask 255.255.255.0 --install-gateway 10.0.2.2 --install-dns 10.0.2.3 --installer-network yes > /tmp/static.log 2>&1; echo exit=$?; cat /tmp/static.log
+[2026-11-11T18:51:26.922731+00:00] Disk free at VM teardown: 19.2 GiB
+[2026-11-11T18:51:26.923658+00:00] Running command: dmesg --color=never 2>&1 || dmesg 2>&1 || true
+[2026-11-11T18:51:27.540265+00:00] Captured dmesg after post-test teardown
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] Linux version 6.18.60 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Fri Oct 30 12:06:41 UTC 2026
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] Command line: BOOT_IMAGE=/boot//nix/store/jyb28mnqm5vaxfggp513xkivabwqvkpy-linux-6.18.60/bzImage init=/nix/store/gk0rr4laawlw3drhlab4y2qq7wfr9i59-nixos-system-nixos-26.05.20261031.fa13731/init console=ttyS0,115200n8 console=tty0 nohibernate root=fstab loglevel=4 lsm=landlock,yama,bpf  initrd=/boot//nix/store/a1j103jp4waf1m7c47d90d9nvp8y6ign-initrd-linux-6.18.60/initrd
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-provided physical RAM map:
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000007ffdcfff] usable
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-e820: [mem 0x000000007ffdd000-0x000000007fffffff] reserved
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] NX (Execute Disable) protection: active
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] APIC: Static calls initialized
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] SMBIOS 2.8 present.
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] DMI: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] DMI: Memory slots populated: 1/1
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] tsc: Fast TSC calibration using PIT
+[2026-11-11T18:51:27.540265+00:00]   [    0.000000] tsc: Detected 2099.977 MHz processor
+[2026-11-11T18:51:27.540265+00:00]   [    0.021060] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[2026-11-11T18:51:27.540265+00:00]   [    0.021401] e820: remove [mem 0x000a0000-0x000fffff] usable
+[2026-11-11T18:51:27.540265+00:00]   [    0.021867] last_pfn = 0x7ffdd max_arch_pfn = 0x400000000
+[2026-11-11T18:51:27.540265+00:00]   [    0.023155] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[2026-11-11T18:51:27.540265+00:00]   [    0.023489] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT
+[2026-11-11T18:51:27.540265+00:00]   [    0.061007] found SMP MP-table at [mem 0x000f54b0-0x000f54bf]
+[2026-11-11T18:51:27.540265+00:00]   [    0.071020] RAMDISK: [mem 0x7e271000-0x7ffdcfff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.071870] ACPI: Early table checksum verification disabled
+[2026-11-11T18:51:27.540265+00:00]   [    0.072769] ACPI: RSDP 0x00000000000F52D0 000014 (v00 BOCHS )
+[2026-11-11T18:51:27.540265+00:00]   [    0.073335] ACPI: RSDT 0x000000007FFE239C 000034 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[2026-11-11T18:51:27.540265+00:00]   [    0.074763] ACPI: FACP 0x000000007FFE2248 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[2026-11-11T18:51:27.540265+00:00]   [    0.075891] ACPI: DSDT 0x000000007FFE0040 002208 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[2026-11-11T18:51:27.540265+00:00]   [    0.076055] ACPI: FACS 0x000000007FFE0000 000040
+[2026-11-11T18:51:27.540265+00:00]   [    0.076151] ACPI: APIC 0x000000007FFE22BC 000080 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[2026-11-11T18:51:27.540265+00:00]   [    0.076192] ACPI: HPET 0x000000007FFE233C 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[2026-11-11T18:51:27.540265+00:00]   [    0.076225] ACPI: WAET 0x000000007FFE2374 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[2026-11-11T18:51:27.540265+00:00]   [    0.076367] ACPI: Reserving FACP table memory at [mem 0x7ffe2248-0x7ffe22bb]
+[2026-11-11T18:51:27.540265+00:00]   [    0.076413] ACPI: Reserving DSDT table memory at [mem 0x7ffe0040-0x7ffe2247]
+[2026-11-11T18:51:27.540265+00:00]   [    0.076426] ACPI: Reserving FACS table memory at [mem 0x7ffe0000-0x7ffe003f]
+[2026-11-11T18:51:27.540265+00:00]   [    0.076435] ACPI: Reserving APIC table memory at [mem 0x7ffe22bc-0x7ffe233b]
+[2026-11-11T18:51:27.540265+00:00]   [    0.076444] ACPI: Reserving HPET table memory at [mem 0x7ffe233c-0x7ffe2373]
+[2026-11-11T18:51:27.540265+00:00]   [    0.076452] ACPI: Reserving WAET table memory at [mem 0x7ffe2374-0x7ffe239b]
+[2026-11-11T18:51:27.540265+00:00]   [    0.084905] No NUMA configuration found
+[2026-11-11T18:51:27.540265+00:00]   [    0.084973] Faking a node at [mem 0x0000000000000000-0x000000007ffdcfff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.086119] NODE_DATA(0) allocated [mem 0x7e26b780-0x7e270cff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.091368] Zone ranges:
+[2026-11-11T18:51:27.540265+00:00]   [    0.091428]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.091573]   DMA32    [mem 0x0000000001000000-0x000000007ffdcfff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.091590]   Normal   empty
+[2026-11-11T18:51:27.540265+00:00]   [    0.091614]   Device   empty
+[2026-11-11T18:51:27.540265+00:00]   [    0.091630] Movable zone start for each node
+[2026-11-11T18:51:27.540265+00:00]   [    0.091726] Early memory node ranges
+[2026-11-11T18:51:27.540265+00:00]   [    0.091775]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.092039]   node   0: [mem 0x0000000000100000-0x000000007ffdcfff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.092256] Initmem setup node 0 [mem 0x0000000000001000-0x000000007ffdcfff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.096479] On node 0, zone DMA: 1 pages in unavailable ranges
+[2026-11-11T18:51:27.540265+00:00]   [    0.096970] On node 0, zone DMA: 97 pages in unavailable ranges
+[2026-11-11T18:51:27.540265+00:00]   [    0.126143] On node 0, zone DMA32: 35 pages in unavailable ranges
+[2026-11-11T18:51:27.540265+00:00]   [    0.127267] ACPI: PM-Timer IO Port: 0x608
+[2026-11-11T18:51:27.540265+00:00]   [    0.128206] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[2026-11-11T18:51:27.540265+00:00]   [    0.129129] IOAPIC[0]: apic_id 0, version 32, address 0xfec00000, GSI 0-23
+[2026-11-11T18:51:27.540265+00:00]   [    0.129363] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[2026-11-11T18:51:27.540265+00:00]   [    0.129934] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+[2026-11-11T18:51:27.540265+00:00]   [    0.130032] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[2026-11-11T18:51:27.540265+00:00]   [    0.130211] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+[2026-11-11T18:51:27.540265+00:00]   [    0.130227] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+[2026-11-11T18:51:27.540265+00:00]   [    0.130538] ACPI: Using ACPI (MADT) for SMP configuration information
+[2026-11-11T18:51:27.540265+00:00]   [    0.130614] ACPI: HPET id: 0x8086a201 base: 0xfed00000
+[2026-11-11T18:51:27.540265+00:00]   [    0.131373] CPU topo: Max. logical packages:   1
+[2026-11-11T18:51:27.540265+00:00]   [    0.131407] CPU topo: Max. logical dies:       1
+[2026-11-11T18:51:27.540265+00:00]   [    0.131423] CPU topo: Max. dies per package:   1
+[2026-11-11T18:51:27.540265+00:00]   [    0.131506] CPU topo: Max. threads per core:   1
+[2026-11-11T18:51:27.540265+00:00]   [    0.131869] CPU topo: Num. cores per package:     2
+[2026-11-11T18:51:27.540265+00:00]   [    0.131904] CPU topo: Num. threads per package:   2
+[2026-11-11T18:51:27.540265+00:00]   [    0.131917] CPU topo: Allowing 2 present CPUs plus 0 hotplug CPUs
+[2026-11-11T18:51:27.540265+00:00]   [    0.133441] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.133514] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+[2026-11-11T18:51:27.540265+00:00]   [    0.133774] [mem 0x80000000-0xfffbffff] available for PCI devices
+[2026-11-11T18:51:27.540265+00:00]   [    0.133899] Booting paravirtualized kernel on bare hardware
+[2026-11-11T18:51:27.540265+00:00]   [    0.134830] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+[2026-11-11T18:51:27.540265+00:00]   [    0.153482] setup_percpu: NR_CPUS:384 nr_cpumask_bits:2 nr_cpu_ids:2 nr_node_ids:1
+[2026-11-11T18:51:27.540265+00:00]   [    0.158016] percpu: Embedded 98 pages/cpu s278528 r8192 d114688 u1048576
+[2026-11-11T18:51:27.540265+00:00]   [    0.158658] pcpu-alloc: s278528 r8192 d114688 u1048576 alloc=1*2097152
+[2026-11-11T18:51:27.540265+00:00]   [    0.158875] pcpu-alloc: [0] 0 1
+[2026-11-11T18:51:27.540265+00:00]   [    0.160461] Kernel command line: BOOT_IMAGE=/boot//nix/store/jyb28mnqm5vaxfggp513xkivabwqvkpy-linux-6.18.60/bzImage init=/nix/store/gk0rr4laawlw3drhlab4y2qq7wfr9i59-nixos-system-nixos-26.05.20261031.fa13731/init console=ttyS0,115200n8 console=tty0 nohibernate root=fstab loglevel=4 lsm=landlock,yama,bpf  initrd=/boot//nix/store/a1j103jp4waf1m7c47d90d9nvp8y6ign-initrd-linux-6.18.60/initrd
+[2026-11-11T18:51:27.540265+00:00]   [    0.163063] printk: log buffer data + meta data: 262144 + 917504 = 1179648 bytes
+[2026-11-11T18:51:27.540265+00:00]   [    0.164569] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    0.165627] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    0.172131] Fallback order for Node 0: 0
+[2026-11-11T18:51:27.540265+00:00]   [    0.172739] Built 1 zonelists, mobility grouping on.  Total pages: 524155
+[2026-11-11T18:51:27.540265+00:00]   [    0.172780] Policy zone: DMA32
+[2026-11-11T18:51:27.540265+00:00]   [    0.175241] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[2026-11-11T18:51:27.540265+00:00]   [    0.411353] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[2026-11-11T18:51:27.540265+00:00]   [    0.418361] allocated 4194304 bytes of page_ext
+[2026-11-11T18:51:27.540265+00:00]   [    0.485420] ftrace: allocating 48767 entries in 192 pages
+[2026-11-11T18:51:27.540265+00:00]   [    0.485834] ftrace: allocated 192 pages with 2 groups
+[2026-11-11T18:51:27.540265+00:00]   [    0.501584] Dynamic Preempt: lazy
+[2026-11-11T18:51:27.540265+00:00]   [    0.507914] rcu: Preemptible hierarchical RCU implementation.
+[2026-11-11T18:51:27.540265+00:00]   [    0.507937] rcu: 	RCU event tracing is enabled.
+[2026-11-11T18:51:27.540265+00:00]   [    0.507961] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=2.
+[2026-11-11T18:51:27.540265+00:00]   [    0.508103] 	Trampoline variant of Tasks RCU enabled.
+[2026-11-11T18:51:27.540265+00:00]   [    0.508110] 	Rude variant of Tasks RCU enabled.
+[2026-11-11T18:51:27.540265+00:00]   [    0.508118] 	Tracing variant of Tasks RCU enabled.
+[2026-11-11T18:51:27.540265+00:00]   [    0.508256] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[2026-11-11T18:51:27.540265+00:00]   [    0.508290] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[2026-11-11T18:51:27.540265+00:00]   [    0.510022] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[2026-11-11T18:51:27.540265+00:00]   [    0.510057] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[2026-11-11T18:51:27.540265+00:00]   [    0.510070] RCU Tasks Trace: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.
+[2026-11-11T18:51:27.540265+00:00]   [    0.567242] NR_IRQS: 24832, nr_irqs: 440, preallocated irqs: 16
+[2026-11-11T18:51:27.540265+00:00]   [    0.582961] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[2026-11-11T18:51:27.540265+00:00]   [    0.583931] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[2026-11-11T18:51:27.540265+00:00]   [    0.591469] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)
+[2026-11-11T18:51:27.540265+00:00]   [    0.600340] Console: colour VGA+ 80x25
+[2026-11-11T18:51:27.540265+00:00]   [    0.601146] printk: legacy console [tty0] enabled
+[2026-11-11T18:51:27.540265+00:00]   [    0.604592] printk: legacy console [ttyS0] enabled
+[2026-11-11T18:51:27.540265+00:00]   [    0.607661] ACPI: Core revision 20250807
+[2026-11-11T18:51:27.540265+00:00]   [    0.618260] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+[2026-11-11T18:51:27.540265+00:00]   [    0.626208] APIC: Switch to symmetric I/O mode setup
+[2026-11-11T18:51:27.540265+00:00]   [    0.636392] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[2026-11-11T18:51:27.540265+00:00]   [    0.643761] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x1e451abd656, max_idle_ns: 440795222232 ns
+[2026-11-11T18:51:27.540265+00:00]   [    0.644876] Calibrating delay loop (skipped), value calculated using timer frequency.. 4199.95 BogoMIPS (lpj=2099977)
+[2026-11-11T18:51:27.540265+00:00]   [    0.653263] Last level iTLB entries: 4KB 512, 2MB 255, 4MB 127
+[2026-11-11T18:51:27.540265+00:00]   [    0.653352] Last level dTLB entries: 4KB 512, 2MB 255, 4MB 127, 1GB 0
+[2026-11-11T18:51:27.540265+00:00]   [    0.654020] mitigations: Enabled attack vectors: user_kernel, user_user, guest_host, guest_guest, SMT mitigations: auto
+[2026-11-11T18:51:27.540265+00:00]   [    0.654907] Spectre V2 : Mitigation: Retpolines
+[2026-11-11T18:51:27.540265+00:00]   [    0.655378] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+[2026-11-11T18:51:27.540265+00:00]   [    0.655580] Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+[2026-11-11T18:51:27.540265+00:00]   [    0.660310] x86/fpu: x87 FPU will use FXSAVE
+[2026-11-11T18:51:27.540265+00:00]   [    0.958346] Freeing SMP alternatives memory: 44K
+[2026-11-11T18:51:27.540265+00:00]   [    0.960751] pid_max: default: 32768 minimum: 301
+[2026-11-11T18:51:27.540265+00:00]   [    0.981483] LSM: initializing lsm=capability,landlock,yama,bpf,ima
+[2026-11-11T18:51:27.540265+00:00]   [    0.989296] landlock: Up and running.
+[2026-11-11T18:51:27.540265+00:00]   [    0.989359] Yama: becoming mindful.
+[2026-11-11T18:51:27.540265+00:00]   [    0.991589] LSM support for eBPF active
+[2026-11-11T18:51:27.540265+00:00]   [    0.994883] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    0.995265] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    1.185087] smpboot: CPU0: AMD QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+[2026-11-11T18:51:27.540265+00:00]   [    1.213577] Performance Events: PMU not available due to virtualization, using software events only.
+[2026-11-11T18:51:27.540265+00:00]   [    1.218473] signal: max sigframe size: 1440
+[2026-11-11T18:51:27.540265+00:00]   [    1.223911] rcu: Hierarchical SRCU implementation.
+[2026-11-11T18:51:27.540265+00:00]   [    1.224461] rcu: 	Max phase no-delay instances is 400.
+[2026-11-11T18:51:27.540265+00:00]   [    1.227634] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[2026-11-11T18:51:27.540265+00:00]   [    1.239864] NMI watchdog: Perf NMI watchdog permanently disabled
+[2026-11-11T18:51:27.540265+00:00]   [    1.251156] smp: Bringing up secondary CPUs ...
+[2026-11-11T18:51:27.540265+00:00]   [    1.264992] smpboot: x86: Booting SMP configuration:
+[2026-11-11T18:51:27.540265+00:00]   [    1.265170] .... node  #0, CPUs:      #1
+[2026-11-11T18:51:27.540265+00:00]   [    1.351873] smp: Brought up 1 node, 2 CPUs
+[2026-11-11T18:51:27.540265+00:00]   [    1.352483] smpboot: Total of 2 processors activated (8409.25 BogoMIPS)
+[2026-11-11T18:51:27.540265+00:00]   [    1.373988] Memory: 1967836K/2096620K available (17182K kernel code, 2723K rwdata, 13612K rodata, 3656K init, 2976K bss, 116952K reserved, 0K cma-reserved)
+[2026-11-11T18:51:27.540265+00:00]   [    1.390256] devtmpfs: initialized
+[2026-11-11T18:51:27.540265+00:00]   [    1.398774] x86/mm: Memory block size: 128MB
+[2026-11-11T18:51:27.540265+00:00]   [    1.418208] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    1.418685] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).
+[2026-11-11T18:51:27.540265+00:00]   [    1.427229] pinctrl core: initialized pinctrl subsystem
+[2026-11-11T18:51:27.540265+00:00]   [    1.437849] PM: RTC time: 18:49:34, date: 2026-11-11
+[2026-11-11T18:51:27.540265+00:00]   [    1.461401] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[2026-11-11T18:51:27.540265+00:00]   [    1.470517] DMA: preallocated 256 KiB GFP_KERNEL pool for atomic allocations
+[2026-11-11T18:51:27.540265+00:00]   [    1.471608] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[2026-11-11T18:51:27.540265+00:00]   [    1.473175] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[2026-11-11T18:51:27.540265+00:00]   [    1.474379] audit: initializing netlink subsys (disabled)
+[2026-11-11T18:51:27.540265+00:00]   [    1.479486] audit: type=2000 audit(1794422973.852:1): state=initialized audit_enabled=0 res=1
+[2026-11-11T18:51:27.540265+00:00]   [    1.491312] thermal_sys: Registered thermal governor 'fair_share'
+[2026-11-11T18:51:27.540265+00:00]   [    1.491410] thermal_sys: Registered thermal governor 'bang_bang'
+[2026-11-11T18:51:27.540265+00:00]   [    1.491440] thermal_sys: Registered thermal governor 'step_wise'
+[2026-11-11T18:51:27.540265+00:00]   [    1.491453] thermal_sys: Registered thermal governor 'user_space'
+[2026-11-11T18:51:27.540265+00:00]   [    1.491465] thermal_sys: Registered thermal governor 'power_allocator'
+[2026-11-11T18:51:27.540265+00:00]   [    1.492269] cpuidle: using governor menu
+[2026-11-11T18:51:27.540265+00:00]   [    1.496790] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+[2026-11-11T18:51:27.540265+00:00]   [    1.505663] PCI: Using configuration type 1 for base access
+[2026-11-11T18:51:27.540265+00:00]   [    1.507879] mtrr: your CPUs had inconsistent fixed MTRR settings
+[2026-11-11T18:51:27.540265+00:00]   [    1.507935] mtrr: your CPUs had inconsistent variable MTRR settings
+[2026-11-11T18:51:27.540265+00:00]   [    1.507960] mtrr: your CPUs had inconsistent MTRRdefType settings
+[2026-11-11T18:51:27.540265+00:00]   [    1.507975] mtrr: probably your BIOS does not setup all CPUs.
+[2026-11-11T18:51:27.540265+00:00]   [    1.507991] mtrr: corrected configuration.
+[2026-11-11T18:51:27.540265+00:00]   [    1.512965] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[2026-11-11T18:51:27.540265+00:00]   [    1.611689] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[2026-11-11T18:51:27.540265+00:00]   [    1.611814] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[2026-11-11T18:51:27.540265+00:00]   [    1.654384] ACPI: Added _OSI(Module Device)
+[2026-11-11T18:51:27.540265+00:00]   [    1.654488] ACPI: Added _OSI(Processor Device)
+[2026-11-11T18:51:27.540265+00:00]   [    1.654505] ACPI: Added _OSI(Processor Aggregator Device)
+[2026-11-11T18:51:27.540265+00:00]   [    1.693808] ACPI: 1 ACPI AML tables successfully acquired and loaded
+[2026-11-11T18:51:27.540265+00:00]   [    1.733977] ACPI: Interpreter enabled
+[2026-11-11T18:51:27.540265+00:00]   [    1.735732] ACPI: PM: (supports S0 S3 S4 S5)
+[2026-11-11T18:51:27.540265+00:00]   [    1.735803] ACPI: Using IOAPIC for interrupt routing
+[2026-11-11T18:51:27.540265+00:00]   [    1.736564] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[2026-11-11T18:51:27.540265+00:00]   [    1.736609] PCI: Using E820 reservations for host bridge windows
+[2026-11-11T18:51:27.540265+00:00]   [    1.739259] ACPI: Enabled 2 GPEs in block 00 to 0F
+[2026-11-11T18:51:27.540265+00:00]   [    1.797648] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[2026-11-11T18:51:27.540265+00:00]   [    1.798902] acpi PNP0A03:00: _OSC: OS supports [ASPM ClockPM Segments MSI HPX-Type3]
+[2026-11-11T18:51:27.540265+00:00]   [    1.799227] acpi PNP0A03:00: _OSC: not requesting OS control; OS requires [ExtendedConfig ASPM ClockPM MSI]
+[2026-11-11T18:51:27.540265+00:00]   [    1.800643] acpi PNP0A03:00: fail to add MMCONFIG information, can't access extended configuration space under this bridge
+[2026-11-11T18:51:27.540265+00:00]   [    1.808606] acpiphp: Slot [3] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.809226] acpiphp: Slot [4] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.809452] acpiphp: Slot [5] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.809554] acpiphp: Slot [6] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.809670] acpiphp: Slot [7] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.809804] acpiphp: Slot [8] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.809923] acpiphp: Slot [9] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810021] acpiphp: Slot [10] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810087] acpiphp: Slot [11] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810256] acpiphp: Slot [12] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810378] acpiphp: Slot [13] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810472] acpiphp: Slot [14] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810564] acpiphp: Slot [15] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810684] acpiphp: Slot [16] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810783] acpiphp: Slot [17] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.810877] acpiphp: Slot [18] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.811276] acpiphp: Slot [19] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.811393] acpiphp: Slot [20] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.811492] acpiphp: Slot [21] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.811585] acpiphp: Slot [22] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.811701] acpiphp: Slot [23] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.811799] acpiphp: Slot [24] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.811919] acpiphp: Slot [25] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.812171] acpiphp: Slot [26] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.812454] acpiphp: Slot [27] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.812624] acpiphp: Slot [28] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.812760] acpiphp: Slot [29] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.812862] acpiphp: Slot [30] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.812985] acpiphp: Slot [31] registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.813660] PCI host bridge to bus 0000:00
+[2026-11-11T18:51:27.540265+00:00]   [    1.814044] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+[2026-11-11T18:51:27.540265+00:00]   [    1.814153] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    1.814171] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    1.814224] pci_bus 0000:00: root bus resource [mem 0x80000000-0xfebfffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    1.814236] pci_bus 0000:00: root bus resource [mem 0x100000000-0x17fffffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    1.814438] pci_bus 0000:00: root bus resource [bus 00-ff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.821663] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.831699] pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.833291] pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.834172] pci 0000:00:01.1: BAR 4 [io  0xc0c0-0xc0cf]
+[2026-11-11T18:51:27.540265+00:00]   [    1.834309] pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+[2026-11-11T18:51:27.540265+00:00]   [    1.834344] pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+[2026-11-11T18:51:27.540265+00:00]   [    1.834393] pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+[2026-11-11T18:51:27.540265+00:00]   [    1.834420] pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+[2026-11-11T18:51:27.540265+00:00]   [    1.836539] pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.837187] pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI
+[2026-11-11T18:51:27.540265+00:00]   [    1.837370] pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB
+[2026-11-11T18:51:27.540265+00:00]   [    1.838568] pci 0000:00:02.0: [1234:1111] type 00 class 0x030000 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.841205] pci 0000:00:02.0: BAR 0 [mem 0xfd000000-0xfdffffff pref]
+[2026-11-11T18:51:27.540265+00:00]   [    1.841391] pci 0000:00:02.0: BAR 2 [mem 0xfebd0000-0xfebd0fff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.841425] pci 0000:00:02.0: ROM [mem 0xfebc0000-0xfebcffff pref]
+[2026-11-11T18:51:27.540265+00:00]   [    1.841962] pci 0000:00:02.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.845450] pci 0000:00:03.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.847087] pci 0000:00:03.0: BAR 0 [io  0xc080-0xc09f]
+[2026-11-11T18:51:27.540265+00:00]   [    1.847187] pci 0000:00:03.0: BAR 1 [mem 0xfebd1000-0xfebd1fff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.848152] pci 0000:00:03.0: BAR 4 [mem 0xfe000000-0xfe003fff 64bit pref]
+[2026-11-11T18:51:27.540265+00:00]   [    1.864590] pci 0000:00:04.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.866253] pci 0000:00:04.0: BAR 0 [io  0xc0a0-0xc0bf]
+[2026-11-11T18:51:27.540265+00:00]   [    1.867205] pci 0000:00:04.0: BAR 1 [mem 0xfebd2000-0xfebd2fff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.867243] pci 0000:00:04.0: BAR 4 [mem 0xfe004000-0xfe007fff 64bit pref]
+[2026-11-11T18:51:27.540265+00:00]   [    1.867265] pci 0000:00:04.0: ROM [mem 0xfeb80000-0xfebbffff pref]
+[2026-11-11T18:51:27.540265+00:00]   [    1.878936] pci 0000:00:05.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[2026-11-11T18:51:27.540265+00:00]   [    1.879181] pci 0000:00:05.0: BAR 0 [io  0xc000-0xc07f]
+[2026-11-11T18:51:27.540265+00:00]   [    1.879266] pci 0000:00:05.0: BAR 1 [mem 0xfebd3000-0xfebd3fff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.879286] pci 0000:00:05.0: BAR 4 [mem 0xfe008000-0xfe00bfff 64bit pref]
+[2026-11-11T18:51:27.540265+00:00]   [    1.899787] ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+[2026-11-11T18:51:27.540265+00:00]   [    1.901354] ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+[2026-11-11T18:51:27.540265+00:00]   [    1.902279] ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+[2026-11-11T18:51:27.540265+00:00]   [    1.903233] ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+[2026-11-11T18:51:27.540265+00:00]   [    1.903658] ACPI: PCI: Interrupt link LNKS configured for IRQ 9
+[2026-11-11T18:51:27.540265+00:00]   [    1.914275] iommu: Default domain type: Translated
+[2026-11-11T18:51:27.540265+00:00]   [    1.914350] iommu: DMA domain TLB invalidation policy: lazy mode
+[2026-11-11T18:51:27.540265+00:00]   [    1.918163] ACPI: bus type USB registered
+[2026-11-11T18:51:27.540265+00:00]   [    1.919328] usbcore: registered new interface driver usbfs
+[2026-11-11T18:51:27.540265+00:00]   [    1.919940] usbcore: registered new interface driver hub
+[2026-11-11T18:51:27.540265+00:00]   [    1.920348] usbcore: registered new device driver usb
+[2026-11-11T18:51:27.540265+00:00]   [    1.941862] NetLabel: Initializing
+[2026-11-11T18:51:27.540265+00:00]   [    1.941937] NetLabel:  domain hash size = 128
+[2026-11-11T18:51:27.540265+00:00]   [    1.942173] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[2026-11-11T18:51:27.540265+00:00]   [    1.943506] NetLabel:  unlabeled traffic allowed by default
+[2026-11-11T18:51:27.540265+00:00]   [    1.943673] PCI: Using ACPI for IRQ routing
+[2026-11-11T18:51:27.540265+00:00]   [    1.943843] PCI: pci_cache_line_size set to 64 bytes
+[2026-11-11T18:51:27.540265+00:00]   [    1.944605] e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.944809] e820: reserve RAM buffer [mem 0x7ffdd000-0x7fffffff]
+[2026-11-11T18:51:27.540265+00:00]   [    1.953233] pci 0000:00:02.0: vgaarb: setting as boot VGA device
+[2026-11-11T18:51:27.540265+00:00]   [    1.953233] pci 0000:00:02.0: vgaarb: bridge control possible
+[2026-11-11T18:51:27.540265+00:00]   [    1.953233] pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+[2026-11-11T18:51:27.540265+00:00]   [    1.954275] vgaarb: loaded
+[2026-11-11T18:51:27.540265+00:00]   [    1.956519] hpet: 3 channels of 0 reserved for per-cpu timers
+[2026-11-11T18:51:27.540265+00:00]   [    1.957166] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+[2026-11-11T18:51:27.540265+00:00]   [    1.957389] hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+[2026-11-11T18:51:27.540265+00:00]   [    1.964066] clocksource: Switched to clocksource tsc-early
+[2026-11-11T18:51:27.540265+00:00]   [    1.972043] VFS: Disk quotas dquot_6.6.0
+[2026-11-11T18:51:27.540265+00:00]   [    1.972857] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[2026-11-11T18:51:27.540265+00:00]   [    1.978448] pnp: PnP ACPI init
+[2026-11-11T18:51:27.540265+00:00]   [    1.983424] pnp 00:02: [dma 2]
+[2026-11-11T18:51:27.540265+00:00]   [    1.987142] pnp: PnP ACPI: found 5 devices
+[2026-11-11T18:51:27.540265+00:00]   [    2.058229] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[2026-11-11T18:51:27.540265+00:00]   [    2.060935] NET: Registered PF_INET protocol family
+[2026-11-11T18:51:27.540265+00:00]   [    2.062766] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.171173] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.171697] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.172036] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.173010] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.173668] TCP: Hash tables configured (established 16384 bind 16384)
+[2026-11-11T18:51:27.540265+00:00]   [    2.177406] MPTCP token hash table entries: 2048 (order: 4, 49152 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.178462] UDP hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.179240] UDP-Lite hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[2026-11-11T18:51:27.540265+00:00]   [    2.183396] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[2026-11-11T18:51:27.540265+00:00]   [    2.184970] NET: Registered PF_XDP protocol family
+[2026-11-11T18:51:27.540265+00:00]   [    2.187067] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+[2026-11-11T18:51:27.540265+00:00]   [    2.187158] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    2.187179] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    2.187196] pci_bus 0000:00: resource 7 [mem 0x80000000-0xfebfffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    2.187210] pci_bus 0000:00: resource 8 [mem 0x100000000-0x17fffffff window]
+[2026-11-11T18:51:27.540265+00:00]   [    2.188372] pci 0000:00:01.0: PIIX3: Enabling Passive Release
+[2026-11-11T18:51:27.540265+00:00]   [    2.188810] pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+[2026-11-11T18:51:27.540265+00:00]   [    2.189035] PCI: CLS 0 bytes, default 64
+[2026-11-11T18:51:27.540265+00:00]   [    2.196802] Trying to unpack rootfs image as initramfs...
+[2026-11-11T18:51:27.540265+00:00]   [    2.411408] Initialise system trusted keyrings
+[2026-11-11T18:51:27.540265+00:00]   [    2.420491] workingset: timestamp_bits=40 max_order=19 bucket_order=0
+[2026-11-11T18:51:27.540265+00:00]   [    2.532931] Key type asymmetric registered
+[2026-11-11T18:51:27.540265+00:00]   [    2.533155] Asymmetric key parser 'x509' registered
+[2026-11-11T18:51:27.540265+00:00]   [    2.533845] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+[2026-11-11T18:51:27.540265+00:00]   [    2.535342] io scheduler mq-deadline registered
+[2026-11-11T18:51:27.540265+00:00]   [    2.535443] io scheduler kyber registered
+[2026-11-11T18:51:27.540265+00:00]   [    2.578969] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[2026-11-11T18:51:27.540265+00:00]   [    2.586820] 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[2026-11-11T18:51:27.540265+00:00]   [    2.607076] Linux agpgart interface v0.103
+[2026-11-11T18:51:27.540265+00:00]   [    2.608389] ACPI: bus type drm_connector registered
+[2026-11-11T18:51:27.540265+00:00]   [    2.628255] usbcore: registered new interface driver usbserial_generic
+[2026-11-11T18:51:27.540265+00:00]   [    2.628690] usbserial: USB Serial support registered for generic
+[2026-11-11T18:51:27.540265+00:00]   [    2.628953] amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled
+[2026-11-11T18:51:27.540265+00:00]   [    2.631451] drop_monitor: Initializing network drop monitor service
+[2026-11-11T18:51:27.540265+00:00]   [    2.636691] NET: Registered PF_INET6 protocol family
+[2026-11-11T18:51:27.540265+00:00]   [    2.663418] Segment Routing with IPv6
+[2026-11-11T18:51:27.540265+00:00]   [    2.664094] In-situ OAM (IOAM) with IPv6
+[2026-11-11T18:51:27.540265+00:00]   [    2.697813] IPI shorthand broadcast: enabled
+[2026-11-11T18:51:27.540265+00:00]   [    2.741453] sched_clock: Marking stable (2698081401, 42443570)->(2785486135, -44961164)
+[2026-11-11T18:51:27.540265+00:00]   [    2.748356] registered taskstats version 1
+[2026-11-11T18:51:27.540265+00:00]   [    2.754047] Loading compiled-in X.509 certificates
+[2026-11-11T18:51:27.540265+00:00]   [    2.829782] Demotion targets for Node 0: null
+[2026-11-11T18:51:27.540265+00:00]   [    2.833464] Key type .fscrypt registered
+[2026-11-11T18:51:27.540265+00:00]   [    2.833615] Key type fscrypt-provisioning registered
+[2026-11-11T18:51:27.540265+00:00]   [    2.840020] ima: No TPM chip found, activating TPM-bypass!
+[2026-11-11T18:51:27.540265+00:00]   [    2.840193] ima: Allocated hash algorithm: sha1
+[2026-11-11T18:51:27.540265+00:00]   [    2.845115] ima: No architecture policies found
+[2026-11-11T18:51:27.540265+00:00]   [    2.851282] PM:   Magic number: 2:555:847
+[2026-11-11T18:51:27.540265+00:00]   [    2.860475] RAS: Correctable Errors collector initialized.
+[2026-11-11T18:51:27.540265+00:00]   [    2.907929] clk: Disabling unused clocks
+[2026-11-11T18:51:27.540265+00:00]   [    2.908385] PM: genpd: Disabling unused power domains
+[2026-11-11T18:51:27.540265+00:00]   [    3.218931] tsc: Refined TSC clocksource calibration: 2100.001 MHz
+[2026-11-11T18:51:27.540265+00:00]   [    3.219822] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x1e453155694, max_idle_ns: 440795221115 ns
+[2026-11-11T18:51:27.540265+00:00]   [    3.220504] clocksource: Switched to clocksource tsc
+[2026-11-11T18:51:27.540265+00:00]   [    3.998613] Freeing initrd memory: 30128K
+[2026-11-11T18:51:27.540265+00:00]   [    4.025502] Freeing unused decrypted memory: 2028K
+[2026-11-11T18:51:27.540265+00:00]   [    4.121065] Freeing unused kernel image (initmem) memory: 3656K
+[2026-11-11T18:51:27.540265+00:00]   [    4.121573] Write protecting the kernel read-only data: 32768k
+[2026-11-11T18:51:27.540265+00:00]   [    4.126404] Freeing unused kernel image (text/rodata gap) memory: 1248K
+[2026-11-11T18:51:27.540265+00:00]   [    4.128208] Freeing unused kernel image (rodata/data gap) memory: 724K
+[2026-11-11T18:51:27.540265+00:00]   [    4.406731] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[2026-11-11T18:51:27.540265+00:00]   [    4.407264] Run /init as init process
+[2026-11-11T18:51:27.540265+00:00]   [    4.407509]   with arguments:
+[2026-11-11T18:51:27.540265+00:00]   [    4.407683]     /init
+[2026-11-11T18:51:27.540265+00:00]   [    4.407734]   with environment:
+[2026-11-11T18:51:27.540265+00:00]   [    4.407820]     HOME=/
+[2026-11-11T18:51:27.540265+00:00]   [    4.407848]     TERM=linux
+[2026-11-11T18:51:27.540265+00:00]   [    4.812039] systemd[1]: Inserted module 'autofs4'
+[2026-11-11T18:51:27.540265+00:00]   [    5.002029] ACPI: \_SB_.LNKC: Enabled at IRQ 11
+[2026-11-11T18:51:27.540265+00:00]   [    5.017881] ACPI: \_SB_.LNKD: Enabled at IRQ 10
+[2026-11-11T18:51:27.540265+00:00]   [    5.030224] ACPI: \_SB_.LNKA: Enabled at IRQ 10
+[2026-11-11T18:51:27.540265+00:00]   [    5.166956] systemd[1]: Successfully made /usr/ read-only.
+[2026-11-11T18:51:27.540265+00:00]   [    5.540575] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[2026-11-11T18:51:27.540265+00:00]   [    5.541050] systemd[1]: Detected virtualization qemu.
+[2026-11-11T18:51:27.540265+00:00]   [    5.541553] systemd[1]: Detected architecture x86-64.
+[2026-11-11T18:51:27.540265+00:00]   [    5.541621] systemd[1]: Running in initrd.
+[2026-11-11T18:51:27.540265+00:00]   [    5.562153] systemd[1]: Initializing machine ID from random generator.
+[2026-11-11T18:51:27.540265+00:00]   [    5.570057] systemd[1]: Hostname set to <nixos>.
+[2026-11-11T18:51:27.540265+00:00]   [    6.592102] systemd[1]: Queued start job for default target Initrd Default Target.
+[2026-11-11T18:51:27.540265+00:00]   [    6.673884] systemd[1]: Created slice Slice /system/modprobe.
+[2026-11-11T18:51:27.540265+00:00]   [    6.685842] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[2026-11-11T18:51:27.540265+00:00]   [    6.689200] systemd[1]: Expecting device /dev/disk/by-label/nixos-minimal-26.05-x86_64...
+[2026-11-11T18:51:27.540265+00:00]   [    6.691434] systemd[1]: Reached target Initrd Root Device.
+[2026-11-11T18:51:27.540265+00:00]   [    6.693419] systemd[1]: Reached target Path Units.
+[2026-11-11T18:51:27.540265+00:00]   [    6.694925] systemd[1]: Reached target Slice Units.
+[2026-11-11T18:51:27.540265+00:00]   [    6.696298] systemd[1]: Reached target Swaps.
+[2026-11-11T18:51:27.540265+00:00]   [    6.697826] systemd[1]: Reached target Timer Units.
+[2026-11-11T18:51:27.540265+00:00]   [    6.707226] systemd[1]: Listening on D-Bus System Message Bus Socket.
+[2026-11-11T18:51:27.540265+00:00]   [    6.712217] systemd[1]: Listening on Journal Socket (/dev/log).
+[2026-11-11T18:51:27.540265+00:00]   [    6.715863] systemd[1]: Listening on Journal Sockets.
+[2026-11-11T18:51:27.540265+00:00]   [    6.719432] systemd[1]: Listening on udev Control Socket.
+[2026-11-11T18:51:27.540265+00:00]   [    6.722700] systemd[1]: Listening on udev Kernel Socket.
+[2026-11-11T18:51:27.540265+00:00]   [    6.724095] systemd[1]: Reached target Socket Units.
+[2026-11-11T18:51:27.540265+00:00]   [    6.773140] systemd[1]: Starting Create List of Static Device Nodes...
+[2026-11-11T18:51:27.540265+00:00]   [    6.798194] systemd[1]: Starting Load Kernel Module configfs...
+[2026-11-11T18:51:27.540265+00:00]   [    6.880014] systemd[1]: Starting Journal Service...
+[2026-11-11T18:51:27.540265+00:00]   [    6.921660] systemd[1]: Starting Load Kernel Modules...
+[2026-11-11T18:51:27.540265+00:00]   [    6.929336] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[2026-11-11T18:51:27.540265+00:00]   [    6.985196] systemd[1]: Starting Coldplug All udev Devices...
+[2026-11-11T18:51:27.540265+00:00]   [    7.070789] systemd[1]: Finished Create List of Static Device Nodes.
+[2026-11-11T18:51:27.540265+00:00]   [    7.091534] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+[2026-11-11T18:51:27.540265+00:00]   [    7.096597] systemd[1]: Finished Load Kernel Module configfs.
+[2026-11-11T18:51:27.540265+00:00]   [    7.111361] systemd[1]: Kernel Configuration File System skipped, unmet condition check ConditionPathExists=/sys/kernel/config
+[2026-11-11T18:51:27.540265+00:00]   [    7.130157] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[2026-11-11T18:51:27.540265+00:00]   [    7.569632] systemd[1]: Finished Create Static Device Nodes in /dev gracefully.
+[2026-11-11T18:51:27.540265+00:00]   [    7.629867] systemd[1]: Starting Create Static Device Nodes in /dev...
+[2026-11-11T18:51:27.540265+00:00]   [    7.666139] loop: module loaded
+[2026-11-11T18:51:27.540265+00:00]   [    7.672460] systemd-journald[72]: Collecting audit messages is disabled.
+[2026-11-11T18:51:27.540265+00:00]   [    7.687511] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+[2026-11-11T18:51:27.540265+00:00]   [    7.702065] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[2026-11-11T18:51:27.540265+00:00]   [    7.939437] systemd[1]: Finished Create Static Device Nodes in /dev.
+[2026-11-11T18:51:27.540265+00:00]   [    7.956508] systemd[1]: Reached target Preparation for Local File Systems.
+[2026-11-11T18:51:27.540265+00:00]   [    7.966291] systemd[1]: Reached target Local File Systems.
+[2026-11-11T18:51:27.540265+00:00]   [    8.032845] systemd[1]: Starting Rule-based Manager for Device Events and Files...
+[2026-11-11T18:51:27.540265+00:00]   [    8.095229] systemd[1]: Finished Load Kernel Modules.
+[2026-11-11T18:51:27.540265+00:00]   [    8.168202] systemd[1]: Mounting /sysroot...
+[2026-11-11T18:51:27.540265+00:00]   [    8.237826] systemd[1]: Starting Apply Kernel Variables...
+[2026-11-11T18:51:27.540265+00:00]   [    8.315337] systemd[1]: Started Journal Service.
+[2026-11-11T18:51:27.540265+00:00]   [   15.279370] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[2026-11-11T18:51:27.540265+00:00]   [   15.287598] SCSI subsystem initialized
+[2026-11-11T18:51:27.540265+00:00]   [   15.289234] serio: i8042 KBD port at 0x60,0x64 irq 1
+[2026-11-11T18:51:27.540265+00:00]   [   15.292361] serio: i8042 AUX port at 0x60,0x64 irq 12
+[2026-11-11T18:51:27.540265+00:00]   [   15.487442] libata version 3.00 loaded.
+[2026-11-11T18:51:27.540265+00:00]   [   15.541688] scsi host0: ata_piix
+[2026-11-11T18:51:27.540265+00:00]   [   15.558379] scsi host1: ata_piix
+[2026-11-11T18:51:27.540265+00:00]   [   15.566070] ata1: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc0c0 irq 14 lpm-pol 0
+[2026-11-11T18:51:27.540265+00:00]   [   15.566172] ata2: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc0c8 irq 15 lpm-pol 0
+[2026-11-11T18:51:27.540265+00:00]   [   15.731572] ata2: found unknown device (class 0)
+[2026-11-11T18:51:27.540265+00:00]   [   15.743337] ata2.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100
+[2026-11-11T18:51:27.540265+00:00]   [   15.773615] scsi 1:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5
+[2026-11-11T18:51:27.540265+00:00]   [   16.299988] virtio_blk virtio2: 2/0/0 default/read/poll queues
+[2026-11-11T18:51:27.540265+00:00]   [   16.399025] virtio_blk virtio2: [vda] 8388608 512-byte logical blocks (4.29 GB/4.00 GiB)
+[2026-11-11T18:51:27.540265+00:00]   [   17.128376] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+[2026-11-11T18:51:27.540265+00:00]   [   17.403894] sr 1:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray
+[2026-11-11T18:51:27.540265+00:00]   [   17.415592] virtio_net virtio1 ens4: renamed from eth0
+[2026-11-11T18:51:27.540265+00:00]   [   17.440280] cdrom: Uniform CD-ROM driver Revision: 3.20
+[2026-11-11T18:51:27.540265+00:00]   [   17.485223] sr 1:0:0:0: Attached scsi CD-ROM sr0
+[2026-11-11T18:51:27.540265+00:00]   [   18.180433] ISO 9660 Extensions: Microsoft Joliet Level 3
+[2026-11-11T18:51:27.540265+00:00]   [   18.192364] ISO 9660 Extensions: RRIP_1991A
+[2026-11-11T18:51:27.540265+00:00]   [   18.459061] loop0: detected capacity change from 0 to 3045632
+[2026-11-11T18:51:27.540265+00:00]   [   18.521588] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[2026-11-11T18:51:27.540265+00:00]   [   23.155491] random: crng init done
+[2026-11-11T18:51:27.540265+00:00]   [   30.412217] systemd-journald[72]: Received SIGTERM from PID 1 (systemd).
+[2026-11-11T18:51:27.540265+00:00]   [   31.957029] NET: Registered PF_VSOCK protocol family
+[2026-11-11T18:51:27.540265+00:00]   [   32.149941] fuse: init (API version 7.45)
+[2026-11-11T18:51:27.540265+00:00]   [   32.809091] systemd[1]: systemd 260.5 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)
+[2026-11-11T18:51:27.540265+00:00]   [   32.809537] systemd[1]: Detected virtualization qemu.
+[2026-11-11T18:51:27.540265+00:00]   [   32.810392] systemd[1]: Detected architecture x86-64.
+[2026-11-11T18:51:27.540265+00:00]   [   32.811472] systemd[1]: Detected first boot.
+[2026-11-11T18:51:27.540265+00:00]   [   32.853838] systemd[1]: Initializing machine ID from random generator.
+[2026-11-11T18:51:27.540265+00:00]   [   34.097254] systemd[1]: bpf-restrict-fs: LSM BPF program attached
+[2026-11-11T18:51:27.540265+00:00]   [   35.142701] systemd[1]: Applying preset policy.
+[2026-11-11T18:51:27.540265+00:00]   [   39.196182] systemd[1]: Populated /etc with preset unit settings.
+[2026-11-11T18:51:27.540265+00:00]   [   44.349285] systemd[1]: initrd-switch-root.service: Deactivated successfully.
+[2026-11-11T18:51:27.540265+00:00]   [   44.354195] systemd[1]: Stopped initrd-switch-root.service.
+[2026-11-11T18:51:27.540265+00:00]   [   44.394826] systemd[1]: systemd-journald.service: Scheduled restart job, restart counter is at 1.
+[2026-11-11T18:51:27.540265+00:00]   [   44.415812] systemd[1]: Created slice Slice /system/getty.
+[2026-11-11T18:51:27.540265+00:00]   [   44.437178] systemd[1]: Created slice Slice /system/serial-getty.
+[2026-11-11T18:51:27.540265+00:00]   [   44.463216] systemd[1]: Created slice User and Session Slice.
+[2026-11-11T18:51:27.540265+00:00]   [   44.473320] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[2026-11-11T18:51:27.540265+00:00]   [   44.478154] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[2026-11-11T18:51:27.540265+00:00]   [   44.482077] systemd[1]: Expecting device /dev/ttyS0...
+[2026-11-11T18:51:27.540265+00:00]   [   44.485235] systemd[1]: Reached target Local Encrypted Volumes.
+[2026-11-11T18:51:27.540265+00:00]   [   44.488334] systemd[1]: Stopped target initrd-fs.target.
+[2026-11-11T18:51:27.540265+00:00]   [   44.491196] systemd[1]: Stopped target initrd-root-fs.target.
+[2026-11-11T18:51:27.540265+00:00]   [   44.493808] systemd[1]: Stopped target initrd-switch-root.target.
+[2026-11-11T18:51:27.540265+00:00]   [   44.496271] systemd[1]: Reached target Virtual Machines and Containers.
+[2026-11-11T18:51:27.540265+00:00]   [   44.498979] systemd[1]: Reached target Path Units.
+[2026-11-11T18:51:27.540265+00:00]   [   44.501324] systemd[1]: Reached target Remote File Systems.
+[2026-11-11T18:51:27.540265+00:00]   [   44.503473] systemd[1]: Reached target Slice Units.
+[2026-11-11T18:51:27.540265+00:00]   [   44.506071] systemd[1]: Reached target Swaps.
+[2026-11-11T18:51:27.540265+00:00]   [   44.508402] systemd[1]: Reached target ZFS pool import target.
+[2026-11-11T18:51:27.540265+00:00]   [   44.581876] systemd[1]: Listening on Process Core Dump Socket.
+[2026-11-11T18:51:27.540265+00:00]   [   44.621600] systemd[1]: Listening on Credential Encryption/Decryption.
+[2026-11-11T18:51:27.540265+00:00]   [   44.665518] systemd[1]: Starting Journal Log Access Socket...
+[2026-11-11T18:51:27.540265+00:00]   [   44.679977] systemd[1]: Listening on Journal Audit Socket.
+[2026-11-11T18:51:27.540265+00:00]   [   44.687940] systemd[1]: Listening on Network Management Metrics Varlink Socket.
+[2026-11-11T18:51:27.540265+00:00]   [   44.693279] systemd[1]: Listening on Network Management Netlink Socket.
+[2026-11-11T18:51:27.540265+00:00]   [   44.699553] systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[2026-11-11T18:51:27.540265+00:00]   [   44.702924] systemd[1]: Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[2026-11-11T18:51:27.540265+00:00]   [   44.705657] systemd[1]: Listening on udev Control Socket.
+[2026-11-11T18:51:27.540265+00:00]   [   44.771131] systemd[1]: Mounting Huge Pages File System...
+[2026-11-11T18:51:27.540265+00:00]   [   44.809182] systemd[1]: Mounting POSIX Message Queue File System...
+[2026-11-11T18:51:27.540265+00:00]   [   44.862357] systemd[1]: Mounting Kernel Debug File System...
+[2026-11-11T18:51:27.540265+00:00]   [   44.953180] systemd[1]: Mounting Kernel Trace File System...
+[2026-11-11T18:51:27.540265+00:00]   [   45.110016] systemd[1]: Starting Create List of Static Device Nodes...
+[2026-11-11T18:51:27.540265+00:00]   [   45.192296] systemd[1]: Starting Load Kernel Module configfs...
+[2026-11-11T18:51:27.540265+00:00]   [   45.200449] systemd[1]: Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[2026-11-11T18:51:27.540265+00:00]   [   45.204398] systemd[1]: Load Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore
+[2026-11-11T18:51:27.540265+00:00]   [   45.209237] systemd[1]: Load Kernel Module fuse skipped, unmet condition check ConditionKernelModuleLoaded=!fuse
+[2026-11-11T18:51:27.540265+00:00]   [   45.428152] systemd[1]: Mounting FUSE Control File System...
+[2026-11-11T18:51:27.540265+00:00]   [   45.440364] systemd[1]: Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[2026-11-11T18:51:27.540265+00:00]   [   45.745445] systemd[1]: Starting Journal Service...
+[2026-11-11T18:51:27.540265+00:00]   [   45.915082] systemd[1]: Starting Load Kernel Modules...
+[2026-11-11T18:51:27.540265+00:00]   [   46.069253] systemd[1]: Starting Userspace Out-Of-Memory (OOM) Killer...
+[2026-11-11T18:51:27.540265+00:00]   [   46.154377] systemd[1]: Starting Remount Root and Kernel File Systems...
+[2026-11-11T18:51:27.540265+00:00]   [   46.170188] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-uki
+[2026-11-11T18:51:27.540265+00:00]   [   46.294391] systemd[1]: Starting Coldplug All udev Devices...
+[2026-11-11T18:51:27.540265+00:00]   [   46.519922] systemd[1]: Listening on Journal Log Access Socket.
+[2026-11-11T18:51:27.540265+00:00]   [   46.547315] systemd[1]: Mounted Huge Pages File System.
+[2026-11-11T18:51:27.540265+00:00]   [   46.577194] systemd[1]: Mounted POSIX Message Queue File System.
+[2026-11-11T18:51:27.540265+00:00]   [   46.616970] systemd[1]: Mounted Kernel Debug File System.
+[2026-11-11T18:51:27.540265+00:00]   [   46.664521] systemd[1]: Mounted Kernel Trace File System.
+[2026-11-11T18:51:27.540265+00:00]   [   46.705126] spl: loading out-of-tree module taints kernel.
+[2026-11-11T18:51:27.540265+00:00]   [   46.746543] systemd-journald[288]: Collecting audit messages is enabled.
+[2026-11-11T18:51:27.540265+00:00]   [   46.844530] systemd[1]: Finished Create List of Static Device Nodes.
+[2026-11-11T18:51:27.540265+00:00]   [   46.965396] systemd[1]: modprobe@configfs.service: Deactivated successfully.
+[2026-11-11T18:51:27.540265+00:00]   [   47.003974] systemd[1]: Finished Load Kernel Module configfs.
+[2026-11-11T18:51:27.540265+00:00]   [   47.022065] systemd[1]: modprobe@configfs.service: Consumed 212ms CPU time over 1.785s wall clock time, 2.1M memory peak, 1.4M read from disk.
+[2026-11-11T18:51:27.540265+00:00]   [   47.045110] systemd[1]: Mounted FUSE Control File System.
+[2026-11-11T18:51:27.540265+00:00]   [   47.158181] systemd[1]: Mounting Kernel Configuration File System...
+[2026-11-11T18:51:27.540265+00:00]   [   47.276990] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[2026-11-11T18:51:27.540265+00:00]   [   47.468136] systemd[1]: Started Journal Service.
+[2026-11-11T18:51:27.540265+00:00]   [   49.186242] systemd-journald[288]: Received client request to flush runtime journal.
+[2026-11-11T18:51:27.540265+00:00]   [   49.620583] zfs: module license 'CDDL' taints kernel.
+[2026-11-11T18:51:27.540265+00:00]   [   49.625389] Disabling lock debugging due to kernel taint
+[2026-11-11T18:51:27.540265+00:00]   [   49.625947] zfs: module license taints kernel.
+[2026-11-11T18:51:27.540265+00:00]   [   54.933597] ZFS: Loaded module v2.4.4-1, ZFS pool version 5000, ZFS filesystem version 5
+[2026-11-11T18:51:27.540265+00:00]   [   69.298976] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[2026-11-11T18:51:27.540265+00:00]   [   69.458939] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[2026-11-11T18:51:27.540265+00:00]   [   69.462150] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[2026-11-11T18:51:27.540265+00:00]   [   86.936444] hrtimer: interrupt took 3758276 ns
+[2026-11-11T18:51:27.540265+00:00]   [   88.676173] input: Power Button as /devices/platform/LNXPWRBN:00/input/input2
+[2026-11-11T18:51:27.540265+00:00]   [   88.714042] ACPI: button: Power Button [PWRF]
+[2026-11-11T18:51:27.540265+00:00]   [   88.879203] rtc_cmos PNP0B00:00: RTC can wake from S4
+[2026-11-11T18:51:27.540265+00:00]   [   88.892216] rtc_cmos PNP0B00:00: registered as rtc0
+[2026-11-11T18:51:27.540265+00:00]   [   88.897389] rtc_cmos PNP0B00:00: setting system clock to 2026-11-11T18:51:01 UTC (1794423061)
+[2026-11-11T18:51:27.540265+00:00]   [   88.927816] rtc_cmos PNP0B00:00: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+[2026-11-11T18:51:27.540265+00:00]   [   90.249320] bochs-drm 0000:00:02.0: vgaarb: deactivate vga console
+[2026-11-11T18:51:27.540265+00:00]   [   90.259552] Console: switching to colour dummy device 80x25
+[2026-11-11T18:51:27.540265+00:00]   [   90.293441] piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+[2026-11-11T18:51:27.540265+00:00]   [   90.299480] [drm] Found bochs VGA, ID 0xb0c5.
+[2026-11-11T18:51:27.540265+00:00]   [   90.300124] [drm] Framebuffer size 16384 kB @ 0xfd000000, mmio @ 0xfebd0000.
+[2026-11-11T18:51:27.540265+00:00]   [   90.313191] i2c i2c-0: Memory type 0x07 not supported yet, not instantiating SPD
+[2026-11-11T18:51:27.540265+00:00]   [   90.400173] bochs-drm 0000:00:02.0: [drm] Registered 1 planes with drm panic
+[2026-11-11T18:51:27.540265+00:00]   [   90.400373] [drm] Initialized bochs-drm 1.0.0 for 0000:00:02.0 on minor 0
+[2026-11-11T18:51:27.540265+00:00]   [   90.929912] Console: switching to colour frame buffer device 160x50
+[2026-11-11T18:51:27.540265+00:00]   [   91.051428] bochs-drm 0000:00:02.0: [drm] fb0: bochs-drmdrmfb frame buffer device
+[2026-11-11T18:51:27.540265+00:00]   [   95.209257] parport_pc 00:03: reported by Plug and Play ACPI
+[2026-11-11T18:51:27.540265+00:00]   [   95.215484] parport0: PC-style at 0x378, irq 7 [PCSPP(,...)]
+[2026-11-11T18:51:27.540265+00:00]   [   95.316534] Floppy drive(s): fd0 is 2.88M AMI BIOS
+[2026-11-11T18:51:27.540265+00:00]   [   95.338260] FDC 0 is a S82078B
+[2026-11-11T18:51:27.540265+00:00]   [   96.765374] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+[2026-11-11T18:51:27.540265+00:00]   [   98.828624] kvm_amd: Nested Virtualization enabled
+[2026-11-11T18:51:27.540265+00:00]   [   98.840413] kvm_amd: Nested Paging disabled
+[2026-11-11T18:51:27.540265+00:00]   [   98.854466] kvm_amd: PMU virtualization is disabled
+[2026-11-11T18:51:27.540265+00:00]   [   99.971767] powernow_k8: Power state transitions not supported
+[2026-11-11T18:51:27.540265+00:00]   [  100.174362] EDAC MC: Ver: 3.0.0
+[2026-11-11T18:51:27.540265+00:00]   [  104.542073] ppdev: user-space parallel port driver
+[2026-11-11T18:51:27.540265+00:00]   [  104.937432] mousedev: PS/2 mouse device common for all mice
+[2026-11-11T18:51:27.541229+00:00] Diagnostic artifact written to /home/user/NixOS-boot-image/notes/2026-11-11T184913Z-vm-run/logs/diagnostics/dmesg-post-test-teardown-01.log
+[2026-11-11T18:51:27.542239+00:00] Running command: journalctl --no-pager -u pre-nixos.service -b || true
+[2026-11-11T18:51:27.715411+00:00] Diagnostic artifact written to /home/user/NixOS-boot-image/notes/2026-11-11T184913Z-vm-run/logs/diagnostics/pre-nixos-journal-02.log
+[2026-11-11T18:51:27.771933+00:00] Running command: printf '__UID_MARK__1794423087716__%s__UID_MARK__1794423087716__\n' "$(id -u)"
+[2026-11-11T18:51:27.866013+00:00] Running command: ls -1 /tmp/pre-nixos*.log 2>/dev/null || true

@@ -407,8 +407,9 @@ def test_cli_static_network_defaults_from_dhcp(monkeypatch, tmp_path):
 
     pre_nixos.main(["--plan-only", "--install-ip-address", "192.0.2.77"])
 
+    # Item 41 (R-N2): DNS is recorded too; without --install-dns, the gateway.
     assert recorded == [
-        {"address": "192.0.2.77", "gateway": "192.0.2.1", "netmask": "255.255.255.0"}
+        {"address": "192.0.2.77", "gateway": "192.0.2.1", "netmask": "255.255.255.0", "dns": ["192.0.2.1"]}
     ]
 
 
@@ -684,3 +685,66 @@ def test_cli_uefi_plans_the_x86_uefi_layout(monkeypatch, tmp_path):
     pre_nixos.main(["--no-auto-install"])
     (plan,) = applied
     assert plan["boot"] == {"layout": "x86-uefi", "disks": ["nvme0n1"]}
+
+
+def _static_cli(monkeypatch, tmp_path, readiness, argv, *, executes=True):
+    """Run the CLI with static settings; return the installer-network calls."""
+
+    monkeypatch.setattr(pre_nixos.inventory, "enumerate_disks", lambda: [Disk(name="sda", size=1000, rotational=False)])
+    sample_lan = pre_nixos.network.LanConfiguration(
+        authorized_key=tmp_path / "key.pub", interface="lan", mac_address="52:54:00:12:34:56"
+    )
+    monkeypatch.setattr(pre_nixos.network, "configure_lan", lambda: sample_lan)
+    monkeypatch.setattr(pre_nixos.network, "installer_network", lambda iface="lan": readiness)
+    monkeypatch.setattr(pre_nixos.apply, "apply_plan", lambda plan, dry_run=False, protected_disks=frozenset(): None)
+    monkeypatch.setattr(pre_nixos.state, "record_install_network_config", lambda payload: tmp_path / "n.json")
+    monkeypatch.setattr(pre_nixos.install, "auto_install", lambda *a, **k: AutoInstallResult(status="skipped"))
+    applied = []
+    monkeypatch.setattr(
+        pre_nixos.installer_network, "apply",
+        lambda config, *, mac_address, **kw: applied.append((config, mac_address)) or (tmp_path / "unit" if executes else None),
+    )
+    pre_nixos.main(["--plan-only", *argv])
+    return applied
+
+
+STATIC_ARGS = ["--install-ip-address", "10.0.2.20", "--install-netmask", "255.255.255.0", "--install-gateway", "10.0.2.2"]
+
+
+def test_cli_configures_the_installer_without_an_address(monkeypatch, tmp_path):
+    """Item 41 (R-N1): no address from DHCP, so the installer adopts the settings."""
+
+    no_address = pre_nixos.network.NetworkReadiness(None, None)
+    applied = _static_cli(monkeypatch, tmp_path, no_address, [*STATIC_ARGS, "--install-dns", "10.0.2.3,9.9.9.9"])
+    ((config, mac),) = applied
+    assert (config.address, config.dns, mac) == ("10.0.2.20", ("10.0.2.3", "9.9.9.9"), "52:54:00:12:34:56")
+
+
+def test_cli_leaves_a_dhcp_installer_alone_unless_told(monkeypatch, tmp_path):
+    has_address = pre_nixos.network.NetworkReadiness("10.0.2.15", "10.0.2.2")
+    assert _static_cli(monkeypatch, tmp_path, has_address, STATIC_ARGS) == []
+    assert len(_static_cli(monkeypatch, tmp_path, has_address, [*STATIC_ARGS, "--installer-network", "yes"])) == 1
+
+
+def test_cli_installer_network_no_declines(monkeypatch, tmp_path):
+    no_address = pre_nixos.network.NetworkReadiness(None, None)
+    assert _static_cli(monkeypatch, tmp_path, no_address, [*STATIC_ARGS, "--installer-network", "no"]) == []
+
+
+def test_cli_says_when_execution_is_disabled(monkeypatch, tmp_path, capsys):
+    """Codex on #351: without PRE_NIXOS_EXEC=1, apply() does nothing; say so."""
+
+    no_address = pre_nixos.network.NetworkReadiness(None, None)
+    _static_cli(monkeypatch, tmp_path, no_address, STATIC_ARGS, executes=False)
+    out = capsys.readouterr().out
+    assert "now uses" not in out
+    assert "PRE_NIXOS_EXEC" in out
+
+
+def test_cli_dry_run_does_not_touch_the_installer_network(monkeypatch, tmp_path, capsys):
+    """Codex on #351: --dry-run only prints; it must not reconfigure lan."""
+
+    no_address = pre_nixos.network.NetworkReadiness(None, None)
+    applied = _static_cli(monkeypatch, tmp_path, no_address, [*STATIC_ARGS, "--dry-run", "--installer-network", "yes"])
+    assert applied == []
+    assert "would give the installer" in capsys.readouterr().out

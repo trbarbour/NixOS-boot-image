@@ -51,7 +51,7 @@ def record_storage_plan(plan: Dict[str, Any], *, state_dir: Optional[Path] = Non
 
 
 def record_install_network_config(
-    config: Dict[str, str], *, state_dir: Optional[Path] = None
+    config: Dict[str, Any], *, state_dir: Optional[Path] = None
 ) -> Path:
     """Persist static network configuration for the installer."""
 
@@ -88,7 +88,7 @@ def load_storage_plan(*, state_dir: Optional[Path] = None) -> Optional[Dict[str,
 
 def load_install_network_config(
     *, state_dir: Optional[Path] = None
-) -> Optional[Dict[str, str]]:
+) -> Optional[Dict[str, Any]]:
     """Return the persisted install-time network configuration when available."""
 
     path = install_network_path(state_dir=state_dir)
@@ -107,4 +107,9 @@ def load_install_network_config(
     gateway = data.get("gateway")
     if not all(isinstance(item, str) for item in (address, netmask, gateway)):
         return None
-    return {"address": address, "netmask": netmask, "gateway": gateway}
+    result: Dict[str, Any] = {"address": address, "netmask": netmask, "gateway": gateway}
+    # Item 41: DNS servers, a list of strings (absent in older payloads).
+    dns = data.get("dns")
+    if isinstance(dns, list) and all(isinstance(item, str) for item in dns):
+        result["dns"] = dns
+    return result

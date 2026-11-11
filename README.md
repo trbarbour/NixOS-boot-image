@@ -57,6 +57,12 @@ the boot image, so you only need to provide an IP address when the live network
 matches the target install-time network. These options persist the chosen
 network values for the next installation run and emit the equivalent static
 `systemd.network` configuration in the generated NixOS config.
+`--install-dns` sets DNS servers (comma-separated); without it, the gateway is
+used. When the installer itself has no address (no DHCP server), it takes the
+same settings until reboot, so it can download what the install needs;
+`--installer-network no` declines, and `yes` applies them even over DHCP. In
+`pre-nixos-tui`, `[C]` asks for the same values, offers to configure the
+installer when it has no address, and a blank address returns both to DHCP.
 
 A disk's SSD/HDD class comes from the kernel's `queue/rotational`. Some SSDs
 report no rotation rate, and the kernel then calls them rotating. When such a

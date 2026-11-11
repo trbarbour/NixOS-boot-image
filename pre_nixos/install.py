@@ -56,6 +56,8 @@ class InstallNetworkConfig:
     netmask: str
     gateway: str
     prefix_length: int
+    # Item 41 (R-N2): without DHCP nothing else supplies DNS servers.
+    dns: Tuple[str, ...] = ()
 
     @property
     def cidr(self) -> str:
@@ -63,13 +65,14 @@ class InstallNetworkConfig:
 
         return f"{self.address}/{self.prefix_length}"
 
-    def to_payload(self) -> Dict[str, str]:
+    def to_payload(self) -> Dict[str, Any]:
         """Return a JSON-serialisable representation of the configuration."""
 
         return {
             "address": self.address,
             "netmask": self.netmask,
             "gateway": self.gateway,
+            "dns": list(self.dns),
         }
 
 
@@ -126,11 +129,12 @@ def _record_result(
 
 
 def build_install_network_config(
-    address: str, netmask: str, gateway: str
+    address: str, netmask: str, gateway: str, dns: Optional[Sequence[str]] = None
 ) -> InstallNetworkConfig:
     """Return a validated :class:`InstallNetworkConfig`.
 
-    Raises ``ValueError`` when any input is not a valid IPv4 element.
+    ``dns`` defaults to the gateway (item 41, R-N2).  Raises ``ValueError``
+    when any input is not a valid IPv4 element.
     """
 
     try:
@@ -148,11 +152,19 @@ def build_install_network_config(
     except (ipaddress.NetmaskValueError, ipaddress.AddressValueError) as exc:
         raise ValueError(f"Invalid IPv4 netmask: {netmask}") from exc
 
+    servers = list(dns) if dns else [gateway]
+    for server in servers:
+        try:
+            ipaddress.IPv4Address(server)
+        except ipaddress.AddressValueError as exc:
+            raise ValueError(f"Invalid IPv4 DNS server: {server}") from exc
+
     return InstallNetworkConfig(
         address=str(ip_address),
         netmask=str(ipv4_network.netmask),
         gateway=gateway,
         prefix_length=ipv4_network.prefixlen,
+        dns=tuple(servers),
     )
 
 
@@ -162,6 +174,7 @@ def build_install_network_config_with_defaults(
     gateway: str | None = None,
     *,
     iface: str = "lan",
+    dns: Optional[Sequence[str]] = None,
 ) -> InstallNetworkConfig:
     """Return a validated :class:`InstallNetworkConfig` using observed defaults.
 
@@ -193,7 +206,7 @@ def build_install_network_config_with_defaults(
             f"Unable to determine install {missing_text}; supply explicit values or ensure DHCP is active"
         )
 
-    return build_install_network_config(address, resolved_netmask, resolved_gateway)
+    return build_install_network_config(address, resolved_netmask, resolved_gateway, dns)
 
 
 def _is_mount_ready(root_path: Path) -> bool:
@@ -489,8 +502,9 @@ def load_install_network_config(
     if not data:
         return None
     try:
+        # Payloads saved before item 41 have no "dns": the gateway is used.
         return build_install_network_config(
-            data["address"], data["netmask"], data["gateway"]
+            data["address"], data["netmask"], data["gateway"], data.get("dns")
         )
     except ValueError as exc:
         log_event(
@@ -789,6 +803,14 @@ def _inject_configuration(
             f' address = "{_escape_nix_string(install_network.gateway)}";'
             ' interface = "lan";'
             " };"
+        )
+        # Item 41 (R-N2).  Not ``networkConfig.DNS`` in the unit above: NixOS
+        # turns ``networking.interfaces.lan`` into ``40-lan.network``, which
+        # sorts first and wins (Codex on #351; evaluated 2026-11-11).
+        block_lines.append(
+            "  networking.nameservers = [ "
+            + " ".join(f'"{_escape_nix_string(server)}"' for server in install_network.dns)
+            + " ];"
         )
         block_lines.append("")
 

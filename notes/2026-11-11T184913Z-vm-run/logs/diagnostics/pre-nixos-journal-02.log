@@ -1,0 +1,10 @@
+Nov 11 18:50:45 nixos systemd[1]: Starting Pre-NixOS setup...
+Nov 11 18:50:46 nixos pre-nixos-start[613]: pre-nixos boot image version 0.31.0
+Nov 11 18:51:20 nixos pre-nixos-start[831]: Traceback (most recent call last):
+Nov 11 18:51:20 nixos pre-nixos-start[831]:   File "/nix/store/l21rlx0dbffbwq682qv74aw74d8cisjl-pre-nixos-0.31.0/bin/.pre-nixos-wrapped", line 6, in <module>
+Nov 11 18:51:20 nixos pre-nixos-start[831]:     from pre_nixos.pre_nixos import main
+Nov 11 18:51:20 nixos pre-nixos-start[831]:   File "/nix/store/l21rlx0dbffbwq682qv74aw74d8cisjl-pre-nixos-0.31.0/lib/python3.13/site-packages/pre_nixos/pre_nixos.py", line 11, in <module>
+Nov 11 18:51:20 nixos pre-nixos-start[831]:     from . import (
+Nov 11 18:51:20 nixos pre-nixos-start[831]:     ...<13 lines>...
+Nov 11 18:51:20 nixos pre-nixos-start[831]:     )
+Nov 11 18:51:20 nixos pre-nixos-start[831]: ImportError: cannot import name 'installer_network' from 'pre_nixos' (/nix/store/l21rlx0dbffbwq682qv74aw74d8cisjl-pre-nixos-0.31.0/lib/python3.13/site-packages/pre_nixos/__init__.py)
