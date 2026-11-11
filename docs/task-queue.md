@@ -402,6 +402,11 @@ _Last updated: 2026-10-30T12-35-13Z_
       - `pre_nixos/kernel_cmdline.py` replaces two private copies of the `/proc/cmdline` reader.
     - Tests first: `tests/test_disk_settle.py`, `test_inventory.py`, `test_cli_disk_settle.py`, `test_tui_disk_class.py` (refusal, rescan), the `boot-service-status` flake check (six cases), and VM test `tests/vm/test_disk_settle_vm.py` (a disk hot-plugged 5 s into the wait, through `tests/vm/late_disk.py`).
     - No VM run of the unfixed image: there the service prints no wait notice, so the test could only time out, which would reproduce nothing.
+    - VM run 1 (`notes/2026-11-11T200421Z-vm-run`): **failed**, but on the test's timing, not the code.
+      - The plan did cover the late disk; disko mounted `disk-vdb-vdb2`.
+      - But the wait logged no change: "settled after 15.0356 s: vda, vdb".
+      - The service script's console notice came at 20:06:13, and the wait's own first line only at 20:06:47, after Python's start-up. The disk, plugged 5 s after the notice (host 20:06:37 + 5 s), was already there at the wait's first inventory.
+      - Fix: the wait announces itself on the consoles just before its first inventory, and the script's notice is gone (tests first).
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.

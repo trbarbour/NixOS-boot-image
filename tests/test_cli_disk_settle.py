@@ -118,8 +118,8 @@ def test_service_maps_the_exit_to_plan_only() -> None:
     assert f'"$wait_status" -eq {disk_settle.EXIT_UNSETTLED}' in service
     for detail in (inventory.CHANGED_REASON, disk_settle.UNSETTLED_DETAIL, disk_settle.ERROR_DETAIL):
         assert f'"$detail" = "{detail}"' in notice
-    # Shown on the consoles, so a pause at boot is explained (and the VM test
-    # knows when to plug its late disk).
-    assert f'wait_msg="{disk_settle.CONSOLE_NOTICE}"' in service
+    # The wait announces itself on the consoles when it starts; the service
+    # script does not, as its notice came long before the wait began.
+    assert disk_settle.CONSOLE_NOTICE not in service
     # The wait comes before storage detection, which reads the same disks (D1).
     assert service.index("pre-nixos-wait-disks") < service.index("detectStorageCmd}; then")

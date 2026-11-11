@@ -17,7 +17,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, FrozenSet, List, Optional, Sequence, Tuple
 
-from . import inventory, kernel_cmdline
+from . import console, inventory, kernel_cmdline
 from .inventory import Disk, DiskIdentity
 from .logging_utils import log_event
 
@@ -29,7 +29,9 @@ DEFAULT_LIMIT = 120
 EXIT_SETTLED = 0
 EXIT_ERROR = 1
 EXIT_UNSETTLED = 2
-# The boot service shows this on the consoles before the wait.
+# Shown on the consoles when the wait starts.  From here, not the service
+# script: Python takes long to start at boot (34 s in the VM, item 35), so a
+# notice from the script came well before the wait began.
 CONSOLE_NOTICE = "pre-nixos: waiting for the disks to settle"
 # storage-status DETAIL values the boot service writes for those exits.
 UNSETTLED_DETAIL = "disks-unsettled"
@@ -128,10 +130,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         settings, warnings = settings_from_cmdline(_read_cmdline())
         for warning in warnings:
             print(f"pre-nixos: {warning}", file=sys.stderr)
-        print(
-            f"{CONSOLE_NOTICE} (quiet {settings.quiet} s, at most {settings.limit} s)",
-            flush=True,
-        )
+        notice = f"{CONSOLE_NOTICE} (quiet {settings.quiet} s, at most {settings.limit} s)"
+        print(notice, flush=True)
+        console.broadcast_to_consoles(notice)
 
         def report(changes: List[str]) -> None:
             for change in changes:

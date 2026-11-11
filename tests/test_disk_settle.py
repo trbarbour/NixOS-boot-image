@@ -161,3 +161,29 @@ def test_command_exit_1_on_error(monkeypatch, capsys) -> None:
     monkeypatch.setattr(disk_settle.inventory, "enumerate_disks", broken)
     assert disk_settle.main([]) == disk_settle.EXIT_ERROR == 1
     assert "sysfs unreadable" in capsys.readouterr().err
+
+
+def test_the_consoles_are_told_when_the_wait_starts(monkeypatch) -> None:
+    """The notice comes from the wait itself, just before its first
+    inventory: Python takes long to start at boot (34 s in the VM, item 35),
+    so a notice from the service script came well before the wait began
+    (VM run notes/2026-11-11T200421Z-vm-run)."""
+
+    events: list = []
+    monkeypatch.setattr(
+        disk_settle.console, "broadcast_to_consoles", lambda message: events.append(("console", message))
+    )
+    clock = FakeClock()
+    read = scripted(clock, [(0, [SDA])])
+
+    def recording_read():
+        events.append(("read",))
+        return read()
+
+    monkeypatch.setattr(disk_settle, "_read_cmdline", lambda: [])
+    monkeypatch.setattr(disk_settle.inventory, "enumerate_disks", recording_read)
+    monkeypatch.setattr(disk_settle.time, "monotonic", clock)
+    monkeypatch.setattr(disk_settle.time, "sleep", clock.sleep)
+    assert disk_settle.main([]) == disk_settle.EXIT_SETTLED
+    assert events[0] == ("console", f"{disk_settle.CONSOLE_NOTICE} (quiet 15 s, at most 120 s)")
+    assert events[1] == ("read",)

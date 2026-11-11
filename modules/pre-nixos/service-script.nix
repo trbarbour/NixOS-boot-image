@@ -70,8 +70,6 @@ in ''
 
   # Task queue item 50 (R-D1): before detection and the plan, which both read
   # the disks, wait until the set of disks has settled.
-  wait_msg="pre-nixos: waiting for the disks to settle"
-  ${broadcastConsoleCmd} "$wait_msg" || true
   wait_status=0
   ${waitDisksCmd} || wait_status=$?
 
