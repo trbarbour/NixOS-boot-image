@@ -72,6 +72,17 @@ class ScsiDisk:
         return HDD_ROTATION_RATE if self.rotational else SSD_ROTATION_RATE
 
 
+def sas_wwn(index: int) -> str:
+    """A SAS address (NAA 5) for the ``index``-th disk on the ``mptsas1068``.
+
+    Linux's mptsas discovers no disk that QEMU presents without one
+    (experiment 2026-11-11, notes/2026-11-11T053000Z-mptsas-wwn-experiment.md).
+    """
+
+    assert 0 <= index < 0x10000, index
+    return f"0x5000c5000000{index + 1:04x}"
+
+
 def scsi_device_id(index: int) -> str:
     """The QEMU device id of the SCSI disk at ``index`` (for QMP ``device_del``)."""
 
@@ -139,7 +150,7 @@ def scsi_disk_args(disks: Sequence[ScsiDisk]) -> List[str]:
             f"file={disk.path},if=none,id={drive},format=raw",
             "-device",
             f"scsi-hd,bus={MPTSAS_CONTROLLER_ID}.0,drive={drive},rotation_rate={disk.rotation_rate},"
-            f"{product}serial={disk.serial},scsi-id={index}",
+            f"{product}serial={disk.serial},scsi-id={index},wwn={sas_wwn(index)}",
         ]
     return args
 
@@ -150,6 +161,7 @@ __all__ = [
     "SSD_ROTATION_RATE",
     "UNREPORTED_ROTATION_RATE",
     "ScsiDisk",
+    "sas_wwn",
     "scsi_device_id",
     "scsi_disk_args",
     "scsi_hd_properties",

@@ -77,5 +77,9 @@ def test_mptsas_disks_attach_to_an_lsi_sas1068(tmp_path: Path) -> None:
     args = scsi_disk_args(disks)
     assert args.count("-device") == 4
     assert "mptsas1068,id=mptsas0" in args
-    assert "scsi-hd,bus=mptsas0.0,drive=sasdisk0,rotation_rate=7200,serial=hba,scsi-id=0" in args
+    # Linux's mptsas finds no disk without a SAS address (wwn).
+    assert (
+        "scsi-hd,bus=mptsas0.0,drive=sasdisk0,rotation_rate=7200,serial=hba,scsi-id=0,wwn=0x5000c50000000001"
+        in args
+    )
     assert f"file={tmp_path / 'hba.img'},if=none,id=sasdisk0,format=raw" in args
