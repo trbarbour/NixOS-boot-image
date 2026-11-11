@@ -764,32 +764,16 @@ def _inject_configuration(
             "  ];",
             "",
             *root_password.nix_lines(root_hash),
+            # Item 52 (R-N4): lan's only network unit is the one NixOS
+            # generates from networking.interfaces.lan (40-lan.network),
+            # matched by the name the link unit below gives the NIC.  A
+            # second, declared unit was never applied: networkd uses only the
+            # first matching unit by name (plans/2026-11-11T225033Z-
+            # installed-network-unit-design.md).
             "  systemd.network.enable = true;",
-            '  systemd.network.networks."lan" = {',
+            "",
         ]
     )
-
-    if lan.mac_address:
-        block_lines.append(
-            f'    matchConfig.MACAddress = "{_escape_nix_string(lan.mac_address)}";'
-        )
-    elif lan.interface:
-        block_lines.append(
-            f'    matchConfig.Name = "{_escape_nix_string(lan.interface)}";'
-        )
-    else:
-        block_lines.append('    matchConfig.Name = "lan";')
-
-    if use_dhcp:
-        network_block = ['    networkConfig.DHCP = "yes";']
-    else:
-        network_block = [
-            '    networkConfig.DHCP = "no";',
-            f'    networkConfig.Address = [ "{install_network.cidr}" ];',
-            f'    networkConfig.Gateway = "{_escape_nix_string(install_network.gateway)}";',
-        ]
-
-    block_lines.extend(network_block + ["  };", ""])
 
     if not use_dhcp:
         block_lines.append(
@@ -798,9 +782,8 @@ def _inject_configuration(
             ' interface = "lan";'
             " };"
         )
-        # Item 41 (R-N2).  Not ``networkConfig.DNS`` in the unit above: NixOS
-        # turns ``networking.interfaces.lan`` into ``40-lan.network``, which
-        # sorts first and wins (Codex on #351; evaluated 2026-11-11).
+        # Item 41 (R-N2): DNS goes to resolved.conf.  networking.interfaces
+        # has no per-interface DNS option (item 52, design (A)).
         block_lines.append(
             "  networking.nameservers = [ "
             + " ".join(f'"{_escape_nix_string(server)}"' for server in install_network.dns)

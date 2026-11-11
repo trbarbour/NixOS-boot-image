@@ -195,6 +195,9 @@ The system must automate the hardware setup process on new servers prior to NixO
 - The static settings include DNS servers, defaulting to the gateway, for the
   installer and the installed system alike. [R-N2]
 - Going back to DHCP also returns the installer to DHCP. [R-N3]
+- The installed system configures `lan` with exactly one systemd-networkd
+  network unit, holding its static address, gateway and DNS, or DHCP: the
+  settings in `configuration.nix` are the ones in effect. [R-N4]
 
 ---
 

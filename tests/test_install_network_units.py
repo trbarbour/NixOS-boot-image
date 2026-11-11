@@ -82,7 +82,8 @@ def test_static_install_over_an_earlier_dhcp_attempt(tmp_path, target) -> None:
     assert not (network_dir / "20-lan.network").exists()
     assert not (network_dir / "10-lan.link").exists()
     content = (target / "etc/nixos/configuration.nix").read_text()
-    assert 'networkConfig.Address = [ "10.137.3.9/24" ];' in content
+    assert 'ipv4.addresses = [ { address = "10.137.3.9"; prefixLength = 24; } ];' in content
+    assert "systemd.network.networks" not in content  # item 52 (R-N4)
     # Item 41 (R-N2): DNS reaches the installed system; it defaults to the gateway.
     # Codex on #351: NixOS turns ``networking.interfaces.lan`` and
     # ``networking.defaultGateway`` into ``40-lan.network``, which sorts before
@@ -99,7 +100,8 @@ def test_dhcp_install_copies_no_unit_and_clears_leftovers(tmp_path, target) -> N
     assert result.status == "success", result
     assert sorted(p.name for p in network_dir.iterdir()) == []
     content = (target / "etc/nixos/configuration.nix").read_text()
-    assert 'networkConfig.DHCP = "yes";' in content
+    assert "useDHCP = true;" in content
+    assert "systemd.network.networks" not in content  # item 52 (R-N4)
     assert 'systemd.network.links."10-lan" = {' in content
 
 

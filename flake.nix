@@ -837,6 +837,46 @@
             pkgs.runCommand "installed-network-single-dhcp-client" {} ''
               touch $out
             '';
+          # Task queue item 52: the installed system configures lan with exactly
+          # one systemd-networkd unit, holding the static address, gateway and
+          # DNS, or DHCP.  networkd applies only the first unit (by name) that
+          # matches, so a second one is dead configuration: a declared
+          # "lan.network" was shadowed by NixOS's "40-lan.network", and DNS
+          # placed in it was ignored (Codex on #351).  The managed block is
+          # evaluated exactly as pre-nixos writes it (tests/fixtures/
+          # managed-block, kept equal by tests/test_managed_block_golden.py).
+          installed-network-units =
+            let
+              lib = pkgs.lib;
+              eval = variant: (nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [
+                  ./tests/fixtures/nixos-generate-config/efi/configuration.nix
+                  ./pre_nixos/templates/network-networkd.nix
+                  (./tests/fixtures/managed-block + "/${variant}.nix")
+                ];
+              }).config;
+              check = variant: expected:
+                let
+                  config = eval variant;
+                  networks = lib.filterAttrs (name: _: lib.hasSuffix ".network" name) config.systemd.network.units;
+                  names = builtins.attrNames networks;
+                  text = (builtins.head (builtins.attrValues networks)).text;
+                  resolved = config.environment.etc."systemd/resolved.conf".text;
+                  missing = builtins.filter (line: !(lib.hasInfix line text)) expected.unit
+                    ++ builtins.filter (line: !(lib.hasInfix line resolved)) expected.resolved;
+                in
+                lib.assertMsg (builtins.length names == 1 && missing == [ ])
+                  "${variant}: .network units ${builtins.toJSON names}; missing ${builtins.toJSON missing}; first unit:\n${text}";
+            in
+            assert check "static" {
+              unit = [ "Name=lan" "DHCP=no" "Address=192.0.2.10/24" "Gateway=192.0.2.1" ];
+              resolved = [ "DNS=192.0.2.53" ];
+            };
+            assert check "dhcp" { unit = [ "Name=lan" "DHCP=" ]; resolved = [ ]; };
+            pkgs.runCommand "installed-network-units" {} ''
+              touch $out
+            '';
           # R-S3 (task queue item 34): the boot service records pre-nixos's
           # "needs the user's answer" exit (3) as plan-only with
           # DETAIL=disk-class-unconfirmed and succeeds; other exits keep their

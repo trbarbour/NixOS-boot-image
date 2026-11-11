@@ -170,3 +170,6 @@
 
 ### v0.39 — 2026-11-11
 - §7.1: at boot, pre-nixos waits for the set of disks to settle before detection and the plan; a plan records its disks, and nothing is written if they changed before the first write (R-D1–R-D4, task queue item 50).
+
+### v0.40 — 2026-11-11
+- §7.7.0 (new): the installed system's `lan` has one network unit, from NixOS's `networking.interfaces.lan`; the shadowed `systemd.network.networks."lan"` is gone (R-N4, task queue item 52).
