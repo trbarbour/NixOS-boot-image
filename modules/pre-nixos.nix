@@ -179,6 +179,20 @@ in {
     # so only ``secure_ssh`` queues the non-blocking restart once the config is safe.
     # No ordering after pre-nixos.service: that unit runs the whole
     # auto-install, so the queued start would wait for it (#324).
+    # #344 (reqs R-S5): the boot image never starts an md array degraded on
+    # its own.  mdadm's last-resort timer runs `mdadm --run` on an array still
+    # missing members after 30 s, which marks them missing in the others'
+    # superblocks for good, so a member that appears late (an HBA disk at 68 s
+    # on the user's PC) is dropped from the installed system's array.  With
+    # the units masked, an incomplete array stays inactive and untouched until
+    # its members arrive or someone runs `mdadm --run`.  Masked in the initrd
+    # too: the ISO's stage 1 can last longer than 30 s.  Guarded by the flake
+    # check no-degraded-md-start and tests/vm/test_late_raid_member_vm.py.
+    systemd.units."mdadm-last-resort@.timer".enable = false;
+    systemd.units."mdadm-last-resort@.service".enable = false;
+    boot.initrd.systemd.units."mdadm-last-resort@.timer".enable = false;
+    boot.initrd.systemd.units."mdadm-last-resort@.service".enable = false;
+
     services.openssh.enable = true;
     systemd.services.sshd.wantedBy = lib.mkForce [ ];
     systemd.services.sshd.serviceConfig.ExecStart =

@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.34
+**Doc status:** Draft v0.35
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -95,6 +95,11 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - **Data array next:** With remaining disks, choose level: **2 ⇒ RAID1**, **3–5 ⇒ RAID5**, **≥6 ⇒ RAID6**. This md becomes PV for **VG `large`**.
   - **Naming:** the largest HDD bucket forms **VG `large`**; additional buckets are named `large_1`, `large_2`, … and remain unused.
   - **Fallbacks:** If insufficient HDDs for a swap mirror, create VG `large` from available HDDs and put the swap LV there. With no rotating tier available, place the swap LV on `main` provided it can accommodate the configured size; otherwise skip swap.
+
+### 7.2.1 Existing arrays at boot [R-S5]
+- The boot image masks mdadm's `mdadm-last-resort@` timer and service, both in its initrd and in its system. Stock NixOS starts an array still missing members after 30 s (`mdadm --run`). That marks the absent members missing in the others' superblocks for good, so a member that appears late (an HBA disk at 68 s on the user's PC) is dropped, also on the installed system (#344).
+- Complete arrays still assemble through udev's incremental assembly. An incomplete one stays inactive until its members arrive, or until someone runs `mdadm --run`.
+- The installed system keeps the stock behaviour: it is the user's system, and its initrd loads its own controllers' drivers.
 
 ### 7.3 Partitioning scheme (GPT)
 - **Per-disk layout:** every participating disk receives a GPT with a single data partition sized to the available capacity. The boot disks (those of VG `main`, or under x86 legacy BIOS the set chosen in §7.6.0) also get an EFI System Partition (FAT32, label `EFI`, or `EFI2`, `EFI3`, … on further members) before the data slice. On x86 a 1 MiB BIOS boot partition (EF02) comes first (§7.6.0, R-B4).
