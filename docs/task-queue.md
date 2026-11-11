@@ -407,10 +407,15 @@ _Last updated: 2026-10-30T12-35-13Z_
       - But the wait logged no change: "settled after 15.0356 s: vda, vdb".
       - The service script's console notice came at 20:06:13, and the wait's own first line only at 20:06:47, after Python's start-up. The disk, plugged 5 s after the notice (host 20:06:37 + 5 s), was already there at the wait's first inventory.
       - Fix: the wait announces itself on the consoles just before its first inventory, and the script's notice is gone (tests first).
+    - VM run 2 on bb6ddec (`notes/2026-11-11T201511Z-vm-run`): **passed** in 9 min. The wait started at 20:17:13, logged "added vdb (6 GiB, no serial)" at 20:17:20, and "settled after 22.4425 s: vda, vdb" at 20:17:35. The applied plan's `inventory` had both disks.
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
+53. **The inventory reads no serial for virtio disks** *(anomaly, 2026-11-11 20:20:27Z, item 50 VM run 2)*.
+    - QEMU gave the hot-plugged disk serial `LATE50`, but pre-nixos logged "no serial". `inventory.enumerate_disks` reads `/sys/block/<d>/device/serial`; virtio-blk exposes it as `/sys/block/<d>/serial` (to be confirmed in a VM).
+    - Effect: a virtio disk swapped for one of the same name and size is not seen as changed (R-D3), and planning has no serial for it. SATA/SAS/NVMe disks are not affected, if they have `device/serial` (to be confirmed for NVMe too).
+    - Next: confirm in a VM which sysfs files hold the serial, for virtio and NVMe; read the first present; add a test with a fake sysfs tree.
 
 ## Recently Completed
 - 2026-11-11T19-48Z - Merged trbarbour/NixOS-boot-image#351 (0.31.0): item 41, the installer adopts the static network settings when it has no address, and the static settings carry DNS servers. Codex's reviews found four issues over two rounds, each fixed with tests first; the third review was clean. The VM test passed on the final code. Found item 52 along the way.
