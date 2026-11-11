@@ -444,6 +444,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       - flake check `initrd-storage-drivers` fails on the current image for all eight drivers;
       - `tests/vm/test_hba_disk_vm.py` puts a disk behind QEMU's `mptsas1068` and requires it attached before the switch to the real root.
     - Fix (0.28.2): `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`, all present in the pinned kernel) added to the x86 initrd (R-S6). VM runs pending.
+    - Fixed image (0.29.0, `notes/2026-11-11T033711Z-vm-run`): `mptsas` loads in the initrd (24.1 s; the switch to the real root comes at about 64 s), and the controller binds (`scsi host3: ioc0: LSISAS1068 A0`). But no disk is discovered behind it, so the VM test still fails. Unknown: does Linux's `mptsas` discover a `scsi-hd` on QEMU 10.2's `mptsas1068` at all? Experiment running (by hand: `scsi-id` 0 or 1, and with `wwn`).
     - Unfixed image (`notes/2026-11-11T031503Z-vm-run` and the rerun with diagnostics): the HBA disk never appears. `mptsas` is not loaded and the controller (1000:0054) is unbound, although `modprobe -n -v mptsas` resolves it and stage 2's `systemd-udev-trigger` ran. On the PC, stage 2 did load it (54.9 s). That difference is item 51.
     - Late disks and the boot-time plan: `pre-nixos.service` has no ordering after disk discovery, so a disk that appears after it starts is missing from the plan. That is item 50.
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
@@ -457,7 +458,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       - `tests/test_raid_alerts.py` (16 failed before the scripts existed);
       - `test_install.py`, which failed before `install.py` wrote the files;
       - flake check `raid-alerts-module`;
-      - `test_installed_system_vm.py` now fails a mirror member on the installed system and requires a crit `mdadm-alert` entry and the login warning. VM run pending.
+      - `test_installed_system_vm.py` now fails a mirror member on the installed system and requires a crit `mdadm-alert` entry and the login warning. **Passed** on 0.29.0 (2026-11-11 04:33Z, `notes/2026-11-11T033955Z-vm-run`).
 
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
