@@ -183,11 +183,17 @@ def test_helper_refuses_an_image_larger_than_the_device(fake: FakeSys, tmp_path:
 
 
 def test_tui_choices_become_cli_arguments() -> None:
-    choices = tui.Choices(fmt="sd", site="/home/me/site", image=None, device="mmcblk0", verify=True)
-    assert tui.cli_argv(choices) == ["--format", "sd", "--site", "/home/me/site", "--device", "mmcblk0", "--verify"]
-    plain = tui.Choices(fmt="iso", site=None, image="/tmp/x.iso", device="sdb", verify=False)
+    from write_image.choices import Selection
+
+    chosen = Selection(arch="aarch64", fmt="sd", console="serial", site="/home/me/site", image=None,
+                       device="mmcblk0", verify=True)
+    assert tui.cli_argv(chosen) == [
+        "--format", "sd", "--console", "serial", "--site", "/home/me/site", "--device", "mmcblk0", "--verify",
+    ]
+    plain = Selection(arch="x86_64", fmt="iso", console="display", site=None, image="/tmp/x.iso",
+                      device="sdb", verify=False)
     argv = tui.cli_argv(plain)
-    assert argv == ["--format", "iso", "--image", "/tmp/x.iso", "--device", "sdb"]
+    assert argv == ["--format", "iso", "--console", "display", "--image", "/tmp/x.iso", "--device", "sdb"]
     assert "--yes" not in argv  # the CLI asks for the typed confirmation
 
 
@@ -230,3 +236,11 @@ def test_helper_refuses_when_the_opened_file_is_another_device(fake: FakeSys, tm
         device_number=lambda fd: (8, 32),
     )
     assert calls == ["/dev/sdb"] and status == helper.EXIT_REFUSED
+
+
+def test_console_variant_selects_the_flake_attribute(fake: FakeSys, iso_output: Path, tmp_path: Path) -> None:
+    runner = Recorder(iso_output)
+    status, _ = _cli(fake, runner, ["--format", "iso", "--console", "serial", "--site", str(tmp_path),
+                                    "--device", "sdb", "--yes"], [])
+    assert status == 0
+    assert runner.calls[0][0][2] == ".#bootImageSerial"

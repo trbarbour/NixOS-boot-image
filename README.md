@@ -164,6 +164,7 @@ The image is named after the pre-nixos version and git commit that built it, fol
 ```bash
 nix run .#write-image -- --format iso --site ./site --verify   # ISO to a USB stick
 nix run .#write-image -- --format sd --site ./site --verify    # SD image to an SD card
+nix run .#write-image -- --format iso --console serial --site ./site  # the serial-console ISO variant
 nix run .#write-image-tui                                      # the same, chosen from menus
 nix run .#write-image -- --list                                # what it would accept, and why not
 ```
@@ -174,6 +175,9 @@ nix run .#write-image -- --list                                # what it would a
 - **Root only for the write:** a small helper runs under `sudo`. It checks the device again itself, refuses an image larger than the device, and opens the device exclusively.
 - **Verification:** `--verify` reads the image's length back from the medium, bypassing caches, and compares SHA-256.
 - **An image already built:** `--image PATH` writes it instead of building.
+- **The TUI** asks for the machine architecture (x86_64 PC or AArch64 Raspberry Pi 4/CM4), the image type (ISO or SD-card image) and the primary console (`--console`).
+  - Each menu opens on its default, which is marked: x86_64, its image type, and the display console on x86_64 or the serial console on AArch64.
+  - Then it asks for the source, the device and verification, and shows a summary before running `write-image` itself.
 
 Design: `plans/2026-11-11T181058Z-image-writer-design.md`.
 

@@ -21,14 +21,14 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence, TextIO, Tuple
 
-from write_image import devices, image
+from write_image import choices, devices, image
 from write_image.devices import Candidate, Format, Refusal, SystemView
 
 EXIT_OK = 0
 EXIT_ERROR = 1
 EXIT_REFUSED = 2
 
-ATTRIBUTES = {"iso": "bootImage", "sd": "bootImageSd"}
+FORMATS = ("iso", "sd")
 # The helper runs from this package's own directory (the Nix store, in the
 # flake app), never from the invoking user's environment: -I ignores
 # PYTHON* variables and the user's site directory.
@@ -50,7 +50,10 @@ def _run(cmd: List[str], capture: bool) -> Tuple[int, str]:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="write-image", description=__doc__.splitlines()[0])
-    parser.add_argument("--format", choices=sorted(ATTRIBUTES), default="iso")
+    parser.add_argument("--format", choices=FORMATS, default="iso",
+                        help="iso: x86_64 (USB stick); sd: AArch64 Raspberry Pi 4/CM4 (SD card)")
+    parser.add_argument("--console", choices=("default", "display", "serial"), default="default",
+                        help="primary console (default: display for iso, serial for sd)")
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--site", type=Path, help="build the image from this site directory")
     source.add_argument("--image", type=Path, help="write an image that is already built")
@@ -141,7 +144,8 @@ def main(
         site = args.site.resolve()
         status, stdout = run(
             [
-                "nix", "build", f"{args.flake}#{ATTRIBUTES[fmt]}", "--no-link", "--print-out-paths",
+                "nix", "build", f"{args.flake}#{choices.attribute(fmt, args.console)}", "--no-link",
+                "--print-out-paths",
                 "--override-input", "site", f"path:{site}",
             ],
             True,

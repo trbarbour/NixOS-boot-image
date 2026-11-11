@@ -51,6 +51,17 @@ _2026-11-11T18:10:58Z. Task queue item 42._
 - **A group with write access to removable disks** (a udev rule) would give any program the user runs standing write access to any inserted stick, and needs setup on each build host. The `disk` group is effectively root.
 - **udisks/polkit:** its default policy for raw writes varies (usually it asks for admin authentication), it is absent on headless hosts, and it adds a D-Bus dependency.
 
+### TUI presentation (user request, 2026-11-11)
+- The user asked: "I would like the TUI to do a nice job of presenting the options for machine architecture, console and image type, with sensible defaults."
+- `write_image/choices.py` (pure) is the single description, used by both the CLI and the TUI:
+  - architectures: x86_64 PC (default), AArch64 Raspberry Pi 4/CM4;
+  - image types per architecture: ISO, SD-card image;
+  - consoles, with the R-C2 default per architecture (display on x86_64, serial on AArch64);
+  - the flake attribute for each (format, console): `bootImage`, `bootImageSerial`, `bootImageSd`, `bootImageSdDisplay`;
+  - the summary text.
+- The CLI takes `--console default|display|serial`.
+- The TUI's menus open on the default, mark it "(default)", and explain each option in one line. A summary screen comes before the CLI runs.
+
 ## 3. Tests
 - Fake sysfs trees (`tests/write_image/`): a USB stick (removable), a USB SSD (removable = 0, USB transport), an SD card in an MMC slot, a SATA disk, NVMe, virtio, a mounted stick, the root disk. Each gets the expected candidate or refusal (R-W2).
 - Writing to a temporary file, then verifying; a corrupted byte fails verification (R-W4). A `.zst` image is streamed through `zstd`.

@@ -74,6 +74,8 @@ files = [
   "pre_nixos/root_password.py",
   "pre_nixos/storage_detection.py",
   "write_image/__init__.py",
+  "write_image/_tools.py",
+  "write_image/choices.py",
   "write_image/cli.py",
   "write_image/devices.py",
   "write_image/helper.py",
