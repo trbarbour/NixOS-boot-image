@@ -401,7 +401,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       - After a build, this repo's other unreferenced image store paths are deleted (`PRE_NIXOS_VM_KEEP_IMAGES=1` keeps them).
       - A VM does not start below `PRE_NIXOS_VM_MIN_FREE_GIB` (default 4).
       - A guard stops QEMU below `PRE_NIXOS_VM_FLOOR_GIB` (default 1), and the failure leads with the reason.
-      - Tests first: `tests/vm/test_disk_space_unit.py` (7). VM smoke run pending.
+      - Tests first: `tests/vm/test_disk_space_unit.py` (7). VM smoke run (`test_hba_disk_vm`) passed: the 3 older ISOs were deleted and the new one kept; free space went from 17 to 20 GiB.
     - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
 
 41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
