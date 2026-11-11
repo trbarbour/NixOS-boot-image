@@ -444,7 +444,11 @@ _Last updated: 2026-10-30T12-35-13Z_
       - flake check `initrd-storage-drivers` fails on the current image for all eight drivers;
       - `tests/vm/test_hba_disk_vm.py` puts a disk behind QEMU's `mptsas1068` and requires it attached before the switch to the real root.
     - Fix (0.28.2): `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`, all present in the pinned kernel) added to the x86 initrd (R-S6). VM runs pending.
-    - Fixed image (0.29.0, `notes/2026-11-11T033711Z-vm-run`): `mptsas` loads in the initrd (24.1 s; the switch to the real root comes at about 64 s), and the controller binds (`scsi host3: ioc0: LSISAS1068 A0`). But no disk is discovered behind it, so the VM test still fails. Unknown: does Linux's `mptsas` discover a `scsi-hd` on QEMU 10.2's `mptsas1068` at all? Experiment running (by hand: `scsi-id` 0 or 1, and with `wwn`).
+    - Fixed image (0.29.0, `notes/2026-11-11T033711Z-vm-run`): `mptsas` loads in the initrd (24.1 s; the switch to the real root comes at about 64 s), and the controller binds (`scsi host3: ioc0: LSISAS1068 A0`). But no disk is discovered behind it, so the VM test still fails.
+    - Experiment `notes/2026-11-11T053000Z-mptsas-wwn-experiment.md`: Linux's `mptsas` finds a disk on QEMU's `mptsas1068` only when the disk has a SAS address (`wwn`). The harness now sets one (`sas_wwn`).
+    - Results with the corrected harness:
+      - 0.29.0 **passes**: the disk is attached in the initrd.
+      - The unfixed image **fails** (`notes/2026-11-11T052441Z-vm-run`): the controller stays unbound and no disk appears.
     - Unfixed image (`notes/2026-11-11T031503Z-vm-run` and the rerun with diagnostics): the HBA disk never appears. `mptsas` is not loaded and the controller (1000:0054) is unbound, although `modprobe -n -v mptsas` resolves it and stage 2's `systemd-udev-trigger` ran. On the PC, stage 2 did load it (54.9 s). That difference is item 51.
     - Late disks and the boot-time plan: `pre-nixos.service` has no ordering after disk discovery, so a disk that appears after it starts is missing from the plan. That is item 50.
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.

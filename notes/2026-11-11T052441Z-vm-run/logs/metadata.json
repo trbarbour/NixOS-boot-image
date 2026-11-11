@@ -7,7 +7,16 @@
     "store_path": "/nix/store/llb8kcm6i0qkpj2xh9x7i894kai8c1zb-pre-nixos-0.29.0-gbd527a5-dirty-26.05.20261031.fa13731-x86_64-linux.iso"
   },
   "diagnostics": {
-    "artifacts": [],
+    "artifacts": [
+      {
+        "label": "dmesg (post-test teardown)",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-11T052441Z-vm-run/logs/diagnostics/dmesg-post-test-teardown-01.log"
+      },
+      {
+        "label": "pre-nixos journal",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-11T052441Z-vm-run/logs/diagnostics/pre-nixos-journal-02.log"
+      }
+    ],
     "directory": "/home/user/NixOS-boot-image/notes/2026-11-11T052441Z-vm-run/logs/diagnostics"
   },
   "generated_at": "2026-11-11T05:24:41.777143+00:00",
@@ -65,7 +74,10 @@
     "port": 50943
   },
   "timings": {
+    "boot_to_login_seconds": 137.855,
     "build_seconds": 318.262,
-    "start": "2026-11-11T05:24:41.651742+00:00"
+    "end": "2026-11-11T05:27:02.879219+00:00",
+    "start": "2026-11-11T05:24:41.651742+00:00",
+    "total_seconds": 141.098
   }
 }
