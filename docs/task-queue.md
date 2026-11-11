@@ -382,7 +382,9 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Proposal: keep one declaration. Either drop the `lan` unit, or drop `networking.interfaces.lan` and `defaultGateway` and name the unit `40-lan`. Needs a design debate, plus a test that evaluates the generated units.
     - 2026-11-11, design `plans/2026-11-11T225033Z-installed-network-unit-design.md` (R-N4). Chosen: (A), keep NixOS's options and drop the declared unit. It is the unit already in effect, so behaviour does not change; the link unit keeps the MAC match.
     - Test first: the flake check `installed-network-units` evaluates the managed block exactly as pre-nixos writes it. The golden files `tests/fixtures/managed-block/{dhcp,static}.nix` are kept equal by `tests/test_managed_block_golden.py`. Before the fix it failed with `.network units ["40-lan.network","lan.network"]`; after it, it passes. The install tests now require no `systemd.network.networks`.
-    - Fixed (0.32.1). VM end-to-end: `test_installed_system_with_a_static_address_is_reachable` (the installed disks boot without the ISO and are reached over SSH at the static address).
+    - Fixed (0.32.1). VM end-to-end `test_installed_system_with_a_static_address_is_reachable` on 0.32.1 (`notes/2026-11-11T225813Z-vm-run`): **passed** in 43 min.
+      - The installed block has no `systemd.network.networks`.
+      - The installed disks boot without the ISO and are reached over SSH at the static address.
 
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
