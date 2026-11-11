@@ -422,34 +422,9 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Must refuse non-removable devices; default to a USB stick for the ISO and an (u)SD card for the SD image.
     - Needs a design (debate) first.
 
-43. **Offline `nixos-install` fails: it plans the compiler bootstrap** *(user report, 2026-11-09, 0.26.2, first BIOS PC; trbarbour/NixOS-boot-image#340)*.
-    - Storage provisioning now works on the hardware (#338 fixed). `nixos-install` then planned 1907 derivations from `stage0-posix`/`hex0-seed` up, and failed on the first source download (no network).
-    - Suspect: the installed system's configuration-specific derivations need build-time tools (a C compiler stdenv) that 26.05's installer no longer ships; same pattern as disko on 2026-10-18 (`tests/vm/offline_closure.py`).
-    - Reproduction: `tests/vm/test_offline_install_closure_vm.py` (dry-run build with substituters disabled, in the VM). Part of item 12.
-    - **Root cause** (host, isolated store; `notes/*-offline-install-closure.md`): the installed system needs packages the minimal ISO lacks (`info` outputs and texinfo, a few packages, GRUB's Perl modules) and builder tools for per-machine configuration derivations. Each missing output forces a rebuild from source, which ends in the compiler bootstrap. The VM test passed wrongly twice (parser), fixed.
-    - **Fix (0.27.0):** `modules/pre-nixos/reference-installed.nix`, two reference installed systems plus six builder tools in the x86 image (about 100 MiB unpacked). A differing configuration: 1247 → 63 derivations to build offline, none of the toolchain.
-      - VM `test_offline_install_closure_vm.py` **passed** on 0.27.0 (`notes/2026-11-09T042722Z-vm-run`): 78 derivations to build offline (was 1751), all configuration; checked against the raw transcript.
-      - Regression on 0.27.0: VM `test_pre_nixos_vm.py` (3), `test_disk_class_vm.py`, `test_reprovision_vm.py`, `test_pre_nixos_cleanup.py`, `test_raid_provisioning.py` passed (7/7); `nix flake check` passed.
-
-44. **Auto-install must wait for the network** *(user, 2026-11-09)*.
-    - The TUI's Apply started `nixos-install` on a machine with no IPv4 address (no DHCP server; the user meant to set a static address next).
-    - User decision: option (b), an IPv4 address **and** a default route on `lan`; explicit requests still run, with a warning. Requirement R-I1 (§2.11).
-    - Implemented: `network.installer_network`, `install.InstallTrigger`, the gate in `auto_install`, TUI and login-notice messages. Tests: `tests/test_install_network_gate.py`, `test_apply_without_network_explains_the_skipped_install`, `test_login_notice_explains_an_install_waiting_for_the_network`.
-    - Correction recorded: "installs must work offline" (BIOS plan D5) was never a requirement; the stock NixOS installer needs the network too.
-
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
     - Options: wait until the device set has been stable for some seconds (bounded), or wait for each controller's scan to complete. Needs a design and a test (a disk hot-plugged during the boot service). On the user's PC the boot run started at 121 s, after the HBA disk (67.8 s).
-49. **mdadm's monitor cannot report a degraded array** *(found 2026-11-10, #344)*.
-    - The installed system has `MAILADDR root` (which pre-nixos writes so mdadm does not warn), but no sendmail, so "DegradedArray" events go nowhere visible. Decide how to report them: the console, the journal at a higher priority, or a `PROGRAM` hook.
-    - 2026-11-11, user decision: options 1 (a login notice) and 2 (a `PROGRAM` hook), test first. Mail was not chosen.
-    - Implemented (0.29.0, R-S7, design §7.2.2): `pre_nixos/templates/pre-nixos-raid-alerts.nix` with `pre-nixos-md-status.sh` and `pre-nixos-md-event.sh`. `MAILADDR root` is gone, and mdadm's daily reminder timer is enabled.
-    - Tests, written first:
-      - `tests/test_raid_alerts.py` (16 failed before the scripts existed);
-      - `test_install.py`, which failed before `install.py` wrote the files;
-      - flake check `raid-alerts-module`;
-      - `test_installed_system_vm.py` now fails a mirror member on the installed system and requires a crit `mdadm-alert` entry and the login warning. **Passed** on 0.29.0 (2026-11-11 04:33Z, `notes/2026-11-11T033955Z-vm-run`).
-
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
