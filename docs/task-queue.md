@@ -389,29 +389,15 @@ _Last updated: 2026-10-30T12-35-13Z_
     - When the ISO build fails, the test reports only `CalledProcessError` with the command; Nix's stderr (the actual error) is not in the pytest output or the run log.
     - Found when the build ran out of disk (`xorriso : FAILURE : Image size 769296s exceeds free space on media 485468s`), seen only by rerunning the build by hand.
     - Plan: capture the build's stderr and include its tail in the failure (and the run's harness log).
+    - 2026-11-11 (0.29.1): `build_boot_artifact` now fails with the last 60 lines of Nix's stderr. Test first: `tests/vm/test_build_errors_unit.py` (a fake `nix` printing the 2026-11-08 xorriso error) failed with the bare `CalledProcessError` and passes now.
 
 38. **Test ISOs fill the cloud session's disk allowance.** *(recurring: 2026-10-18, 2026-10-19, 2026-11-07, 2026-11-08, 2026-11-10)*
     - Each VM run builds a ~1.5 GB ISO into the Nix store; they are not GC roots but stay until collected, and a session's writable disk is a fixed allowance.
     - Plan: before building, delete this repo's older `pre-nixos-*.iso` store paths (unreferenced ones only, `nix-store --delete`), or have the fixture warn when free space is below ~3 GB.
     - 2026-11-08: also the VM disk images. A RAID-1 resync writes the whole member, so sparse images become fully allocated: the reprovision test (`test_reprovision_vm.py`, two array creations on 4+5+5 GiB) needs ~14 GB. Run `notes/2026-11-08T165915Z-vm-run` was stopped by a free-space watchdog (< 1.5 GB). `nix-store --gc` freed 18.7 GiB (the nixpkgs closure from before the flake update, and old builds).
+    - **Correction (2026-11-11, experiment):** `df`'s Avail *is* the limit, root included. `/` is ext4 with `resv_strict` and a large reserved pool. A `fallocate` just over Avail fails with ENOSPC, and one 2 GiB under it succeeds. The 2026-11-10 watchdog most likely never ran: it exited as soon as its `pgrep -f "pytest tests/vm"` did not match. The claim below that "`df` does not show the session's allowance" is wrong.
     - 2026-11-10 (03:20Z): the end-to-end run on the unfixed `install.py` (`notes/2026-11-10T020935Z-vm-run`) died with ENOSPC during `nixos-install`, although `df` still showed 6.2 GB free: `df` does not show the session's allowance, so the df-based watchdog never fired. The SSD and HDD images had grown to 2.5 GB and 5.0 GB. Freed by deleting the images and `nix-store --gc` (11.9 GiB). A watchdog must measure the allowance some other way (e.g. the sizes of the VM images plus the store growth), not `df`.
     - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
-
-39. **Re-provisioning over an earlier layout fails; the disks are wiped three times** *(user report, 2026-11-08, 0.26.1, first BIOS PC; trbarbour/NixOS-boot-image#338)*.
-    - TUI Apply after answering "S": disko skipped `mkfs.vfat` on the new ESP (old signature found), mounting `/boot` failed; the retry failed at `pvcreate` on md0 (`md127` held open).
-    - Hypothesis: the cleanup deactivates LVs and stops arrays before wiping them, so signatures inside LVs/arrays survive and reappear at the same offsets.
-    - **Reproduced 2026-11-08** (`tests/vm/test_reprovision_vm.py`, 0.26.1, `notes/2026-11-08T171557Z-vm-run`): `FAT-fs (sda2): bogus number of reserved sectors`, then on the retry `Can't open /dev/md127 exclusively` and `Cannot use /dev/md/md0: device has a signature` — the user's two failures.
-    - **Fix (0.26.2):** `storage_cleanup._dismantle_graph` releases mounts and swap, then for each node leaf to root wipes it while active (`wipefs`/`lvremove` an LV, `vgremove` a VG, `pvremove`/`wipefs` an array) and only then deactivates it (`mdadm --stop`, zero the members). Unit test `test_global_teardown_and_wipe_leaf_to_root` updated to the correct order (it pinned the faulty one); the mounted-target kernel model now covers `lvremove`/`vgremove`.
-      - VM `test_reprovision_vm.py` **passed** on 0.26.2 (`notes/2026-11-08T173200Z-vm-run`).
-      - Regression on 0.26.2: VM `test_pre_nixos_cleanup.py` and `test_raid_provisioning.py` passed; `nix flake check` passed.
-      - 2026-11-08 16:44Z run interrupted: the first provision (HDD layout) succeeded; during the second apply the session's disk filled (VM images plus test ISOs) and the user's upload failed. Logs `notes/2026-11-08T164406Z-vm-run`. Rerun with a free-space watchdog (item 38).
-    - Also: the TUI wipes, then `apply_plan` wipes again, then retries disko after a third wipe. Review once the root cause is fixed.
-
-40. **`pre-nixos --plan-only` with an unconfirmed disk: the note is glued to the plan, then repeated** *(user report, 2026-11-08, 0.26.1)*.
-    - User request: when a disk's class is unconfirmed, do not print the plan (it is the wrong one); print only the question.
-    - **Root cause of the duplication (user's session, reproduced on a pty):** the user ran `pre-nixos` (not `--plan-only`), so the refusal path printed the note and then broadcast it to the consoles; on the serial console the terminal is `/dev/console`. Every print-then-broadcast in `install.py` (BIOS refusal, boot-order refusal, install start and completion) had the same flaw.
-    - **Fixed:** `console.stdout_is_terminal` (shared with item 36's rule); `install._announce` prints and broadcasts only when stdout is not a terminal; the plan is not printed while a disk's class is unconfirmed. Tests: `test_plan_only_shows_only_the_question`, `test_at_a_terminal_the_note_appears_once`, `test_boot_service_broadcasts_the_refusal`.
-    - Not explained: the missing newline after `}` on the user's serial console (a pty shows `}\r\n`). It cannot recur here since the plan is no longer printed with the note; recorded in case it appears elsewhere.
 
 41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
     - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.
@@ -422,54 +408,17 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Must refuse non-removable devices; default to a USB stick for the ISO and an (u)SD card for the SD image.
     - Needs a design (debate) first.
 
-43. **Offline `nixos-install` fails: it plans the compiler bootstrap** *(user report, 2026-11-09, 0.26.2, first BIOS PC; trbarbour/NixOS-boot-image#340)*.
-    - Storage provisioning now works on the hardware (#338 fixed). `nixos-install` then planned 1907 derivations from `stage0-posix`/`hex0-seed` up, and failed on the first source download (no network).
-    - Suspect: the installed system's configuration-specific derivations need build-time tools (a C compiler stdenv) that 26.05's installer no longer ships; same pattern as disko on 2026-10-18 (`tests/vm/offline_closure.py`).
-    - Reproduction: `tests/vm/test_offline_install_closure_vm.py` (dry-run build with substituters disabled, in the VM). Part of item 12.
-    - **Root cause** (host, isolated store; `notes/*-offline-install-closure.md`): the installed system needs packages the minimal ISO lacks (`info` outputs and texinfo, a few packages, GRUB's Perl modules) and builder tools for per-machine configuration derivations. Each missing output forces a rebuild from source, which ends in the compiler bootstrap. The VM test passed wrongly twice (parser), fixed.
-    - **Fix (0.27.0):** `modules/pre-nixos/reference-installed.nix`, two reference installed systems plus six builder tools in the x86 image (about 100 MiB unpacked). A differing configuration: 1247 → 63 derivations to build offline, none of the toolchain.
-      - VM `test_offline_install_closure_vm.py` **passed** on 0.27.0 (`notes/2026-11-09T042722Z-vm-run`): 78 derivations to build offline (was 1751), all configuration; checked against the raw transcript.
-      - Regression on 0.27.0: VM `test_pre_nixos_vm.py` (3), `test_disk_class_vm.py`, `test_reprovision_vm.py`, `test_pre_nixos_cleanup.py`, `test_raid_provisioning.py` passed (7/7); `nix flake check` passed.
-
-44. **Auto-install must wait for the network** *(user, 2026-11-09)*.
-    - The TUI's Apply started `nixos-install` on a machine with no IPv4 address (no DHCP server; the user meant to set a static address next).
-    - User decision: option (b), an IPv4 address **and** a default route on `lan`; explicit requests still run, with a warning. Requirement R-I1 (§2.11).
-    - Implemented: `network.installer_network`, `install.InstallTrigger`, the gate in `auto_install`, TUI and login-notice messages. Tests: `tests/test_install_network_gate.py`, `test_apply_without_network_explains_the_skipped_install`, `test_login_notice_explains_an_install_waiting_for_the_network`.
-    - Correction recorded: "installs must work offline" (BIOS plan D5) was never a requirement; the stock NixOS installer needs the network too.
-
-48. **The x86 image's initrd lacks SAS HBA drivers (`mptsas`)** *(found 2026-11-11, #344)*.
-    - On the user's PC the HBA disk appears at 67.8 s in the installer, but at about 15 s on the installed system, whose generated configuration has `mptsas` in the initrd.
-    - Since #344's fix a late member no longer degrades an array. Adding common HBA drivers (`mptsas`, `mpt3sas`) to the ISO's initrd would still make such disks appear sooner, for pre-nixos's inventory too. Check first whether disks that appear late are missed by the boot-time plan.
-    - 2026-11-11 (user: "do item 48"). Tests first:
-      - flake check `initrd-storage-drivers` fails on the current image for all eight drivers;
-      - `tests/vm/test_hba_disk_vm.py` puts a disk behind QEMU's `mptsas1068` and requires it attached before the switch to the real root.
-    - Fix (0.28.2): `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`, all present in the pinned kernel) added to the x86 initrd (R-S6). VM runs pending.
-    - Fixed image (0.29.0, `notes/2026-11-11T033711Z-vm-run`): `mptsas` loads in the initrd (24.1 s; the switch to the real root comes at about 64 s), and the controller binds (`scsi host3: ioc0: LSISAS1068 A0`). But no disk is discovered behind it, so the VM test still fails.
-    - Experiment `notes/2026-11-11T053000Z-mptsas-wwn-experiment.md`: Linux's `mptsas` finds a disk on QEMU's `mptsas1068` only when the disk has a SAS address (`wwn`). The harness now sets one (`sas_wwn`).
-    - Results with the corrected harness:
-      - 0.29.0 **passes**: the disk is attached in the initrd.
-      - The unfixed image **fails** (`notes/2026-11-11T052441Z-vm-run`): the controller stays unbound and no disk appears.
-    - Unfixed image (`notes/2026-11-11T031503Z-vm-run` and the rerun with diagnostics): the HBA disk never appears. `mptsas` is not loaded and the controller (1000:0054) is unbound, although `modprobe -n -v mptsas` resolves it and stage 2's `systemd-udev-trigger` ran. On the PC, stage 2 did load it (54.9 s). That difference is item 51.
-    - Late disks and the boot-time plan: `pre-nixos.service` has no ordering after disk discovery, so a disk that appears after it starts is missing from the plan. That is item 50.
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
     - Options: wait until the device set has been stable for some seconds (bounded), or wait for each controller's scan to complete. Needs a design and a test (a disk hot-plugged during the boot service). On the user's PC the boot run started at 121 s, after the HBA disk (67.8 s).
-49. **mdadm's monitor cannot report a degraded array** *(found 2026-11-10, #344)*.
-    - The installed system has `MAILADDR root` (which pre-nixos writes so mdadm does not warn), but no sendmail, so "DegradedArray" events go nowhere visible. Decide how to report them: the console, the journal at a higher priority, or a `PROGRAM` hook.
-    - 2026-11-11, user decision: options 1 (a login notice) and 2 (a `PROGRAM` hook), test first. Mail was not chosen.
-    - Implemented (0.29.0, R-S7, design §7.2.2): `pre_nixos/templates/pre-nixos-raid-alerts.nix` with `pre-nixos-md-status.sh` and `pre-nixos-md-event.sh`. `MAILADDR root` is gone, and mdadm's daily reminder timer is enabled.
-    - Tests, written first:
-      - `tests/test_raid_alerts.py` (16 failed before the scripts existed);
-      - `test_install.py`, which failed before `install.py` wrote the files;
-      - flake check `raid-alerts-module`;
-      - `test_installed_system_vm.py` now fails a mirror member on the installed system and requires a crit `mdadm-alert` entry and the login warning. **Passed** on 0.29.0 (2026-11-11 04:33Z, `notes/2026-11-11T033955Z-vm-run`).
-
+    - 2026-11-11, user decision: options 1 and 3. (1) Before the inventory, wait until the disk set has been unchanged for a quiet period (about 15 s), with an upper bound (about 2 min), both settable on the kernel command line. (3) Take the inventory again just before anything is written; if it differs from the plan's, stop (plan-only) and name the change. Tests: unit tests with a simulated clock and device list, and a VM test that hot-plugs a disk shortly after the boot service starts. Queued after items 38, 42 and 41.
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-11T14-21-08Z - Merged trbarbour/NixOS-boot-image#347 (0.29.0): item 48, SAS/RAID controller drivers in the x86 initrd (R-S6; the HBA disk is now found in the initrd, and the test fails on the unfixed image); item 49, degraded arrays reported at login and through mdadm's PROGRAM hook instead of `MAILADDR root` (R-S7; the installed-system VM test fails a member and sees the crit entry and the login warning). CI green, no Codex findings. Follow-ups: items 50 and 51.
 - 2026-11-11T02-55-39Z - Merged trbarbour/NixOS-boot-image#346 (0.28.1): fixes #344 (item 47). The boot image masks mdadm's last-resort units (initrd and system), so an array whose member appears late (an HBA disk at 67.8 s on the user's PC) is no longer started degraded, which had dropped that member for good. R-S5, design §7.2.1. Tests first: `tests/vm/test_late_raid_member_vm.py` fails on the unfixed image and passes on 0.28.1, and the flake check `no-degraded-md-start` does the same. RAID regression passes. CI green, no Codex findings. The user still has to re-add `sdc1` on the PC. Follow-ups: items 48 and 49.
 - 2026-11-11T01-06-16Z - Merged trbarbour/NixOS-boot-image#345 (0.28.0): item 45, the optional site setting `rootHashedPassword` (R-A1, R-A2), checked by libxcrypt at build time after Codex's finding.
 - 2026-11-10T04-02-58Z - Merged trbarbour/NixOS-boot-image#343 (0.27.1): fixes #342 (item 46). An installed system with a static address was unreachable because the installer's DHCP unit `20-lan.network`, copied into the target by an earlier failed DHCP install, overrode the declared network. pre-nixos no longer copies the installer's units and removes leftovers. The end-to-end VM test `tests/vm/test_installed_system_vm.py` (item 12; static 10.0.2.20, stale unit planted) passes on 0.27.1 (`notes/2026-11-10T032558Z-vm-run`) and fails on the unfixed `install.py` with no SSH to the installed system (`notes/2026-11-10T035101Z-vm-run`, 04:23Z). The user confirmed the cause on the PC. CI green, no Codex findings.
