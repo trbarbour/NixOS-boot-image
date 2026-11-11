@@ -729,3 +729,12 @@ def test_cli_leaves_a_dhcp_installer_alone_unless_told(monkeypatch, tmp_path):
 def test_cli_installer_network_no_declines(monkeypatch, tmp_path):
     no_address = pre_nixos.network.NetworkReadiness(None, None)
     assert _static_cli(monkeypatch, tmp_path, no_address, [*STATIC_ARGS, "--installer-network", "no"]) == []
+
+
+def test_cli_dry_run_does_not_touch_the_installer_network(monkeypatch, tmp_path, capsys):
+    """Codex on #351: --dry-run only prints; it must not reconfigure lan."""
+
+    no_address = pre_nixos.network.NetworkReadiness(None, None)
+    applied = _static_cli(monkeypatch, tmp_path, no_address, [*STATIC_ARGS, "--dry-run", "--installer-network", "yes"])
+    assert applied == []
+    assert "would give the installer" in capsys.readouterr().out

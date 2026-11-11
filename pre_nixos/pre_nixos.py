@@ -251,12 +251,21 @@ def _configure_installer_network(
     config: install.InstallNetworkConfig,
     lan_config: network.LanConfiguration | None,
     mode: installer_network.Mode,
+    *,
+    dry_run: bool = False,
 ) -> None:
     """Item 41 (R-N1): give the installer the static settings when it has no
-    address (``auto``), or when asked (``yes``)."""
+    address (``auto``), or when asked (``yes``).  ``--dry-run`` only says so
+    (Codex on #351)."""
 
     iface = lan_config.interface if lan_config and lan_config.interface else "lan"
     if not installer_network.decide(mode, network.installer_network(iface)):
+        return
+    if dry_run:
+        print(
+            f"Dry run: would give the installer's {iface} {config.cidr} via {config.gateway},"
+            f" DNS {', '.join(config.dns)}."
+        )
         return
     mac = lan_config.mac_address if lan_config else None
     try:
@@ -421,7 +430,9 @@ def main(argv: list[str] | None = None) -> None:
                     f"Warning: failed to record install network configuration: {exc}",
                     file=sys.stderr,
                 )
-            _configure_installer_network(install_network, lan_config, installer_network.Mode(args.installer_network))
+            _configure_installer_network(
+                install_network, lan_config, installer_network.Mode(args.installer_network), dry_run=args.dry_run
+            )
 
         if args.install_now:
             if args.plan_only or args.partition_boot or args.partition_lvm or class_answers:

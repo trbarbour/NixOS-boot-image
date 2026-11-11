@@ -21,7 +21,9 @@ pytestmark = [pytest.mark.vm, pytest.mark.slow]
 
 STATIC = "10.0.2.20"
 GATEWAY = "10.0.2.2"
-DNS = "10.0.2.3"
+# Not QEMU's DHCP DNS server (10.0.2.3), so the DHCP setting cannot pass the
+# check (Codex on #351).  It need not answer: resolved only has to adopt it.
+DNS = "10.0.2.53"
 
 
 def test_installer_takes_the_static_settings(boot_image_vm: BootImageVM) -> None:
@@ -38,14 +40,16 @@ def test_installer_takes_the_static_settings(boot_image_vm: BootImageVM) -> None
 
     deadline = time.monotonic() + 120
     while True:
-        state = vm.run_as_root(
-            "ip -4 -o addr show lan; ip -4 route show default; resolvectl dns lan;"
-            " cat /run/systemd/network/10-lan-static.network",
-            timeout=60,
-        )
-        if f"inet {STATIC}/24" in state and f"default via {GATEWAY}" in state and DNS in state:
+        addresses = vm.run_as_root("ip -4 -o addr show lan; ip -4 route show default", timeout=60)
+        # DNS only from systemd-resolved, not from the unit file (Codex on #351).
+        resolved = vm.run_as_root("resolvectl dns lan", timeout=60)
+        if (f"inet {STATIC}/24" in addresses and f"default via {GATEWAY}" in addresses
+                and DNS in resolved):
             break
-        assert time.monotonic() < deadline, f"lan did not take the static settings:\n{state}"
+        if time.monotonic() > deadline:
+            unit = vm.run_as_root("cat /run/systemd/network/10-lan-static.network", timeout=60)
+            pytest.fail(f"lan did not take the static settings:\n{addresses}\n{resolved}\n--- unit ---\n{unit}")
         time.sleep(5)
-    # DHCP is off for lan: the address QEMU's DHCP server hands out is gone.
-    assert "inet 10.0.2.15/" not in state, state
+    # DHCP is off for lan: QEMU's DHCP address and DNS server are gone.
+    assert "inet 10.0.2.15/" not in addresses, addresses
+    assert "10.0.2.3" not in resolved.replace(DNS, ""), resolved

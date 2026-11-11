@@ -40,6 +40,6 @@ _2026-11-11T18:38:53Z. Task queue item 41._
   - an old payload without DNS;
   - the managed block's `networkConfig.DNS`.
 - The CLI: `--install-dns` and `--installer-network`.
-- A VM test: `pre-nixos --install-ip-address 10.0.2.20 … --install-dns 10.0.2.3 --installer-network yes --plan-only` in the booted image.
-  - `lan` must then have 10.0.2.20/24, a default route via 10.0.2.2, and DNS 10.0.2.3 (`resolvectl dns lan`).
+- A VM test: `pre-nixos --install-ip-address 10.0.2.20 … --install-dns 10.0.2.53 --installer-network yes --plan-only` in the booted image.
+  - `lan` must then have 10.0.2.20/24, a default route via 10.0.2.2, and DNS 10.0.2.53 in `resolvectl dns lan` (not QEMU's DHCP DNS server, 10.0.2.3, which must be gone). `--dry-run` only prints what it would do.
   - QEMU's network always offers DHCP, so this proves the mechanism and its precedence over DHCP, not the no-DHCP trigger (covered by `decide`'s unit tests).
