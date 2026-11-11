@@ -402,13 +402,45 @@
           if system == preInstallerSystem then preInstallerPackage
           else if system == aarch64System then aarch64Config.pkgs.pre-nixos
           else makePreNixosPackage { inherit system; };
+        # Item 42: write an image to removable media, from the build host
+        # (plans/2026-11-11T181058Z-image-writer-design.md).  Not part of the
+        # boot image.  zstd comes from the store; nix and sudo stay the host's
+        # (sudo's setuid wrapper cannot come from the store).
+        writeImage = pkgs.runCommand "pre-nixos-write-image-${preNixosVersion}" {
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+        } (''
+          mkdir -p $out/lib $out/bin
+          cp -r ${./write_image} $out/lib/write_image
+          chmod -R u+w $out/lib/write_image
+          # sudo's secure_path drops PATH: the root helper runs tools by
+          # absolute store path (Codex on #350).
+          echo 'ZSTD = "${pkgs.zstd}/bin/zstd"' > $out/lib/write_image/_tools.py
+        '' + lib.concatMapStrings ({ name, module }: ''
+          cat > $out/bin/${name} <<EOF
+          #!${pkgs.python3}/bin/python3 -I
+          import sys
+          sys.path.insert(0, "$out/lib")
+          from write_image.${module} import main
+          sys.exit(main())
+          EOF
+          chmod +x $out/bin/${name}
+          wrapProgram $out/bin/${name} --prefix PATH : ${lib.makeBinPath [ pkgs.zstd ]}
+        '') [ { name = "write-image"; module = "cli"; } { name = "write-image-tui"; module = "tui"; } ]);
       in {
-        packages =
+        apps = {
+          write-image = { type = "app"; program = "${writeImage}/bin/write-image"; };
+          write-image-tui = { type = "app"; program = "${writeImage}/bin/write-image-tui"; };
+        };
+        packages = (
           if system == preInstallerSystem then {
             default = preInstallerConfig.config.system.build.isoImage;
             bootImage = preInstallerConfig.config.system.build.isoImage;
             # The same ISO with the serial console primary (R-C2; "-serial" in its name).
             bootImageSerial = consoleVariant "iso" "serial";
+            # Forced to the format's default console, overriding the site
+            # (write-image's explicit --console; Codex on #350).
+            bootImageDisplay = consoleVariant "iso" "display";
+            bootImageSdSerial = consoleVariant "sd" "serial";
             bootImageSdDisplay = consoleVariant "sd" "display";
             # The AArch64 image again, so `nix build .#bootImageSd` works on an
             # x86_64 build host (built under emulation); short attribute names
@@ -421,13 +453,27 @@
             bootImageSd = aarch64Config.config.system.build.sdImage;
             # The SD image with the display primary (R-C2; "-display" in its name).
             bootImageSdDisplay = consoleVariant "sd" "display";
+            bootImageSdSerial = consoleVariant "sd" "serial";
             ubootRpi4Nvme = aarch64Config.pkgs.callPackage ./nix/uboot-rpi4-nvme.nix { };
             rpi4NvmeFirmware = aarch64Config.config.services.pre-nixos.rpiFirmware;
           } else {
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
-          };
+          }) // { inherit writeImage; };
         checks = {
+          # Item 42: the app starts, and the root helper's bootstrap (run by
+          # sudo with the store's python, -I) imports from the store.
+          write-image-app = pkgs.runCommand "write-image-app" { } ''
+            ${writeImage}/bin/write-image --help > help.txt
+            grep -q -- "--site" help.txt
+            ${pkgs.python3}/bin/python3 -I -c "import sys; sys.path.insert(0, '${writeImage}/lib'); from write_image.helper import main; sys.exit(main(sys.argv[1:]))" --help > helper.txt
+            grep -q -- "--device" helper.txt
+            # The helper decompresses with an empty PATH, as under sudo's secure_path.
+            echo pre-nixos > card.img && ${pkgs.zstd}/bin/zstd -q card.img
+            env -i ${pkgs.python3}/bin/python3 -I -c "import sys; sys.path.insert(0, '${writeImage}/lib'); from write_image import image; print(image.digest(image.image_at(__import__('pathlib').Path('card.img.zst'))))" > digest.txt
+            grep -q "^(10, " digest.txt
+            touch $out
+          '';
           pre-nixos-propagates-required-tools =
             let
               propagatedNames =
