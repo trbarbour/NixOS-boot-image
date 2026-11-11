@@ -42,11 +42,26 @@ def _first(lines: List[str], *needles: str) -> Optional[float]:
     return None
 
 
+# Evidence when the disk is missing: whether the driver is loaded, bound to
+# the controller (QEMU's SAS1068 is PCI 1000:0054), and loadable at all.
+DRIVER_DIAGNOSTICS = (
+    "echo '--- lsmod'; lsmod | grep -iE 'mpt|scsi_transport_sas' || echo none;"
+    " echo '--- controller'; for d in /sys/bus/pci/devices/*; do"
+    " if grep -q v00001000d00000054 $d/modalias 2>/dev/null; then"
+    " echo $d modalias=$(cat $d/modalias) driver=$(readlink $d/driver || echo none); fi; done;"
+    " echo '--- modprobe -n -v mptsas'; modprobe -n -v mptsas 2>&1;"
+    " echo '--- udev trigger'; systemctl status systemd-udev-trigger.service --no-pager 2>&1 | head -n 5;"
+    " echo '--- kernel'; journalctl -b -k -o short-monotonic --no-pager | grep -iE 'mpt|fusion|scsi host' | head -n 20"
+)
+
+
 def test_hba_disk_is_found_in_the_initrd(boot_image_vm_with_hba_disk: BootImageVM) -> None:
     vm = boot_image_vm_with_hba_disk
     listing = vm.run_as_root_checked("lsblk -dnro NAME,SERIAL", timeout=120)
     names = [line.split()[0] for line in listing.splitlines() if line.split()[1:] == [HBA_SERIAL]]
-    assert len(names) == 1, f"the HBA disk is not visible:\n{listing}"
+    if len(names) != 1:
+        diagnostics = vm.run_as_root(DRIVER_DIAGNOSTICS, timeout=120)
+        pytest.fail(f"the HBA disk is not visible:\n{listing}\n{diagnostics}")
     (name,) = names
 
     journal = vm.run_as_root(

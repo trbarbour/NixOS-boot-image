@@ -492,6 +492,43 @@
         } // pkgs.lib.optionalAttrs (system == preInstallerSystem) (
           builtins.mapAttrs (name: passed: assert passed; pkgs.runCommand name { } "touch $out") siteChecks
         ) // pkgs.lib.optionalAttrs (system == preInstallerSystem) {
+          # Item 49 (reqs R-S7): the module pre-nixos writes on the target
+          # reports through mdadm's PROGRAM hook (no MAILADDR, which needs
+          # sendmail), checks /proc/mdstat at every login, and enables
+          # mdadm's daily reminder.  Its built scripts run on a degraded
+          # /proc/mdstat (the user's, #344).
+          raid-alerts-module =
+            let
+              cfg = (nixpkgs.lib.nixosSystem {
+                inherit system;
+                modules = [
+                  ./pre_nixos/templates/pre-nixos-raid-alerts.nix
+                  {
+                    boot.loader.grub.enable = false;
+                    fileSystems."/" = { device = "/dev/disk/by-label/slash"; fsType = "ext4"; };
+                    boot.swraid.enable = true;
+                    system.stateVersion = "26.05";
+                  }
+                ];
+              }).config;
+              mdadmConf = cfg.environment.etc."mdadm.conf".text;
+              status = lib.removeSuffix "\n" cfg.environment.loginShellInit;
+            in
+            assert lib.assertMsg (!(lib.hasInfix "MAILADDR" mdadmConf)) "mdadm.conf still has MAILADDR: ${mdadmConf}";
+            assert lib.assertMsg (lib.elem "timers.target" cfg.systemd.timers.mdmonitor-oneshot.wantedBy)
+              "mdadm's daily reminder is not enabled";
+            # The conf file carries the hook's store path as a dependency.
+            pkgs.runCommand "raid-alerts-module" { conf = pkgs.writeText "mdadm.conf" mdadmConf; } ''
+              printf 'md0 : active raid1 sda1[0]\n      732440576 blocks super 1.2 [2/1] [U_]\n' > mdstat
+              notice=$(PRE_NIXOS_MDSTAT=$PWD/mdstat ${status})
+              echo "$notice"
+              case "$notice" in *"md0 is degraded (1 of 2"*) ;; *) echo "no degraded notice"; exit 1 ;; esac
+              program=$(sed -n 's/^PROGRAM //p' "$conf")
+              [ -x "$program" ] || { echo "no PROGRAM in mdadm.conf"; exit 1; }
+              "$program" Fail /dev/md0 /dev/sdc1
+              "$program" NewArray /dev/md0
+              touch $out
+            '';
           # Item 48 (reqs R-S6): the ISO's initrd carries the storage
           # controller drivers of modules/pre-nixos/initrd-storage-drivers.nix,
           # so their disks appear before the real root starts.

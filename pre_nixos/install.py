@@ -27,6 +27,14 @@ _AUTO_INSTALL_MODULE = "./pre-nixos-auto-install-ip.nix"
 # Disables NetworkManager, which nixos-generate-config enables (#326).
 _NETWORK_MODULE = "./pre-nixos-network.nix"
 _NETWORK_MODULE_TEMPLATE = "network-networkd.nix"
+# Item 49 (reqs R-S7): degraded-array reports; the module and its scripts are
+# written under these names, which the module itself refers to.
+_RAID_ALERTS_MODULE = "./pre-nixos-raid-alerts.nix"
+_RAID_ALERTS_FILES = (
+    "pre-nixos-raid-alerts.nix",
+    "pre-nixos-md-status.sh",
+    "pre-nixos-md-event.sh",
+)
 _SERIAL_CONSOLE_PARAM = "console=ttyS0,115200n8"
 _VGA_CONSOLE_PARAM = "console=tty0"
 
@@ -686,6 +694,9 @@ def _inject_configuration(
         _load_template(_NETWORK_MODULE_TEMPLATE), encoding="utf-8"
     )
     filtered = _ensure_import(filtered, _NETWORK_MODULE)
+    for name in _RAID_ALERTS_FILES:
+        (config_dir / name).write_text(_load_template(name), encoding="utf-8")
+    filtered = _ensure_import(filtered, _RAID_ALERTS_MODULE)
     loader_template = boot_platform.loader_module_template(boot_setup)
     if loader_template is not None:
         (config_dir / boot_platform.LOADER_MODULE_FILE).write_text(
@@ -805,15 +816,6 @@ def _inject_configuration(
         [
             '    linkConfig.Name = "lan";',
             "  };",
-            "",
-        ]
-    )
-
-    block_lines.extend(
-        [
-            "  boot.swraid.mdadmConf = ''",
-            "    MAILADDR root",
-            "  '';",
             "",
         ]
     )

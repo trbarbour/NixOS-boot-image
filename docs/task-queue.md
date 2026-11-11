@@ -444,12 +444,25 @@ _Last updated: 2026-10-30T12-35-13Z_
       - flake check `initrd-storage-drivers` fails on the current image for all eight drivers;
       - `tests/vm/test_hba_disk_vm.py` puts a disk behind QEMU's `mptsas1068` and requires it attached before the switch to the real root.
     - Fix (0.28.2): `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`, all present in the pinned kernel) added to the x86 initrd (R-S6). VM runs pending.
+    - Unfixed image (`notes/2026-11-11T031503Z-vm-run` and the rerun with diagnostics): the HBA disk never appears. `mptsas` is not loaded and the controller (1000:0054) is unbound, although `modprobe -n -v mptsas` resolves it and stage 2's `systemd-udev-trigger` ran. On the PC, stage 2 did load it (54.9 s). That difference is item 51.
     - Late disks and the boot-time plan: `pre-nixos.service` has no ordering after disk discovery, so a disk that appears after it starts is missing from the plan. That is item 50.
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
     - Options: wait until the device set has been stable for some seconds (bounded), or wait for each controller's scan to complete. Needs a design and a test (a disk hot-plugged during the boot service). On the user's PC the boot run started at 121 s, after the HBA disk (67.8 s).
 49. **mdadm's monitor cannot report a degraded array** *(found 2026-11-10, #344)*.
     - The installed system has `MAILADDR root` (which pre-nixos writes so mdadm does not warn), but no sendmail, so "DegradedArray" events go nowhere visible. Decide how to report them: the console, the journal at a higher priority, or a `PROGRAM` hook.
+    - 2026-11-11, user decision: options 1 (a login notice) and 2 (a `PROGRAM` hook), test first. Mail was not chosen.
+    - Implemented (0.29.0, R-S7, design §7.2.2): `pre_nixos/templates/pre-nixos-raid-alerts.nix` with `pre-nixos-md-status.sh` and `pre-nixos-md-event.sh`. `MAILADDR root` is gone, and mdadm's daily reminder timer is enabled.
+    - Tests, written first:
+      - `tests/test_raid_alerts.py` (16 failed before the scripts existed);
+      - `test_install.py`, which failed before `install.py` wrote the files;
+      - flake check `raid-alerts-module`;
+      - `test_installed_system_vm.py` now fails a mirror member on the installed system and requires a crit `mdadm-alert` entry and the login warning. VM run pending.
+
+51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
+    - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
+    - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
+    - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
 - 2026-11-11T02-55-39Z - Merged trbarbour/NixOS-boot-image#346 (0.28.1): fixes #344 (item 47). The boot image masks mdadm's last-resort units (initrd and system), so an array whose member appears late (an HBA disk at 67.8 s on the user's PC) is no longer started degraded, which had dropped that member for good. R-S5, design §7.2.1. Tests first: `tests/vm/test_late_raid_member_vm.py` fails on the unfixed image and passes on 0.28.1, and the flake check `no-degraded-md-start` does the same. RAID regression passes. CI green, no Codex findings. The user still has to re-add `sdc1` on the PC. Follow-ups: items 48 and 49.

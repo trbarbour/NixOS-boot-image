@@ -31,7 +31,10 @@ let
 
   # Mirrors install.py's managed block where it chooses packages or services.
   common = { lib, ... }: {
-    imports = [ ../../pre_nixos/templates/network-networkd.nix ];
+    imports = [
+      ../../pre_nixos/templates/network-networkd.nix
+      ../../pre_nixos/templates/pre-nixos-raid-alerts.nix
+    ];
     nixpkgs.hostPlatform = lib.mkForce system;
     system.stateVersion = "26.05";
     networking.networkmanager.enable = true; # as the generator writes it; the network module turns it off
@@ -48,7 +51,6 @@ let
       settings.PasswordAuthentication = false;
     };
     boot.swraid.enable = true;
-    boot.swraid.mdadmConf = "MAILADDR root";
     boot.initrd.services.lvm.enable = true;
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
     # Typical hardware-configuration.nix lines on the user's machines.
