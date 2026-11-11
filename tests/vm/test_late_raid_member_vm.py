@@ -49,8 +49,18 @@ def _mirror(mdstat: str) -> str:
     return name
 
 
-def _array_line(mdstat: str, name: str) -> str:
-    lines: List[str] = [line for line in mdstat.splitlines() if line.startswith(f"{name} :")]
+def _array_with(mdstat: str, member: str) -> str:
+    """The /proc/mdstat line of the array holding partition ``member``.
+
+    Found by member, not by name: the array the image provisions is ``md127``,
+    and incremental reassembly names it ``md0`` (first run, 2026-11-11).
+    """
+
+    lines: List[str] = [
+        line for line in mdstat.splitlines()
+        if line.startswith("md") and re.search(rf"\b{re.escape(member)}\[", line)
+    ]
+    assert len(lines) <= 1, mdstat
     return lines[0] if lines else ""
 
 
@@ -92,9 +102,9 @@ def test_late_member_does_not_degrade_the_mirror(
     time.sleep(LAST_RESORT_SECONDS + MARGIN_SECONDS)
     waited = vm.run_as_root_checked("cat /proc/mdstat", timeout=60)
     journal = vm.run_as_root("journalctl -b --no-pager | grep -i 'last-resort\\|degraded' | tail -n 20", timeout=60)
-    line = _array_line(waited, md)
-    assert "inactive" in line and "active raid1" not in line, (
-        f"the boot image started {md} without its late member:\n{waited}\n{journal}"
+    line = _array_with(waited, f"{early}1")
+    assert line and "inactive" in line and "active raid1" not in line, (
+        f"the boot image started the mirror without its late member:\n{waited}\n{journal}"
     )
 
     # The late member arrives: incremental assembly completes the mirror.
@@ -109,11 +119,12 @@ def test_late_member_does_not_degrade_the_mirror(
     deadline = time.monotonic() + 180
     while True:
         mdstat = vm.run_as_root_checked("udevadm settle; cat /proc/mdstat", timeout=120)
-        line = _array_line(mdstat, md)
+        line = _array_with(mdstat, f"{early}1")
         if "active raid1" in line and line.count("[") >= 2:
             break
-        assert time.monotonic() < deadline, f"{md} did not assemble with both members:\n{mdstat}"
+        assert time.monotonic() < deadline, f"the mirror did not assemble with both members:\n{mdstat}"
         time.sleep(5)
-    detail = vm.run_as_root_checked(f"mdadm --detail /dev/{md}", timeout=60)
+    assembled = line.split()[0]
+    detail = vm.run_as_root_checked(f"mdadm --detail /dev/{assembled}", timeout=60)
     assert re.search(r"Active Devices : 2", detail), detail
     assert "removed" not in detail, detail

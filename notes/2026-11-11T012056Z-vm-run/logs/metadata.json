@@ -7,7 +7,16 @@
     "store_path": "/nix/store/viqz2akf87bs7bs0xxiihjswj4zldapi-pre-nixos-0.28.0-20261111011348-s0e9230d0-26.05.20261031.fa13731-x86_64-linux.iso"
   },
   "diagnostics": {
-    "artifacts": [],
+    "artifacts": [
+      {
+        "label": "dmesg (post-test teardown)",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-11T012056Z-vm-run/logs/diagnostics/dmesg-post-test-teardown-01.log"
+      },
+      {
+        "label": "pre-nixos journal",
+        "path": "/home/user/NixOS-boot-image/notes/2026-11-11T012056Z-vm-run/logs/diagnostics/pre-nixos-journal-02.log"
+      }
+    ],
     "directory": "/home/user/NixOS-boot-image/notes/2026-11-11T012056Z-vm-run/logs/diagnostics"
   },
   "generated_at": "2026-11-11T01:21:00.012050+00:00",
@@ -70,6 +79,8 @@
   "timings": {
     "boot_to_login_seconds": 146.059,
     "build_seconds": 412.58,
-    "start": "2026-11-11T01:20:56.897686+00:00"
+    "end": "2026-11-11T01:28:14.241482+00:00",
+    "start": "2026-11-11T01:20:56.897686+00:00",
+    "total_seconds": 434.212
   }
 }
