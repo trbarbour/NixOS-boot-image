@@ -20,6 +20,10 @@ unavailable".  No test had booted an installed system before.
    ``lan``).  The test SSHes in through the port forward with the image's
    root key, and reads the address and route of ``lan``.
 
+Task queue item 49 (reqs R-S7): on the installed system, failing a mirror
+member must give a crit journal entry from mdadm's PROGRAM hook and a warning
+at login.
+
 Task queue item 45 (reqs R-A1): the image is built with the test hashed root
 password (tests/vm/fixtures.py), and the test plants an earlier attempt's
 ``/etc/shadow`` with root locked.  The installed system's root must have the
@@ -81,6 +85,40 @@ def _ssh(ssh_executable: str, key: Path, port: int, command: str) -> subprocess.
         ],
         capture_output=True, text=True, timeout=120,
     )
+
+
+def _check_degraded_array_reports(ssh_executable: str, key: Path, port: int) -> None:
+    """Item 49 (reqs R-S7): a failed mirror member is reported.
+
+    The HDD pair's mirror is complete after the install: no login notice.  A
+    member is then failed by hand; mdadm's monitor must run the PROGRAM hook,
+    which logs at crit (tag mdadm-alert), and a login shell must warn.
+    """
+
+    def run(command: str) -> str:
+        result = _ssh(ssh_executable, key, port, command)
+        assert result.returncode == 0, f"{command}: {result.stdout}{result.stderr}"
+        return result.stdout
+
+    healthy = run("cat /proc/mdstat; echo ---; bash -l -c true")
+    assert "WARNING: RAID" not in healthy, healthy
+    mirror = run("awk '/ : active raid1 / {print $1; print $NF}' /proc/mdstat").split()
+    assert len(mirror) == 2, healthy
+    md, member = mirror[0], mirror[1].split("[")[0]
+    run(f"mdadm /dev/{md} --fail /dev/{member}")
+    # mdadm --monitor polls every 60 s by default.
+    deadline = time.monotonic() + 240
+    while True:
+        alerts = run("journalctl -b -p crit -t mdadm-alert --no-pager -o cat || true")
+        if f"Fail on /dev/{md}" in alerts:
+            break
+        assert time.monotonic() < deadline, (
+            f"no crit mdadm-alert after failing {member}:\n{alerts}\n"
+            + run("journalctl -b -u mdmonitor --no-pager | tail -n 20; cat /etc/mdadm.conf")
+        )
+        time.sleep(10)
+    notice = run("bash -l -c true")
+    assert f"RAID array {md} is degraded (1 of 2" in notice, notice
 
 
 def test_installed_system_with_a_static_address_is_reachable(
@@ -157,6 +195,7 @@ def test_installed_system_with_a_static_address_is_reachable(
         assert "default via 10.0.2.2" in result.stdout, result.stdout
         # R-A1: root can log in on the console with the site's password.
         assert f"shadow-root={TEST_ROOT_PASSWORD_HASH}" in result.stdout, result.stdout
+        _check_degraded_array_reports(ssh_executable, boot_ssh_key_pair.private_key, port)
     finally:
         installed.terminate()
         try:

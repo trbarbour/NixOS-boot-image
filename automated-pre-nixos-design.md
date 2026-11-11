@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.35
+**Doc status:** Draft v0.37
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -74,6 +74,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 
 ## 7) Discovery & Heuristics (Core logic)
 ### 7.1 Disk inventory
+- **Controllers [R-S6]:** the x86 image's initrd adds the SAS/RAID drivers listed in `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`) to NixOS's all-hardware list, whose SCSI part is incomplete. On the user's PC an LSI SAS1068E disk otherwise appeared only at 67.8 s, once the real root's udev loaded `mptsas` (task queue item 48, #344). udev loads them only for matching hardware.
 - Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
 - For each disk: gather `model` (the full ATA model from `device/vpd_pg89` when present, since a SATA disk's `device/model` is cut to 16 characters, #336; else `device/model`), `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
 - Group disks into **SSDs** and **HDDs**, then bucket them by approximate size (≤1% tolerance).
@@ -95,6 +96,14 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - **Data array next:** With remaining disks, choose level: **2 ⇒ RAID1**, **3–5 ⇒ RAID5**, **≥6 ⇒ RAID6**. This md becomes PV for **VG `large`**.
   - **Naming:** the largest HDD bucket forms **VG `large`**; additional buckets are named `large_1`, `large_2`, … and remain unused.
   - **Fallbacks:** If insufficient HDDs for a swap mirror, create VG `large` from available HDDs and put the swap LV there. With no rotating tier available, place the swap LV on `main` provided it can accommodate the configured size; otherwise skip swap.
+
+### 7.2.2 Degraded-array reports on the installed system [R-S7]
+- pre-nixos writes `pre-nixos-raid-alerts.nix`, `pre-nixos-md-status.sh` and `pre-nixos-md-event.sh` into the target's `/etc/nixos` and imports the module (task queue item 49, #344). The reference installed systems import the same module.
+- `environment.loginShellInit` runs the status script, which reads `/proc/mdstat` and prints a warning for each array with fewer active devices than members (with any recovery progress), or that is inactive. It prints nothing otherwise and never fails.
+- `boot.swraid.mdadmConf = "PROGRAM <event script>"` replaces `MAILADDR root`: the installed system has no sendmail, so the mail failed and a degraded array went unnoticed.
+  - Fail, FailSpare, DegradedArray, DeviceDisappeared and SparesMissing are logged at `crit` (tag `mdadm-alert`) and broadcast with `wall`.
+  - Other events are logged at `info`.
+- mdadm's `mdmonitor-oneshot.timer` (the daily "Reminder for degraded MD arrays") is enabled; NixOS ignores its `[Install]` section.
 
 ### 7.2.1 Existing arrays at boot [R-S5]
 - The boot image masks mdadm's `mdadm-last-resort@` timer and service, both in its initrd and in its system. Stock NixOS starts an array still missing members after 30 s (`mdadm --run`). That marks the absent members missing in the others' superblocks for good, so a member that appears late (an HBA disk at 68 s on the user's PC) is dropped, also on the installed system (#344).

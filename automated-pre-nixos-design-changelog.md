@@ -157,3 +157,9 @@
 
 ### v0.35 — 2026-11-11
 - §7.2.1: the boot image never starts a degraded md array on its own (R-S5, #344). mdadm's last-resort units are masked in its initrd and system.
+
+### v0.36 — 2026-11-11
+- §7.1: the x86 image's initrd carries common SAS/RAID controller drivers (R-S6, task queue item 48).
+
+### v0.37 — 2026-11-11
+- §7.2.2: the installed system reports degraded or inactive md arrays at login and through mdadm's PROGRAM hook, instead of `MAILADDR root` (R-S7, task queue item 49).

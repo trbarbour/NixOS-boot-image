@@ -209,6 +209,10 @@ in {
     # of what an installed system needs (task queue item 43, #340).
     system.extraDependencies = [ pkgs.grub2 ]
       ++ import ./pre-nixos/reference-installed.nix { inherit pkgs lib; };
+    # Item 48 (reqs R-S6): SAS/RAID controller drivers in the initrd, so
+    # their disks appear before the real root starts (and before pre-nixos's
+    # inventory).  Loaded only when udev finds the hardware.
+    boot.initrd.availableKernelModules = import ./pre-nixos/initrd-storage-drivers.nix;
     boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
     boot.loader.grub.memtest86.enable = true;
     boot.loader.grub.extraConfig = ''

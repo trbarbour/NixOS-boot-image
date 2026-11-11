@@ -23,6 +23,9 @@ pre_nixos = [
     "templates/boot-rpi4-uboot-extlinux.nix",
     "templates/boot-x86-bios-grub.nix",
     "templates/network-networkd.nix",
+    "templates/pre-nixos-md-event.sh",
+    "templates/pre-nixos-md-status.sh",
+    "templates/pre-nixos-raid-alerts.nix",
 ]
 
 [project.optional-dependencies]

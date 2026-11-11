@@ -241,8 +241,12 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert 'swapDevices = [' in content
     assert 'label = "swap";' in content
     assert 'boot.swraid.enable = true;' in content
-    assert "boot.swraid.mdadmConf = ''" in content
-    assert 'MAILADDR root' in content
+    # Item 49 (R-S7): mdadm reports through pre-nixos-raid-alerts.nix's
+    # PROGRAM hook; MAILADDR root failed without sendmail (#344).
+    assert "MAILADDR" not in content
+    assert "./pre-nixos-raid-alerts.nix" in content
+    for name in ("pre-nixos-raid-alerts.nix", "pre-nixos-md-status.sh", "pre-nixos-md-event.sh"):
+        assert (root / "etc/nixos" / name).is_file(), name
     assert 'boot.initrd.services.lvm.enable = true;' in content
 
     hardware_text = (root / "etc/nixos/hardware-configuration.nix").read_text()

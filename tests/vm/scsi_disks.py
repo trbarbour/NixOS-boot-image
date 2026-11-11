@@ -14,7 +14,8 @@ whose ``model`` takes up to 40 characters: the guest's libata truncates
 ``device/model`` to 16, as on real SATA disks, and keeps the full name in
 ``device/vpd_pg89`` (#336, notes/2026-11-08T003000Z-u2-sata-model-truncation.md).
 ``ide-hd`` takes the same ``rotation_rate`` values.  Disks attach to one virtio-scsi
-controller in list order (``scsi-id`` = index).  The guest does **not**
+controller in list order (``scsi-id`` = index).  ``Bus.MPTSAS`` disks attach
+the same way to one ``mptsas1068`` (LSI SAS1068) controller.  The guest does **not**
 reliably name them ``/dev/sda``, ``/dev/sdb``, … in that order: names follow
 probe completion (2026-11-07, notes/2026-11-07T171600Z-vm-run: target 0 became
 ``sdb``).  Identify a disk by its model or serial.
@@ -31,6 +32,7 @@ SSD_ROTATION_RATE = 1
 HDD_ROTATION_RATE = 7200
 UNREPORTED_ROTATION_RATE = 0
 SATA_CONTROLLER_ID = "ahci0"
+MPTSAS_CONTROLLER_ID = "mptsas0"
 # ich9-ahci has six ports.
 SATA_PORTS = 6
 
@@ -38,11 +40,14 @@ SATA_PORTS = 6
 class Bus(enum.Enum):
     SCSI = "scsi"
     SATA = "sata"
+    # An LSI SAS1068 HBA (QEMU ``mptsas1068``, kernel ``mptsas``), the
+    # controller of the user's late HDD (#344, task queue item 48).
+    MPTSAS = "mptsas"
 
     @property
     def max_model_length(self) -> int:
         # SCSI INQUIRY product identification: 16 bytes; ATA model: 40.
-        return 16 if self is Bus.SCSI else 40
+        return 40 if self is Bus.SATA else 16
 CONTROLLER_ID = "scsi0"
 
 
@@ -65,6 +70,17 @@ class ScsiDisk:
         if self.rotational is None:
             return UNREPORTED_ROTATION_RATE
         return HDD_ROTATION_RATE if self.rotational else SSD_ROTATION_RATE
+
+
+def sas_wwn(index: int) -> str:
+    """A SAS address (NAA 5) for the ``index``-th disk on the ``mptsas1068``.
+
+    Linux's mptsas discovers no disk that QEMU presents without one
+    (experiment 2026-11-11, notes/2026-11-11T053000Z-mptsas-wwn-experiment.md).
+    """
+
+    assert 0 <= index < 0x10000, index
+    return f"0x5000c5000000{index + 1:04x}"
 
 
 def scsi_device_id(index: int) -> str:
@@ -99,6 +115,7 @@ def scsi_disk_args(disks: Sequence[ScsiDisk]) -> List[str]:
     args: List[str] = []
     scsi = [disk for disk in disks if disk.bus is Bus.SCSI]
     sata = [disk for disk in disks if disk.bus is Bus.SATA]
+    sas = [disk for disk in disks if disk.bus is Bus.MPTSAS]
     assert len(sata) <= SATA_PORTS, len(sata)
     if scsi:
         args += ["-device", f"virtio-scsi-pci,id={CONTROLLER_ID}"]
@@ -123,6 +140,18 @@ def scsi_disk_args(disks: Sequence[ScsiDisk]) -> List[str]:
             f"ide-hd,bus={SATA_CONTROLLER_ID}.{index},drive={drive},rotation_rate={disk.rotation_rate},"
             f"{model}serial={disk.serial}",
         ]
+    if sas:
+        args += ["-device", f"mptsas1068,id={MPTSAS_CONTROLLER_ID}"]
+    for index, disk in enumerate(sas):
+        drive = f"sasdisk{index}"
+        product = f"product={disk.model}," if disk.model else ""
+        args += [
+            "-drive",
+            f"file={disk.path},if=none,id={drive},format=raw",
+            "-device",
+            f"scsi-hd,bus={MPTSAS_CONTROLLER_ID}.0,drive={drive},rotation_rate={disk.rotation_rate},"
+            f"{product}serial={disk.serial},scsi-id={index},wwn={sas_wwn(index)}",
+        ]
     return args
 
 
@@ -132,6 +161,7 @@ __all__ = [
     "SSD_ROTATION_RATE",
     "UNREPORTED_ROTATION_RATE",
     "ScsiDisk",
+    "sas_wwn",
     "scsi_device_id",
     "scsi_disk_args",
     "scsi_hd_properties",

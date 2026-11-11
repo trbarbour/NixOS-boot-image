@@ -1,0 +1,54 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261031.fa13731 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261031.fa13731 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot//nix/store/jyb28mnqm5vaxfggp513xkivabwqvkpy-linux-6.18.60/bzImage... ok
+Loading /boot//nix/store/a1j103jp4waf1m7c47d90d9nvp8y6ign-initrd-linux-6.18.60/initrd...ok
+[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;start=5f4aeb6e1794409f9697c0dedf0fe818;user=root;hostname=nixos;machineid=10055a34fc5c4e9b97c722fd1168a470;bootid=fd364e385e344921af623019f5c9d125;pid=690;pidfdid=691;comm=(agetty);servicename=serial-getty@ttyS0.service;invocationid=60d598f9c31e44328674323291bcf8d9;type=service\P+q6E616D65\
+<<< Welcome to the pre-nixos auto-install boot image (26.05.20261031.fa13731, x86_64) - ttyS0 >>>
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+(PRE_NIXOS_AUTO_INSTALL=)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)
+
+pre-nixos boot image version 0.29.0
+]3008;start=54c0ed75714a4fce904403f324cfaa02;user=root;hostname=nixos;machineid=10055a34fc5c4e9b97c722fd1168a470;bootid=fd364e385e344921af623019f5c9d125;pid=690;pidfdid=691;comm=login;targetuser=nixos;sessionid=1;type=session\pre-nixos boot image version 0.29.0
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m sudo -i
+sudo -i
+[?2004lpre-nixos boot image version 0.29.0
+[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:PS1='EXP# '
+~]#[0m PS1='EXP# '
+[?2004lsleep 45; echo ==RESULT==; dmesg | grep -iE 'mpt|sas|scsi [0-9]|\] sd|sd [0-9]'; lsblk -dnro NAME,SERIAL; echo ==END==
+[?2004hEXP# sleep 45; echo ==RESULT==; dmesg | grep -iE 'mpt|sas|scsi [0-9]|\] sd|sd [0-9]'; lsblk -dnro NAME,SERIAL; echo ==END==
+[?2004lLAN IPv4 address: 10.0.2.15
+==RESULT==
+[    0.000000] Linux version 6.18.60 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Fri Oct 30 12:06:41 UTC 2026
+[    0.094625]   Normal   empty
+[    0.094649]   Device   empty
+[    0.591387] Dynamic Preempt: lazy
+[    0.599080] rcu: Preemptible hierarchical RCU implementation.
+[    2.327372] MPTCP token hash table entries: 2048 (order: 4, 49152 bytes, linear)
+[   19.964037] Fusion MPT base driver 3.04.20
+[   20.109959] Fusion MPT SAS Host driver 3.04.20
+[   20.508032] mptbase: ioc0: Initiating bringup
+[   20.576980] ioc0: LSISAS1068 A0: Capabilities={Initiator}
+[   20.723757] scsi host0: ioc0: LSISAS1068 A0, FwRev=01329200h, Ports=8, MaxQ=128, IRQ=11
+[   21.360125] scsi 2:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5
+fd0 
+loop0 
+sr0 QM00003
+==END==
+[?2004hEXP# LAN IPv4 address: 10.0.2.15
+
+EXPERIMENT ERROR: TIMEOUT("Timeout exceeded.\n<pexpect.pty_spawn.spawn object at 0x7f22f35b7230>\ncommand: /nix/store/xz24bm2725bh2alz510gqxa9lbjxasqb-qemu-10.2.4/bin/qemu-system-x86_64\nargs: [b'/nix/store/xz24bm2725bh2alz510gqxa9lbjxasqb-qemu-10.2.4/bin/qemu-system-x86_64', b'-m', b'2048', b'-smp', b'2', b'-display', b'none', b'-no-reboot', b'-serial', b'stdio', b'-boot', b'd', b'-cdrom', b'/nix/store/2pldvmh9gf2kmj5gb23ps25q5k2xpwmw-pre-nixos-0.29.0-20261111032737-s0e7468e5-26.05.20261031.fa13731-x86_64-linux.iso/iso/pre-nixos-0.29.0-20261111032737-s0e7468e5-26.05.20261031.fa13731-x86_64-linux.iso', b'-device', b'mptsas1068,id=mptsas0', b'-drive', b'file=/tmp/claude-0/-home-user-NixOS-boot-image/93d2ffc0-3987-539d-bac2-eb76314fff24/scratchpad/mptsas-exp/A-scsi-id-0.img,if=none,id=d0,format=raw', b'-device', b'scsi-hd,bus=mptsas0.0,drive=d0,serial=hbahdd,scsi-id=0']\nbuffer (last 100 chars): ' PQ: 0 ANSI: 5\\r\\r\\nfd0 \\r\\r\\nloop0 \\r\\r\\nsr0 QM00003\\r\\r\\n==END==\\r\\r\\n\\x1b[?2004hEXP# LAN IPv4 address: 10.0.2.15\\r\\r\\n'\nbefore (last 100 chars): ' PQ: 0 ANSI: 5\\r\\r\\nfd0 \\r\\r\\nloop0 \\r\\r\\nsr0 QM00003\\r\\r\\n==END==\\r\\r\\n\\x1b[?2004hEXP# LAN IPv4 address: 10.0.2.15\\r\\r\\n'\nafter: <class 'pexpect.exceptions.TIMEOUT'>\nmatch: None\nmatch_index: None\nexitstatus: None\nflag_eof: False\npid: 21533\nchild_fd: 6\nclosed: False\ntimeout: 900\ndelimiter: <class 'pexpect.exceptions.EOF'>\nlogfile: <_io.TextIOWrapper name='/tmp/claude-0/-home-user-NixOS-boot-image/93d2ffc0-3987-539d-bac2-eb76314fff24/scratchpad/mptsas-exp/A-scsi-id-0.log' mode='w' encoding='utf-8'>\nlogfile_read: None\nlogfile_send: None\nmaxread: 2000\nignorecase: False\nsearchwindowsize: None\ndelaybeforesend: 0.05\ndelayafterclose: 0.1\ndelayafterterminate: 0.1\nsearcher: searcher_re:\n    0: re.compile('==END==\\r?\\n')")
+
+ELAPSED 436s

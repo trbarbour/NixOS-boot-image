@@ -793,6 +793,53 @@ def boot_image_vm_with_raid_disks(
 
 
 @pytest.fixture(scope="module")
+def hba_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[ScsiDisk]]:
+    """An SSD on virtio-scsi plus an HDD behind an LSI SAS1068 HBA (``mptsas``),
+    the user's first BIOS PC in small (task queue item 48, #344)."""
+
+    disks = [
+        ScsiDisk(
+            path=_create_disk_image(tmp_path_factory, prefix="boot-image-hba-ssd", size_bytes=4 * 1024**3),
+            rotational=False,
+            serial="ssd",
+        ),
+        ScsiDisk(
+            path=_create_disk_image(tmp_path_factory, prefix="boot-image-hba-hdd", size_bytes=5 * 1024**3),
+            rotational=True,
+            serial="hbahdd",
+            bus=Bus.MPTSAS,
+        ),
+    ]
+    try:
+        yield disks
+    finally:
+        _remove_disk_images([disk.path for disk in disks])
+
+
+@pytest.fixture(scope="module")
+def boot_image_vm_with_hba_disk(
+    _pexpect: "pexpect",
+    qemu_executable: str,
+    boot_image_build: BootImageBuild,
+    hba_scsi_disks: List[ScsiDisk],
+    ssh_executable: str,
+    request: pytest.FixtureRequest,
+) -> Iterator["BootImageVM"]:
+    """A VM with ``hba_scsi_disks`` only."""
+
+    yield from _launch_boot_image_vm(
+        _pexpect=_pexpect,
+        machine=x86_machine(qemu_executable, boot_image_build.iso_path, None, VM_LOGIN_TIMEOUT),
+        boot_image_build=boot_image_build,
+        vm_disk_image=None,
+        extra_disks=[],
+        ssh_executable=ssh_executable,
+        request=request,
+        scsi_disks=hba_scsi_disks,
+    )
+
+
+@pytest.fixture(scope="module")
 def ambiguous_ssd_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[ScsiDisk]]:
     """The user's first BIOS PC in small (task queue item 34), on SATA: an SSD
     named as the user's (``G.SKILL 128GB SSD``) that reports no rotation rate,
@@ -867,6 +914,8 @@ __all__ = [
     "boot_image_vm_for_hotplug",
     "boot_image_vm_from_usb_stick",
     "boot_image_vm_with_raid_disks",
+    "boot_image_vm_with_hba_disk",
+    "hba_scsi_disks",
     "raid_scsi_disks",
     "ambiguous_ssd_scsi_disks",
     "boot_image_vm_with_ambiguous_ssd",
