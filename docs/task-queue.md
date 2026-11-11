@@ -397,22 +397,6 @@ _Last updated: 2026-10-30T12-35-13Z_
     - 2026-11-10 (03:20Z): the end-to-end run on the unfixed `install.py` (`notes/2026-11-10T020935Z-vm-run`) died with ENOSPC during `nixos-install`, although `df` still showed 6.2 GB free: `df` does not show the session's allowance, so the df-based watchdog never fired. The SSD and HDD images had grown to 2.5 GB and 5.0 GB. Freed by deleting the images and `nix-store --gc` (11.9 GiB). A watchdog must measure the allowance some other way (e.g. the sizes of the VM images plus the store growth), not `df`.
     - Related: in a new container, `github:` inputs need `scripts/nix_git_inputs.py` (HTTP 403 on archives); `nix develop … -c pytest` must get the overrides on `nix develop`, not after `-c`.
 
-39. **Re-provisioning over an earlier layout fails; the disks are wiped three times** *(user report, 2026-11-08, 0.26.1, first BIOS PC; trbarbour/NixOS-boot-image#338)*.
-    - TUI Apply after answering "S": disko skipped `mkfs.vfat` on the new ESP (old signature found), mounting `/boot` failed; the retry failed at `pvcreate` on md0 (`md127` held open).
-    - Hypothesis: the cleanup deactivates LVs and stops arrays before wiping them, so signatures inside LVs/arrays survive and reappear at the same offsets.
-    - **Reproduced 2026-11-08** (`tests/vm/test_reprovision_vm.py`, 0.26.1, `notes/2026-11-08T171557Z-vm-run`): `FAT-fs (sda2): bogus number of reserved sectors`, then on the retry `Can't open /dev/md127 exclusively` and `Cannot use /dev/md/md0: device has a signature` — the user's two failures.
-    - **Fix (0.26.2):** `storage_cleanup._dismantle_graph` releases mounts and swap, then for each node leaf to root wipes it while active (`wipefs`/`lvremove` an LV, `vgremove` a VG, `pvremove`/`wipefs` an array) and only then deactivates it (`mdadm --stop`, zero the members). Unit test `test_global_teardown_and_wipe_leaf_to_root` updated to the correct order (it pinned the faulty one); the mounted-target kernel model now covers `lvremove`/`vgremove`.
-      - VM `test_reprovision_vm.py` **passed** on 0.26.2 (`notes/2026-11-08T173200Z-vm-run`).
-      - Regression on 0.26.2: VM `test_pre_nixos_cleanup.py` and `test_raid_provisioning.py` passed; `nix flake check` passed.
-      - 2026-11-08 16:44Z run interrupted: the first provision (HDD layout) succeeded; during the second apply the session's disk filled (VM images plus test ISOs) and the user's upload failed. Logs `notes/2026-11-08T164406Z-vm-run`. Rerun with a free-space watchdog (item 38).
-    - Also: the TUI wipes, then `apply_plan` wipes again, then retries disko after a third wipe. Review once the root cause is fixed.
-
-40. **`pre-nixos --plan-only` with an unconfirmed disk: the note is glued to the plan, then repeated** *(user report, 2026-11-08, 0.26.1)*.
-    - User request: when a disk's class is unconfirmed, do not print the plan (it is the wrong one); print only the question.
-    - **Root cause of the duplication (user's session, reproduced on a pty):** the user ran `pre-nixos` (not `--plan-only`), so the refusal path printed the note and then broadcast it to the consoles; on the serial console the terminal is `/dev/console`. Every print-then-broadcast in `install.py` (BIOS refusal, boot-order refusal, install start and completion) had the same flaw.
-    - **Fixed:** `console.stdout_is_terminal` (shared with item 36's rule); `install._announce` prints and broadcasts only when stdout is not a terminal; the plan is not printed while a disk's class is unconfirmed. Tests: `test_plan_only_shows_only_the_question`, `test_at_a_terminal_the_note_appears_once`, `test_boot_service_broadcasts_the_refusal`.
-    - Not explained: the missing newline after `}` on the user's serial console (a pty shows `}\r\n`). It cannot recur here since the plan is no longer printed with the note; recorded in case it appears elsewhere.
-
 41. **TUI network configuration should also configure the installer when DHCP gave it nothing** *(user request, 2026-11-08)*.
     - Today `[C]` sets only the installed system's static address; with no DHCP server the user had to configure the installer's `lan` by hand.
     - Proposal (user): when the installer has no address from DHCP, adopt the same static configuration, unless told otherwise. Needs a short design.
