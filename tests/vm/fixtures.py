@@ -279,6 +279,13 @@ class BuiltArtifact:
     build_duration_seconds: float
 
 
+BUILD_ERROR_TAIL_LINES = 60
+
+
+def _tail(text: str, lines: int) -> str:
+    return "\n".join(text.splitlines()[-lines:])
+
+
 def build_boot_artifact(
     nix_executable: str,
     attribute: str,
@@ -316,11 +323,18 @@ def build_boot_artifact(
             ],
         ),
         cwd=REPO_ROOT,
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
         env=env,
     )
+    if result.returncode != 0:
+        # Item 37: Nix's own error is the useful part, not the command.
+        raise AssertionError(
+            f"nix build {attribute} failed with exit status {result.returncode};"
+            f" last {BUILD_ERROR_TAIL_LINES} lines of its stderr:\n"
+            + _tail(result.stderr, BUILD_ERROR_TAIL_LINES)
+        )
     build_duration = time.perf_counter() - build_started
     paths = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if not paths:
