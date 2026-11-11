@@ -19,6 +19,12 @@ unavailable".  No test had booted an installed system before.
    (QEMU's default MAC, which the installed system matches to rename it to
    ``lan``).  The test SSHes in through the port forward with the image's
    root key, and reads the address and route of ``lan``.
+
+Task queue item 45 (reqs R-A1): the image is built with the test hashed root
+password (tests/vm/fixtures.py), and the test plants an earlier attempt's
+``/etc/shadow`` with root locked.  The installed system's root must have the
+hash: NixOS alone would keep the old entry (design D4,
+plans/2026-11-10T140423Z-root-password-design.md).
 """
 
 from __future__ import annotations
@@ -30,6 +36,7 @@ from typing import List
 
 import pytest
 
+from tests.root_password_data import TEST_ROOT_PASSWORD_HASH
 from tests.vm.controller import BootImageVM
 from tests.vm.scsi_disks import ScsiDisk, scsi_disk_args
 
@@ -45,6 +52,8 @@ STATIC_ADDRESS = "10.0.2.20"
 # The installer's DHCP unit, as an earlier, failed DHCP install on the user's
 # PC left it in the target (#342).
 STALE_DHCP_UNIT = "[Match]\nName=lan\n\n[Network]\nDHCP=yes\n"
+# An earlier attempt's shadow file, root locked as NixOS writes it.
+STALE_SHADOW = "root:!:1::::::\n"
 
 # pre-nixos reboots after a successful install; under -no-reboot that would
 # end QEMU in the middle of the command, so the stand-in only swallows it.
@@ -99,6 +108,11 @@ def test_installed_system_with_a_static_address_is_reachable(
         + "' > /mnt/etc/systemd/network/20-lan.network",
         timeout=60,
     )
+    vm.run_as_root_checked(
+        "printf '" + STALE_SHADOW.replace("\n", "\\n")
+        + "' > /mnt/etc/shadow && chmod 640 /mnt/etc/shadow",
+        timeout=60,
+    )
     out = vm.run_as_root(
         "PATH=/root/shim:$PATH pre-nixos --install-now"
         f" --install-ip-address {STATIC_ADDRESS} --install-netmask 255.255.255.0"
@@ -129,7 +143,8 @@ def test_installed_system_with_a_static_address_is_reachable(
         result = None
         while time.monotonic() < deadline and installed.poll() is None:
             result = _ssh(ssh_executable, boot_ssh_key_pair.private_key, port,
-                          "ip -4 -o addr show lan; ip -4 route show default")
+                          "ip -4 -o addr show lan; ip -4 route show default;"
+                          " echo shadow-root=$(getent shadow root | cut -d: -f2)")
             if result.returncode == 0:
                 break
             time.sleep(10)
@@ -140,6 +155,8 @@ def test_installed_system_with_a_static_address_is_reachable(
         )
         assert f"inet {STATIC_ADDRESS}/24" in result.stdout, result.stdout
         assert "default via 10.0.2.2" in result.stdout, result.stdout
+        # R-A1: root can log in on the console with the site's password.
+        assert f"shadow-root={TEST_ROOT_PASSWORD_HASH}" in result.stdout, result.stdout
     finally:
         installed.terminate()
         try:

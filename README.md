@@ -99,8 +99,15 @@ A **site** is a directory with a `pre-nixos-site.nix` file. It supplies the sett
   rootKey = ./root_key.pub;   # your root SSH public key, next to this file
   autoInstall = true;         # install NixOS unattended (default: false)
   primaryConsole = "serial";  # or "display" (default: serial for the SD image, display for the ISO)
+  rootHashedPassword = "$y$j9T$…";  # optional: the installed system's root password, hashed
 }
 ```
+
+`rootHashedPassword` lets root log in on the installed system's console (serial or screen). This matters when the network does not come up. SSH stays key-only.
+- Make the hash with `mkpasswd -m yescrypt` (in nixpkgs' `mkpasswd`).
+- A plain password, or a hash that NixOS or libxcrypt cannot use (bad parameters, a truncated digest), is a build error.
+- The hash ends up in the image and in the installed system's Nix store, which anyone can read. Use a strong password.
+- Without the setting, root has no password on the installed system, as before. The installer itself always has an empty console password.
 
 `primaryConsole` chooses where systemd's status lines, emergency shells and `/dev/console` go: the serial port or the screen. The installed system keeps the same choice.
 

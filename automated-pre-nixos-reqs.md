@@ -121,6 +121,8 @@ The system must automate the hardware setup process on new servers prior to NixO
 
 - Only public key authentication is permitted for the root account over SSH.
 - Root login must be possible over the serial console (if functional).
+- A site may give a hashed root password for the installed system. Root can then log in with it on the console; SSH stays key-only. Without one, nothing changes. [R-A1]
+- That setting must be a crypt hash NixOS accepts. A plain password, or a value that would lock root out, is an error when the image is built. [R-A2]
 - A default public key is embedded into `/root/.ssh/authorized_keys`.
 - Builders must replace the embedded key with their own before creating an image.
 - The `sshd` service must remain **disabled** during boot and is only enabled

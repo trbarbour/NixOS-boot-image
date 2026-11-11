@@ -1,5 +1,7 @@
-# Site settings for the boot images: the root SSH public key and auto-install
-# (design: plans/2026-10-21T135252Z-site-settings-pure-images-design.md).
+# Site settings for the boot images: the root SSH public key, auto-install,
+# the primary console and the installed system's hashed root password
+# (designs: plans/2026-10-21T135252Z-site-settings-pure-images-design.md,
+# plans/2026-11-10T140423Z-root-password-design.md).
 #
 # A *site* is a directory holding `pre-nixos-site.nix`, a plain attribute set
 # (paths resolve relative to the site directory, e.g. `rootKey = ./root_key.pub`).
@@ -9,8 +11,29 @@
 { lib }:
 
 let
-  settingNames = [ "rootKey" "autoInstall" "primaryConsole" ];
+  settingNames = [ "rootKey" "autoInstall" "primaryConsole" "rootHashedPassword" ];
   consoles = [ "serial" "display" ];
+
+  # The crypt(3) schemes NixOS accepts for hashedPassword: nixpkgs'
+  # `pkgs.libxcrypt.enabledCryptSchemeIds`.  This file only has `lib`, so the
+  # list is repeated here; the flake check `crypt-schemes` fails if the two
+  # differ (design D2).
+  cryptSchemeIds = [ "y" "gy" "sm3y" "7" "2b" "2y" "2a" "6" ];
+
+  # NixOS's Modular Crypt Format pattern (nixos/modules/config/users-groups.nix),
+  # which NixOS only warns about; here a mismatch is an error (reqs R-A2).
+  mcfPattern =
+    let
+      sep = "\\$";
+      base64 = "[a-zA-Z0-9./]+";
+      id = "(${lib.concatStringsSep "|" cryptSchemeIds})";
+      name = "[a-z0-9-]+";
+      value = "[a-zA-Z0-9/+.-]+";
+      options = "${name}(=${value})?(,${name}=${value})*";
+      scheme = "${id}(${sep}${options})?";
+      content = "${base64}${sep}${base64}(${sep}${base64})?";
+    in
+    "${sep}${scheme}${sep}${content}";
 
   # PRE_NIXOS_AUTO_INSTALL as pre_nixos.py reads it; anything else is an error
   # rather than a silent "off".
@@ -22,6 +45,11 @@ let
 in
 rec {
   siteFileName = "pre-nixos-site.nix";
+  inherit cryptSchemeIds mcfPattern;
+
+  # Whether a string is a crypt hash NixOS accepts (R-A2).  builtins.match
+  # anchors the whole string, so a trailing newline does not match either.
+  isCryptHash = value: builtins.isString value && builtins.match mcfPattern value != null;
 
   # Typed settings of one site: `null` means "not set by this site".
   validateSite = where: raw:
@@ -30,6 +58,7 @@ rec {
       rootKey = raw.rootKey or null;
       autoInstall = raw.autoInstall or null;
       primaryConsole = raw.primaryConsole or null;
+      rootHashedPassword = raw.rootHashedPassword or null;
     in
     if !builtins.isAttrs raw then
       throw "pre-nixos site ${where}: expected an attribute set"
@@ -43,8 +72,13 @@ rec {
       throw "pre-nixos site ${where}: autoInstall must be true or false, not ${builtins.typeOf autoInstall}"
     else if !(primaryConsole == null || lib.elem primaryConsole consoles) then
       throw "pre-nixos site ${where}: primaryConsole must be one of ${lib.concatStringsSep ", " (map builtins.toJSON consoles)}, not ${builtins.toJSON primaryConsole}"
+    else if !(rootHashedPassword == null || builtins.isString rootHashedPassword) then
+      throw "pre-nixos site ${where}: rootHashedPassword must be a string (a crypt hash), not ${builtins.typeOf rootHashedPassword}"
+    else if rootHashedPassword != null && !(isCryptHash rootHashedPassword) then
+      # The value is not echoed: it may be a plain password typed by mistake.
+      throw "pre-nixos site ${where}: rootHashedPassword is not a crypt hash; make one with `mkpasswd -m yescrypt` (accepted schemes: ${lib.concatStringsSep ", " cryptSchemeIds})"
     else
-      { inherit rootKey autoInstall primaryConsole; };
+      { inherit rootKey autoInstall primaryConsole rootHashedPassword; };
 
   # A site directory.  Its settings file is required, so a mistyped override
   # or an incomplete site fails instead of silently building an image with no
@@ -59,8 +93,10 @@ rec {
   # is an error.  `env` is { rootKey = string; autoInstall = string; }, the raw
   # PRE_NIXOS_ROOT_KEY / PRE_NIXOS_AUTO_INSTALL values ("" when unset or when
   # evaluating purely).  Result: { rootKey = path | null; autoInstall = bool;
-  # primaryConsole = "serial" | "display" | null }, null meaning the format's
-  # default (design plans/2026-10-23T022949Z-primary-console-design.md).
+  # primaryConsole = "serial" | "display" | null; rootHashedPassword = string
+  # | null }, a null console meaning the format's default (design
+  # plans/2026-10-23T022949Z-primary-console-design.md).  The hashed password
+  # has no environment variable: it is new, and the variables are legacy.
   resolveSettings = { site, env }:
     let
       envKey =
@@ -80,5 +116,5 @@ rec {
           throw "pre-nixos: the site's autoInstall and PRE_NIXOS_AUTO_INSTALL differ; set only one"
         else site.autoInstall;
     in
-    { inherit rootKey autoInstall; inherit (site) primaryConsole; };
+    { inherit rootKey autoInstall; inherit (site) primaryConsole rootHashedPassword; };
 }

@@ -1,0 +1,50 @@
+
+      label = "swap";
+
+    }
+
+  ];
+
+
+
+  boot.swraid.enable = true;
+
+  boot.initrd.services.lvm.enable = true;
+
+  boot.kernelParams = [ "console=ttyS0,115200n8" "console=tty0" ];
+
+  boot.loader.grub.extraConfig = ''
+
+    serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
+
+    terminal_input serial console
+
+    terminal_output serial console
+
+  '';
+
+
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  # pre-nixos auto-install end
+
+[?2004hPRE-NIXOS> poweroff
+poweroff
+
+[?2004l
+
+
+Broadcast message from root@nixos on pts/0 (Tue 2026-11-10 04:08:10 UTC):
+
+
+
+The system will power off now!
+
+
+
+[?2004hPRE-NIXOS> [!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8[ 1022.710116] reboot: Power down
+
+dmesg --color=never 2>&1 || dmesg 2>&1 || true
+dmesg --color=never 2>&1 || dmesg 2>&1 || true
+journalctl --no-pager -u pre-nixos.service -b || true
