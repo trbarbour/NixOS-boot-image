@@ -83,4 +83,4 @@ _2026-11-11T19:49:43Z. Task queue item 50._
 - TUI: a changed disk set refuses to apply and says so; nothing is wiped.
 - Service script: the flake check gains the new branches (wait exit 2 and 1, pre-nixos exit 4).
 - VM test: a disk hot-plugged shortly after boot (QMP `device_add`, 5 s after the wait's console notice) is in the boot-time plan, and the service waited for it.
-  - The notice comes from `pre-nixos-wait-disks` itself, just before its first inventory. In the first VM run it came from the service script instead. The wait then started 34 s later (Python start-up at boot, item 35), so the disk was already present at the wait's first inventory, and the run proved nothing about the wait (`notes/2026-11-11T200421Z-vm-run`).
+  - The notice comes from `pre-nixos-wait-disks` itself, just before its first inventory. In the first VM run it came from the service script instead. The wait then started 34 s later (Python start-up in a VM without KVM, under software emulation), so the disk was already present at the wait's first inventory, and the run proved nothing about the wait (`notes/2026-11-11T200421Z-vm-run`).

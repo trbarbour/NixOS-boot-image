@@ -30,7 +30,7 @@ EXIT_SETTLED = 0
 EXIT_ERROR = 1
 EXIT_UNSETTLED = 2
 # Shown on the consoles when the wait starts.  From here, not the service
-# script: Python takes long to start at boot (34 s in the VM, item 35), so a
+# script: Python started slowly (34 s in the test VM, which runs without KVM), so a
 # notice from the script came well before the wait began.
 CONSOLE_NOTICE = "pre-nixos: waiting for the disks to settle"
 # storage-status DETAIL values the boot service writes for those exits.

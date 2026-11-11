@@ -165,7 +165,7 @@ def test_command_exit_1_on_error(monkeypatch, capsys) -> None:
 
 def test_the_consoles_are_told_when_the_wait_starts(monkeypatch) -> None:
     """The notice comes from the wait itself, just before its first
-    inventory: Python takes long to start at boot (34 s in the VM, item 35),
+    inventory: Python started slowly (34 s in the test VM, which runs without KVM),
     so a notice from the service script came well before the wait began
     (VM run notes/2026-11-11T200421Z-vm-run)."""
 
