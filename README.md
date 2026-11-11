@@ -76,6 +76,18 @@ pre-nixos --plan-only --ssd sda   # preview
 pre-nixos --ssd sda               # provision (and install, if enabled)
 ```
 
+At boot, before it looks at the disks, the boot service waits until the set of
+disks has been unchanged for 15 seconds (at most 2 minutes), so a disk behind a
+slow controller is not left out of the plan. The console shows "pre-nixos:
+waiting for the disks to settle". Kernel parameters change the times:
+`pre-nixos-disk-quiet=SECONDS` (0 skips the wait) and
+`pre-nixos-disk-wait-max=SECONDS`. If the disks are still changing at the
+bound, the boot run only plans. A plan also records the disks it was made
+for: if they differ when it is about to write (a disk added, removed or
+swapped), nothing is written and pre-nixos says which disks changed; in the
+TUI, press `R` to rescan and plan again. A saved plan without that record (from
+an older version) cannot be applied; make a new one.
+
 For an interactive review and to apply the plan manually, use the TUI helper,
 which displays the current IP address or a diagnostic message when the
 embedded SSH key is missing or no address was assigned:

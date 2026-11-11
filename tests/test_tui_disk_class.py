@@ -166,3 +166,95 @@ def test_disk_list_reaches_the_last_disk(existing_storage) -> None:
     (picked,) = state.class_answers
     names = [disk.name for disk in state.kernel_disks]
     assert names.index(picked) > len(names) - 10
+
+
+# --- task queue item 50 (R-D3): the TUI writes only to the disks it planned for
+
+
+def test_apply_refuses_when_the_disks_changed(user_pc_state, monkeypatch) -> None:
+    """A disk that appears after the TUI planned: nothing is wiped or applied,
+    and the user is told to re-plan (plans/2026-11-11T194943Z-disk-settle-design.md, D5)."""
+
+    from pre_nixos.inventory import Disk
+
+    late = Disk(name="sde", model="ST3750528AS", size=750 * 1024**3, rotational=True, serial="E")
+    user_pc_state.class_answers = {"sda": DiskClass.SSD}
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: [*USER_PC, late])
+
+    def no_scan():
+        raise AssertionError("must stop before inspecting storage")
+
+    monkeypatch.setattr(tui.storage_detection, "detect_existing_storage", no_scan)
+    monkeypatch.setattr(tui.apply, "apply_plan", no_scan)
+    window = _window("x")
+    assert tui._handle_apply_plan(window, user_pc_state) is False
+    shown = " ".join(window.lines.values())
+    assert "added sde (750 GiB, serial E)" in shown and "[R]" in shown
+
+
+def test_rescan_plans_for_the_disks_present_now(user_pc_state, monkeypatch) -> None:
+    """[R] takes the inventory again and re-plans; answers for disks still
+    present are kept, those for disks gone are dropped (item 50, D5)."""
+
+    from pre_nixos import inventory
+    from pre_nixos.inventory import Disk
+
+    late = Disk(name="sde", model="ST3750528AS", size=750 * 1024**3, rotational=True, serial="E")
+    user_pc_state.class_answers = {"sda": DiskClass.SSD, "sdz": DiskClass.HDD}
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: [*USER_PC, late])
+    tui._rescan(_window(), user_pc_state)
+    assert [d.name for d in user_pc_state.kernel_disks] == ["sda", "sdb", "sdd", "sde"]
+    assert user_pc_state.class_answers == {"sda": DiskClass.SSD}
+    assert [e["name"] for e in user_pc_state.plan[inventory.PLAN_KEY]] == ["sda", "sdb", "sdd", "sde"]
+    assert inventory.verify_plan_disks(user_pc_state.plan, user_pc_state.protected_disks) == []
+
+
+def test_rescan_asks_about_a_new_disk_named_ssd_but_rotating(user_pc_state, monkeypatch) -> None:
+    from tests.test_disk_class import GSKILL
+
+    user_pc_state.class_answers = {}
+    user_pc_state.kernel_disks = []
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: [GSKILL])
+    window = _window("h")
+    tui._rescan(window, user_pc_state)
+    assert user_pc_state.class_answers == {"sda": DiskClass.HDD}
+    assert window.key_queue == []
+
+
+def test_a_change_during_the_cleanup_prompt_is_caught(user_pc_state, monkeypatch, existing_storage) -> None:
+    """Codex on #352: the cleanup prompt waits for the user; check again after it."""
+
+    from pre_nixos.inventory import Disk
+    from pre_nixos.storage_detection import ExistingStorageDevice
+
+    late = Disk(name="sde", model="ST3750528AS", size=750 * 1024**3, rotational=True, serial="E")
+    reads = [list(USER_PC), [*USER_PC, late]]
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: reads.pop(0) if len(reads) > 1 else reads[0])
+    user_pc_state.class_answers = {"sda": DiskClass.SSD}
+    existing_storage.devices = [ExistingStorageDevice(device="/dev/sda1", reasons=("ext4",))]
+    monkeypatch.setattr(tui, "_prompt_storage_cleanup", lambda stdscr, devices: "wipe-signatures")
+
+    def must_not_write(*args, **kwargs):
+        raise AssertionError("must stop before writing")
+
+    monkeypatch.setattr(tui.storage_cleanup, "perform_storage_cleanup", must_not_write)
+    monkeypatch.setattr(tui.apply, "apply_plan", must_not_write)
+    window = _window("x")
+    assert tui._handle_apply_plan(window, user_pc_state) is False
+    assert "added sde" in " ".join(window.lines.values())
+
+
+def test_rescan_drops_the_answer_for_a_replaced_disk(user_pc_state, monkeypatch) -> None:
+    """Codex on #352: the answer was about that disk, not about its name."""
+
+    from dataclasses import replace
+
+    from tests.test_disk_class import GSKILL
+
+    user_pc_state.class_answers = {"sda": DiskClass.SSD}
+    replacement = replace(GSKILL, serial="NEW")
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: [replacement, *USER_PC[1:]])
+    window = _window("h")
+    tui._rescan(window, user_pc_state)
+    assert user_pc_state.class_answers == {"sda": DiskClass.HDD}
+    assert window.key_queue == []

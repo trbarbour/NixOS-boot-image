@@ -37,6 +37,7 @@ test = [
 [project.scripts]
 pre-nixos = "pre_nixos.pre_nixos:main"
 pre-nixos-detect-storage = "pre_nixos.storage_detection:main"
+pre-nixos-wait-disks = "pre_nixos.disk_settle:main"
 pre-nixos-tui = "pre_nixos.tui:run"
 pre-nixos-console = "pre_nixos.console:main"
 pre-nixos-install-boot-files = "pre_nixos.boot_platform:main"
@@ -66,7 +67,9 @@ files = [
   "pre_nixos/boot_order.py",
   "pre_nixos/boot_platform.py",
   "pre_nixos/disk_class.py",
+  "pre_nixos/disk_settle.py",
   "pre_nixos/inventory.py",
+  "pre_nixos/kernel_cmdline.py",
   "pre_nixos/lan_reuse.py",
   "pre_nixos/logging_utils.py",
   "pre_nixos/network.py",

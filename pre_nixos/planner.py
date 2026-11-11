@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional, Set
 
-from .inventory import Disk
+from .inventory import Disk, record_disks
 from .block_names import partition_name
 from .boot_layout import BIOS_BOOT_PARTITION_SIZE, BootLayout, choose_boot_disks
 
@@ -205,6 +205,25 @@ def plan_storage(
     prefer_raid6_on_four: bool = False,
     ram_gb: int = 16,
     boot_layout: BootLayout = BootLayout.ESP,
+) -> Dict[str, Any]:
+    """Generate storage plan from disks and mode; see :func:`_plan_storage`.
+
+    Item 50 (R-D3): every plan records the disks it is for, which are checked
+    again before writing.  Here, so that no return path of the planner can
+    miss it (Codex on #352: the HDD-only path returned early).
+    """
+
+    plan = _plan_storage(mode, disks, prefer_raid6_on_four, ram_gb, boot_layout)
+    record_disks(plan, disks)
+    return plan
+
+
+def _plan_storage(
+    mode: str,
+    disks: List[Disk],
+    prefer_raid6_on_four: bool,
+    ram_gb: int,
+    boot_layout: BootLayout,
 ) -> Dict[str, Any]:
     """Generate storage plan from disks and mode.
 

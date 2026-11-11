@@ -772,6 +772,7 @@ def _draw_plan(stdscr: curses.window, state: TUIState) -> RenderResult:
         "[N] Install now",
         "[I] Auto-install toggle",
         "[T] SSD/HDD",
+        "[R]escan disks",
         "[Q]uit",
     ]
     footer = "  ".join(footer_parts)
@@ -827,6 +828,23 @@ def _ask_disk_classes(stdscr: curses.window, state: TUIState) -> None:
     if pending:
         _replan(state)
     assert not disk_class.unconfirmed(state.kernel_disks, state.class_answers)
+
+
+def _rescan(stdscr: curses.window, state: TUIState) -> None:
+    """Take the inventory again and re-plan (task queue item 50, D5).
+
+    An answer is kept only for the same disk (name, size and serial), not for
+    another disk under the same name (Codex on #352); a new disk named SSD
+    but reported as rotating is asked about (R-S3).  Replaces the plan, as
+    :func:`_replan` does.
+    """
+
+    before = inventory.disk_identities(state.kernel_disks)
+    state.kernel_disks = inventory.exclude_disks(inventory.enumerate_disks(), state.protected_disks)
+    unchanged = {i.name for i in before & inventory.disk_identities(state.kernel_disks)}
+    state.class_answers = {name: answer for name, answer in state.class_answers.items() if name in unchanged}
+    _replan(state)
+    _ask_disk_classes(stdscr, state)
 
 
 # Keys for the disks on one page; n, p and q page and cancel.
@@ -1243,6 +1261,20 @@ def _configure_install_network(stdscr: curses.window, state: TUIState) -> None:
     _show_modal(stdscr, lines)
 
 
+def _planned_disks_changed(stdscr: curses.window, state: TUIState) -> bool:
+    """Whether the disks differ from the plan's (item 50, R-D3); if so, say
+    which and how to re-plan."""
+
+    changes = inventory.verify_plan_disks(state.plan, state.protected_disks)
+    if changes:
+        _show_modal(
+            stdscr,
+            inventory.changed_disks_message(changes).splitlines()
+            + ["", "Press [R] to rescan the disks and re-plan."],
+        )
+    return bool(changes)
+
+
 def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     """Handle the apply-plan workflow. Returns ``True`` when exiting."""
 
@@ -1252,6 +1284,11 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
     unconfirmed = disk_class.unconfirmed(state.kernel_disks, state.class_answers)
     if unconfirmed:
         _show_modal(stdscr, [disk_class.refusal_message(unconfirmed)])
+        return False
+    # Item 50 (R-D3): write only to the disks the plan was made from.
+    # Checked before any question, and again right before each write (Codex
+    # on #352: the cleanup prompt waits for as long as the user takes).
+    if _planned_disks_changed(stdscr, state):
         return False
     try:
         devices = storage_detection.detect_existing_storage()
@@ -1265,6 +1302,8 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
             _show_modal(stdscr, ["Aborting without modifying storage."])
             return False
         if action != storage_cleanup.SKIP_CLEANUP:
+            if _planned_disks_changed(stdscr, state):
+                return False
             targets = [entry.device for entry in devices]
 
             progress_lines: list[str] = []
@@ -1295,6 +1334,8 @@ def _handle_apply_plan(stdscr: curses.window, state: TUIState) -> bool:
                 _show_modal(stdscr, [f"Failed to wipe storage: {exc}"])
                 return False
 
+    if _planned_disks_changed(stdscr, state):
+        return False
     stdscr.clear()
     stdscr.addstr(0, 0, "Applying plan...\n")
     stdscr.refresh()
@@ -1494,6 +1535,9 @@ def run() -> None:
                 continue
             if key_lower == "t":
                 _toggle_disk_class(stdscr, state)
+                continue
+            if key_lower == "r":
+                _rescan(stdscr, state)
                 continue
             if key_lower in {"KEY_UP", "k"}:
                 _move_focus(state, render, -1)

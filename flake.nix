@@ -840,45 +840,59 @@
           # R-S3 (task queue item 34): the boot service records pre-nixos's
           # "needs the user's answer" exit (3) as plan-only with
           # DETAIL=disk-class-unconfirmed and succeeds; other exits keep their
-          # meaning.  The real service script runs with stub commands.
+          # meaning.  Item 50 (R-D1-R-D3): the disk wait runs first; if it did
+          # not settle (2) or failed (1), pre-nixos only plans and a forced
+          # cleanup is dropped; pre-nixos's "disks changed" exit (4) is
+          # plan-only too.  The real service script runs with stub commands;
+          # the pre-nixos stub records its arguments and the cleanup flag.
           boot-service-status =
             let
-              stubs = exitCode: pkgs.runCommand "pre-nixos-stub-${toString exitCode}" { } ''
+              name = waitExit: preExit: "${toString waitExit}-${toString preExit}";
+              stubs = waitExit: preExit: pkgs.runCommand "pre-nixos-stub-${name waitExit preExit}" { } ''
                 mkdir -p $out/bin
-                printf '#!${pkgs.runtimeShell}\nexit ${toString exitCode}\n' > $out/bin/pre-nixos
+                printf '#!${pkgs.runtimeShell}\nprintf "args=%%s force=%%s\\n" "$*" "''${PRE_NIXOS_FORCE_CLEANUP-}" > "$PRE_NIXOS_STATE_DIR/pre-nixos-call"\nexit ${toString preExit}\n' > $out/bin/pre-nixos
                 # No existing storage: the service runs pre-nixos without --plan-only.
                 printf '#!${pkgs.runtimeShell}\nexit 1\n' > $out/bin/pre-nixos-detect-storage
+                printf '#!${pkgs.runtimeShell}\nexit ${toString waitExit}\n' > $out/bin/pre-nixos-wait-disks
                 printf '#!${pkgs.runtimeShell}\nexit 0\n' > $out/bin/pre-nixos-console
                 chmod +x $out/bin/*
               '';
-              script = exitCode: pkgs.writeText "service-script-${toString exitCode}"
+              script = waitExit: preExit: pkgs.writeText "service-script-${name waitExit preExit}"
                 (import ./modules/pre-nixos/service-script.nix {
                   pkgs = pkgs // {
-                    pre-nixos = stubs exitCode;
+                    pre-nixos = stubs waitExit preExit;
                     # The LAN announcement waits for an address; not under test.
                     writeShellScript = _name: _text: "${pkgs.coreutils}/bin/true";
                   };
                 });
-              run = exitCode: expectedStatus: expectedLines: ''
-                state=$TMPDIR/state-${toString exitCode}
+              run = waitExit: preExit: expectedStatus: expectedLines: expectedCall: ''
+                state=$TMPDIR/state-${name waitExit preExit}
                 set +e
-                PRE_NIXOS_STATE_DIR=$state PRE_NIXOS_LOG_FILE=$TMPDIR/log \
-                  ${pkgs.bash}/bin/bash ${script exitCode}
+                PRE_NIXOS_STATE_DIR=$state PRE_NIXOS_LOG_FILE=$TMPDIR/log PRE_NIXOS_FORCE_CLEANUP=1 \
+                  ${pkgs.bash}/bin/bash ${script waitExit preExit}
                 status=$?
                 set -e
-                echo "pre-nixos exit ${toString exitCode}: service exit $status"
-                cat "$state/storage-status"
+                echo "wait exit ${toString waitExit}, pre-nixos exit ${toString preExit}: service exit $status"
+                cat "$state/storage-status" "$state/pre-nixos-call"
                 [ "$status" -eq ${toString expectedStatus} ]
                 ${pkgs.lib.concatMapStrings (line: ''
                   grep -qx '${line}' "$state/storage-status"
                 '') expectedLines}
+                grep -qx '${expectedCall}' "$state/pre-nixos-call"
               '';
+              # Detection finds no storage, so a settled run is not plan-only
+              # and keeps the cleanup flag the test passes in.
+              settled = "args= force=1";
+              planOnly = "args=--plan-only force=";
             in
             pkgs.runCommand "boot-service-status" { } ''
               set -eu
-              ${run 3 0 [ "STATE=plan-only" "DETAIL=disk-class-unconfirmed" ]}
-              ${run 0 0 [ "STATE=applied" "DETAIL=auto-applied" ]}
-              ${run 1 1 [ "STATE=failed" "DETAIL=auto-applied" ]}
+              ${run 0 3 0 [ "STATE=plan-only" "DETAIL=disk-class-unconfirmed" ] settled}
+              ${run 0 0 0 [ "STATE=applied" "DETAIL=auto-applied" ] settled}
+              ${run 0 1 1 [ "STATE=failed" "DETAIL=auto-applied" ] settled}
+              ${run 0 4 0 [ "STATE=plan-only" "DETAIL=disks-changed" ] settled}
+              ${run 2 0 0 [ "STATE=plan-only" "DETAIL=disks-unsettled" ] planOnly}
+              ${run 1 0 0 [ "STATE=plan-only" "DETAIL=disk-wait-error" ] planOnly}
               touch $out
             '';
           # #324: on the installer, sshd starts once secure_ssh has hardened it,

@@ -255,6 +255,14 @@ def test_draw_plan_footer_mentions_manual_install(monkeypatch, sample_plan, samp
     assert "[N] Install now" in footer
 
 
+def _disks_unchanged(monkeypatch, state, disks) -> None:
+    """Item 50 (R-D3): the hand-made plan records its disks, and they are
+    still there when it is applied."""
+
+    tui.inventory.record_disks(state.plan, disks)
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: list(disks))
+
+
 def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan, sample_disks):
     state = tui._initial_state(sample_plan, sample_disks, None)
     lan_config = LanConfiguration(
@@ -266,6 +274,7 @@ def test_handle_apply_plan_runs_auto_install(monkeypatch, tmp_path, sample_plan,
     state.lan_config = lan_config
     state.auto_install_enabled = True
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    _disks_unchanged(monkeypatch, state, sample_disks)
 
     apply_calls = []
     monkeypatch.setattr(
@@ -302,6 +311,7 @@ def test_handle_apply_plan_aborts_when_storage_scan_fails(
     """A failed scan must not lead to applying the plan."""
 
     state = tui._initial_state(sample_plan, sample_disks, None)
+    _disks_unchanged(monkeypatch, state, sample_disks)
     existing_storage.devices = None
     existing_storage.error = RuntimeError("command wipefs -n /dev/vda exited with status 1")
     apply_calls = []
@@ -424,6 +434,7 @@ def test_apply_without_network_explains_the_skipped_install(monkeypatch, tmp_pat
     state = tui._initial_state(sample_plan, sample_disks, None)
     state.lan_config = LanConfiguration(authorized_key=tmp_path / "key.pub", interface="lan")
     state.auto_install_enabled = True
+    _disks_unchanged(monkeypatch, state, sample_disks)
     monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
     monkeypatch.setattr(tui.apply, "apply_plan", lambda plan, protected_disks=frozenset(): None)
     monkeypatch.setattr(

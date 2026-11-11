@@ -1,0 +1,701 @@
+
+ISOLINUX 6.04   Copyright (C) 1994-2015 H. Peter Anvin et al
+e%@)0(B[0;37;40m[?25l[2J[1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261031.fa13731 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[0;37;40m[35;1H[K[K[36;1H[33;34H[0;37;40mAutomatic boot in [0;1;37;40m10[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m9[0;37;40m seconds... [33;35H[0;37;40mAutomatic boot in [0;1;37;40m8[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m7[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m6[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m5[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m4[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m3[0;37;40m seconds...[33;35H[0;37;40mAutomatic boot in [0;1;37;40m2[0;37;40m seconds...[33;34H[0;37;40m Automatic boot in [0;1;37;40m1[0;37;40m second... [1;1H[0;30;44mlqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk[2;1H[0;30;44mx[0;1;36;44m                                             NixOS                                              [0;30;44mx[3;1H[0;30;44mtqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu[4;1H[0;30;44mx[0;7;37;40m NixOS 26.05.20261031.fa13731 Installer                                                         [0;30;44mx[5;1H[0;30;44mx[0;37;44m Options                                                                                      > [0;30;44mx[6;1H[0;30;44mx[0;37;44m Memtest86+                                                                                     [0;30;44mx[7;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[8;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[9;1H[0;30;44mx[0;37;44m                                                                                                [0;30;44mx[10;1H[0;30;44mmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj[0;31;40m[34;36HPress [Tab] to edit options[0;37;40m[35;1H[?25he%@)0(B[0;37;40m[?25l[2J[?25h[35;1H[0mLoading /boot//nix/store/jyb28mnqm5vaxfggp513xkivabwqvkpy-linux-6.18.60/bzImage... ok
+Loading /boot//nix/store/a1j103jp4waf1m7c47d90d9nvp8y6ign-initrd-linux-6.18.60/initrd...ok
+[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8[!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;start=d6c2498b452b4040a2e3063adc9aeaa9;user=root;hostname=nixos;machineid=8267035a9c75487ab44c441860e2258a;bootid=87d79743b9b143d6a5b742160b96f838;pid=698;pidfdid=699;comm=(agetty);servicename=serial-getty@ttyS0.service;invocationid=3e524e8715fe4c0fa2c7dc2a01f11747;type=service\P+q6E616D65\
+<<< Welcome to the pre-nixos auto-install boot image (26.05.20261031.fa13731, x86_64) - ttyS0 >>>
+Automatic installation is disabled; run pre-nixos to configure networking and start installation.
+(PRE_NIXOS_AUTO_INSTALL=)
+The "nixos" and "root" accounts have empty passwords for console logins.
+
+SSH access:
+  - Use the matching private key for the embedded root SSH key to log in as root.
+  - Add additional public keys to /root/.ssh/authorized_keys if needed.
+
+
+Networking starts automatically; verify connectivity with ip addr or networkctl.
+
+Run "nixos-help" for the NixOS manual.
+nixos login: nixos (automatic login)export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429214513__\n'
+
+
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429214513__\n'
+pre-nixos boot image version 0.32.0
+]3008;start=a45f4d3253a74062a9d94afb97e999b9;user=root;hostname=nixos;machineid=8267035a9c75487ab44c441860e2258a;bootid=87d79743b9b143d6a5b742160b96f838;pid=698;pidfdid=699;comm=login;targetuser=nixos;sessionid=2;type=session\pre-nixos boot image version 0.32.0
+[?2004h
+[1;32m[]0;nixos@nixos: ~nixos@nixos:~]$[0m export PS1='PRE-NIXOS> ' SY
+STEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429214513__\n'
+[?2004l__PROMPT_READY__1794429214513__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794429228410__%s__UID_MARK__1794429228410__\n' "$(id -u)"
+
+[?2004l[?2004hPRE-NIXOS> export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429228512__\n'
+printf '__UID_MARK__1794429228410__%s__UID_MARK__1794429228410__\n' "$(id -u)"
+[?2004lexport PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429228512__\n'
+__UID_MARK__1794429228410__1000__UID_MARK__1794429228410__
+[?2004hPRE-NIXOS> 
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429228512__\n'
+[?2004l__PROMPT_READY__1794429228512__
+[?2004hPRE-NIXOS> printf '__UID_MARK__1794429228410__%s__UID_MARK__1794429228410__\n' "$(id -u)"
+sudo -i
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794429228410__%s__UID_MARK__1794429228410__\n' "$(id -u)"
+[?2004lsudo -i
+__UID_MARK__1794429228410__1000__UID_MARK__1794429228410__
+[?2004hPRE-NIXOS> sudo -i
+[?2004lpre-nixos: waiting for the disks to settle (quiet 15 s, at most 120 s)
+pre-nixos boot image version 0.32.0
+[?2004h
+[1;31m[]0;root@nixos: ~root@nixos:~]#[0m export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429232332__\n'
+export PS1='PRE-NIXOS> ' SYSTEMD_PAGER=cat PAGER=cat; printf '__PROMPT_READY__1794429232332__\n'
+[?2004l__PROMPT_READY__1794429232332__
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794429232407__%s__UID_MARK__1794429232407__\n' "$(id -u)"
+printf '__UID_MARK__1794429232407__%s__UID_MARK__1794429232407__\n' "$(id -u)"
+[?2004l__UID_MARK__1794429232407__0__UID_MARK__1794429232407__
+[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+LAN IPv4 address: 10.0.2.15
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004l[?2004hPRE-NIXOS> cat /run/pre-nixos/storage-status 2>/dev/null || true
+cat /run/pre-nixos/storage-status 2>/dev/null || true
+[?2004lSTATE=applied
+DETAIL=auto-applied
+AUTO_INSTALL=skipped
+AUTO_INSTALL_REASON=disabled
+[?2004hPRE-NIXOS> :
+:
+[?2004l[?2004hPRE-NIXOS> journalctl --no-pager -u pre-nixos.service -b || true
+journalctl --no-pager -u pre-nixos.service -b || true
+[?2004lNov 11 20:33:17 nixos systemd[1]: Starting Pre-NixOS setup...
+Nov 11 20:33:21 nixos pre-nixos-start[643]: pre-nixos boot image version 0.32.0
+Nov 11 20:33:51 nixos pre-nixos-start[765]: pre-nixos: waiting for the disks to settle (quiet 15 s, at most 120 s)
+Nov 11 20:33:58 nixos pre-nixos-start[765]: pre-nixos: disk change: added vdb (6 GiB, no serial)
+Nov 11 20:34:13 nixos pre-nixos-start[765]: pre-nixos: disks settled after 22.0559 s: vda, vdb
+Nov 11 20:34:28 nixos pre-nixos-start[922]: LAN IPv4 address: 10.0.2.15
+Nov 11 20:34:28 nixos pre-nixos-start[922]: Tearing down existing storage on /dev/vda, /dev/vdb
+Nov 11 20:34:28 nixos pre-nixos-start[922]: Removing metadata from dependent volumes on /dev/vda, /dev/vdb
+Nov 11 20:34:30 nixos pre-nixos-start[922]: Zapping partition table on /dev/vda
+Nov 11 20:34:32 nixos pre-nixos-start[922]: Wiping filesystem signatures on /dev/vda
+Nov 11 20:34:32 nixos pre-nixos-start[922]: Zapping partition table on /dev/vdb
+Nov 11 20:34:34 nixos pre-nixos-start[922]: Wiping filesystem signatures on /dev/vdb
+Nov 11 20:34:35 nixos pre-nixos-start[922]: Storage cleanup finished on /dev/vda, /dev/vdb
+Nov 11 20:34:35 nixos pre-nixos-start[1006]: disko version 1.13.0-dirty
+Nov 11 20:35:42 nixos pre-nixos-start[1009]: this derivation will be built:
+Nov 11 20:35:42 nixos pre-nixos-start[1009]:   /nix/store/xjgp2qzj0b931cx91ls81zjxgfnn4682-disko-destroy-format-mount.drv
+Nov 11 20:35:43 nixos pre-nixos-start[1009]: building '/nix/store/xjgp2qzj0b931cx91ls81zjxgfnn4682-disko-destroy-format-mount.drv'...
+Nov 11 20:35:46 nixos pre-nixos-start[1067]: umount: /mnt: not mounted
+Nov 11 20:35:46 nixos pre-nixos-start[1069]: ++ realpath /dev/vda
+Nov 11 20:35:46 nixos pre-nixos-start[1068]: + disk=/dev/vda
+Nov 11 20:35:46 nixos pre-nixos-start[1068]: + lsblk -a -f
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: NAME  FSTYPE   FSVER            LABEL                      UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: fd0
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop0 squashfs 4.0                                                                                    0   100% /nix/.ro-store
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop1
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop2
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop3
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop4
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop5
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop6
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: loop7
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: sr0   iso9660  Joliet Extension nixos-minimal-26.05-x86_64 1980-01-01-00-00-00-00                     0   100% /iso
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: vda
+Nov 11 20:35:46 nixos pre-nixos-start[1071]: vdb
+Nov 11 20:35:46 nixos pre-nixos-start[1072]: + lsblk --output-all --json
+Nov 11 20:35:46 nixos pre-nixos-start[1074]: + bash -x
+Nov 11 20:35:46 nixos pre-nixos-start[1075]: ++ dirname /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/disk-deactivate
+Nov 11 20:35:46 nixos pre-nixos-start[1073]: + jq -r -f /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/zfs-swap-deactivate.jq
+Nov 11 20:35:47 nixos pre-nixos-start[1076]: + lsblk --output-all --json
+Nov 11 20:35:47 nixos pre-nixos-start[1078]: + bash -x
+Nov 11 20:35:47 nixos pre-nixos-start[1079]: ++ dirname /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/disk-deactivate
+Nov 11 20:35:47 nixos pre-nixos-start[1077]: + jq -r --arg disk_to_clear /dev/vda -f /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/disk-deactivate.jq
+Nov 11 20:35:47 nixos pre-nixos-start[1078]: + set -fu
+Nov 11 20:35:47 nixos pre-nixos-start[1080]: ++ type zdb
+Nov 11 20:35:47 nixos pre-nixos-start[1081]: ++ zdb -l /dev/vda
+Nov 11 20:35:47 nixos pre-nixos-start[1082]: ++ sed -nr 's/ +name: '\''(.*)'\''/\1/p'
+Nov 11 20:35:48 nixos pre-nixos-start[1078]: + zpool=
+Nov 11 20:35:48 nixos pre-nixos-start[1078]: + [[ -n '' ]]
+Nov 11 20:35:48 nixos pre-nixos-start[1078]: + unset zpool
+Nov 11 20:35:48 nixos pre-nixos-start[1183]: ++ lsblk /dev/vda -l -p -o type,name
+Nov 11 20:35:48 nixos pre-nixos-start[1184]: ++ awk 'match($1,"raid.*") {print $2}'
+Nov 11 20:35:48 nixos pre-nixos-start[1078]: + md_dev=
+Nov 11 20:35:48 nixos pre-nixos-start[1078]: + [[ -n '' ]]
+Nov 11 20:35:48 nixos pre-nixos-start[1078]: + wipefs --all -f /dev/vda
+Nov 11 20:35:48 nixos pre-nixos-start[1078]: + dd if=/dev/zero of=/dev/vda bs=440 count=1
+Nov 11 20:35:48 nixos pre-nixos-start[1187]: 1+0 records in
+Nov 11 20:35:48 nixos pre-nixos-start[1187]: 1+0 records out
+Nov 11 20:35:48 nixos pre-nixos-start[1187]: 440 bytes copied, 0.016513 s, 26.6 kB/s
+Nov 11 20:35:48 nixos pre-nixos-start[1068]: + lsblk -a -f
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: NAME  FSTYPE   FSVER            LABEL                      UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: fd0
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop0 squashfs 4.0                                                                                    0   100% /nix/.ro-store
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop1
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop2
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop3
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop4
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop5
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop6
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: loop7
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: sr0   iso9660  Joliet Extension nixos-minimal-26.05-x86_64 1980-01-01-00-00-00-00                     0   100% /iso
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: vda
+Nov 11 20:35:48 nixos pre-nixos-start[1188]: vdb
+Nov 11 20:35:48 nixos pre-nixos-start[1190]: ++ realpath /dev/vdb
+Nov 11 20:35:49 nixos pre-nixos-start[1189]: + disk=/dev/vdb
+Nov 11 20:35:49 nixos pre-nixos-start[1189]: + lsblk -a -f
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: NAME  FSTYPE   FSVER            LABEL                      UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: fd0
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop0 squashfs 4.0                                                                                    0   100% /nix/.ro-store
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop1
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop2
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop3
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop4
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop5
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop6
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: loop7
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: sr0   iso9660  Joliet Extension nixos-minimal-26.05-x86_64 1980-01-01-00-00-00-00                     0   100% /iso
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: vda
+Nov 11 20:35:49 nixos pre-nixos-start[1193]: vdb
+Nov 11 20:35:49 nixos pre-nixos-start[1195]: + lsblk --output-all --json
+Nov 11 20:35:49 nixos pre-nixos-start[1197]: + bash -x
+Nov 11 20:35:49 nixos pre-nixos-start[1198]: ++ dirname /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/disk-deactivate
+Nov 11 20:35:49 nixos pre-nixos-start[1196]: + jq -r -f /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/zfs-swap-deactivate.jq
+Nov 11 20:35:50 nixos pre-nixos-start[1200]: + lsblk --output-all --json
+Nov 11 20:35:50 nixos pre-nixos-start[1202]: ++ dirname /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/disk-deactivate
+Nov 11 20:35:50 nixos pre-nixos-start[1203]: + bash -x
+Nov 11 20:35:50 nixos pre-nixos-start[1201]: + jq -r --arg disk_to_clear /dev/vdb -f /nix/store/ry7rdm4ydy8g0h5xa038bvciidgdsvgg-disk-deactivate/disk-deactivate.jq
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + set -fu
+Nov 11 20:35:51 nixos pre-nixos-start[1204]: ++ type zdb
+Nov 11 20:35:51 nixos pre-nixos-start[1205]: ++ zdb -l /dev/vdb
+Nov 11 20:35:51 nixos pre-nixos-start[1206]: ++ sed -nr 's/ +name: '\''(.*)'\''/\1/p'
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + zpool=
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + [[ -n '' ]]
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + unset zpool
+Nov 11 20:35:51 nixos pre-nixos-start[1308]: ++ lsblk /dev/vdb -l -p -o type,name
+Nov 11 20:35:51 nixos pre-nixos-start[1309]: ++ awk 'match($1,"raid.*") {print $2}'
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + md_dev=
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + [[ -n '' ]]
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + wipefs --all -f /dev/vdb
+Nov 11 20:35:51 nixos pre-nixos-start[1203]: + dd if=/dev/zero of=/dev/vdb bs=440 count=1
+Nov 11 20:35:52 nixos pre-nixos-start[1311]: 1+0 records in
+Nov 11 20:35:52 nixos pre-nixos-start[1311]: 1+0 records out
+Nov 11 20:35:52 nixos pre-nixos-start[1311]: 440 bytes copied, 0.00910901 s, 48.3 kB/s
+Nov 11 20:35:52 nixos pre-nixos-start[1189]: + lsblk -a -f
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: NAME  FSTYPE   FSVER            LABEL                      UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: fd0
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop0 squashfs 4.0                                                                                    0   100% /nix/.ro-store
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop1
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop2
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop3
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop4
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop5
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop6
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: loop7
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: sr0   iso9660  Joliet Extension nixos-minimal-26.05-x86_64 1980-01-01-00-00-00-00                     0   100% /iso
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: vda
+Nov 11 20:35:52 nixos pre-nixos-start[1314]: vdb
+Nov 11 20:35:52 nixos pre-nixos-start[1315]: ++ mktemp -d
+Nov 11 20:35:52 nixos pre-nixos-start[1006]: + disko_devices_dir=/tmp/tmp.sLo5rS5Ry0
+Nov 11 20:35:52 nixos pre-nixos-start[1006]: + trap 'rm -rf "$disko_devices_dir"' EXIT
+Nov 11 20:35:52 nixos pre-nixos-start[1006]: + mkdir -p /tmp/tmp.sLo5rS5Ry0
+Nov 11 20:35:52 nixos pre-nixos-start[1317]: + destroy=1
+Nov 11 20:35:52 nixos pre-nixos-start[1317]: + device=/dev/vda
+Nov 11 20:35:52 nixos pre-nixos-start[1317]: + imageName=vda
+Nov 11 20:35:52 nixos pre-nixos-start[1317]: + imageSize=2G
+Nov 11 20:35:52 nixos pre-nixos-start[1317]: + name=vda
+Nov 11 20:35:52 nixos pre-nixos-start[1317]: + type=disk
+Nov 11 20:35:52 nixos pre-nixos-start[1318]: + device=/dev/vda
+Nov 11 20:35:52 nixos pre-nixos-start[1318]: + efiGptPartitionFirst=1
+Nov 11 20:35:52 nixos pre-nixos-start[1318]: + type=gpt
+Nov 11 20:35:52 nixos pre-nixos-start[1318]: + blkid /dev/vda
+Nov 11 20:35:53 nixos pre-nixos-start[1318]: + sgdisk --clear /dev/vda
+Nov 11 20:35:54 nixos pre-nixos-start[1322]: Creating new GPT entries in memory.
+Nov 11 20:35:54 nixos pre-nixos-start[1322]: The operation has completed successfully.
+Nov 11 20:35:54 nixos pre-nixos-start[1318]: + sgdisk --align-end --new=1:0:-0 --partition-guid=1:R --change-name=1:disk-vda-vda1 --typecode=1:8300 --attributes=1:=:0 /dev/vda
+Nov 11 20:35:55 nixos pre-nixos-start[1327]: The operation has completed successfully.
+Nov 11 20:35:55 nixos pre-nixos-start[1318]: + partprobe /dev/vda
+Nov 11 20:35:55 nixos pre-nixos-start[1318]: + udevadm trigger --subsystem-match=block
+Nov 11 20:35:56 nixos pre-nixos-start[1318]: + udevadm settle --timeout 120
+Nov 11 20:36:00 nixos pre-nixos-start[1366]: + device=/dev/disk/by-partlabel/disk-vda-vda1
+Nov 11 20:36:00 nixos pre-nixos-start[1366]: + type=lvm_pv
+Nov 11 20:36:00 nixos pre-nixos-start[1366]: + vg=large
+Nov 11 20:36:00 nixos pre-nixos-start[1368]: + blkid /dev/disk/by-partlabel/disk-vda-vda1
+Nov 11 20:36:00 nixos pre-nixos-start[1369]: + grep -q TYPE=
+Nov 11 20:36:00 nixos pre-nixos-start[1366]: + pvcreate /dev/disk/by-partlabel/disk-vda-vda1
+Nov 11 20:36:00 nixos pre-nixos-start[1370]:   Physical volume "/dev/disk/by-partlabel/disk-vda-vda1" successfully created.
+Nov 11 20:36:00 nixos pre-nixos-start[1366]: + echo /dev/disk/by-partlabel/disk-vda-vda1
+Nov 11 20:36:00 nixos pre-nixos-start[1371]: + destroy=1
+Nov 11 20:36:00 nixos pre-nixos-start[1371]: + device=/dev/vdb
+Nov 11 20:36:00 nixos pre-nixos-start[1371]: + imageName=vdb
+Nov 11 20:36:00 nixos pre-nixos-start[1371]: + imageSize=2G
+Nov 11 20:36:00 nixos pre-nixos-start[1371]: + name=vdb
+Nov 11 20:36:00 nixos pre-nixos-start[1371]: + type=disk
+Nov 11 20:36:00 nixos pre-nixos-start[1372]: + device=/dev/vdb
+Nov 11 20:36:00 nixos pre-nixos-start[1372]: + efiGptPartitionFirst=1
+Nov 11 20:36:00 nixos pre-nixos-start[1372]: + type=gpt
+Nov 11 20:36:00 nixos pre-nixos-start[1372]: + blkid /dev/vdb
+Nov 11 20:36:01 nixos pre-nixos-start[1372]: + sgdisk --clear /dev/vdb
+Nov 11 20:36:02 nixos pre-nixos-start[1375]: Creating new GPT entries in memory.
+Nov 11 20:36:02 nixos pre-nixos-start[1375]: The operation has completed successfully.
+Nov 11 20:36:02 nixos pre-nixos-start[1372]: + sgdisk --align-end --new=1:0:+1M --partition-guid=1:R --change-name=1:disk-vdb-vdb1 --typecode=1:EF02 --attributes=1:=:0 /dev/vdb
+Nov 11 20:36:03 nixos pre-nixos-start[1379]: The operation has completed successfully.
+Nov 11 20:36:03 nixos pre-nixos-start[1372]: + partprobe /dev/vdb
+Nov 11 20:36:03 nixos pre-nixos-start[1372]: + udevadm trigger --subsystem-match=block
+Nov 11 20:36:03 nixos pre-nixos-start[1372]: + udevadm settle --timeout 120
+Nov 11 20:36:06 nixos pre-nixos-start[1372]: + sgdisk --align-end --new=2:0:+1G --partition-guid=2:R --change-name=2:disk-vdb-vdb2 --typecode=2:EF00 --attributes=2:=:0 /dev/vdb
+Nov 11 20:36:08 nixos pre-nixos-start[1418]: The operation has completed successfully.
+Nov 11 20:36:08 nixos pre-nixos-start[1372]: + partprobe /dev/vdb
+Nov 11 20:36:08 nixos pre-nixos-start[1372]: + udevadm trigger --subsystem-match=block
+Nov 11 20:36:09 nixos pre-nixos-start[1372]: + udevadm settle --timeout 120
+Nov 11 20:36:13 nixos pre-nixos-start[1372]: + sgdisk --align-end --new=3:0:-0 --partition-guid=3:R --change-name=3:disk-vdb-vdb3 --typecode=3:8300 --attributes=3:=:0 /dev/vdb
+Nov 11 20:36:15 nixos pre-nixos-start[1468]: The operation has completed successfully.
+Nov 11 20:36:15 nixos pre-nixos-start[1372]: + partprobe /dev/vdb
+Nov 11 20:36:15 nixos pre-nixos-start[1372]: + udevadm trigger --subsystem-match=block
+Nov 11 20:36:15 nixos pre-nixos-start[1372]: + udevadm settle --timeout 120
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + device=/dev/disk/by-partlabel/disk-vdb-vdb2
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + extraArgs=('-n' 'EFI')
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + declare -a extraArgs
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + format=vfat
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + mountOptions=('umask=0077')
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + declare -a mountOptions
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + mountpoint=/boot
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + type=filesystem
+Nov 11 20:36:21 nixos pre-nixos-start[1528]: + blkid /dev/disk/by-partlabel/disk-vdb-vdb2
+Nov 11 20:36:21 nixos pre-nixos-start[1529]: + grep -q TYPE=
+Nov 11 20:36:21 nixos pre-nixos-start[1526]: + mkfs.vfat -n EFI /dev/disk/by-partlabel/disk-vdb-vdb2
+Nov 11 20:36:21 nixos pre-nixos-start[1530]: mkfs.fat 4.2 (2021-01-31)
+Nov 11 20:36:21 nixos pre-nixos-start[1531]: + device=/dev/disk/by-partlabel/disk-vdb-vdb3
+Nov 11 20:36:22 nixos pre-nixos-start[1531]: + type=lvm_pv
+Nov 11 20:36:22 nixos pre-nixos-start[1531]: + vg=main
+Nov 11 20:36:22 nixos pre-nixos-start[1533]: + blkid /dev/disk/by-partlabel/disk-vdb-vdb3
+Nov 11 20:36:22 nixos pre-nixos-start[1534]: + grep -q TYPE=
+Nov 11 20:36:22 nixos pre-nixos-start[1531]: + pvcreate /dev/disk/by-partlabel/disk-vdb-vdb3
+Nov 11 20:36:22 nixos pre-nixos-start[1535]:   Physical volume "/dev/disk/by-partlabel/disk-vdb-vdb3" successfully created.
+Nov 11 20:36:22 nixos pre-nixos-start[1531]: + echo /dev/disk/by-partlabel/disk-vdb-vdb3
+Nov 11 20:36:22 nixos pre-nixos-start[1536]: + name=large
+Nov 11 20:36:22 nixos pre-nixos-start[1536]: + type=lvm_vg
+Nov 11 20:36:22 nixos pre-nixos-start[1536]: + modprobe dm-snapshot
+Nov 11 20:36:22 nixos pre-nixos-start[1536]: + readarray -t lvm_devices
+Nov 11 20:36:23 nixos pre-nixos-start[1545]: ++ cat /tmp/tmp.sLo5rS5Ry0/lvm_large
+Nov 11 20:36:23 nixos pre-nixos-start[1536]: + vgdisplay large
+Nov 11 20:36:23 nixos pre-nixos-start[1546]:   Volume group "large" not found
+Nov 11 20:36:23 nixos pre-nixos-start[1546]:   Cannot process volume group large
+Nov 11 20:36:23 nixos pre-nixos-start[1536]: + vgcreate large /dev/disk/by-partlabel/disk-vda-vda1
+Nov 11 20:36:23 nixos pre-nixos-start[1547]:   Volume group "large" successfully created
+Nov 11 20:36:23 nixos pre-nixos-start[1536]: + lvdisplay large/data
+Nov 11 20:36:24 nixos pre-nixos-start[1549]:   Failed to find logical volume "large/data"
+Nov 11 20:36:24 nixos pre-nixos-start[1536]: + lvcreate --yes -L 4M -n data large
+Nov 11 20:36:25 nixos pre-nixos-start[1550]:   Logical volume "data" created.
+Nov 11 20:36:25 nixos pre-nixos-start[1536]: + lvdisplay large/swap
+Nov 11 20:36:25 nixos pre-nixos-start[1557]:   Failed to find logical volume "large/swap"
+Nov 11 20:36:25 nixos pre-nixos-start[1536]: + lvcreate --yes -L 4088M -n swap large
+Nov 11 20:36:27 nixos pre-nixos-start[1558]:   Logical volume "swap" created.
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + device=/dev/large/data
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + extraArgs=('-L' 'data')
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + declare -a extraArgs
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + format=ext4
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + mountOptions=('relatime')
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + declare -a mountOptions
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + mountpoint=/data
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + type=filesystem
+Nov 11 20:36:27 nixos pre-nixos-start[1575]: + blkid /dev/large/data
+Nov 11 20:36:27 nixos pre-nixos-start[1576]: + grep -q TYPE=
+Nov 11 20:36:27 nixos pre-nixos-start[1573]: + mkfs.ext4 -L data /dev/large/data
+Nov 11 20:36:27 nixos pre-nixos-start[1579]: mke2fs 1.47.4 (6-Mar-2025)
+Nov 11 20:36:27 nixos pre-nixos-start[1579]: [66B blob data]
+Nov 11 20:36:27 nixos pre-nixos-start[1579]: Creating filesystem with 4096 1k blocks and 1024 inodes
+Nov 11 20:36:27 nixos pre-nixos-start[1579]: [41B blob data]
+Nov 11 20:36:27 nixos pre-nixos-start[1579]: [38B blob data]
+Nov 11 20:36:28 nixos pre-nixos-start[1579]: Creating journal (1024 blocks): done
+Nov 11 20:36:28 nixos pre-nixos-start[1579]: [75B blob data]
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + device=/dev/large/swap
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + discardPolicy=
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + extraArgs=('--label' 'swap')
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + declare -a extraArgs
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + mountOptions=('defaults')
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + declare -a mountOptions
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + priority=
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + randomEncryption=
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + resumeDevice=
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + type=swap
+Nov 11 20:36:28 nixos pre-nixos-start[1583]: + blkid /dev/large/swap -o export
+Nov 11 20:36:28 nixos pre-nixos-start[1584]: + grep -q '^TYPE='
+Nov 11 20:36:28 nixos pre-nixos-start[1581]: + mkswap --label swap /dev/large/swap
+Nov 11 20:36:28 nixos pre-nixos-start[1586]: Setting up swapspace version 1, size = 4 GiB (4286574592 bytes)
+Nov 11 20:36:28 nixos pre-nixos-start[1586]: LABEL=swap, UUID=7eed8c2b-4d01-4095-80b7-9e15714f1b2f
+Nov 11 20:36:28 nixos pre-nixos-start[1587]: + name=main
+Nov 11 20:36:28 nixos pre-nixos-start[1587]: + type=lvm_vg
+Nov 11 20:36:28 nixos pre-nixos-start[1587]: + modprobe dm-snapshot
+Nov 11 20:36:28 nixos pre-nixos-start[1587]: + readarray -t lvm_devices
+Nov 11 20:36:28 nixos pre-nixos-start[1589]: ++ cat /tmp/tmp.sLo5rS5Ry0/lvm_main
+Nov 11 20:36:28 nixos pre-nixos-start[1587]: + vgdisplay main
+Nov 11 20:36:29 nixos pre-nixos-start[1590]:   Volume group "main" not found
+Nov 11 20:36:29 nixos pre-nixos-start[1590]:   Cannot process volume group main
+Nov 11 20:36:29 nixos pre-nixos-start[1587]: + vgcreate main /dev/disk/by-partlabel/disk-vdb-vdb3
+Nov 11 20:36:29 nixos pre-nixos-start[1591]:   Volume group "main" successfully created
+Nov 11 20:36:29 nixos pre-nixos-start[1587]: + lvdisplay main/slash
+Nov 11 20:36:30 nixos pre-nixos-start[1596]:   Failed to find logical volume "main/slash"
+Nov 11 20:36:30 nixos pre-nixos-start[1587]: + lvcreate --yes -L 5108M -n slash main
+Nov 11 20:36:31 nixos pre-nixos-start[1598]:   Logical volume "slash" created.
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + device=/dev/main/slash
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + extraArgs=('-L' 'slash')
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + declare -a extraArgs
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + format=ext4
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + mountOptions=('relatime')
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + declare -a mountOptions
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + mountpoint=/
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + type=filesystem
+Nov 11 20:36:31 nixos pre-nixos-start[1609]: + blkid /dev/main/slash
+Nov 11 20:36:31 nixos pre-nixos-start[1610]: + grep -q TYPE=
+Nov 11 20:36:31 nixos pre-nixos-start[1607]: + mkfs.ext4 -L slash /dev/main/slash
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: mke2fs 1.47.4 (6-Mar-2025)
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: [90B blob data]
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: Creating filesystem with 1307648 4k blocks and 327040 inodes
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: Filesystem UUID: 8a5c82c1-3cdf-4729-a6d8-92d3e970fa8c
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: Superblock backups stored on blocks:
+Nov 11 20:36:32 nixos pre-nixos-start[1613]:         32768, 98304, 163840, 229376, 294912, 819200, 884736
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: [49B blob data]
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: [46B blob data]
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: Creating journal (16384 blocks): done
+Nov 11 20:36:32 nixos pre-nixos-start[1613]: [83B blob data]
+Nov 11 20:36:32 nixos pre-nixos-start[1006]: + set -efux
+Nov 11 20:36:32 nixos pre-nixos-start[1614]: + destroy=1
+Nov 11 20:36:32 nixos pre-nixos-start[1614]: + device=/dev/vda
+Nov 11 20:36:32 nixos pre-nixos-start[1614]: + imageName=vda
+Nov 11 20:36:32 nixos pre-nixos-start[1614]: + imageSize=2G
+Nov 11 20:36:32 nixos pre-nixos-start[1614]: + name=vda
+Nov 11 20:36:32 nixos pre-nixos-start[1614]: + type=disk
+Nov 11 20:36:32 nixos pre-nixos-start[1615]: + device=/dev/vda
+Nov 11 20:36:32 nixos pre-nixos-start[1615]: + efiGptPartitionFirst=1
+Nov 11 20:36:32 nixos pre-nixos-start[1615]: + type=gpt
+Nov 11 20:36:32 nixos pre-nixos-start[1616]: + destroy=1
+Nov 11 20:36:32 nixos pre-nixos-start[1616]: + device=/dev/vdb
+Nov 11 20:36:32 nixos pre-nixos-start[1616]: + imageName=vdb
+Nov 11 20:36:32 nixos pre-nixos-start[1616]: + imageSize=2G
+Nov 11 20:36:32 nixos pre-nixos-start[1616]: + name=vdb
+Nov 11 20:36:32 nixos pre-nixos-start[1616]: + type=disk
+Nov 11 20:36:32 nixos pre-nixos-start[1617]: + device=/dev/vdb
+Nov 11 20:36:32 nixos pre-nixos-start[1617]: + efiGptPartitionFirst=1
+Nov 11 20:36:32 nixos pre-nixos-start[1617]: + type=gpt
+Nov 11 20:36:32 nixos pre-nixos-start[1618]: + name=large
+Nov 11 20:36:32 nixos pre-nixos-start[1618]: + type=lvm_vg
+Nov 11 20:36:32 nixos pre-nixos-start[1618]: + vgchange -a y
+Nov 11 20:36:32 nixos pre-nixos-start[1618]:   1 logical volume(s) in volume group "main" now active
+Nov 11 20:36:32 nixos pre-nixos-start[1618]:   2 logical volume(s) in volume group "large" now active
+Nov 11 20:36:32 nixos pre-nixos-start[1619]: + name=main
+Nov 11 20:36:32 nixos pre-nixos-start[1619]: + type=lvm_vg
+Nov 11 20:36:32 nixos pre-nixos-start[1619]: + vgchange -a y
+Nov 11 20:36:33 nixos pre-nixos-start[1619]:   1 logical volume(s) in volume group "main" now active
+Nov 11 20:36:33 nixos pre-nixos-start[1619]:   2 logical volume(s) in volume group "large" now active
+Nov 11 20:36:33 nixos pre-nixos-start[1621]: + name=main
+Nov 11 20:36:33 nixos pre-nixos-start[1621]: + type=lvm_vg
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + device=/dev/main/slash
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + extraArgs=('-L' 'slash')
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + declare -a extraArgs
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + format=ext4
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + mountOptions=('relatime')
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + declare -a mountOptions
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + mountpoint=/
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + type=filesystem
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + findmnt /dev/main/slash /mnt/
+Nov 11 20:36:33 nixos pre-nixos-start[1622]: + mount /dev/main/slash /mnt/ -t ext4 -o relatime -o X-mount.mkdir
+Nov 11 20:36:34 nixos pre-nixos-start[1631]: + destroy=1
+Nov 11 20:36:34 nixos pre-nixos-start[1631]: + device=/dev/vdb
+Nov 11 20:36:34 nixos pre-nixos-start[1631]: + imageName=vdb
+Nov 11 20:36:34 nixos pre-nixos-start[1631]: + imageSize=2G
+Nov 11 20:36:34 nixos pre-nixos-start[1631]: + name=vdb
+Nov 11 20:36:34 nixos pre-nixos-start[1631]: + type=disk
+Nov 11 20:36:34 nixos pre-nixos-start[1632]: + device=/dev/vdb
+Nov 11 20:36:34 nixos pre-nixos-start[1632]: + efiGptPartitionFirst=1
+Nov 11 20:36:34 nixos pre-nixos-start[1632]: + type=gpt
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + device=/dev/disk/by-partlabel/disk-vdb-vdb2
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + extraArgs=('-n' 'EFI')
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + declare -a extraArgs
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + format=vfat
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + mountOptions=('umask=0077')
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + declare -a mountOptions
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + mountpoint=/boot
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + type=filesystem
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + findmnt /dev/disk/by-partlabel/disk-vdb-vdb2 /mnt/boot
+Nov 11 20:36:34 nixos pre-nixos-start[1633]: + mount /dev/disk/by-partlabel/disk-vdb-vdb2 /mnt/boot -t vfat -o umask=0077 -o X-mount.mkdir
+Nov 11 20:36:34 nixos pre-nixos-start[1636]: + name=large
+Nov 11 20:36:34 nixos pre-nixos-start[1636]: + type=lvm_vg
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + device=/dev/large/data
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + extraArgs=('-L' 'data')
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + declare -a extraArgs
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + format=ext4
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + mountOptions=('relatime')
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + declare -a mountOptions
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + mountpoint=/data
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + type=filesystem
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + findmnt /dev/large/data /mnt/data
+Nov 11 20:36:34 nixos pre-nixos-start[1637]: + mount /dev/large/data /mnt/data -t ext4 -o relatime -o X-mount.mkdir
+Nov 11 20:36:35 nixos pre-nixos-start[1006]: + rm -rf /tmp/tmp.sLo5rS5Ry0
+Nov 11 20:36:36 nixos pre-nixos-start[1649]: LAN IPv4 address: 10.0.2.15
+[?2004hPRE-NIXOS> 
+
+[?2004l[?2004hPRE-NIXOS> printf '__UID_MARK__1794429400082__%s__UID_MARK__1794429400082__\n' "$(id -u)"
+printf '__UID_MARK__1794429400082__%s__UID_MARK__1794429400082__\n' "$(id -u)"
+[?2004l__UID_MARK__1794429400082__0__UID_MARK__1794429400082__
+[?2004hPRE-NIXOS> { printf '\n__BEGIN__\n'; cat /run/pre-nixos/storage-plan.json; printf '\n__EXIT__=%s\n' $?; }
+{ printf '\n__BEGIN__\n'; cat /run/pre-nixos/storage-plan.json; printf '\n__EXIT__=%s\n' $?; }
+[?2004l
+__BEGIN__
+{
+  "arrays": [],
+  "boot": {
+    "disks": [
+      "vdb"
+    ],
+    "layout": "x86-bios"
+  },
+  "disko": {
+    "disk": {
+      "vda": {
+        "content": {
+          "partitions": {
+            "vda1": {
+              "content": {
+                "type": "lvm_pv",
+                "vg": "large"
+              },
+              "size": "100%"
+            }
+          },
+          "type": "gpt"
+        },
+        "device": "/dev/vda",
+        "type": "disk"
+      },
+      "vdb": {
+        "content": {
+          "partitions": {
+            "vdb1": {
+              "size": "1M",
+              "type": "EF02"
+            },
+            "vdb2": {
+              "content": {
+                "extraArgs": [
+                  "-n",
+                  "EFI"
+                ],
+                "format": "vfat",
+                "mountOptions": [
+                  "umask=0077"
+                ],
+                "mountpoint": "/boot",
+                "mountpointPermissions": 0,
+                "type": "filesystem"
+              },
+              "size": "1G",
+              "type": "EF00"
+            },
+            "vdb3": {
+              "content": {
+                "type": "lvm_pv",
+                "vg": "main"
+              },
+              "size": "100%"
+            }
+          },
+          "type": "gpt"
+        },
+        "device": "/dev/vdb",
+        "type": "disk"
+      }
+    },
+    "lvm_vg": {
+      "large": {
+        "lvs": {
+          "data": {
+            "content": {
+              "extraArgs": [
+                "-L",
+                "data"
+              ],
+              "format": "ext4",
+              "mountOptions": [
+                "relatime"
+              ],
+              "mountpoint": "/data",
+              "mountpointPermissions": 0,
+              "type": "filesystem"
+            },
+            "size": "4M"
+          },
+          "swap": {
+            "content": {
+              "extraArgs": [
+                "--label",
+                "swap"
+              ],
+              "type": "swap"
+            },
+            "size": "4088M"
+          }
+        },
+        "type": "lvm_vg"
+      },
+      "main": {
+        "lvs": {
+          "slash": {
+            "content": {
+              "extraArgs": [
+                "-L",
+                "slash"
+              ],
+              "format": "ext4",
+              "mountOptions": [
+                "relatime"
+              ],
+              "mountpoint": "/",
+              "mountpointPermissions": 0,
+              "type": "filesystem"
+            },
+            "size": "5108M"
+          }
+        },
+        "type": "lvm_vg"
+      }
+    },
+    "mdadm": {}
+  },
+  "inventory": [
+    {
+      "name": "vda",
+      "serial": "",
+      "size": 4294967296
+    },
+    {
+      "name": "vdb",
+      "serial": "",
+      "size": 6442450944
+    }
+  ],
+  "lvs": [
+    {
+      "name": "slash",
+      "size": "5108M",
+      "vg": "main"
+    },
+    {
+      "name": "swap",
+      "size": "4088M",
+      "vg": "large"
+    },
+    {
+      "name": "data",
+      "size": "4M",
+      "vg": "large"
+    }
+  ],
+  "partitions": {
+    "vda": [
+      {
+        "name": "vda1",
+        "type": "lvm"
+      }
+    ],
+    "vdb": [
+      {
+        "name": "vdb1",
+        "size": "1M",
+        "type": "bios_grub"
+      },
+      {
+        "name": "vdb2",
+        "size": "1G",
+        "type": "efi"
+      },
+      {
+        "name": "vdb3",
+        "type": "lvm"
+      }
+    ]
+  },
+  "vgs": [
+    {
+      "devices": [
+        "vdb3"
+      ],
+      "name": "main"
+    },
+    {
+      "devices": [
+        "vda1"
+      ],
+      "name": "large"
+    }
+  ]
+}
+__EXIT__=0
+[?2004hPRE-NIXOS> poweroff
+poweroff
+[?2004lLAN IPv4 address: 10.0.2.15
+
+Broadcast message from root@nixos on pts/0 (Wed 2026-11-11 20:36:39 UTC):
+
+The system will power off now!
+
+[?2004hPRE-NIXOS> [!p]104\[0m[?7h[1G[0J7[32766;32766H[6n8]3008;end=d6c24[  307.039367] reboot: Power down

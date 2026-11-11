@@ -30,6 +30,15 @@ if [ -r "$status_file" ]; then
       elif [ "$detail" = "detection-error" ]; then
         printf '%s\n' "pre-nixos: Storage detection encountered an error; provisioning ran in plan-only mode."
         printf '%s\n' "             Check 'journalctl -u pre-nixos' for details before continuing."
+      elif [ "$detail" = "disks-unsettled" ]; then
+        printf '%s\n' "pre-nixos: Disks were still appearing or disappearing at boot; nothing was provisioned or installed."
+        printf '%s\n' "             Check the disks with 'lsblk', then apply with 'pre-nixos-tui' (it plans for the disks present)."
+      elif [ "$detail" = "disk-wait-error" ]; then
+        printf '%s\n' "pre-nixos: The wait for the disks failed; provisioning ran in plan-only mode."
+        printf '%s\n' "             Check 'journalctl -u pre-nixos' for details before continuing."
+      elif [ "$detail" = "disks-changed" ]; then
+        printf '%s\n' "pre-nixos: The disks changed after the plan was made; nothing was written."
+        printf '%s\n' "             Re-plan and apply with 'pre-nixos-tui' ([R] rescans), or run 'pre-nixos' again."
       else
         printf '%s\n' "pre-nixos: Provisioning ran in plan-only mode. Review before applying."
       fi
