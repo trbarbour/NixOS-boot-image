@@ -53,7 +53,11 @@ _2026-11-11T19:49:43Z. Task queue item 50._
   - The CLI prints the changes and exits with `EXIT_DISKS_CHANGED = 4`. It records the auto-install status as skipped, with reason `disks-changed`, as R-S3's stop does.
   - The service script maps 4 to plan-only with `DETAIL=disks-changed`.
   - The TUI shows the changes and asks the user to re-plan (`r`); it does not apply.
-- A run that only plans (`--plan-only` without a forced cleanup) or a `--dry-run` writes nothing, so it does not check.
+- A run that only plans (`--plan-only` without a forced cleanup or explicit partitioning) or a `--dry-run` writes nothing, so it does not check.
+- **After Codex's review of #352:**
+  - **Timing:** the check runs before any question is asked, and again right before each write: the cleanup, after its prompt; explicit partitioning; and disko, after the apply confirmation. A prompt can wait for as long as the user takes.
+  - **Record:** the planner's public `plan_storage` records the disks around the whole planning function, so that no return path misses it. The HDD-only path returned early without the record.
+  - **TUI `[R]`:** it keeps a disk-class answer only for the same disk (name, size and serial), not for another disk under the same name.
 
 ### D6. Plans without a record (R-D4)
 - (a) Apply them unchecked. A plan made on another machine, or before a disk was swapped, would be applied blind.

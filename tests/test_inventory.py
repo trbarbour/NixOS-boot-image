@@ -212,3 +212,13 @@ def test_the_planner_records_its_disks() -> None:
         {"name": "sda", "size": 128 * GIB, "serial": "A"},
         {"name": "sdb", "size": 750 * GIB, "serial": "B"},
     ]
+
+
+@pytest.mark.parametrize("hdds", [[SDB], [SDB, Disk(name="sdc", size=750 * GIB, serial="C", rotational=True)]])
+def test_the_planner_records_its_disks_on_the_hdd_only_path(hdds) -> None:
+    """Codex on #352: one or two HDDs and no SSD return early from the planner."""
+
+    from pre_nixos.planner import plan_storage
+
+    plan = plan_storage("fast", hdds, ram_gb=16)
+    assert [entry["name"] for entry in plan[inventory.PLAN_KEY]] == [d.name for d in hdds]

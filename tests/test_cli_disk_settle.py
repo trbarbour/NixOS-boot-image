@@ -123,3 +123,45 @@ def test_service_maps_the_exit_to_plan_only() -> None:
     assert disk_settle.CONSOLE_NOTICE not in service
     # The wait comes before storage detection, which reads the same disks (D1).
     assert service.index("pre-nixos-wait-disks") < service.index("detectStorageCmd}; then")
+
+
+# --- Codex on #352: check immediately before each write, not only once ------
+
+
+def test_explicit_partitioning_is_checked(cli, monkeypatch, capsys) -> None:
+    """``--plan-only --partition-lvm`` partitions without a cleanup or an apply."""
+
+    _late_disk(cli)
+    partitioned: list = []
+    monkeypatch.setattr(pre_nixos.partition, "create_partitions", lambda *a, **k: partitioned.append(a))
+    with pytest.raises(SystemExit) as excinfo:
+        pre_nixos.main(["--plan-only", "--partition-lvm", "/dev/sdb"])
+    assert excinfo.value.code == pre_nixos.EXIT_DISKS_CHANGED
+    assert partitioned == []
+
+
+def test_a_change_during_the_cleanup_prompt_is_caught(cli, monkeypatch, existing_storage, capsys) -> None:
+    """The prompt can wait for as long as the user takes."""
+
+    cli["reads"][:] = [[SDA, SDB], [SDA, SDB], [SDA, SDB, LATE]]  # plan, first check, before cleanup
+    existing_storage.devices = [ExistingStorageDevice(device="/dev/sda1", reasons=("ext4",))]
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(pre_nixos, "_is_interactive", lambda: True)
+    monkeypatch.setattr(pre_nixos, "_prompt_storage_cleanup", lambda devices: "wipe-signatures")
+    monkeypatch.setattr(pre_nixos, "_expand_devices_with_lsblk", lambda devices: set(devices))
+    with pytest.raises(SystemExit) as excinfo:
+        pre_nixos.main([])
+    assert excinfo.value.code == pre_nixos.EXIT_DISKS_CHANGED
+    assert cli["cleanup"] == [] and cli["apply"] == []
+    assert "added sdc" in capsys.readouterr().err
+
+
+def test_a_change_during_the_apply_confirmation_is_caught(cli, monkeypatch, capsys) -> None:
+    cli["reads"][:] = [[SDA, SDB], [SDA, SDB], [SDA, SDB, LATE]]  # plan, first check, before apply
+    monkeypatch.setenv("PRE_NIXOS_EXEC", "1")
+    monkeypatch.setattr(pre_nixos, "_is_interactive", lambda: True)
+    monkeypatch.setattr(pre_nixos, "_confirm_storage_reset", lambda: True)
+    with pytest.raises(SystemExit) as excinfo:
+        pre_nixos.main([])
+    assert excinfo.value.code == pre_nixos.EXIT_DISKS_CHANGED
+    assert cli["apply"] == []

@@ -80,9 +80,9 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - A disk is identified by `(name, size, serial)`: not by its model, which a slow device can report late, nor its rotational flag.
   - Exit 0 settled; 2 still changing at the bound; 1 an error. On 2 or 1 the service runs `pre-nixos --plan-only` (`DETAIL=disks-unsettled` or `disk-wait-error`) and drops a forced cleanup, which would otherwise wipe on an incomplete view.
 - **The plan's disks [R-D3, R-D4]:** `planner.plan_storage` records the disks it planned for as `plan["inventory"]`.
-  - Before the first write, which is the cleanup of existing storage, the CLI and the TUI call `inventory.verify_plan_disks` (the inventory again, without the protected disks, as when planning).
+  - The CLI and the TUI call `inventory.verify_plan_disks` (the inventory again, without the protected disks, as when planning) before any question, and again right before each write: the cleanup of existing storage, explicit partitioning, and disko.
   - On a difference, the CLI records `REASON=disks-changed` and exits 4, which the boot service reports as `STATE=plan-only`, `DETAIL=disks-changed`.
-  - The TUI shows the changes and offers `R`, which rescans and re-plans; it keeps the answers about disks still present, and asks about a new unconfirmed one.
+  - The TUI shows the changes and offers `R`, which rescans and re-plans. It keeps an answer only for the same disk (name, size and serial), and asks about a new unconfirmed one.
   - A plan without a record is refused.
 - Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
 - For each disk: gather `model` (the full ATA model from `device/vpd_pg89` when present, since a SATA disk's `device/model` is cut to 16 characters, #336; else `device/model`), `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.

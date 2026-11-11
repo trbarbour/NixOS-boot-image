@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import sys
-from typing import Collection, Iterable, Sequence, Set
+from typing import Callable, Collection, Iterable, Sequence, Set
 
 from . import (
     apply,
@@ -197,7 +197,12 @@ def _handle_existing_storage(
     execute: bool,
     forced_action: str | None = None,
     protected_disks: Collection[str] = (),
+    before_cleanup: Callable[[], None] = lambda: None,
 ) -> bool:
+    """Wipe existing storage the user (or the boot parameters) chose to wipe;
+    ``False`` to stop.  ``before_cleanup`` runs right before the wipe, after
+    any prompt (item 50: the disks are checked again there)."""
+
     try:
         devices = storage_detection.detect_existing_storage()
     except Exception as exc:
@@ -234,6 +239,7 @@ def _handle_existing_storage(
             "the storage plan, including the detected devices listed above."
         )
     if action != storage_cleanup.SKIP_CLEANUP:
+        before_cleanup()
         storage_cleanup.perform_storage_cleanup(
             action,
             sorted(cleanup_targets),
@@ -547,11 +553,11 @@ def main(argv: list[str] | None = None) -> None:
                 sys.exit(EXIT_NEEDS_ANSWER)
             print(message, file=sys.stderr)
 
-        # Item 50 (R-D3): write only to the disks the plan was made from.  The
-        # first write to them is the cleanup of existing storage, so this
-        # comes before it.
-        writes_plan_disks = not args.plan_only or forced_cleanup_action is not None
-        if writes_plan_disks and not args.dry_run:
+        # Item 50 (R-D3): write only to the disks the plan was made from.
+        # Checked here, before any question is asked, and again right before
+        # each write, since a prompt can wait for as long as the user takes
+        # (Codex on #352).
+        def require_planned_disks() -> None:
             changes = inventory.verify_plan_disks(plan, protected_disks)
             if changes:
                 install.refuse_before_writing(
@@ -559,7 +565,15 @@ def main(argv: list[str] | None = None) -> None:
                 )
                 sys.exit(EXIT_DISKS_CHANGED)
 
+        writes_disks = (
+            not args.plan_only or forced_cleanup_action is not None or bool(explicit_targets)
+        )
+        if writes_disks and not args.dry_run:
+            require_planned_disks()
+
         # Explicit partitioning (after the R-S3 stop: it erases the disks).
+        # Its targets are named by the user, and the check above covered
+        # them (Codex on #352); there is no prompt in between.
         if args.partition_boot:
             partition.create_partitions(args.partition_boot, dry_run=args.dry_run)
         for dev in args.partition_lvm:
@@ -584,6 +598,7 @@ def main(argv: list[str] | None = None) -> None:
                 execute=will_modify_storage,
                 forced_action=forced_cleanup_action,
                 protected_disks=protected_disks,
+                before_cleanup=require_planned_disks,
             ):
                 return
             if _is_interactive() and not _confirm_storage_reset():
@@ -591,6 +606,8 @@ def main(argv: list[str] | None = None) -> None:
                 return
 
         if not args.plan_only:
+            if not args.dry_run:
+                require_planned_disks()
             apply.apply_plan(plan, dry_run=args.dry_run, protected_disks=protected_disks)
             result = install.auto_install(
                 lan_config,

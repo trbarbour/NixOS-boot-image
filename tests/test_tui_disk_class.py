@@ -219,3 +219,42 @@ def test_rescan_asks_about_a_new_disk_named_ssd_but_rotating(user_pc_state, monk
     tui._rescan(window, user_pc_state)
     assert user_pc_state.class_answers == {"sda": DiskClass.HDD}
     assert window.key_queue == []
+
+
+def test_a_change_during_the_cleanup_prompt_is_caught(user_pc_state, monkeypatch, existing_storage) -> None:
+    """Codex on #352: the cleanup prompt waits for the user; check again after it."""
+
+    from pre_nixos.inventory import Disk
+    from pre_nixos.storage_detection import ExistingStorageDevice
+
+    late = Disk(name="sde", model="ST3750528AS", size=750 * 1024**3, rotational=True, serial="E")
+    reads = [list(USER_PC), [*USER_PC, late]]
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: reads.pop(0) if len(reads) > 1 else reads[0])
+    user_pc_state.class_answers = {"sda": DiskClass.SSD}
+    existing_storage.devices = [ExistingStorageDevice(device="/dev/sda1", reasons=("ext4",))]
+    monkeypatch.setattr(tui, "_prompt_storage_cleanup", lambda stdscr, devices: "wipe-signatures")
+
+    def must_not_write(*args, **kwargs):
+        raise AssertionError("must stop before writing")
+
+    monkeypatch.setattr(tui.storage_cleanup, "perform_storage_cleanup", must_not_write)
+    monkeypatch.setattr(tui.apply, "apply_plan", must_not_write)
+    window = _window("x")
+    assert tui._handle_apply_plan(window, user_pc_state) is False
+    assert "added sde" in " ".join(window.lines.values())
+
+
+def test_rescan_drops_the_answer_for_a_replaced_disk(user_pc_state, monkeypatch) -> None:
+    """Codex on #352: the answer was about that disk, not about its name."""
+
+    from dataclasses import replace
+
+    from tests.test_disk_class import GSKILL
+
+    user_pc_state.class_answers = {"sda": DiskClass.SSD}
+    replacement = replace(GSKILL, serial="NEW")
+    monkeypatch.setattr(tui.inventory, "enumerate_disks", lambda: [replacement, *USER_PC[1:]])
+    window = _window("h")
+    tui._rescan(window, user_pc_state)
+    assert user_pc_state.class_answers == {"sda": DiskClass.HDD}
+    assert window.key_queue == []
