@@ -402,8 +402,32 @@
           if system == preInstallerSystem then preInstallerPackage
           else if system == aarch64System then aarch64Config.pkgs.pre-nixos
           else makePreNixosPackage { inherit system; };
+        # Item 42: write an image to removable media, from the build host
+        # (plans/2026-11-11T181058Z-image-writer-design.md).  Not part of the
+        # boot image.  zstd comes from the store; nix and sudo stay the host's
+        # (sudo's setuid wrapper cannot come from the store).
+        writeImage = pkgs.runCommand "pre-nixos-write-image-${preNixosVersion}" {
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+        } (''
+          mkdir -p $out/lib $out/bin
+          cp -r ${./write_image} $out/lib/write_image
+        '' + lib.concatMapStrings ({ name, module }: ''
+          cat > $out/bin/${name} <<EOF
+          #!${pkgs.python3}/bin/python3 -I
+          import sys
+          sys.path.insert(0, "$out/lib")
+          from write_image.${module} import main
+          sys.exit(main())
+          EOF
+          chmod +x $out/bin/${name}
+          wrapProgram $out/bin/${name} --prefix PATH : ${lib.makeBinPath [ pkgs.zstd ]}
+        '') [ { name = "write-image"; module = "cli"; } { name = "write-image-tui"; module = "tui"; } ]);
       in {
-        packages =
+        apps = {
+          write-image = { type = "app"; program = "${writeImage}/bin/write-image"; };
+          write-image-tui = { type = "app"; program = "${writeImage}/bin/write-image-tui"; };
+        };
+        packages = (
           if system == preInstallerSystem then {
             default = preInstallerConfig.config.system.build.isoImage;
             bootImage = preInstallerConfig.config.system.build.isoImage;
@@ -426,8 +450,17 @@
           } else {
             default = preNixosPackage;
             pre-nixos = preNixosPackage;
-          };
+          }) // { inherit writeImage; };
         checks = {
+          # Item 42: the app starts, and the root helper's bootstrap (run by
+          # sudo with the store's python, -I) imports from the store.
+          write-image-app = pkgs.runCommand "write-image-app" { } ''
+            ${writeImage}/bin/write-image --help > help.txt
+            grep -q -- "--site" help.txt
+            ${pkgs.python3}/bin/python3 -I -c "import sys; sys.path.insert(0, '${writeImage}/lib'); from write_image.helper import main; sys.exit(main(sys.argv[1:]))" --help > helper.txt
+            grep -q -- "--device" helper.txt
+            touch $out
+          '';
           pre-nixos-propagates-required-tools =
             let
               propagatedNames =

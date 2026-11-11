@@ -393,6 +393,12 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Build the chosen image and write it to a chosen device, perhaps as a TUI.
     - Must refuse non-removable devices; default to a USB stick for the ISO and an (u)SD card for the SD image.
     - Needs a design (debate) first.
+    - 2026-11-11, user decisions: D1 a CLI and a TUI ("DRY implies that the TUI calls the CLI"); D2 the device rules; D3 build from a site (or `--image`); D4 optional verification; D5 build as the user and write through a `sudo` helper that re-checks the device; D6 Linux only. Design `plans/2026-11-11T181058Z-image-writer-design.md` (R-W1–R-W6).
+    - Implemented (0.30.0):
+      - `write_image/` (`devices`, `image`, `writer`, `helper`, `cli`, `tui`), with flake apps `write-image` and `write-image-tui` and the package `writeImage`.
+      - Tests first: `tests/test_write_image_{devices,writer,cli}.py` (26), plus the flake check `write-image-app`.
+      - Smoke run of the built app on the cloud host: all virtio disks refused, exit 2 for `--device vda`.
+      - A write to real media is untested here (no removable device); it awaits the user.
 
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
