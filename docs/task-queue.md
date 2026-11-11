@@ -395,7 +395,7 @@ _Last updated: 2026-10-30T12-35-13Z_
       - CLI `--install-dns` and `--installer-network`;
       - TUI `[C]`: a DNS prompt, the offer, and the undo.
     - Tests first: `tests/test_installer_network.py`, `test_cli.py` (3), `test_tui.py` (5), and `test_install_network_units.py` (DNS in the block). VM test `tests/vm/test_installer_static_network_vm.py`.
-    - First VM run (`notes/2026-11-11T184913Z-vm-run`) failed with an ImportError: the image was built before `pre_nixos/installer_network.py` was `git add`ed, and a flake's source is the tracked files only. That was a process slip, not a code fault. Rule: `git add` new files before a VM run. Rerun on the committed tree pending.
+    - First VM run (`notes/2026-11-11T184913Z-vm-run`) failed with an ImportError: the image was built before `pre_nixos/installer_network.py` was `git add`ed, and a flake's source is the tracked files only. That was a process slip, not a code fault. Rule: `git add` new files before a VM run. Rerun on the committed tree: **passed**. `lan` took 10.0.2.20/24, the default route via 10.0.2.2 and DNS 10.0.2.3, and QEMU's DHCP address was gone.
 
 50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
     - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.

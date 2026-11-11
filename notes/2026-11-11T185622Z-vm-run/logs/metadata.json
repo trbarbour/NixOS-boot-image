@@ -1,0 +1,60 @@
+{
+  "artifact": {
+    "deriver": "/nix/store/xnnzj996zr88hw8f2kmg69y2w74lqyz2-pre-nixos-0.31.0-20261111185218-s66c533c1-26.05.20261031.fa13731-x86_64-linux.iso.drv",
+    "iso_path": "/nix/store/l5k8ifgxapll5y31hhx70c9dsf9kwjk8-pre-nixos-0.31.0-20261111185218-s66c533c1-26.05.20261031.fa13731-x86_64-linux.iso/iso/pre-nixos-0.31.0-20261111185218-s66c533c1-26.05.20261031.fa13731-x86_64-linux.iso",
+    "nar_hash": "sha256-oYn3dqLNo59iltMysNwI8CDOJO21gCnGjERJ91lWf7Y=",
+    "root_key_fingerprint": "256 SHA256:Nle2FzHyZi/iK0iDjfuB4iTkhET66ZsPEBgMIvTr07g boot-image-vm-test (ED25519)",
+    "store_path": "/nix/store/l5k8ifgxapll5y31hhx70c9dsf9kwjk8-pre-nixos-0.31.0-20261111185218-s66c533c1-26.05.20261031.fa13731-x86_64-linux.iso"
+  },
+  "diagnostics": {
+    "artifacts": [],
+    "directory": "/home/user/NixOS-boot-image/notes/2026-11-11T185622Z-vm-run/logs/diagnostics"
+  },
+  "generated_at": "2026-11-11T18:56:22.967189+00:00",
+  "logs": {
+    "harness": "/home/user/NixOS-boot-image/notes/2026-11-11T185622Z-vm-run/logs/harness.log",
+    "serial": "/home/user/NixOS-boot-image/notes/2026-11-11T185622Z-vm-run/logs/serial.log"
+  },
+  "qemu": {
+    "command": [
+      "/nix/store/xz24bm2725bh2alz510gqxa9lbjxasqb-qemu-10.2.4/bin/qemu-system-x86_64",
+      "-m",
+      "2048",
+      "-smp",
+      "2",
+      "-display",
+      "none",
+      "-no-reboot",
+      "-serial",
+      "stdio",
+      "-boot",
+      "d",
+      "-cdrom",
+      "/nix/store/l5k8ifgxapll5y31hhx70c9dsf9kwjk8-pre-nixos-0.31.0-20261111185218-s66c533c1-26.05.20261031.fa13731-x86_64-linux.iso/iso/pre-nixos-0.31.0-20261111185218-s66c533c1-26.05.20261031.fa13731-x86_64-linux.iso",
+      "-drive",
+      "file=/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-disk-primary0/disk.img,if=virtio,format=raw",
+      "-qmp",
+      "unix:/tmp/boot-image-shared-tmp/qmp-mc181r45/qmp.sock,server=on,wait=off",
+      "-device",
+      "virtio-rng-pci",
+      "-netdev",
+      "user,id=net0,hostfwd=tcp:127.0.0.1:34895-:22",
+      "-device",
+      "virtio-net-pci,netdev=net0"
+    ],
+    "disk_image": "/tmp/boot-image-shared-tmp/pytest-of-root/pytest-0/boot-image-disk-primary0/disk.img",
+    "version": "QEMU emulator version 10.2.4"
+  },
+  "ssh": {
+    "executable": "/usr/bin/ssh",
+    "host": "127.0.0.1",
+    "port": 34895
+  },
+  "timings": {
+    "boot_to_login_seconds": 109.028,
+    "build_seconds": 244.976,
+    "end": "2026-11-11T19:00:14.532791+00:00",
+    "start": "2026-11-11T18:56:22.884967+00:00",
+    "total_seconds": 231.56
+  }
+}
