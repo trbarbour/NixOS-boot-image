@@ -72,6 +72,14 @@ def clean_command_output(raw: str, command: str) -> str:
     return "\n".join(cleaned).strip()
 
 
+def with_abort_reason(message: str, reason: Optional[str]) -> str:
+    """``message``, led by why the harness stopped the VM, if it did (item 38)."""
+
+    if not reason:
+        return message
+    return f"VM stopped by the harness: {reason}\n{message}"
+
+
 @dataclass
 class BootImageVM:
     """Minimal controller for interacting with the boot image via serial and SSH."""
@@ -91,6 +99,9 @@ class BootImageVM:
     boot_started_at: Optional[float] = None
     qmp_socket: Optional[Path] = None
     login_timeout: int = VM_LOGIN_TIMEOUT
+    # Set when the harness stops QEMU itself (item 38: the disk allowance ran
+    # low), so the failure names the cause instead of a bare EOF.
+    abort_reason: Optional[str] = None
     _transcript: List[str] = field(default_factory=list, init=False, repr=False)
     _has_root_privileges: bool = field(default=False, init=False, repr=False)
     _log_dir: Path = field(init=False, repr=False)
@@ -471,7 +482,7 @@ class BootImageVM:
             )
             collected_diagnostics.append(("failure context", context_path))
 
-        details = [message]
+        details = [with_abort_reason(message, self.abort_reason)]
         details.append("Boot image artifact metadata:")
         details.extend(self._format_artifact_metadata())
         if body:

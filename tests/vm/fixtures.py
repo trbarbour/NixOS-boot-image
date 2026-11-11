@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Optional, Sequ
 import pytest
 
 from scripts.nix_git_inputs import nix_command
+from tests.vm import disk_space
 from tests.root_password_data import TEST_ROOT_PASSWORD_HASH
 from tests.vm.boot_medium import UsbStick, make_usb_stick
 from tests.vm.machines import Machine, x86_machine
@@ -286,6 +287,22 @@ def _tail(text: str, lines: int) -> str:
     return "\n".join(text.splitlines()[-lines:])
 
 
+def _delete_stale_images(nix_executable: str, *, keep: Path) -> None:
+    """Item 38: drop this repository's older, unreferenced images from the store.
+
+    Each run builds a ~1.5 GB image that stays until a GC; set
+    ``PRE_NIXOS_VM_KEEP_IMAGES=1`` to keep them (e.g. to compare two builds).
+    """
+
+    if os.environ.get(disk_space.KEEP_IMAGES_ENV):
+        return
+    sibling = Path(nix_executable).with_name("nix-store")
+    nix_store = str(sibling) if sibling.exists() else "nix-store"
+    deleted = disk_space.delete_stale_images(nix_store, keep=keep)
+    if deleted:
+        print(f"Deleted {len(deleted)} older image(s) from the Nix store: " + ", ".join(p.name for p in deleted))
+
+
 def build_boot_artifact(
     nix_executable: str,
     attribute: str,
@@ -340,6 +357,7 @@ def build_boot_artifact(
     if not paths:
         raise AssertionError(f"nix build {attribute} did not return a store path")
     store_path = Path(paths[-1])
+    _delete_stale_images(nix_executable, keep=store_path)
 
     info_proc = subprocess.run(
         [nix_executable, "path-info", "--json", str(store_path)],
@@ -550,6 +568,10 @@ def _launch_boot_image_vm(
     )
     record_run_timings(metadata_path, run_timings=run_timings)
 
+    # Item 38: refuse to start a VM that would run out of disk halfway.
+    disk_space.require_free_space(
+        log_dir, minimum_bytes=disk_space.min_free_bytes(), purpose="starting a VM"
+    )
     child = _pexpect.spawn(
         cmd[0],
         cmd[1:],
@@ -572,6 +594,7 @@ def _launch_boot_image_vm(
             handle.write(f"[{timestamp}] {message}\n")
 
     _log_debug(f"Disk free at VM start: {_free_gib(log_dir):.1f} GiB")
+    guard: Optional[disk_space.FreeSpaceGuard] = None
     try:
         vm = BootImageVM(
             child=child,
@@ -591,6 +614,21 @@ def _launch_boot_image_vm(
             login_timeout=machine.login_timeout,
         )
         record_run_timings(metadata_path, run_timings=run_timings)
+        running = vm
+
+        def _on_low(free: int) -> None:
+            # Item 38: stop QEMU before an ENOSPC corrupts the run, and say so.
+            reason = (
+                f"the disk allowance ran low ({free / disk_space.GIB:.1f} GiB free, below the"
+                f" {disk_space.floor_bytes() / disk_space.GIB:.1f} GiB floor); QEMU was stopped"
+                f" (raise or lower {disk_space.FLOOR_ENV})"
+            )
+            running.abort_reason = reason
+            _log_debug(reason)
+            child.terminate(force=True)
+
+        guard = disk_space.FreeSpaceGuard(log_dir, disk_space.floor_bytes(), _on_low)
+        guard.start()
         try:
             yield vm
             run_outcome = (
@@ -621,6 +659,8 @@ def _launch_boot_image_vm(
         run_outcome = "error"
         raise
     finally:
+        if guard is not None:
+            guard.stop()
         _log_debug(f"Disk free at VM teardown: {_free_gib(log_dir):.1f} GiB")
         run_timings.total_seconds = time.perf_counter() - total_started_at
         run_timings.completed_at = datetime.datetime.now(datetime.timezone.utc)
