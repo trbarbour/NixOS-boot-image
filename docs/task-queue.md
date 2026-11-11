@@ -440,6 +440,14 @@ _Last updated: 2026-10-30T12-35-13Z_
 48. **The x86 image's initrd lacks SAS HBA drivers (`mptsas`)** *(found 2026-11-11, #344)*.
     - On the user's PC the HBA disk appears at 67.8 s in the installer, but at about 15 s on the installed system, whose generated configuration has `mptsas` in the initrd.
     - Since #344's fix a late member no longer degrades an array. Adding common HBA drivers (`mptsas`, `mpt3sas`) to the ISO's initrd would still make such disks appear sooner, for pre-nixos's inventory too. Check first whether disks that appear late are missed by the boot-time plan.
+    - 2026-11-11 (user: "do item 48"). Tests first:
+      - flake check `initrd-storage-drivers` fails on the current image for all eight drivers;
+      - `tests/vm/test_hba_disk_vm.py` puts a disk behind QEMU's `mptsas1068` and requires it attached before the switch to the real root.
+    - Fix (0.28.2): `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`, all present in the pinned kernel) added to the x86 initrd (R-S6). VM runs pending.
+    - Late disks and the boot-time plan: `pre-nixos.service` has no ordering after disk discovery, so a disk that appears after it starts is missing from the plan. That is item 50.
+50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
+    - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
+    - Options: wait until the device set has been stable for some seconds (bounded), or wait for each controller's scan to complete. Needs a design and a test (a disk hot-plugged during the boot service). On the user's PC the boot run started at 121 s, after the HBA disk (67.8 s).
 49. **mdadm's monitor cannot report a degraded array** *(found 2026-11-10, #344)*.
     - The installed system has `MAILADDR root` (which pre-nixos writes so mdadm does not warn), but no sendmail, so "DegradedArray" events go nowhere visible. Decide how to report them: the console, the journal at a higher priority, or a `PROGRAM` hook.
 

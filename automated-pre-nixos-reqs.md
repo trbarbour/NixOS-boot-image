@@ -37,6 +37,8 @@ The system must automate the hardware setup process on new servers prior to NixO
       own. An incomplete array stays inactive, and nothing is written to it,
       until its members appear or the user starts it. A member that appears
       late (a slow controller) must not be dropped from an existing array. [R-S5]
+    - The x86 image's initrd carries the drivers of common SAS and RAID
+      controllers, so their disks appear before the real root starts. [R-S6]
   - For each group of (approximately) same-sized rotating disks:
     - If exactly two → use for swap on RAID-1.
     - If three or more → use for bulk storage on RAID-5 or RAID-6, depending on count.

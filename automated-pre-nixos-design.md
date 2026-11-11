@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.35
+**Doc status:** Draft v0.36
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -74,6 +74,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 
 ## 7) Discovery & Heuristics (Core logic)
 ### 7.1 Disk inventory
+- **Controllers [R-S6]:** the x86 image's initrd adds the SAS/RAID drivers listed in `modules/pre-nixos/initrd-storage-drivers.nix` (`mptsas`, `mpt3sas`, `megaraid_sas`, `aacraid`, `smartpqi`, `isci`, `mvsas`, `pm80xx`) to NixOS's all-hardware list, whose SCSI part is incomplete. On the user's PC an LSI SAS1068E disk otherwise appeared only at 67.8 s, once the real root's udev loaded `mptsas` (task queue item 48, #344). udev loads them only for matching hardware.
 - Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
 - For each disk: gather `model` (the full ATA model from `device/vpd_pg89` when present, since a SATA disk's `device/model` is cut to 16 characters, #336; else `device/model`), `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
 - Group disks into **SSDs** and **HDDs**, then bucket them by approximate size (≤1% tolerance).
