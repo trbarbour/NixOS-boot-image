@@ -28,14 +28,6 @@ _Last updated: 2026-11-12T02-36Z_
    - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
     - **2026-11-12, audit:** still open: `scripts/collect_pre_nixos_journal.py` does not wait for the unit to finish.
 
-11. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
-    - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.
-    - Reqs §2.4: swap goes in `main` "when no rotating tier exists and capacity allows"; "if there is insufficient capacity anywhere, swap may be omitted". A 4 MiB swap is neither a real size nor omitted, so it looks like `slash` is sized before swap.
-    - Similarly, SSD + 3 HDD gives `data` 4M on `large`.
-    - To do: reproduce in a unit test, then root-cause against §2.4.
-    - Related (2026-10-19, AArch64 E5 run5): a solid-state device too small for `slash` still becomes `main`. The planner postcondition (#313) then stops pre-nixos, which is safe but leaves no plan at all. Seen with QEMU virt's 128M flash (`mtdblock0`); that device is now excluded as a non-candidate. Design question: choose `main` only where `slash` fits.
-    - **2026-11-12, audit:** still reproduces for two 4 GiB SSDs with 2 GiB RAM: `main` gets `slash` 6136M and `swap` **4M**. The SSD + 3 HDD case is fixed (`data` is now 6136M on `large`).
-
 12. **End-to-end install VM test (E9d).** *(gap, 2026-10-19)*
     - 2026-10-22: #320 (duplicate loader attribute) reached hardware because of this gap; the flake checks added for it now cover the parse and evaluation part.
     - No VM test runs `nixos-install` and then boots the installed system, on either x86 or AArch64. Images are built without `PRE_NIXOS_AUTO_INSTALL`.
@@ -245,12 +237,22 @@ _Last updated: 2026-11-12T02-36Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
     - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
+54. **Small disks: `slash` takes everything before swap and `home`.** *(design question, 2026-11-12T02-47Z, found while fixing item 11)*
+    - `slash` is planned first, at up to 50 GiB, so a `main` smaller than about 52 GiB has no `home`, and, when swap falls back to `main` (no rotating disks), no swap. Example: one 20 GiB SSD with 16 GiB RAM gives `slash` 19448M and nothing else.
+    - Before 0.32.3 these were 4 MiB slivers (item 11), so nothing usable was lost; the question is only whether small systems should reserve room for swap or `home`.
+    - For the user: keep `slash` first, or reserve some swap (e.g. up to RAM, or a fraction of `main`) before `slash` on small disks? Needs a short design debate; reqs §2.4 says swap goes in `main` "when capacity allows".
+
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-12T02-47Z - Item 11 fixed (0.32.3): no sliver LVs.
+  - Root cause: `add_lv` gave whatever was left when a request did not fit, so a nearly full VG produced a one-extent (4 MiB) LV. That covered the filed swap case and also `large/data` once swap had filled a small `large`.
+  - Now an optional LV is omitted below 1 GiB, or below its request if smaller; `slash` is exempt (R-L1).
+  - Tests first: `tests/test_planner_lv_minimum.py`; 24 of its 67 cases failed before the fix, e.g. on a 20 GiB SSD.
+  - Found item 54 (`slash` first on small disks). Full text in `docs/task-queue-archive.md`.
 - 2026-11-12T02-36Z - **Queue audit** (user request). Each old item was checked against the code, the merged PRs and the notes. Closed:
   - Item 1: Harden BootImageVM diagnostics: an open-ended log of work already done (metadata, transcripts, journals, dmesg, failed units, QEMU version); items 37 and 38 extended it further. No concrete work remains; new gaps get their own items.
   - Item 2: Rebuild the image and rerun the VM regression: now standing practice, every change gets its VM runs (e.g. items 50, 52, 53), so it is not a task.

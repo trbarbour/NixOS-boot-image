@@ -126,6 +126,7 @@ The system must automate the hardware setup process on new servers prior to NixO
   - When a dedicated `swap` VG exists **and still has capacity after provisioning swap**, provision:
     - `swap/var_tmp` mounted on `/var/tmp`, default size equal to the allocated swap space, permissions `1777`.
     - `swap/var_log` mounted on `/var/log`, default size **4 GiB or the allocated swap size**, whichever is smaller.
+- An optional volume (`home`, swap, `var_tmp`, `var_log`, `data`) that would get less than **1 GiB**, or less than its own default size if that is smaller, is omitted rather than created as a sliver. This is what "insufficient capacity" means above. [R-L1]
 
 ### 2.5 Filesystems
 

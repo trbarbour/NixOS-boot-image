@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.41
+**Doc status:** Draft v0.42
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -140,6 +140,8 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
     - `swap/var_log`, default size 4 GiB or the swap LV size, whichever is smaller.
   - Bulk: `large/data` receives 100 GiB by default when a `large` VG exists.
 - **Extent safety margin:** allocations avoid consuming the final one or two extents of a VG so follow-up provisioning remains possible.
+- **No slivers [R-L1]:** an LV that does not fit gets what is left, but an optional one (`home`, swap, `var_tmp`, `var_log`, `data`) gets none at all below `OPTIONAL_LV_MINIMUM` (1 GiB), or below its request if that is smaller. `slash` is required, and exempt.
+  - Before 0.32.3, a nearly full VG gave one 4 MiB extent: e.g. `main/swap` on two 4 GiB SSDs, `large/data` when swap had filled a small `large` (task queue item 11).
 
 ### 7.5 Filesystems (ext4)
 - Mount options: `relatime`. For SSDs, optional `discard=async`. `/var/tmp` inherits the default ext4 mount and is fixed to mode `1777` via a post-apply command.

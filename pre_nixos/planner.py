@@ -51,6 +51,10 @@ def _format_size(size: int) -> str:
 
 MI_BYTE = 1024 ** 2
 LVM_EXTENT_BYTES = 4 * MI_BYTE
+# Item 11: an optional LV (home, swap, var_tmp, var_log, data) smaller than
+# this, or than its own request if that is smaller, is not created; a
+# one-extent swap or data LV is neither a real size nor omitted (reqs §2.4).
+OPTIONAL_LV_MINIMUM = 1024 * MI_BYTE
 
 # EFI System Partition size (reqs §2.3, R-B3): 3% of the disk, but at least
 # 1 GiB and at most 4 GiB.  Each generation kept on /boot costs about 200 MB
@@ -332,7 +336,16 @@ def _plan_storage(
             free -= free % LVM_EXTENT_BYTES
         return free
 
-    def add_lv(name: str, vg: str, size: str) -> int:
+    def add_lv(name: str, vg: str, size: str, *, minimum: int = OPTIONAL_LV_MINIMUM) -> int:
+        """Plan LV ``name`` in ``vg``, up to ``size``; return the bytes given.
+
+        When the request does not fit, the LV gets what is left, but none
+        at all below ``min(minimum, size)`` (item 11): a sliver is neither a
+        real size nor omitted.  ``slash`` passes ``minimum=0``: it is
+        required, and the planner's postcondition checks it.
+        """
+
+        assert minimum >= 0, minimum
         total = vg_sizes.get(vg, 0)
         used = used_vg_sizes.get(vg, 0)
         free = max(total - used, 0)
@@ -362,6 +375,8 @@ def _plan_storage(
             return 0
 
         alloc = alloc_extents * LVM_EXTENT_BYTES
+        if alloc < min(minimum, req):
+            return 0
         used_vg_sizes[vg] = used + alloc
         plan["lvs"].append({"name": name, "vg": vg, "size": _format_size(alloc)})
         return alloc
@@ -428,7 +443,7 @@ def _plan_storage(
             add_array(name, arr["level"], devices, "hdd")
             add_vg("main", [name])
         swap_size = _format_size(_to_bytes(ram_gb * 2))
-        slash_alloc = add_lv("slash", "main", ROOT_LV_SIZE)
+        slash_alloc = add_lv("slash", "main", ROOT_LV_SIZE, minimum=0)
         if slash_alloc > 0:
             free_main = vg_free("main")
             if free_main > 0:
@@ -556,7 +571,7 @@ def _plan_storage(
             None,
         )
     if any(vg["name"] == "main" for vg in plan["vgs"]):
-        slash_alloc = add_lv("slash", "main", ROOT_LV_SIZE)
+        slash_alloc = add_lv("slash", "main", ROOT_LV_SIZE, minimum=0)
         if slash_alloc > 0:
             ensure_home_lv()
     if swap_vg is not None:

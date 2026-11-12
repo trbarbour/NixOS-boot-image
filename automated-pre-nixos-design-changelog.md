@@ -176,3 +176,6 @@
 
 ### v0.41 — 2026-11-12
 - §7.1: the inventory reads each disk's serial where its bus puts it (virtio `serial`, NVMe `device/serial`, SCSI/SAS/SATA `device/vpd_pg80`); before, only NVMe disks had one (task queue item 53).
+
+### v0.42 — 2026-11-12
+- §7.4: no sliver LVs. An optional LV that would get less than 1 GiB, or less than its request if smaller, is omitted (R-L1, task queue item 11).
