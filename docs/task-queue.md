@@ -3,7 +3,7 @@
 _Last updated: 2026-10-30T12-35-13Z_
 
 ## Rules
-- **CI minutes (user decision, 2026-11-11):** record-keeping commits (notes, the task queue, VM run logs) go out with the next code push. When one must come after the last code push of a PR, its commit message carries `[skip ci]`. Not before the PR is opened: CI runs only for pull requests (and pushes to `main`), so the PR's first run would land on a `[skip ci]` head and be skipped (2026-11-11, item 52). Most of #352's CI runs came from record-keeping pushes, and the account's free Actions minutes ran out.
+- **CI minutes (user decision, 2026-11-11):** record-keeping commits (notes, the task queue, VM run logs) go out with the next code push. When one must come after the last code push of a PR, its commit message carries `[skip ci]`. Not before the PR is opened: CI runs only for pull requests (and pushes to `main`), so the PR's first run would land on a `[skip ci]` head and be skipped (2026-11-11, item 52). Never write the skip marker in any other commit message, not even to describe this rule: GitHub matches it anywhere in the head commit's message. Commit d5e1bb0's subject quoted it and suppressed all of PR #353's CI, even after a close and reopen (2026-11-12). Most of #352's CI runs came from record-keeping pushes, and the account's free Actions minutes ran out.
 
 ## Active Tasks
 
