@@ -147,3 +147,10 @@ Closed task-queue items, kept verbatim with their full history when they leave `
     - To do: reproduce in a unit test, then root-cause against §2.4.
     - Related (2026-10-19, AArch64 E5 run5): a solid-state device too small for `slash` still becomes `main`. The planner postcondition (#313) then stops pre-nixos, which is safe but leaves no plan at all. Seen with QEMU virt's 128M flash (`mtdblock0`); that device is now excluded as a non-candidate. Design question: choose `main` only where `slash` fits.
     - **2026-11-12, audit:** still reproduces for two 4 GiB SSDs with 2 GiB RAM: `main` gets `slash` 6136M and `swap` **4M**. The SSD + 3 HDD case is fixed (`data` is now 6136M on `large`).
+
+## Closed 2026-11-12: item 54 (user decision: keep `slash` first)
+
+54. **Small disks: `slash` takes everything before swap and `home`.** *(design question, 2026-11-12T02-47Z, found while fixing item 11)*
+    - `slash` is planned first, at up to 50 GiB, so a `main` smaller than about 52 GiB has no `home`, and, when swap falls back to `main` (no rotating disks), no swap. Example: one 20 GiB SSD with 16 GiB RAM gives `slash` 19448M and nothing else.
+    - Before 0.32.3 these were 4 MiB slivers (item 11), so nothing usable was lost; the question is only whether small systems should reserve room for swap or `home`.
+    - For the user: keep `slash` first, or reserve some swap (e.g. up to RAM, or a fraction of `main`) before `slash` on small disks? Needs a short design debate; reqs §2.4 says swap goes in `main` "when capacity allows".

@@ -237,17 +237,15 @@ _Last updated: 2026-11-12T02-36Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
     - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
-54. **Small disks: `slash` takes everything before swap and `home`.** *(design question, 2026-11-12T02-47Z, found while fixing item 11)*
-    - `slash` is planned first, at up to 50 GiB, so a `main` smaller than about 52 GiB has no `home`, and, when swap falls back to `main` (no rotating disks), no swap. Example: one 20 GiB SSD with 16 GiB RAM gives `slash` 19448M and nothing else.
-    - Before 0.32.3 these were 4 MiB slivers (item 11), so nothing usable was lost; the question is only whether small systems should reserve room for swap or `home`.
-    - For the user: keep `slash` first, or reserve some swap (e.g. up to RAM, or a fraction of `main`) before `slash` on small disks? Needs a short design debate; reqs §2.4 says swap goes in `main` "when capacity allows".
-
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-12T04-01Z - User decisions on item 11's follow-ups:
+  - The 1 GiB floor for optional LVs (R-L1) is fine.
+  - Item 54 closed: `slash` stays first, at up to 50 GiB, even when that leaves a small `main` without swap or `home` (user: "root up to 50 GiB is fine"). Full text in `docs/task-queue-archive.md`.
 - 2026-11-12T02-47Z - Item 11 fixed (0.32.3), merged in trbarbour/NixOS-boot-image#356 (CI green, Codex clean): no sliver LVs.
   - Root cause: `add_lv` gave whatever was left when a request did not fit, so a nearly full VG produced a one-extent (4 MiB) LV. That covered the filed swap case and also `large/data` once swap had filled a small `large`.
   - Now an optional LV is omitted below 1 GiB, or below its request if smaller; `slash` is exempt (R-L1).
