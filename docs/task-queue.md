@@ -375,17 +375,6 @@ _Last updated: 2026-10-30T12-35-13Z_
       - 2026-11-08: RAID VM test passed with the SATA-capable disk helper; `nix flake check` passed (inputs over git, `scripts/nix_git_inputs.py`).
       - 2026-11-07, VM runs: run 1 failed on the test's own `cat /proc/mdstat` (no md driver when nothing is provisioned); run 2 found the TEST SSD named `sdb`, which exposed #334 (sd names follow probe order). Run 3 **passed** (`notes/2026-11-07T172113Z-vm-run`). `test_raid_provisioning.py`, fixed for #334, **passed** (`notes/2026-11-07T172610Z-vm-run`). `nix flake check` passed, including the new `boot-service-status`.
 
-52. **The managed block's `systemd.network.networks."lan"` unit is never used** *(anomaly, 2026-11-11 19:30:56Z, found while checking Codex's DNS finding on #351)*.
-    - Evaluated: NixOS turns `networking.interfaces.lan` (and `networking.defaultGateway`) into `40-lan.network`, matching `Name=lan`. It sorts before the declared `lan.network`, which networkd therefore never applies.
-    - So that unit's `matchConfig.MACAddress` and its `networkConfig` are dead. The working settings come from `networking.interfaces.lan` and `networking.defaultGateway`, matched by the name the link unit gives.
-    - Statics still work (the address and gateway are in `40-lan`), but the duplication misleads, and caused item 41's DNS slip.
-    - Proposal: keep one declaration. Either drop the `lan` unit, or drop `networking.interfaces.lan` and `defaultGateway` and name the unit `40-lan`. Needs a design debate, plus a test that evaluates the generated units.
-    - 2026-11-11, design `plans/2026-11-11T225033Z-installed-network-unit-design.md` (R-N4). Chosen: (A), keep NixOS's options and drop the declared unit. It is the unit already in effect, so behaviour does not change; the link unit keeps the MAC match.
-    - Test first: the flake check `installed-network-units` evaluates the managed block exactly as pre-nixos writes it. The golden files `tests/fixtures/managed-block/{dhcp,static}.nix` are kept equal by `tests/test_managed_block_golden.py`. Before the fix it failed with `.network units ["40-lan.network","lan.network"]`; after it, it passes. The install tests now require no `systemd.network.networks`.
-    - Fixed (0.32.1). VM end-to-end `test_installed_system_with_a_static_address_is_reachable` on 0.32.1 (`notes/2026-11-11T225813Z-vm-run`): **passed** in 43 min.
-      - The installed block has no `systemd.network.networks`.
-      - The installed disks boot without the ISO and are reached over SSH at the static address.
-
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
@@ -396,6 +385,10 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Next: confirm in a VM which sysfs files hold the serial, for virtio and NVMe; read the first present; add a test with a fake sysfs tree.
 
 ## Recently Completed
+- 2026-11-12T01-06Z - Merged trbarbour/NixOS-boot-image#353 (0.32.1): item 52. The installed system's `lan` has one network unit, from NixOS's `networking.interfaces.lan`; the shadowed `systemd.network.networks."lan"` is gone (R-N4).
+  - Test first: the flake check `installed-network-units` over golden copies of the managed block.
+  - The VM install-and-boot test passed; Codex found nothing; CI green.
+  - CI first failed to start because a commit subject quoted the skip marker (rule recorded under Rules).
 - 2026-11-11T22-48Z - Closed items 35 and 36: both were fixed in trbarbour/NixOS-boot-image#333 (0.25.2) but left on the queue.
   - Item 35: manual runs reuse the boot's LAN configuration (`lan_reuse.ensure_lan`) instead of waiting 60 s for a DHCP lease; the user confirmed 0.35 s on 2026-11-07.
   - Item 36: the plan is printed once at a terminal (`tests/test_cli.py`).
