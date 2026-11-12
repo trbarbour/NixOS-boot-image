@@ -72,6 +72,42 @@ def _ata_model(device: Path) -> Optional[str]:
     return ata_model_from_vpd_pg89(page)
 
 
+# Unit Serial Number VPD page (SPC; /sys/block/<d>/device/vpd_pg80): page
+# code at byte 1, the serial's length at bytes 2-3 (big-endian), the serial
+# from byte 4.  The only place SCSI, SAS and SATA disks expose their serial
+# (task queue item 53; notes/2026-11-12T014614Z-disk-serial-experiment.md).
+_VPD_UNIT_SERIAL_NUMBER = 0x80
+_VPD80_HEADER = 4
+
+
+def serial_from_vpd_pg80(page: bytes) -> Optional[str]:
+    """The serial in a Unit Serial Number VPD page, or ``None``."""
+
+    if len(page) < _VPD80_HEADER or page[1] != _VPD_UNIT_SERIAL_NUMBER:
+        return None
+    length = int.from_bytes(page[2:4], "big")
+    if len(page) < _VPD80_HEADER + length:
+        return None
+    serial = page[_VPD80_HEADER : _VPD80_HEADER + length].decode("ascii", errors="replace").strip(" \x00")
+    return serial or None
+
+
+def _serial(entry: Path) -> str:
+    """The disk's serial, from wherever its bus puts it (item 53), in order:
+    ``serial`` (virtio-blk), ``device/serial`` (NVMe), ``device/vpd_pg80``
+    (SCSI, SAS, SATA).  An empty file does not hide a later one; ``""`` when
+    there is none."""
+
+    for text in (_read_text(entry / "serial"), _read_text(entry / "device" / "serial")):
+        if text:
+            return text
+    try:
+        page = (entry / "device" / "vpd_pg80").read_bytes()
+    except OSError:
+        return ""
+    return serial_from_vpd_pg80(page) or ""
+
+
 def enumerate_disks(sys_block: Path = Path("/sys/block")) -> List[Disk]:
     """Enumerate available disks.
 
@@ -100,7 +136,7 @@ def enumerate_disks(sys_block: Path = Path("/sys/block")) -> List[Disk]:
             size = int(size_str) * 512
         except ValueError:
             size = 0
-        serial = _read_text(entry / "device" / "serial")
+        serial = _serial(entry)
         nvme = name.startswith("nvme")
         disks.append(
             Disk(

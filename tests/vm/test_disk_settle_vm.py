@@ -17,7 +17,7 @@ import json
 import pytest
 
 from tests.vm.controller import BootImageVM
-from tests.vm.fixtures import LATE_DISK_BYTES
+from tests.vm.fixtures import LATE_DISK_BYTES, LATE_DISK_SERIAL
 from tests.vm.late_disk import LateDiskPlugger
 
 pytestmark = [pytest.mark.vm, pytest.mark.slow]
@@ -31,10 +31,14 @@ def test_the_boot_plan_waits_for_a_late_disk(
     plugger.check()
 
     journal = vm.collect_journal("pre-nixos.service")
+    # Item 53: a virtio disk's serial is in /sys/block/<d>/serial; before,
+    # this logged "no serial".
     assert "pre-nixos: disk change: added vd" in journal, journal
+    assert f"(6 GiB, serial {LATE_DISK_SERIAL})" in journal, journal
     assert "pre-nixos: disks settled after" in journal, journal
 
     plan = json.loads(vm.run_as_root_checked("cat /run/pre-nixos/storage-plan.json", timeout=60))
     sizes = sorted(entry["size"] for entry in plan["inventory"])
     assert len(sizes) == 2 and LATE_DISK_BYTES in sizes, plan["inventory"]
+    assert LATE_DISK_SERIAL in [entry["serial"] for entry in plan["inventory"]], plan["inventory"]
     assert status.get("STATE") == "applied", status

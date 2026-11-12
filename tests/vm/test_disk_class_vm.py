@@ -67,3 +67,6 @@ def test_boot_run_waits_for_the_disk_class_answer(
     vgs = {vg["name"]: vg["devices"] for vg in plan["vgs"]}
     assert vgs["main"] == [f"{ssd}3"] and vgs["swap"] == ["md0"], vgs
     assert plan["disk_classes"] == {ssd: "ssd"}
+    # Item 53: SATA disks' serials come from the Unit Serial Number VPD page;
+    # before, the inventory read none (notes/2026-11-12T014614Z-disk-serial-experiment.md).
+    assert sorted(entry["serial"] for entry in plan["inventory"]) == ["hdda", "hddb", "ssd"], plan["inventory"]

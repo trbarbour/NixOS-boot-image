@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.40
+**Doc status:** Draft v0.41
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -86,6 +86,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
   - A plan without a record is refused.
 - Enumerate block devices excluding removable boot media (`/sys/block/*/removable`), CDROMs, and dm-crypt devices.
 - For each disk: gather `model` (the full ATA model from `device/vpd_pg89` when present, since a SATA disk's `device/model` is cut to 16 characters, #336; else `device/model`), `size`, `rotational` (from `/sys/block/X/queue/rotational`), `logical/physical sector size`, `serial`, and whether NVMe.
+  - The serial is read where each bus puts it, in order: `/sys/block/X/serial` (virtio-blk), `device/serial` (NVMe), then the Unit Serial Number VPD page `device/vpd_pg80` (SCSI, SAS, SATA). An empty file does not hide a later one. Until 0.32.2 only `device/serial` was read, so only NVMe disks had a serial (task queue item 53; notes/2026-11-12T014614Z-disk-serial-experiment.md). R-D3's disk identity depends on it.
 - Group disks into **SSDs** and **HDDs**, then bucket them by approximate size (≤1% tolerance).
 - **Disk class [R-S3, R-S4]** (`disk_class.py`; plans/2026-11-07T161535Z-ssd-model-name-design.md):
   - The class is the kernel's `rotational`, unless the user answered for the disk (`--ssd`/`--hdd`, the TUI's start-up question or its `T` toggle). The answers are applied to the inventory before planning, so the planner is unchanged; the plan records them as `disk_classes`.

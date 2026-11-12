@@ -173,3 +173,6 @@
 
 ### v0.40 — 2026-11-11
 - §7.7.0 (new): the installed system's `lan` has one network unit, from NixOS's `networking.interfaces.lan`; the shadowed `systemd.network.networks."lan"` is gone (R-N4, task queue item 52).
+
+### v0.41 — 2026-11-12
+- §7.1: the inventory reads each disk's serial where its bus puts it (virtio `serial`, NVMe `device/serial`, SCSI/SAS/SATA `device/vpd_pg80`); before, only NVMe disks had one (task queue item 53).
