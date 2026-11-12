@@ -1,57 +1,11 @@
 # Task Queue
 
-_Last updated: 2026-10-30T12-35-13Z_
+_Last updated: 2026-11-12T02-36Z_
 
 ## Rules
 - **CI minutes (user decision, 2026-11-11):** record-keeping commits (notes, the task queue, VM run logs) go out with the next code push. When one must come after the last code push of a PR, its commit message carries `[skip ci]`. Not before the PR is opened: CI runs only for pull requests (and pushes to `main`), so the PR's first run would land on a `[skip ci]` head and be skipped (2026-11-11, item 52). Never write the skip marker in any other commit message, not even to describe this rule: GitHub matches it anywhere in the head commit's message. Commit d5e1bb0's subject quoted it and suppressed all of PR #353's CI, even after a close and reopen (2026-11-12). Most of #352's CI runs came from record-keeping pushes, and the account's free Actions minutes ran out.
 
 ## Active Tasks
-
-1. **Harden BootImageVM diagnostics.**
-   - Keep improving the login helper so root escalation transcripts and serial output are captured automatically on failure.
-   - Collect `journalctl -u pre-nixos.service -b` and `systemctl status pre-nixos` whenever provisioning or DHCP waits time out, and emit ISO metadata (store path, hash, root key fingerprint) in logs.
-   - 2025-10-24T03-23-43Z session emits a structured metadata block at harness startup and mirrors it in assertion failures for provenance tracking.【F:docs/work-notes/2025-10-24T03-23-43Z-boot-image-vm-metadata-log.md†L1-L15】【F:tests/test_boot_image_vm.py†L273-L343】
-   - 2025-10-24T03-50-00Z harness sessions now persist their metadata to `metadata.json`, and manual debug utilities reuse the same structure when exporting artefacts.【F:tests/test_boot_image_vm.py†L249-L395】【F:scripts/manual_vm_debug.py†L19-L218】【F:scripts/collect_sshd_dependency_audit.py†L18-L216】【F:scripts/collect_sshd_pre_nixos_debug.py†L183-L305】
-   - 2025-10-24T04-30-00Z timeout handlers persist captured systemd and journal output as diagnostic artefacts and manual exports copy the diagnostics directory for postmortem analysis.【F:docs/work-notes/2025-10-24T04-30-00Z-boot-image-diagnostic-artifacts.md†L1-L18】【F:tests/test_boot_image_vm.py†L715-L833】【F:scripts/collect_sshd_pre_nixos_debug.py†L279-L312】
-   - 2025-10-24T05-45-00Z metadata now catalogues every diagnostic artifact and timeout handlers collect `lsblk`, `networkctl status`, and `systemctl list-jobs` outputs for richer postmortems.【F:docs/work-notes/2025-10-24T05-45-00Z-boot-image-diagnostic-artifact-catalog.md†L1-L18】【F:tests/test_boot_image_vm.py†L249-L381】【F:tests/test_boot_image_metadata.py†L1-L76】
-   - 2025-10-24T06-30-00Z root escalation failures now emit dedicated transcript diagnostics recorded in `metadata.json` and included in assertion output for postmortem triage.【F:docs/work-notes/2025-10-24T06-30-00Z-boot-image-escalation-transcript-diagnostics.md†L1-L16】【F:tests/test_boot_image_vm.py†L360-L706】【F:tests/test_boot_image_vm.py†L1122-L1204】
-   - 2025-10-26T21-06-03Z SSH retry exhaustion now captures `systemctl status sshd` and `journalctl -u sshd.service -b` alongside host stdout/stderr diagnostics, and the unit test asserts the new artifacts surface in metadata and assertion messages.【F:docs/work-notes/2025-10-26T21-06-03Z-boot-image-ssh-diagnostics.md†L1-L16】【F:tests/test_boot_image_vm.py†L1068-L1211】
-   - 2025-10-27T02-30-00Z unexpected `pexpect` EOFs now trigger the same structured diagnostics as other harness failures and a unit test verifies login transcripts are recorded in metadata.【F:docs/work-notes/2025-10-27T02-30-00Z-boot-image-eof-diagnostics.md†L1-L17】【F:tests/test_boot_image_vm.py†L520-L611】【F:tests/test_boot_image_vm.py†L1225-L1303】
-   - 2025-10-27T04-00-00Z abrupt QEMU exits now capture exit status diagnostics that are logged, catalogued in `metadata.json`, and asserted by the EOF regression test.【F:docs/work-notes/2025-10-27T04-00-00Z-boot-image-qemu-exit-diagnostics.md†L1-L14】【F:tests/test_boot_image_vm.py†L417-L470】【F:tests/test_boot_image_vm.py†L1373-L1439】
-   - 2025-10-27T13-04-29Z storage and IPv4 timeouts now record `systemctl list-jobs` outputs alongside existing diagnostics so metadata and failure messages surface the active job queue.【F:docs/work-notes/2025-10-27T13-04-29Z-boot-image-systemd-jobs-diagnostics.md†L1-L14】【F:tests/test_boot_image_vm.py†L1051-L1183】
-   - 2025-10-27T13-39-46Z IPv4 timeouts additionally capture `systemctl status systemd-networkd` and its journal so diagnostics catalogue the service state when DHCP waits fail.【F:docs/work-notes/2025-10-27T13-39-46Z-boot-image-networkd-diagnostics.md†L1-L13】【F:tests/test_boot_image_vm.py†L1148-L1187】【F:tests/test_boot_image_vm.py†L2044-L2193】
-   - 2025-10-27T23-08-26Z IPv4 timeouts now snapshot `ip addr show dev <iface>` and `ip route show dev <iface>` outputs so diagnostics catalogue link configuration alongside systemd state.【F:docs/work-notes/2025-10-27T23-08-26Z-boot-image-ip-diagnostics.md†L1-L18】【F:tests/test_boot_image_vm.py†L1136-L1188】【F:tests/test_boot_image_vm.py†L2044-L2209】
-   - 2025-10-28T01-15-00Z metadata capture now records the QEMU version and `_raise_with_transcript` includes it in failure messages, ensuring provenance for host-specific regressions.【F:docs/work-notes/2025-10-28T01-15-00Z-boot-image-qemu-version-diagnostics.md†L1-L17】【F:tests/test_boot_image_vm.py†L240-L305】【F:tests/test_boot_image_vm.py†L1405-L1459】【F:tests/test_boot_image_metadata.py†L24-L56】
-   - 2025-10-28T12-44-37Z IPv4 timeouts now capture `ip -s link show dev <iface>` output so link statistics accompany address and routing diagnostics in both metadata and assertion messages.【F:docs/work-notes/2025-10-28T12-44-37Z-boot-image-ip-link-diagnostics.md†L1-L15】【F:tests/test_boot_image_vm.py†L1161-L1199】【F:tests/test_boot_image_vm.py†L2184-L2251】
-   - 2025-10-29T19-20-22Z storage and IPv4 timeouts now snapshot `systemctl list-units --failed --no-legend` alongside job queues so metadata and failure messages surface failed services during triage.【F:docs/work-notes/2025-10-29T19-20-22Z-boot-image-failed-units-diagnostics.md†L1-L18】【F:tests/test_boot_image_vm.py†L1096-L1249】【F:tests/test_boot_image_vm.py†L1969-L2251】
-   - 2025-10-29T19-55-52Z unit inactivity timeouts now snapshot `systemctl list-units --failed --no-legend` alongside job queues so metadata and failure messages surface failed services when waiting for units to stop.【F:docs/work-notes/2025-10-29T19-55-52Z-boot-image-unit-inactive-diagnostics.md†L1-L15】【F:tests/test_boot_image_vm.py†L1278-L1389】【F:tests/test_boot_image_vm.py†L2252-L2359】
-   - 2025-10-29T20-25-29Z storage, IPv4, and unit inactivity timeouts now capture the kernel ring buffer via `dmesg`, logging and cataloguing the artifacts alongside existing diagnostics.【F:docs/work-notes/2025-10-29T20-25-29Z-boot-image-dmesg-diagnostics.md†L1-L9】【F:tests/test_boot_image_vm.py†L1137-L1389】【F:tests/test_boot_image_vm.py†L2102-L2567】
-   - 2025-10-29T20-45-20Z storage timeouts archive `/run/pre-nixos/storage-status` snapshots as labelled diagnostics and surface the contents in failure messages for faster triage.【F:docs/work-notes/2025-10-29T20-45-20Z-boot-image-storage-status-diagnostics.md†L1-L16】【F:tests/test_boot_image_vm.py†L1080-L1159】【F:tests/test_boot_image_vm.py†L2036-L2177】
-  - 2025-10-27T04-21-49Z BootImageVM failure metadata now lists the disk image and shell-quoted QEMU command so provenance survives outside `metadata.json`, with regression coverage guarding the new lines.【F:docs/work-notes/2025-10-27T04-21-49Z-boot-image-qemu-command-diagnostics.md†L1-L18】【F:tests/test_boot_image_vm.py†L368-L428】【F:tests/test_boot_image_vm.py†L1870-L1914】【F:tests/test_boot_image_vm.py†L1512-L1538】
-   - 2025-10-09T15-30-00Z improvements laid the groundwork; continue iterating as new edge cases appear. 【F:docs/work-notes/2025-10-09T15-30-00Z-boot-image-vm-test-attempt.md†L1-L42】
-   - 2025-10-24T03-00-00Z updates capture serial tails and systemd diagnostics in the harness log when timeouts occur. 【F:docs/work-notes/2025-10-24T03-00-00Z-boot-image-vm-diagnostics.md†L1-L17】【F:tests/test_boot_image_vm.py†L286-L341】【F:tests/test_boot_image_vm.py†L599-L675】
-
-
-2. **Rebuild the boot image with future network/storage tweaks and rerun the VM regression.**
-   - Use the now-working dev shell workflow to produce new ISOs whenever changes land, then run `pytest tests/test_boot_image_vm.py -vv` without interruption to validate end-to-end behaviour.
-   - Promote passing serial/journal logs to `docs/boot-logs/` with updated test reports.
-   - 2025-10-29T21-32-03Z - Rebuilt the ISO and reran the full regression suite; see `docs/work-notes/2025-10-29T21-32-03Z-boot-image-vm-regression.md` and `docs/test-reports/2025-10-29T21-32-03Z-boot-image-vm-test.md` for command output and results.【F:docs/work-notes/2025-10-29T21-32-03Z-boot-image-vm-regression.md†L1-L7】【F:docs/test-reports/2025-10-29T21-32-03Z-boot-image-vm-test.md†L1-L15】
-
-
-3. **Capture follow-up boot timings after configuration adjustments.**
-    - With the harness stable, collect new timing data after each substantive change to detect regressions early.
-    - 2026-04-25T19-35-35Z - Root-cause review replaced the broad early-DHCP approach with a targeted networkd refresh fast-path (`networkctl reload` + `networkctl reconfigure lan`) and retained restart fallback; next VM timing pass should measure improvement without overriding static/rename workflows. See `docs/work-notes/2026-04-25T19-35-35Z-network-init-delay-root-cause.md`.
-
-
-4. **Ensure the full test suite runs without skips.**
-    - Audit pytest skips and prerequisites so the VM suite remains active, and maintain CI coverage for the entire suite.
-    - 2026-10-18T02-53-00Z - In a Claude Code cloud session the full suite ran with no skips: `236 passed` in 17m14s, VM tests included, under TCG. See `notes/2026-10-18T025300Z-vm-run.md`. CI coverage is still outstanding.
-
-
-5. **Add unit coverage for the TUI plan editor.**
-   - Drive `pre_nixos.tui._edit_plan` via a fake window with scripted inputs for arrays and LVs, including invalid input handling.
-   - 2026-04-25T17-43-55Z - Added a regression that verifies LV edits in `_edit_plan` also refresh the derived `plan["disko"]` structure used by `apply`, preventing stale LV sizes from being provisioned.
-
 
 6. **Narrow the flake's package source (`src = ./.`).**
    - 2026-10-19 evidence that this matters:
@@ -59,7 +13,7 @@ _Last updated: 2026-10-30T12-35-13Z_
      - The image and a second evaluation of the system disagreed (`q9m06…` vs `cbcs15…`). The fixture's precondition caught it.
      - Test-only edits should not change the product image. Rule until fixed: do not commit or edit tracked files while a VM run is evaluating.
    - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
-
+    - **2026-11-12, audit:** still open: the package's `src = ./.` (flake.nix line 93).
 
 7. **Make the VM harness (`tests/vm/`) type-check cleanly.**
    - 2026-10-18T03-25-00Z - `mypy --check-untyped-defs` reports 18 errors in `tests/vm/{controller,fixtures,metadata}.py`. Reviewed: none is a known runtime bug.
@@ -68,63 +22,11 @@ _Last updated: 2026-10-30T12-35-13Z_
      - 4× undefined `pexpect`: a `TYPE_CHECKING` import alias.
      - The rest are generator-fixture return types and `object`-typed metadata dicts.
    - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
-
+    - **2026-11-12, audit:** still open: `[tool.mypy] files` lists no `tests/vm/` or `scripts/` modules.
 
 8. **Let `collect_pre_nixos_journal.py` capture the whole run.**
    - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
-
-
-9. **Plan AArch64 support (Raspberry Pi CM4 microSD boot image).** *(user request, 2026-10-18T04-35-00Z)*
-   - Goal: build an AArch64 boot image that can be written to a microSD card to boot e.g. a CM4. Use the stock NixOS AArch64 SD image as the base; it works, including on the serial console.
-   - Deliverable: a top-down plan from requirements, with a design debate for each choice and a list of unknowns, each with an experiment to resolve it. Start after the race-fix PR.
-   - 2026-10-18T14-21-35Z - Plan written: `plans/2026-10-18T142135Z-aarch64-cm4-boot-image-plan.md`.
-     - E1 (module evaluates on the stock SD image), E2 (this host builds AArch64 via binfmt) and E3 (only 44 derivations built locally) are done.
-     - Found a safety gap: the SD boot card is not excluded from storage plans (§3.1).
-     - Its §3.1 (boot-medium protection) is now done via #306, #308 and #309.
-   - 2026-10-18T22-03-51Z - User answers received and recorded (plan §8; verbatim copy `plans/2026-10-18T220351Z-aarch64-user-answers.txt`).
-     - Requirements §2 approved and applied to `automated-pre-nixos-reqs.md` (R-IDs).
-     - Install target: NVMe. Refusing to install on a wrong `BOOT_ORDER` is acceptable.
-     - **Next:** implement work items 3 to 9 of the plan in order (not started).
-   - 2026-10-19:
-     - Items 3 to 8 are done and merged in trbarbour/NixOS-boot-image#315 (0.18.1, 2026-10-20 03:08Z).
-     - 2026-10-20/21:
-       - E9b to E9b-4 on the CM4 (#316, closed): U-Boot moved to v2026.10, plus a local patch for NVMe read/write DMA translation, which is verified on hardware.
-       - Item 9 (the `BOOT_ORDER` check, 0.19.0) is done.
-       - VM tests at 0.19.1: the full regression had 11 passed and 1 stale test, which was fixed. The AArch64 module then passed 4/4.
-     - **Next:** item 10, hardware acceptance on the CM4 (the user).
-       - 2026-10-21: the first attempt used an image built without a root key, so `end0` was not renamed and SSH failed. That is designed behaviour: `configure_lan` skips when no key is embedded (user confirmed). The user's NVMe holds a Windows GPT, so auto-provisioning will not run (reqs §2.3) unless the user wipes it.
-       - 2026-10-22: attempt 1 with 0.20.0 and a site key (`docs/test-reports/2026-10-22T025029Z-cm4-item10-acceptance-1.md`).
-         - Worked: LAN renamed with DHCP, the BOOT_ORDER check passed, disko provisioned the NVMe.
-         - Failed: `nixos-install` stopped on a duplicate `boot.loader.grub.enable` (#320).
-         - Fixed in 0.20.1: the Pi loader is now a separate module with `mkForce`, tested against real `nixos-generate-config` output.
-         - **Next:** the user rebuilds from 0.20.1, wipes the NVMe, and repeats the test.
-       - 2026-10-22: attempt 2 with 0.21.0 (`docs/test-reports/2026-10-22T154500Z-cm4-item10-acceptance-2.md`).
-         - Worked: the install, then firmware → U-Boot 2026.10 → extlinux from NVMe, as far as `Starting kernel ...`.
-         - Failed:
-           - the installed initrd lacks `pcie-brcmstb`, so the system hung with no serial output and no DHCP (#323);
-           - the installer's sshd waited for the whole auto-install (#324).
-         - Both fixed in 0.21.1.
-         - **Next:** the user rebuilds 0.21.1, wipes the NVMe, and retests. Open question: make serial the installed Pi's primary console?
-       - 2026-10-23 (user decision): the primary console is a site setting (`primaryConsole`), serial by default on AArch64 and display on x86. It applies to the image and is inherited by the installed system. Implemented in 0.22.0 (`plans/2026-10-23T022949Z-primary-console-design.md`).
-       - 2026-10-23: attempt 3 with 0.22.0 (`docs/test-reports/2026-10-23T142031Z-cm4-item10-acceptance-3.md`).
-         - The installed system boots from NVMe with serial login and SSH. #323 and #324 are confirmed on hardware, and serial primary works.
-         - Failed: `lan` holds two DHCP leases, because NetworkManager runs beside networkd (#326). Also, each broadcast appears twice on serial (#327).
-         - Both fixed in 0.22.1.
-         - **Next:** the user rebuilds 0.22.1 and retests. Expected: one lease, single broadcasts.
-
-10. **Stop old boot-image builds from filling the disk.** *(anomaly, 2026-10-18T22-31-37Z)*
-    - The first 26.05 VM regression failed before any test ran. The ISO build stopped in xorriso with `Image size 716672s exceeds free space on media 441800s`, because the session's disk allowance was spent.
-    - Cause: 15 unrooted 25.05 ISOs at 1.4 GiB each were left in `/nix/store` by earlier builds. Deleting them freed 20.1 GiB.
-    - Plan: a helper that deletes boot-image store paths other than the current one, called from the VM fixture's build step (or the session hook) when free space is low. Record the disk headroom in the run metadata so this shows up early.
-    - 2026-10-19 - It happened again, and the full VM regression's output was lost (ENOSPC, also in `/tmp`). A second cause: pytest kept the tmp dirs of the **last 3 sessions**, each holding the VM disk images (now including 14 GiB of RAID disks, about 5 GiB of it written by the RAID-1 resync).
-      - Mitigation (0.12.1): `tmp_path_retention_count = 1` in `pytest.ini`. Verified by experiment: three consecutive runs left only the latest dir.
-      - 2026-10-19 (0.17.1) - It happened again twice: the AArch64 image build hit `zstd … No space left on device`, and the x86 regression's RAID and USB tests failed with ENOSPC.
-        - Root cause: **every VM fixture was session-scoped**, so all VMs and their disk images lived until the end of the run (primary, hot-plug, residue, 14 GiB of RAID disks, USB stick and target, the AArch64 card), on top of a 21 GiB store.
-        - Fix: VM and disk fixtures are now module-scoped (each is used by exactly one test file) and delete their images at teardown. The image builds stay session-scoped.
-        - Disk headroom is now logged in `harness.log` at VM start and at teardown.
-        - `nix-collect-garbage` freed 18.0 GiB this time.
-        - Pitfall: `pgrep -f "pytest -m vm"` matches its own command line; use `pgrep -f "[p]ytest -m vm"`.
-      - Still to do: the stale-ISO helper above.
+    - **2026-11-12, audit:** still open: `scripts/collect_pre_nixos_journal.py` does not wait for the unit to finish.
 
 11. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
     - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.
@@ -132,6 +34,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Similarly, SSD + 3 HDD gives `data` 4M on `large`.
     - To do: reproduce in a unit test, then root-cause against §2.4.
     - Related (2026-10-19, AArch64 E5 run5): a solid-state device too small for `slash` still becomes `main`. The planner postcondition (#313) then stops pre-nixos, which is safe but leaves no plan at all. Seen with QEMU virt's 128M flash (`mtdblock0`); that device is now excluded as a non-candidate. Design question: choose `main` only where `slash` fits.
+    - **2026-11-12, audit:** still reproduces for two 4 GiB SSDs with 2 GiB RAM: `main` gets `slash` 6136M and `swap` **4M**. The SSD + 3 HDD case is fixed (`data` is now 6136M on `large`).
 
 12. **End-to-end install VM test (E9d).** *(gap, 2026-10-19)*
     - 2026-10-22: #320 (duplicate loader attribute) reached hardware because of this gap; the flake checks added for it now cover the parse and evaluation part.
@@ -139,6 +42,7 @@ _Last updated: 2026-10-30T12-35-13Z_
     - For AArch64: boot the installed NVMe disk with U-Boot for `qemu_arm64` and extlinux. That checks the extlinux, initrd and LVM-root part of plan item 8 (design §3, E9d).
     - Unknowns: `nixos-install` builds the generated configuration, so it needs substitutes or network inside the VM, and it is slow under TCG.
     - 2026-11-10: x86 done: `tests/vm/test_installed_system_vm.py` installs with a static address on the BIOS VM, boots the installed disks without the ISO and SSHes in (#342, #343). Remaining: AArch64 and UEFI.
+    - **2026-11-12, audit:** the x86 part is done (BIOS). Remaining: AArch64 (U-Boot `qemu_arm64` + extlinux) and an x86 UEFI install.
 
 13. **Firmware updates on the installed Pi.** *(follow-up, plan item 8 design D2)*
     - The firmware and U-Boot on `/boot` are written once, at install, as on the stock SD card.
@@ -147,6 +51,7 @@ _Last updated: 2026-10-30T12-35-13Z_
 14. **Test-only path in `install._is_mount_ready`.** *(anomaly, 2026-10-19)*
     - Under pytest, the function treats `ROOT/etc` existing as "mounted" (`PYTEST_CURRENT_TEST`). That is test logic in product code.
     - Replace it with an injected predicate, as `boot_platform.install_boot_files` does.
+    - **2026-11-12, audit:** still open: `install.py` checks `PYTEST_CURRENT_TEST` in two places (lines 241 and 1060).
 
 15. **`nix-collect-garbage` deletes unrooted experiment builds.** *(anomaly, 2026-10-19)*
     - The GC before the 0.18.1 regression deleted the NVMe U-Boot just built, which cost 17 minutes to rebuild.
@@ -155,6 +60,7 @@ _Last updated: 2026-10-30T12-35-13Z_
 16. **Show auto-install results in the TUI.** *(gap, 2026-10-20, AArch64 item 9)*
     - The TUI does not read `/run/pre-nixos/auto-install-status`.
     - A refusal such as `REASON=boot-order` (with `MESSAGE=…`) reaches only the consoles and the status file.
+    - **2026-11-12, audit:** still open: `tui.py` does not read `auto-install-status`.
 
 17. **Report a second installer boot after a successful install (AArch64 item 9b).** *(plan §3.9)*
     - When the installer boots again on a board that already has an installed system, say on serial and in the TUI that the boot order is the likely cause.
@@ -167,6 +73,7 @@ _Last updated: 2026-10-30T12-35-13Z_
 19. **Move the VM fixtures and scripts from PRE_NIXOS_ROOT_KEY/--impure to sites.** *(follow-up, site-settings design D2)*
     - `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still pass the key through the legacy environment fallback.
     - Move them to `--override-input site path:<tmp dir>`, then decide whether to drop the fallback.
+    - **2026-11-12, audit:** still open: `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still use `PRE_NIXOS_ROOT_KEY`.
 
 20. **CMA pool exhausted on the CM4 during provisioning.** *(anomaly, 2026-10-22, item 10 attempt 1)*
     - `cma: __cma_alloc: linux,cma: alloc failed, req-size: 256 pages` (also 512 pages), with 176 of 16384 pages free.
@@ -294,18 +201,7 @@ _Last updated: 2026-10-30T12-35-13Z_
 29. **The installed system shows its LAN announcement twice.** *(anomaly, 2026-10-23; second source in #327)*
     - `pre-nixos-auto-install-ip` has `StandardOutput = "journal+console"`, and `announce-lan-ip.sh` also writes to `/dev/console`, because `pre-nixos-console` is absent on the installed system.
     - Reproduce, then decide on one path to the console, e.g. `StandardOutput = "journal"`.
-
-30. **`uptime` reports about 220 days on the installer and on the first boot of the installed system; `date -u` is right.** *(anomaly, 2026-10-24, user)*
-    - 220 days is the time from systemd's built-in clock epoch (2026-03-17, seen in attempt 1) to now.
-    - coreutils 9.11's `uptime` computes now minus a boot time taken from the utmp `BOOT_TIME` entry. Without that entry, it falls back to the mtime of `/var/lib/systemd/random-seed` (gnulib `boot-time-aux.h`); only after that does it use the kernel's counter.
-    - **Hypothesis:** both are written early in boot, before NTP corrects the clock. On a first boot (the installer always; a fresh install, which has no `/var/lib/systemd/timesync/clock`), the clock still holds the epoch at that moment. A later boot restores the clock saved at shutdown, so the error should be small.
-    - **2026-10-24, confirmed (user): `who -b` shows 2026-03-17 and `/proc/uptime` is right.** So the utmp boot record was written before the clock was corrected.
-    - To confirm, on the CM4:
-      - `cat /proc/uptime` should be right;
-      - `who -b` should show 2026-03-17;
-      - `stat -c %y /var/lib/systemd/random-seed` should show its mtime;
-      - after a reboot, `uptime` should be about right.
-    - Not caused by pre-nixos; it comes from the board having no RTC (item 23's board). To decide: document it, or keep it out of pre-nixos's own logs.
+    - **2026-11-12, audit:** still open: `pre-nixos-auto-install-ip` still has `StandardOutput = "journal+console"` (`pre_nixos/templates/auto-install-ip.nix`).
 
 31. **Use the Waveshare CM4-POE-UPS-BOX's battery-backed RTC.** *(user request, 2026-10-24; fixes item 30 at the source)*
     - **Facts (verified here):**
@@ -318,12 +214,14 @@ _Last updated: 2026-10-30T12-35-13Z_
     - **Plan:**
       1. A manual experiment on the installed CM4: copy `i2c-rtc.dtbo` into `/boot/overlays/`, add the lines, reboot, check `/dev/rtc0`, set the RTC, reboot, and check that `who -b` is right.
       2. Then a design debate: ship `overlays/` in the firmware set, and how a site adds `config.txt` lines (a new site setting?), traced to this request.
+    - **2026-11-12, audit:** item 30 (`uptime` wrong on a first boot) is folded in here; this item fixes it at the source.
 
 32. **The installed system's generation limit does not follow its ESP size.** *(gap, 2026-10-30, found while doing R-B3)*
     - The ESP is now 1 to 4 GiB (R-B3), at about 200 MB per generation. extlinux keeps 20 generations by default, which overflows a 1 GiB ESP; systemd-boot (x86) has no default limit at all. A full `/boot` makes `nixos-rebuild switch` fail.
     - Consider writing `boot.loader.{systemd-boot,generic-extlinux-compatible}.configurationLimit` into the generated configuration, derived from the planned ESP size. Needs a design debate (fixed headroom per generation vs. measured closure; what happens when a kernel grows).
+    - **2026-11-12, audit:** still open: nothing writes `configurationLimit`.
 
-33. **BIOS (legacy) x86 installs fail late: the disks are wiped first, then `nixos-install` fails.** *(defect plus possible feature, 2026-10-31, user question)*
+33. **BIOS (legacy) x86 installs fail late: the disks are wiped first, then `nixos-install` fails.** Done except: keep the other boot disks' ESPs in sync (plan D3 (b)). *(defect plus possible feature, 2026-10-31, user question)*
     - Facts (evaluated):
       - the ISO is BIOS-bootable (`isoImage.makeBiosBootable = true`), and the x86 VM tests already boot it under SeaBIOS;
       - on a BIOS machine, `nixos-generate-config` writes `grub.enable = true` with no device. The rendered configuration (the GRUB fixture plus the managed block) fails with "You must set the option 'boot.loader.grub.devices' or 'boot.loader.grub.mirroredBoots'".
@@ -345,50 +243,27 @@ _Last updated: 2026-10-30T12-35-13Z_
       - 2026-10-31 (user): D2 and D6 confirmed (the user used to put /boot on the swap disks); the machines have probably one NVMe and a pair of HDDs for swap.
         - **Implemented in 0.24.0**; see plan §7.
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
-
-34. **An old SATA SSD is planned as an HDD.** *(user report, 2026-11-06, the first BIOS PC: 128 GB SATA SSD `sda` plus two 750 GB HDDs, serial ISO 0.25.0)*
-    - The plan put `main` on a RAID-1 of the HDDs and `sda` in `large`; the TUI showed `sda` as an HDD.
-    - pre-nixos uses only the kernel's `/sys/block/<disk>/queue/rotational` (`inventory.py:52`).
-    - **Hypothesis:** the kernel reports `1` because the drive's ATA identify data does not report "solid state" (word 217), as some early SSDs do not.
-    - Asked the user for `queue/rotational`, `lsblk ROTA` and `hdparm -I` (rotation rate).
-    - Then design an override (a site setting, a TUI toggle, or reading the rotation rate).
-    - **2026-11-06, confirmed (user):**
-      - `/sys/block/sda/queue/rotational` = 1;
-      - `lsblk`: `sda 1 sata G.SKILL 128GB SSD`;
-      - `hdparm -I /dev/sda | grep -i rotation` prints nothing, so the drive does not report a rotation rate and the kernel defaults to rotational.
-      - Not a pre-nixos defect. The user can lay the disks out in the TUI.
-      - Optional improvement (user to decide): an override, such as a site setting listing disks to treat as SSD, a TUI toggle, or treating a model name containing "SSD" as solid-state.
-    - **2026-11-06, user decision:** do both of these (not many such drives are expected):
-      1. When an apparently rotational disk has "SSD" in its model name, do not assume: **ask**, and block auto-install until answered.
-      2. A per-disk SSD/HDD toggle in the TUI.
-      - Needs a short design (where the question is asked; how auto-install reports the block).
-    - **2026-11-07: design** `plans/2026-11-07T161535Z-ssd-model-name-design.md`. Finding F3: on blank disks the boot run provisions storage even without auto-install, so the design recommends blocking provisioning too (D2 (b)). Waiting on the user: R-S3/R-S4, D2.
-    - **2026-11-07 (user):** R-S3/R-S4 approved; D2 (b) (block provisioning and auto-install).
-    - **Implemented in 0.26.0:**
-      - `disk_class.py` (the D1 rule, answers applied to the inventory, the plan's `disk_classes`);
-      - `pre-nixos --ssd/--hdd`; a run that would provision or install stops first (exit 3, `REASON=disk-class-unconfirmed`);
-      - the boot service reports exit 3 as `STATE=plan-only`, `DETAIL=disk-class-unconfirmed` (flake check `boot-service-status`), and the login notice says how to answer;
-      - TUI: a question per unconfirmed disk at start, and `T` to switch any disk's class.
-      - U1 resolved by experiment: `notes/2026-11-07T165520Z-u1-scsi-unreported-rotation.md`. VM test `tests/vm/test_disk_class_vm.py`.
-      - **2026-11-08, user:** with 0.26.0, `pre-nixos --plan-only` on the PC did not ask; the SSD was still planned as an HDD. **Root cause (#336, experiment `notes/2026-11-08T003000Z-u2-sata-model-truncation.md`):** for SATA disks, sysfs `device/model` is 16 characters (`G.SKILL 128GB SS`). The VM stand-in was virtio-scsi, which does not truncate. **Fix in 0.26.1:** the model comes from `device/vpd_pg89` (ATA IDENTIFY) when present; the VM test now uses an AHCI disk with the user's model name.
-      - 2026-11-08: the SATA VM test **passed** (guest sysfs model `G.SKILL 128GB SS`; journal names `G.SKILL 128GB SSD`). The user's real drive page (serial blanked) is a fixture and decodes to the full model; its rotation rate (word 217) is 0.
-      - 2026-11-08: RAID VM test passed with the SATA-capable disk helper; `nix flake check` passed (inputs over git, `scripts/nix_git_inputs.py`).
-      - 2026-11-07, VM runs: run 1 failed on the test's own `cat /proc/mdstat` (no md driver when nothing is provisioned); run 2 found the TEST SSD named `sdb`, which exposed #334 (sd names follow probe order). Run 3 **passed** (`notes/2026-11-07T172113Z-vm-run`). `test_raid_provisioning.py`, fixed for #334, **passed** (`notes/2026-11-07T172610Z-vm-run`). `nix flake check` passed, including the new `boot-service-status`.
+    - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
-53. **The inventory reads no serial for virtio disks** *(anomaly, 2026-11-11 20:20:27Z, item 50 VM run 2)*.
-    - QEMU gave the hot-plugged disk serial `LATE50`, but pre-nixos logged "no serial". `inventory.enumerate_disks` reads `/sys/block/<d>/device/serial`; virtio-blk exposes it as `/sys/block/<d>/serial` (to be confirmed in a VM).
-    - Effect: a virtio disk swapped for one of the same name and size is not seen as changed (R-D3), and planning has no serial for it. SATA/SAS/NVMe disks are not affected, if they have `device/serial` (to be confirmed for NVMe too).
-    - Next: confirm in a VM which sysfs files hold the serial, for virtio and NVMe; read the first present; add a test with a fake sysfs tree.
-    - 2026-11-12, experiment (`notes/2026-11-12T014614Z-disk-serial-experiment.md`). Wider than virtio: SCSI, SAS and SATA disks have no `device/serial` either, only the Unit Serial Number VPD page `device/vpd_pg80`; only NVMe had one. So on the user's PC, R-D3 could not tell two same-size disks under one name apart.
-    - Fixed (0.32.2), tests first: `inventory._serial` reads virtio `serial`, then `device/serial`, then `serial_from_vpd_pg80(device/vpd_pg80)`. Unit tests use fake sysfs trees for each layout seen, plus the page parser (other page, truncated, too long, padding).
-    - The VM tests now check serials: item 50's late virtio disk logs `serial LATE50`, and the disk-class test's SATA disks record theirs in the plan.
-    - VM runs on 0.32.2 (`notes/2026-11-12T015305Z-vm-run`, `notes/2026-11-12T015732Z-vm-run`): **both passed** (12.5 min).
 
 ## Recently Completed
+- 2026-11-12T02-36Z - **Queue audit** (user request). Each old item was checked against the code, the merged PRs and the notes. Closed:
+  - Item 1: Harden BootImageVM diagnostics: an open-ended log of work already done (metadata, transcripts, journals, dmesg, failed units, QEMU version); items 37 and 38 extended it further. No concrete work remains; new gaps get their own items.
+  - Item 2: Rebuild the image and rerun the VM regression: now standing practice, every change gets its VM runs (e.g. items 50, 52, 53), so it is not a task.
+  - Item 3: Boot timings after configuration changes: no concrete target. The real slowness (item 35, a 60 s DHCP wait) was fixed in 0.25.2 and confirmed on hardware.
+  - Item 4: Full suite without skips: the suite runs without skips (2026-10-18); CI covers the unit tests and flake checks (#318); running the VM tests in CI is item 18.
+  - Item 5: TUI plan editor coverage: `tests/test_tui.py` drives `_edit_plan` for arrays, LVs, adding an LV and invalid input, and checks that `plan["disko"]` is refreshed.
+  - Item 9: Plan and build AArch64 (CM4) support: done. Items 3–9 merged in #315 and later; attempts 1–4 on the CM4 led to fixes (#320, #323, #324, #326, #327), and attempt 4's installed system boots from NVMe with serial and SSH. The remaining CM4 questions are their own items (13, 20–28, 31).
+  - Item 10: Old boot-image builds filling the disk: the stale-ISO helper exists (`tests/vm/fixtures.py` `_delete_stale_images`, called before each build), and item 38 added free-space checks and a low-space guard.
+  - Item 30: `uptime` about 220 days on a CM4 first boot: root cause confirmed (the utmp boot record is written before the clock is corrected; the board has no RTC). Not pre-nixos's defect; item 31 (use the board's RTC) fixes it at the source, so it is folded into item 31.
+  - Item 34: An old SATA SSD planned as an HDD: done in 0.26.0/0.26.1 (R-S3/R-S4: ask about a disk named SSD but reported rotating; `--ssd`/`--hdd`; TUI `T`; the full ATA model from `vpd_pg89`, #336). The SATA VM test passed; the user's PC has since been provisioned and installed (items 44–49).
+  - The closed items' full text is kept in `docs/task-queue-archive.md`.
+  - Updated with what the audit found: items 6, 7, 8, 11, 12, 14, 16, 19, 29, 31 and 33 (now only the ESP sync remains). The rest are unchanged and still open.
+- 2026-11-12T02-05Z - Merged trbarbour/NixOS-boot-image#354 (0.32.2): item 53. The inventory reads each disk's serial where its bus puts it: virtio `serial`, NVMe `device/serial`, SCSI/SAS/SATA `device/vpd_pg80`. Before, only NVMe disks had one (experiment `notes/2026-11-12T014614Z-disk-serial-experiment.md`). Tests first; VM tests passed; Codex clean; CI green.
 - 2026-11-12T01-06Z - Merged trbarbour/NixOS-boot-image#353 (0.32.1): item 52. The installed system's `lan` has one network unit, from NixOS's `networking.interfaces.lan`; the shadowed `systemd.network.networks."lan"` is gone (R-N4).
   - Test first: the flake check `installed-network-units` over golden copies of the managed block.
   - The VM install-and-boot test passed; Codex found nothing; CI green.
