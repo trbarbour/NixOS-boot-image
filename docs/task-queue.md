@@ -248,7 +248,7 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-12T02-47Z - Item 11 fixed (0.32.3): no sliver LVs.
+- 2026-11-12T02-47Z - Item 11 fixed (0.32.3), merged in trbarbour/NixOS-boot-image#356 (CI green, Codex clean): no sliver LVs.
   - Root cause: `add_lv` gave whatever was left when a request did not fit, so a nearly full VG produced a one-extent (4 MiB) LV. That covered the filed swap case and also `large/data` once swap had filled a small `large`.
   - Now an optional LV is omitted below 1 GiB, or below its request if smaller; `slash` is exempt (R-L1).
   - Tests first: `tests/test_planner_lv_minimum.py`; 24 of its 67 cases failed before the fix, e.g. on a 20 GiB SSD.
