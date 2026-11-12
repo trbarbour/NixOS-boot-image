@@ -252,6 +252,7 @@ _Last updated: 2026-11-12T02-36Z_
   - Root cause: `add_lv` gave whatever was left when a request did not fit, so a nearly full VG produced a one-extent (4 MiB) LV. That covered the filed swap case and also `large/data` once swap had filled a small `large`.
   - Now an optional LV is omitted below 1 GiB, or below its request if smaller; `slash` is exempt (R-L1).
   - Tests first: `tests/test_planner_lv_minimum.py`; 24 of its 67 cases failed before the fix, e.g. on a 20 GiB SSD.
+  - VM `tests/vm/test_pre_nixos_vm.py` on 0.32.3 (`notes/2026-11-12T025237Z-vm-run`): **3 passed**; the plain 4 GiB VM disk now provisions without the 4 MiB swap.
   - Found item 54 (`slash` first on small disks). Full text in `docs/task-queue-archive.md`.
 - 2026-11-12T02-36Z - **Queue audit** (user request). Each old item was checked against the code, the merged PRs and the notes. Closed:
   - Item 1: Harden BootImageVM diagnostics: an open-ended log of work already done (metadata, transcripts, journals, dmesg, failed units, QEMU version); items 37 and 38 extended it further. No concrete work remains; new gaps get their own items.
