@@ -212,7 +212,10 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert "useDHCP = true;" in content
     assert 'matchConfig.MACAddress = "00:11:22:33:44:55";' in content
     assert 'systemd.network.links."10-lan"' in content
-    assert content.count('matchConfig.MACAddress = "00:11:22:33:44:55";') >= 2
+    # Item 52 (R-N4): only the link unit matches the MAC address; the network
+    # comes from networking.interfaces.lan, matched by the name it gives.
+    assert content.count('matchConfig.MACAddress = "00:11:22:33:44:55";') == 1
+    assert "systemd.network.networks" not in content
     assert 'matchConfig.OriginalName' not in content
     assert 'matchConfig.Name = "lan";' not in content
     assert "./pre-nixos-auto-install-ip.nix" in content
@@ -274,7 +277,8 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     assert not (network_dir / "20-lan.network").exists()
     content = (root / "etc/nixos/configuration.nix").read_text()
     assert 'systemd.network.links."10-lan" = {' in content
-    assert 'networkConfig.DHCP = "yes";' in content
+    assert "useDHCP = true;" in content
+    assert "systemd.network.networks" not in content  # item 52 (R-N4)
 
     start_stamp = start_time.strftime("%Y-%m-%d %H:%M:%SZ")
     completion_stamp = completion_time.strftime("%Y-%m-%d %H:%M:%SZ")
@@ -377,9 +381,10 @@ def test_auto_install_static_network_skips_dhcp_unit(
     assert not (network_dir / "20-lan.network").exists()
 
     content = (root / "etc/nixos/configuration.nix").read_text()
-    assert 'networkConfig.DHCP = "no";' in content
-    assert 'networkConfig.Address = [ "192.0.2.10/24" ];' in content
-    assert 'networkConfig.Gateway = "192.0.2.1";' in content
+    # Item 52 (R-N4): NixOS's options only; no second, shadowed unit.
+    assert 'ipv4.addresses = [ { address = "192.0.2.10"; prefixLength = 24; } ];' in content
+    assert 'networking.defaultGateway = { address = "192.0.2.1"; interface = "lan"; };' in content
+    assert "systemd.network.networks" not in content
 
 
 def test_inject_configuration_prefers_mac_matches(tmp_path):
@@ -414,9 +419,10 @@ def test_inject_configuration_static_network(tmp_path):
     assert 'networking.interfaces.lan = {' in content
     assert 'useDHCP = false;' in content
     assert 'ipv4.addresses = [ { address = "192.0.2.10"; prefixLength = 24; } ];' in content
-    assert 'networkConfig.DHCP = "no";' in content
-    assert 'networkConfig.Address = [ "192.0.2.10/24" ];' in content
-    assert 'networkConfig.Gateway = "192.0.2.1";' in content
+    # Item 52 (R-N4): NixOS's options only; no second, shadowed unit.
+    assert 'ipv4.addresses = [ { address = "192.0.2.10"; prefixLength = 24; } ];' in content
+    assert 'networking.defaultGateway = { address = "192.0.2.1"; interface = "lan"; };' in content
+    assert "systemd.network.networks" not in content
     assert "  networking.defaultGateway = {" in content
     assert ' address = "192.0.2.1";' in content
     assert ' interface = "lan";' in content

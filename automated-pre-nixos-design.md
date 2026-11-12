@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.39
+**Doc status:** Draft v0.40
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -190,6 +190,12 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - Select top candidate; persist rename to `lan` via udev/systemd.
 - Bring `lan` up with DHCP; log assigned IP.
 - This runs once per boot. A manual `pre-nixos` or `pre-nixos-tui` run later in the same boot reuses the result, recorded in `/run/pre-nixos/lan-configuration.json`, while `lan` still exists with the recorded MAC address and the recorded files exist. It does not bounce the link or wait again for DHCP (up to 60 s on a network that gives no lease). Nothing is recorded when no NIC had a carrier, so a later run looks for a link again.
+
+### 7.7.0 The installed system's network unit [R-N4]
+- The managed block sets `networking.interfaces.lan` (`useDHCP`, or `ipv4.addresses`), and for a static address also `networking.defaultGateway` and `networking.nameservers`. NixOS turns these into one `40-lan.network`, matched by `Name=lan`.
+- The link unit `systemd.network.links."10-lan"` matches the NIC's MAC address and names it `lan`.
+- No `systemd.network.networks` is declared. A declared `lan.network` was shadowed by `40-lan.network`, since networkd applies only the first matching unit by name, and it was dead until 0.32.1 (task queue item 52; plans/2026-11-11T225033Z-installed-network-unit-design.md).
+- The flake check `installed-network-units` evaluates the block as pre-nixos writes it (golden files in `tests/fixtures/managed-block`) and requires exactly one `.network` unit with the settings.
 
 ### 7.7.1 Install waits for the network [R-I1]
 - `network.installer_network()` reads `lan`'s IPv4 address and default gateway (`NetworkReadiness`).

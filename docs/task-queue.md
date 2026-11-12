@@ -2,6 +2,9 @@
 
 _Last updated: 2026-10-30T12-35-13Z_
 
+## Rules
+- **CI minutes (user decision, 2026-11-11):** record-keeping commits (notes, the task queue, VM run logs) go out with the next code push. When one must come after the last code push of a PR, its commit message carries `[skip ci]`. Not before the PR is opened: CI runs only for pull requests (and pushes to `main`), so the PR's first run would land on a `[skip ci]` head and be skipped (2026-11-11, item 52). Never write the skip marker in any other commit message, not even to describe this rule: GitHub matches it anywhere in the head commit's message. Commit d5e1bb0's subject quoted it and suppressed all of PR #353's CI, even after a close and reopen (2026-11-12). Most of #352's CI runs came from record-keeping pushes, and the account's free Actions minutes ran out.
+
 ## Active Tasks
 
 1. **Harden BootImageVM diagnostics.**
@@ -372,53 +375,17 @@ _Last updated: 2026-10-30T12-35-13Z_
       - 2026-11-08: RAID VM test passed with the SATA-capable disk helper; `nix flake check` passed (inputs over git, `scripts/nix_git_inputs.py`).
       - 2026-11-07, VM runs: run 1 failed on the test's own `cat /proc/mdstat` (no md driver when nothing is provisioned); run 2 found the TEST SSD named `sdb`, which exposed #334 (sd names follow probe order). Run 3 **passed** (`notes/2026-11-07T172113Z-vm-run`). `test_raid_provisioning.py`, fixed for #334, **passed** (`notes/2026-11-07T172610Z-vm-run`). `nix flake check` passed, including the new `boot-service-status`.
 
-35. **`pre-nixos` and `pre-nixos-tui` take about 60 s to start** *(user report, same PC: FX-8350)*.
-    - **Suspect:** `network.wait_for_lan`, 30 × 2 s waiting for carrier when no NIC has a link. It runs on every manual start, before planning.
-    - Asked whether the Ethernet cable was connected, and for the `wait_for_lan` lines of `/var/log/pre-nixos/actions.log`.
-    - 2026-11-06: the cable was connected (the firewall blocks outbound traffic, which does not affect carrier). The carrier theory is unconfirmed; the `actions.log` timestamps are needed.
-    - **2026-11-06, root cause (user's events log, `PRE_NIXOS_LOG_EVENTS=1`):** not the carrier wait (carrier was found at once). `configure_lan` ran again on the manual run: rename, link down/up, then `wait_for_ipv4` timed out after 60 s (02:50:28.475 → 02:51:28.764). The user's network deliberately gives no DHCP lease.
-    - **Fixed in 0.25.2** (user request: skip the network setup on manual runs). `lan_reuse.ensure_lan` reuses the boot's configuration, recorded in `/run/pre-nixos/lan-configuration.json`, while it still matches the machine. `tests/test_lan_reuse.py`; its CLI test failed before the fix ("configure_lan must not run again").
-    - **2026-11-07, confirmed (user):** with 0.25.2, `time pre-nixos --plan-only` took 0.35 s (was 60.76 s). Done.
-
-36. **The plan is printed twice on the serial ISO.**
-    - `pre_nixos.main` prints the plan to stdout and also writes it to `/dev/console`. With the serial console primary, both are the same port. The same pattern as #327.
-    - Reproduce in a unit test, then fix (for example, skip the console copy when stdout is the console).
-    - **2026-11-06: fixed in 0.25.1** (user request). The console copy is written only when stdout is not a terminal, i.e. the boot-time service. `test_cli_at_a_terminal_prints_the_plan_once` failed before the fix.
-
 52. **The managed block's `systemd.network.networks."lan"` unit is never used** *(anomaly, 2026-11-11 19:30:56Z, found while checking Codex's DNS finding on #351)*.
     - Evaluated: NixOS turns `networking.interfaces.lan` (and `networking.defaultGateway`) into `40-lan.network`, matching `Name=lan`. It sorts before the declared `lan.network`, which networkd therefore never applies.
     - So that unit's `matchConfig.MACAddress` and its `networkConfig` are dead. The working settings come from `networking.interfaces.lan` and `networking.defaultGateway`, matched by the name the link unit gives.
     - Statics still work (the address and gateway are in `40-lan`), but the duplication misleads, and caused item 41's DNS slip.
     - Proposal: keep one declaration. Either drop the `lan` unit, or drop `networking.interfaces.lan` and `defaultGateway` and name the unit `40-lan`. Needs a design debate, plus a test that evaluates the generated units.
+    - 2026-11-11, design `plans/2026-11-11T225033Z-installed-network-unit-design.md` (R-N4). Chosen: (A), keep NixOS's options and drop the declared unit. It is the unit already in effect, so behaviour does not change; the link unit keeps the MAC match.
+    - Test first: the flake check `installed-network-units` evaluates the managed block exactly as pre-nixos writes it. The golden files `tests/fixtures/managed-block/{dhcp,static}.nix` are kept equal by `tests/test_managed_block_golden.py`. Before the fix it failed with `.network units ["40-lan.network","lan.network"]`; after it, it passes. The install tests now require no `systemd.network.networks`.
+    - Fixed (0.32.1). VM end-to-end `test_installed_system_with_a_static_address_is_reachable` on 0.32.1 (`notes/2026-11-11T225813Z-vm-run`): **passed** in 43 min.
+      - The installed block has no `systemd.network.networks`.
+      - The installed disks boot without the ISO and are reached over SSH at the static address.
 
-50. **The boot-time plan does not wait for disk discovery** *(found 2026-11-11, item 48)*.
-    - `pre-nixos.service` is only `wantedBy = multi-user.target`. A disk that appears after it starts (a slow HBA scan finishing after the switch to the real root, or a driver loaded in stage 2) is missing from the boot-time inventory, and an auto-provisioning run would plan without it.
-    - Options: wait until the device set has been stable for some seconds (bounded), or wait for each controller's scan to complete. Needs a design and a test (a disk hot-plugged during the boot service). On the user's PC the boot run started at 121 s, after the HBA disk (67.8 s).
-    - 2026-11-11, user decision: options 1 and 3. (1) Before the inventory, wait until the disk set has been unchanged for a quiet period (about 15 s), with an upper bound (about 2 min), both settable on the kernel command line. (3) Take the inventory again just before anything is written; if it differs from the plan's, stop (plan-only) and name the change. Tests: unit tests with a simulated clock and device list, and a VM test that hot-plugs a disk shortly after the boot service starts. Queued after items 38, 42 and 41.
-    - Implemented (0.32.0), design `plans/2026-11-11T194943Z-disk-settle-design.md` (R-D1–R-D4):
-      - `pre_nixos/disk_settle.py` (`pre-nixos-wait-disks`), run first by the boot service;
-      - `plan["inventory"]`, recorded by the planner and re-checked by the CLI (exit 4) and the TUI (`[R]` rescans) before the first write;
-      - a plan without the record is refused;
-      - `pre_nixos/kernel_cmdline.py` replaces two private copies of the `/proc/cmdline` reader.
-    - Tests first: `tests/test_disk_settle.py`, `test_inventory.py`, `test_cli_disk_settle.py`, `test_tui_disk_class.py` (refusal, rescan), the `boot-service-status` flake check (six cases), and VM test `tests/vm/test_disk_settle_vm.py` (a disk hot-plugged 5 s into the wait, through `tests/vm/late_disk.py`).
-    - No VM run of the unfixed image: there the service prints no wait notice, so the test could only time out, which would reproduce nothing.
-    - VM run 1 (`notes/2026-11-11T200421Z-vm-run`): **failed**, but on the test's timing, not the code.
-      - The plan did cover the late disk; disko mounted `disk-vdb-vdb2`.
-      - But the wait logged no change: "settled after 15.0356 s: vda, vdb".
-      - The service script's console notice came at 20:06:13, and the wait's own first line only at 20:06:47, after Python's start-up. The disk, plugged 5 s after the notice (host 20:06:37 + 5 s), was already there at the wait's first inventory.
-      - Fix: the wait announces itself on the consoles just before its first inventory, and the script's notice is gone (tests first).
-    - VM run 2 on bb6ddec (`notes/2026-11-11T201511Z-vm-run`): **passed** in 9 min. The wait started at 20:17:13, logged "added vdb (6 GiB, no serial)" at 20:17:20, and "settled after 22.4425 s: vda, vdb" at 20:17:35. The applied plan's `inventory` had both disks.
-    - Codex on #352 found four issues, each fixed with tests first (cbb7805):
-      1. the HDD-only planner path returned without the record;
-      2. the check ran once, before prompts that can wait indefinitely (now also right before each write);
-      3. `--plan-only` with explicit partitioning skipped the check;
-      4. TUI `[R]` kept answers by name, not by disk.
-    - The second review was clean. VM run 3 on cbb7805 (`notes/2026-11-11T203130Z-vm-run`): **passed**; it saw "added vdb" and settled after 22.0559 s.
-    - CI stall (anomaly, recorded 2026-11-11 22:17:13Z): runs 72–74 for #352, from 20:21 UTC, never started. They had no jobs, and the API refused to cancel them ("has not been queued yet").
-      - Cause, per the user: the account's free Actions minutes were exhausted.
-      - The user subscribed to GitHub Pro around 22:20 UTC, but the held runs stayed held.
-      - This commit gives CI a fresh trigger; the workflow's `cancel-in-progress` clears the old runs.
-      - Watch for this again: tier-1 CI takes about 4 minutes per push. If minutes run short, consider fewer notes-only pushes per PR, or path filters for `notes/` and `docs/`.
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
@@ -429,6 +396,14 @@ _Last updated: 2026-10-30T12-35-13Z_
     - Next: confirm in a VM which sysfs files hold the serial, for virtio and NVMe; read the first present; add a test with a fake sysfs tree.
 
 ## Recently Completed
+- 2026-11-11T22-48Z - Closed items 35 and 36: both were fixed in trbarbour/NixOS-boot-image#333 (0.25.2) but left on the queue.
+  - Item 35: manual runs reuse the boot's LAN configuration (`lan_reuse.ensure_lan`) instead of waiting 60 s for a DHCP lease; the user confirmed 0.35 s on 2026-11-07.
+  - Item 36: the plan is printed once at a terminal (`tests/test_cli.py`).
+  - The 18–34 s start-up seen in item 50's VM runs is not item 35. This container has no `/dev/kvm`, so the VMs run under QEMU's software emulation.
+- 2026-11-11T22-23Z - Merged trbarbour/NixOS-boot-image#352 (0.32.0): item 50. The boot service waits for the set of disks to settle (15 s quiet, at most 120 s; kernel parameters), and a plan records its disks, which are checked again before any question and right before each write. Design `plans/2026-11-11T194943Z-disk-settle-design.md` (R-D1–R-D4).
+  - Codex's first review found four issues, each fixed with tests first; the second was clean.
+  - VM test passed on the final code. Its first run failed on the test's own timing (recorded in the notes).
+  - CI stalled for two hours: the account's free Actions minutes were exhausted, and the user subscribed to GitHub Pro. Found item 53 along the way.
 - 2026-11-11T19-48Z - Merged trbarbour/NixOS-boot-image#351 (0.31.0): item 41, the installer adopts the static network settings when it has no address, and the static settings carry DNS servers. Codex's reviews found four issues over two rounds, each fixed with tests first; the third review was clean. The VM test passed on the final code. Found item 52 along the way.
 - 2026-11-11T18-37Z - Merged trbarbour/NixOS-boot-image#350 (0.30.0): item 42, `write-image` (a CLI and a TUI: build as the user, write to removable media through a `sudo` helper that re-checks the device and its identity, optional verification; the TUI presents architecture, image type and console with defaults). Codex's reviews found five issues over two rounds, each fixed with tests first; the third review was clean. CI green. A write to real media awaits the user's hardware.
 - 2026-11-11T15-03Z - Merged trbarbour/NixOS-boot-image#349 (0.29.2): item 38, the VM harness's disk-space handling. After each build it deletes unreferenced older images, keeping every image the session holds. A VM does not start below `PRE_NIXOS_VM_MIN_FREE_GIB`, and a guard stops QEMU below `PRE_NIXOS_VM_FLOOR_GIB`, both watching the logs' and every VM disk's filesystem. Codex found three issues, each fixed with a test first; its re-review was clean. CI green.
