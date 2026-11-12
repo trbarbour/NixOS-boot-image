@@ -383,6 +383,9 @@ _Last updated: 2026-10-30T12-35-13Z_
     - QEMU gave the hot-plugged disk serial `LATE50`, but pre-nixos logged "no serial". `inventory.enumerate_disks` reads `/sys/block/<d>/device/serial`; virtio-blk exposes it as `/sys/block/<d>/serial` (to be confirmed in a VM).
     - Effect: a virtio disk swapped for one of the same name and size is not seen as changed (R-D3), and planning has no serial for it. SATA/SAS/NVMe disks are not affected, if they have `device/serial` (to be confirmed for NVMe too).
     - Next: confirm in a VM which sysfs files hold the serial, for virtio and NVMe; read the first present; add a test with a fake sysfs tree.
+    - 2026-11-12, experiment (`notes/2026-11-12T014614Z-disk-serial-experiment.md`). Wider than virtio: SCSI, SAS and SATA disks have no `device/serial` either, only the Unit Serial Number VPD page `device/vpd_pg80`; only NVMe had one. So on the user's PC, R-D3 could not tell two same-size disks under one name apart.
+    - Fixed (0.32.2), tests first: `inventory._serial` reads virtio `serial`, then `device/serial`, then `serial_from_vpd_pg80(device/vpd_pg80)`. Unit tests use fake sysfs trees for each layout seen, plus the page parser (other page, truncated, too long, padding).
+    - The VM tests now check serials: item 50's late virtio disk logs `serial LATE50`, and the disk-class test's SATA disks record theirs in the plan.
 
 ## Recently Completed
 - 2026-11-12T01-06Z - Merged trbarbour/NixOS-boot-image#353 (0.32.1): item 52. The installed system's `lan` has one network unit, from NixOS's `networking.interfaces.lan`; the shadowed `systemd.network.networks."lan"` is gone (R-N4).

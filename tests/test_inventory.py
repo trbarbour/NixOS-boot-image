@@ -222,3 +222,77 @@ def test_the_planner_records_its_disks_on_the_hdd_only_path(hdds) -> None:
 
     plan = plan_storage("fast", hdds, ram_gb=16)
     assert [entry["name"] for entry in plan[inventory.PLAN_KEY]] == [d.name for d in hdds]
+
+
+# --- the serial, by bus (task queue item 53) ---------------------------------
+# Experiment notes/2026-11-12T014614Z-disk-serial-experiment.md: virtio has
+# /sys/block/<d>/serial, NVMe device/serial (space-padded), and SCSI, SAS and
+# SATA only the Unit Serial Number VPD page device/vpd_pg80.
+
+
+def vpd_pg80(serial: bytes) -> bytes:
+    """A Unit Serial Number VPD page (SPC): page code 0x80, big-endian length."""
+
+    return bytes([0x00, 0x80, len(serial) >> 8, len(serial) & 0xFF]) + serial
+
+
+def _bare_disk(root: Path, name: str) -> Path:
+    disk = root / name
+    (disk / "device").mkdir(parents=True)
+    (disk / "queue").mkdir()
+    (disk / "removable").write_text("0")
+    (disk / "queue" / "rotational").write_text("1")
+    (disk / "size").write_text("2097152")
+    return disk
+
+
+@pytest.mark.parametrize(
+    "name,layout,expected",
+    [
+        ("vda", {"serial": b"VIRTSER1\n"}, "VIRTSER1"),
+        ("nvme0n1", {"device/serial": b"NVMESER1             \n"}, "NVMESER1"),
+        ("sda", {"device/vpd_pg80": vpd_pg80(b"SCSISER1")}, "SCSISER1"),
+        ("sdb", {"device/vpd_pg80": vpd_pg80(b"SATASER1            ")}, "SATASER1"),
+        ("sdc", {"device/vpd_pg80": vpd_pg80(b"  LEADING")}, "LEADING"),
+        ("sdd", {}, ""),
+    ],
+)
+def test_serial_is_read_where_the_bus_puts_it(tmp_path: Path, name, layout, expected) -> None:
+    disk = _bare_disk(tmp_path, name)
+    for relative, content in layout.items():
+        (disk / relative).write_bytes(content)
+    (found,) = enumerate_disks(tmp_path)
+    assert found.serial == expected
+
+
+def test_the_first_serial_found_wins(tmp_path: Path) -> None:
+    disk = _bare_disk(tmp_path, "sda")
+    (disk / "device" / "serial").write_text("FROMDEVICE\n")
+    (disk / "device" / "vpd_pg80").write_bytes(vpd_pg80(b"FROMVPD"))
+    (found,) = enumerate_disks(tmp_path)
+    assert found.serial == "FROMDEVICE"
+
+
+def test_an_empty_file_does_not_hide_a_later_one(tmp_path: Path) -> None:
+    disk = _bare_disk(tmp_path, "sda")
+    (disk / "device" / "serial").write_text("   \n")
+    (disk / "device" / "vpd_pg80").write_bytes(vpd_pg80(b"FROMVPD"))
+    (found,) = enumerate_disks(tmp_path)
+    assert found.serial == "FROMVPD"
+
+
+@pytest.mark.parametrize(
+    "page,expected",
+    [
+        (vpd_pg80(b"SCSISER1"), "SCSISER1"),
+        (vpd_pg80(b"SATASER1    ") + b"\x00\x00", "SATASER1"),  # padding past the length is ignored
+        (vpd_pg80(b""), None),
+        (vpd_pg80(b"   "), None),
+        (b"\x00\x83\x00\x04ABCD", None),  # another page
+        (b"\x00\x80\x00\x10SHORT", None),  # length beyond the data
+        (b"\x00\x80", None),  # truncated header
+        (b"", None),
+    ],
+)
+def test_vpd_pg80_parser(page: bytes, expected) -> None:
+    assert inventory.serial_from_vpd_pg80(page) == expected
