@@ -137,3 +137,13 @@ Closed task-queue items, kept verbatim with their full history when they leave `
       - 2026-11-08: the SATA VM test **passed** (guest sysfs model `G.SKILL 128GB SS`; journal names `G.SKILL 128GB SSD`). The user's real drive page (serial blanked) is a fixture and decodes to the full model; its rotation rate (word 217) is 0.
       - 2026-11-08: RAID VM test passed with the SATA-capable disk helper; `nix flake check` passed (inputs over git, `scripts/nix_git_inputs.py`).
       - 2026-11-07, VM runs: run 1 failed on the test's own `cat /proc/mdstat` (no md driver when nothing is provisioned); run 2 found the TEST SSD named `sdb`, which exposed #334 (sd names follow probe order). Run 3 **passed** (`notes/2026-11-07T172113Z-vm-run`). `test_raid_provisioning.py`, fixed for #334, **passed** (`notes/2026-11-07T172610Z-vm-run`). `nix flake check` passed, including the new `boot-service-status`.
+
+## Closed 2026-11-12: item 11 (fixed in 0.32.3)
+
+11. **Planner gives a 4 MiB swap LV on two SSDs.** *(anomaly, 2026-10-19)*
+    - `plan_storage("fast", [vda 4G, vdb 4G], ram_gb=2)` plans `md0` RAID-0, `slash` 6136M and `swap` **4M** in `main`.
+    - Reqs §2.4: swap goes in `main` "when no rotating tier exists and capacity allows"; "if there is insufficient capacity anywhere, swap may be omitted". A 4 MiB swap is neither a real size nor omitted, so it looks like `slash` is sized before swap.
+    - Similarly, SSD + 3 HDD gives `data` 4M on `large`.
+    - To do: reproduce in a unit test, then root-cause against §2.4.
+    - Related (2026-10-19, AArch64 E5 run5): a solid-state device too small for `slash` still becomes `main`. The planner postcondition (#313) then stops pre-nixos, which is safe but leaves no plan at all. Seen with QEMU virt's 128M flash (`mtdblock0`); that device is now excluded as a non-candidate. Design question: choose `main` only where `slash` fits.
+    - **2026-11-12, audit:** still reproduces for two 4 GiB SSDs with 2 GiB RAM: `main` gets `slash` 6136M and `swap` **4M**. The SSD + 3 HDD case is fixed (`data` is now 6136M on `large`).
