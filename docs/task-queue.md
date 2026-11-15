@@ -217,7 +217,7 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-15T14-01Z - Items 6 and 19 fixed (0.32.8).
+- 2026-11-15T14-01Z - Items 6 and 19 fixed (0.32.8), merged in trbarbour/NixOS-boot-image#360 (CI green, Codex clean).
   - **Item 6:** the `pre-nixos` package is built from `pyproject.toml` and `pre_nixos/` only (`lib.fileset.toSource`), not the whole tree. `pyproject.toml` no longer names `README.md` as the package readme (unused: the package is not published).
     - Experiment first: a docs-only edit changed the package derivation (`07fc6a24…` → `2jwjkvk0…`).
     - Afterwards, a docs edit plus a test edit left it identical (`0w9v31ni…`).
