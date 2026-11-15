@@ -67,9 +67,6 @@ _Last updated: 2026-11-12T02-36Z_
     - Hypothesis, unproven: the NVMe host memory buffer (64 MiB, `allocated 64 MiB host memory buffer`) fills the 64 MiB CMA pool.
     - To do: find who requests the failed allocations, and whether the installed system is affected. Candidate remedies: a larger `cma=`, or `nvme.max_host_mem_size_mb`.
 
-21. **Duplicate "Starting automatic NixOS installation" line after a failure.** *(anomaly, 2026-10-22)*
-    - The journal shows it again after `Auto-install failed: nixos-install`, at the same second, apparently a buffered message replayed. Reproduce in a unit test, then root-cause.
-
 22. **The SD image took 29 minutes to build on the user's N355.** *(anomaly, 2026-10-22)*
     - Find which derivations are built locally rather than substituted (likely the NVMe U-Boot and the firmware). Consider publishing them to a binary cache (see item 18, tier 3).
     - 2026-10-22 (user): the 0.20.1 rebuild took **8 minutes**, because no AArch64 binaries needed rebuilding. So the first build's cost is one-off AArch64 compilation under emulation on an x86 host. A binary cache remains the remedy for fresh hosts.
@@ -233,6 +230,12 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-15T04-09Z - Item 21 fixed (0.32.6): install messages reach the journal when announced.
+  - Root cause, from the CM4 attempt-1 journal (`docs/test-reports/2026-10-22T025029Z-cm4-item10-pre-nixos-journal.txt`, line 307): not a duplicate. The line is there once, logged at 02:53:25 although it says 02:50:29, after "Auto-install failed".
+  - Under the boot service stdout is a pipe, so Python block-buffered it and the line left only at exit; stderr is unbuffered and came first. The console broadcast had shown it on time, so it looked repeated.
+  - Fix: `install._announce` flushes, and the boot service sets `PYTHONUNBUFFERED=1` so every print reaches the journal in order.
+  - Tests first: `tests/test_announce_order.py` runs `_announce` in a child with stdout on a pipe and finds the announcement after a later stderr line (the CM4 order); it passes now. A second test checks the service environment.
+  - The item 29 VM run was stopped: its image was still building while item 21's files were edited (item 6's rule), so it would have proved nothing. One VM run on the final tree covers both.
 - 2026-11-15T04-07Z - Item 29 fixed (0.32.5): the LAN announcement reaches each console once.
   - `announce-lan-ip.sh` had four independent console paths: stdout (the installed unit's `journal+console`), the broadcast command, each active console, and a `/dev/console` "fallback" that always ran. `/dev/console` is the primary console, already in the active list (#327), so a serial-primary system such as the CM4 saw repeats.
   - Now one chain, the rule `pre_nixos.console` already applies: the broadcast command if it worked; otherwise each active console once; `/dev/console` only when no console is known. The installed unit's output goes to the journal only.

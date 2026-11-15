@@ -168,3 +168,8 @@ Closed task-queue items, kept verbatim with their full history when they leave `
     - `pre-nixos-auto-install-ip` has `StandardOutput = "journal+console"`, and `announce-lan-ip.sh` also writes to `/dev/console`, because `pre-nixos-console` is absent on the installed system.
     - Reproduce, then decide on one path to the console, e.g. `StandardOutput = "journal"`.
     - **2026-11-12, audit:** still open: `pre-nixos-auto-install-ip` still has `StandardOutput = "journal+console"` (`pre_nixos/templates/auto-install-ip.nix`).
+
+## Closed 2026-11-15: item 21 (fixed in 0.32.6)
+
+21. **Duplicate "Starting automatic NixOS installation" line after a failure.** *(anomaly, 2026-10-22)*
+    - The journal shows it again after `Auto-install failed: nixos-install`, at the same second, apparently a buffered message replayed. Reproduce in a unit test, then root-cause.

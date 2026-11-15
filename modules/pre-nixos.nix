@@ -50,6 +50,9 @@ let
   };
   preNixosServiceEnv = preNixosExecEnv // {
     NIX_PATH = "nixpkgs=${pkgs.path}";
+    # stdout is the journal's pipe, which Python block-buffers: lines arrived
+    # at exit, out of order with stderr (task queue item 21).
+    PYTHONUNBUFFERED = "1";
   };
   preNixosLoginNotice = builtins.readFile ./pre-nixos/login-notice.sh;
   preNixosServiceScript = import ./pre-nixos/service-script.nix { inherit pkgs; };
