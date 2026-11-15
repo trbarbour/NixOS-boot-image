@@ -238,7 +238,7 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-15T02-23Z - Item 14 fixed (0.32.4): no test-only paths in product code.
+- 2026-11-15T02-23Z - Item 14 fixed (0.32.4), merged in trbarbour/NixOS-boot-image#357 (CI green, Codex clean): no test-only paths in product code.
   - `install.py` checked `PYTEST_CURRENT_TEST` twice: `_is_mount_ready` took an existing `ROOT/etc` as mounted, and `_request_reboot` skipped the reboot. Both are gone.
   - `auto_install` takes `is_mount` (default: the real check), as `boot_platform.install_boot_files` does. The tests with a fake target pass `tests.test_install._mounted`.
   - `tests/conftest.py` stubs `install._request_reboot` in every test, so no test can reboot the host.
