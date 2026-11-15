@@ -226,7 +226,7 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-15T04-31Z - Item 8 fixed (0.32.7): `scripts/collect_pre_nixos_journal.py` captures the whole boot run.
+- 2026-11-15T04-31Z - Item 8 fixed (0.32.7), merged in trbarbour/NixOS-boot-image#359 (CI green, Codex clean): `scripts/collect_pre_nixos_journal.py` captures the whole boot run.
   - It took the journal right after login, while `pre-nixos` was still running (2 lines). Now it waits for `pre-nixos.service` to finish (`BootImageVM.wait_for_unit_inactive`, `--timeout`, default 1800 s for emulated VMs).
   - A unit that failed or did not finish still gets its journal; the script then says why on stderr and exits 2.
   - Tests first: `tests/test_collect_pre_nixos_journal.py` (a fake VM records the call order); all 5 failed before the fix.
