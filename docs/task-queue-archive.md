@@ -173,3 +173,16 @@ Closed task-queue items, kept verbatim with their full history when they leave `
 
 21. **Duplicate "Starting automatic NixOS installation" line after a failure.** *(anomaly, 2026-10-22)*
     - The journal shows it again after `Auto-install failed: nixos-install`, at the same second, apparently a buffered message replayed. Reproduce in a unit test, then root-cause.
+
+## Closed 2026-11-15: item 55 (user decision: keep both announcements)
+
+55. **The installer announces its LAN address twice, at two moments.** *(question for the user, 2026-11-15T04-20Z, found in item 29's VM run)*
+    - `network.configure_lan` announces as soon as `lan` gets an address (early: the user can SSH in during a long provisioning). The boot service script's `announce_network` announces again when the run ends (`notes/2026-11-15T041538Z-vm-run/logs/serial.log`, lines 81 and 152).
+    - Each reaches each console once (item 29 holds); they are two events by design, predating item 29.
+    - For the user: keep both (the end-of-run one confirms the address after provisioning, and covers a link that came up late), or announce once?
+
+## Closed 2026-11-15: item 8 (fixed in 0.32.7)
+
+8. **Let `collect_pre_nixos_journal.py` capture the whole run.**
+   - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
+    - **2026-11-12, audit:** still open: `scripts/collect_pre_nixos_journal.py` does not wait for the unit to finish.
