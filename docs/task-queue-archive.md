@@ -154,3 +154,10 @@ Closed task-queue items, kept verbatim with their full history when they leave `
     - `slash` is planned first, at up to 50 GiB, so a `main` smaller than about 52 GiB has no `home`, and, when swap falls back to `main` (no rotating disks), no swap. Example: one 20 GiB SSD with 16 GiB RAM gives `slash` 19448M and nothing else.
     - Before 0.32.3 these were 4 MiB slivers (item 11), so nothing usable was lost; the question is only whether small systems should reserve room for swap or `home`.
     - For the user: keep `slash` first, or reserve some swap (e.g. up to RAM, or a fraction of `main`) before `slash` on small disks? Needs a short design debate; reqs §2.4 says swap goes in `main` "when capacity allows".
+
+## Closed 2026-11-15: item 14 (fixed in 0.32.4)
+
+14. **Test-only path in `install._is_mount_ready`.** *(anomaly, 2026-10-19)*
+    - Under pytest, the function treats `ROOT/etc` existing as "mounted" (`PYTEST_CURRENT_TEST`). That is test logic in product code.
+    - Replace it with an injected predicate, as `boot_platform.install_boot_files` does.
+    - **2026-11-12, audit:** still open: `install.py` checks `PYTEST_CURRENT_TEST` in two places (lines 241 and 1060).

@@ -40,11 +40,6 @@ _Last updated: 2026-11-12T02-36Z_
     - The firmware and U-Boot on `/boot` are written once, at install, as on the stock SD card.
     - Decide whether `nixos-rebuild` should refresh them.
 
-14. **Test-only path in `install._is_mount_ready`.** *(anomaly, 2026-10-19)*
-    - Under pytest, the function treats `ROOT/etc` existing as "mounted" (`PYTEST_CURRENT_TEST`). That is test logic in product code.
-    - Replace it with an injected predicate, as `boot_platform.install_boot_files` does.
-    - **2026-11-12, audit:** still open: `install.py` checks `PYTEST_CURRENT_TEST` in two places (lines 241 and 1060).
-
 15. **`nix-collect-garbage` deletes unrooted experiment builds.** *(anomaly, 2026-10-19)*
     - The GC before the 0.18.1 regression deleted the NVMe U-Boot just built, which cost 17 minutes to rebuild.
     - Plan: build experiment inputs with `--out-link` under the scratchpad (GC roots), per AGENTS.md "save a copy".
@@ -243,6 +238,12 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-15T02-23Z - Item 14 fixed (0.32.4): no test-only paths in product code.
+  - `install.py` checked `PYTEST_CURRENT_TEST` twice: `_is_mount_ready` took an existing `ROOT/etc` as mounted, and `_request_reboot` skipped the reboot. Both are gone.
+  - `auto_install` takes `is_mount` (default: the real check), as `boot_platform.install_boot_files` does. The tests with a fake target pass `tests.test_install._mounted`.
+  - `tests/conftest.py` stubs `install._request_reboot` in every test, so no test can reboot the host.
+  - Tests first: `tests/test_no_test_only_paths.py` (no product module mentions `PYTEST_CURRENT_TEST`; an unmounted root with `etc` is not mounted; the reboot runs `systemctl reboot`). All three failed before the fix.
+  - No VM run: the removed branches only ran under pytest, so the image behaves exactly as before.
 - 2026-11-12T04-01Z - User decisions on item 11's follow-ups:
   - The 1 GiB floor for optional LVs (R-L1) is fine.
   - Item 54 closed: `slash` stays first, at up to 50 GiB, even when that leaves a small `main` without swap or `home` (user: "root up to 50 GiB is fine"). Full text in `docs/task-queue-archive.md`.
