@@ -185,11 +185,6 @@ _Last updated: 2026-11-12T02-36Z_
     - Without `CONFIG_BOOTSTD_FULL`, `bootflow scan` takes no flags or label. To boot the SD card when NVMe holds a system, the user had to run `setenv boot_targets mmc0; bootflow scan`.
     - Consider enabling `CONFIG_BOOTSTD_FULL` in `nix/uboot-rpi4-nvme.nix` (size and boot-time cost to check), and document the recovery path.
 
-29. **The installed system shows its LAN announcement twice.** *(anomaly, 2026-10-23; second source in #327)*
-    - `pre-nixos-auto-install-ip` has `StandardOutput = "journal+console"`, and `announce-lan-ip.sh` also writes to `/dev/console`, because `pre-nixos-console` is absent on the installed system.
-    - Reproduce, then decide on one path to the console, e.g. `StandardOutput = "journal"`.
-    - **2026-11-12, audit:** still open: `pre-nixos-auto-install-ip` still has `StandardOutput = "journal+console"` (`pre_nixos/templates/auto-install-ip.nix`).
-
 31. **Use the Waveshare CM4-POE-UPS-BOX's battery-backed RTC.** *(user request, 2026-10-24; fixes item 30 at the source)*
     - **Facts (verified here):**
       - Kernel 6.18.56 sets the clock from `rtc0` when it registers, even for a module driver (`drivers/rtc/class.c:433–435`).
@@ -238,6 +233,12 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-15T04-07Z - Item 29 fixed (0.32.5): the LAN announcement reaches each console once.
+  - `announce-lan-ip.sh` had four independent console paths: stdout (the installed unit's `journal+console`), the broadcast command, each active console, and a `/dev/console` "fallback" that always ran. `/dev/console` is the primary console, already in the active list (#327), so a serial-primary system such as the CM4 saw repeats.
+  - Now one chain, the rule `pre_nixos.console` already applies: the broadcast command if it worked; otherwise each active console once; `/dev/console` only when no console is known. The installed unit's output goes to the journal only.
+  - The console paths are overridable (`ANNOUNCE_CONSOLE_ACTIVE`, `ANNOUNCE_DEV_DIR`), like `console.get_console_paths(active_path)`.
+  - Tests first: `tests/test_announce_lan_ip.py` runs the real script against fake consoles; 5 of its 6 cases failed before the fix.
+  - A VM cannot show the duplicate: our VMs' primary console is `tty0`, not the serial port. The basic VM test checks the installer's announcement path still works.
 - 2026-11-15T02-23Z - Item 14 fixed (0.32.4), merged in trbarbour/NixOS-boot-image#357 (CI green, Codex clean): no test-only paths in product code.
   - `install.py` checked `PYTEST_CURRENT_TEST` twice: `_is_mount_ready` took an existing `ROOT/etc` as mounted, and `_request_reboot` skipped the reboot. Both are gone.
   - `auto_install` takes `is_mount` (default: the real check), as `boot_platform.install_boot_files` does. The tests with a fake target pass `tests.test_install._mounted`.

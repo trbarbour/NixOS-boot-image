@@ -161,3 +161,10 @@ Closed task-queue items, kept verbatim with their full history when they leave `
     - Under pytest, the function treats `ROOT/etc` existing as "mounted" (`PYTEST_CURRENT_TEST`). That is test logic in product code.
     - Replace it with an injected predicate, as `boot_platform.install_boot_files` does.
     - **2026-11-12, audit:** still open: `install.py` checks `PYTEST_CURRENT_TEST` in two places (lines 241 and 1060).
+
+## Closed 2026-11-15: item 29 (fixed in 0.32.5)
+
+29. **The installed system shows its LAN announcement twice.** *(anomaly, 2026-10-23; second source in #327)*
+    - `pre-nixos-auto-install-ip` has `StandardOutput = "journal+console"`, and `announce-lan-ip.sh` also writes to `/dev/console`, because `pre-nixos-console` is absent on the installed system.
+    - Reproduce, then decide on one path to the console, e.g. `StandardOutput = "journal"`.
+    - **2026-11-12, audit:** still open: `pre-nixos-auto-install-ip` still has `StandardOutput = "journal+console"` (`pre_nixos/templates/auto-install-ip.nix`).
