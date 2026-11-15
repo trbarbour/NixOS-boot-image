@@ -7,14 +7,6 @@ _Last updated: 2026-11-12T02-36Z_
 
 ## Active Tasks
 
-6. **Narrow the flake's package source (`src = ./.`).**
-   - 2026-10-19 evidence that this matters:
-     - Committing four new test files during a VM run changed the `pre-nixos` source, and so the whole AArch64 system.
-     - The image and a second evaluation of the system disagreed (`q9m06…` vs `cbcs15…`). The fixture's precondition caught it.
-     - Test-only edits should not change the product image. Rule until fixed: do not commit or edit tracked files while a VM run is evaluating.
-   - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
-    - **2026-11-12, audit:** still open: the package's `src = ./.` (flake.nix line 93).
-
 7. **Make the VM harness (`tests/vm/`) type-check cleanly.**
    - 2026-10-18T03-25-00Z - `mypy --check-untyped-defs` reports 18 errors in `tests/vm/{controller,fixtures,metadata}.py`. Reviewed: none is a known runtime bug.
      - 4× "Missing return": the functions end in `_raise_with_transcript`, which always raises but is annotated `-> None`; annotate it `NoReturn`.
@@ -52,11 +44,6 @@ _Last updated: 2026-11-12T02-36Z_
     - 2026-10-21: #318 merged; `pre_nixos/boot_order.py` added to `[tool.mypy] files` on #317's branch.
     - Tier 2: x86 VM tests (about 1 h), nightly or on a label.
     - Tier 3: AArch64 image and VM tests under emulation; needs a binary cache (e.g. Cachix) to fit a 6-hour job.
-
-19. **Move the VM fixtures and scripts from PRE_NIXOS_ROOT_KEY/--impure to sites.** *(follow-up, site-settings design D2)*
-    - `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still pass the key through the legacy environment fallback.
-    - Move them to `--override-input site path:<tmp dir>`, then decide whether to drop the fallback.
-    - **2026-11-12, audit:** still open: `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still use `PRE_NIXOS_ROOT_KEY`.
 
 20. **CMA pool exhausted on the CM4 during provisioning.** *(anomaly, 2026-10-22, item 10 attempt 1)*
     - `cma: __cma_alloc: linux,cma: alloc failed, req-size: 256 pages` (also 512 pages), with 176 of 16384 pages free.
@@ -220,13 +207,28 @@ _Last updated: 2026-11-12T02-36Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
     - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
+56. **Questions left by items 6 and 19.** *(for the user, 2026-11-15T14-01Z)*
+    - **The ISO name carries the git revision** (`pre-nixos-<version>-g<rev>[-dirty]-…`), so any commit, docs included, renames the image and changes its derivation, even with item 6's narrow package source. This looks deliberate (provenance). Keep it, or keep the revision only in the image's metadata (e.g. `/etc/pre-nixos-version`) so that two images built from the same code are byte-identical?
+    - **The legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` fallback** (`flake.nix`, `nix/site.nix`, under `--impure`; site-settings design D2c) has no remaining user in this repository after item 19. Keep it for people's own scripts, or drop it?
+
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-15T04-31Z - Item 8 fixed (0.32.7): `scripts/collect_pre_nixos_journal.py` captures the whole boot run.
+- 2026-11-15T14-01Z - Items 6 and 19 fixed (0.32.8).
+  - **Item 6:** the `pre-nixos` package is built from `pyproject.toml` and `pre_nixos/` only (`lib.fileset.toSource`), not the whole tree. `pyproject.toml` no longer names `README.md` as the package readme (unused: the package is not published).
+    - Experiment first: a docs-only edit changed the package derivation (`07fc6a24…` → `2jwjkvk0…`).
+    - Afterwards, a docs edit plus a test edit left it identical (`0w9v31ni…`).
+    - New flake check `package-source-files`, which failed before the fix with the whole tree listed.
+    - The ISO name still carries the git revision (item 56).
+  - **Item 19:** `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` build from a site (`--override-input site path:<dir>`), like the VM fixtures, through one helper, `tests/vm/site_build.py`, which the fixture now uses too.
+    - Tests first: `tests/test_scripts_use_sites.py`; both script cases failed with `--impure` in the command.
+    - Whether to drop the legacy fallback is item 56.
+    - Codex on #360: the site was written next to the supplied key, which may be read-only (`--public-key` in the Nix store). `build_boot_image` now takes `site_dir` from its caller (a directory the script owns). Two further callers (`collect_sshd_dependency_audit.py`, `probe_storage_detection.py`) had been missed: `scripts/` is not type-checked (item 7). A new test checks that every caller passes `site_dir`.
+  - VM `tests/vm/test_pre_nixos_vm.py` on 0.32.8 (`notes/2026-11-15T140614Z-vm-run`): **3 passed**, built through the shared site helper from the narrowed package source.
+- 2026-11-15T04-31Z - Item 8 fixed (0.32.7), merged in trbarbour/NixOS-boot-image#359 (CI green, Codex clean): `scripts/collect_pre_nixos_journal.py` captures the whole boot run.
   - It took the journal right after login, while `pre-nixos` was still running (2 lines). Now it waits for `pre-nixos.service` to finish (`BootImageVM.wait_for_unit_inactive`, `--timeout`, default 1800 s for emulated VMs).
   - A unit that failed or did not finish still gets its journal; the script then says why on stderr and exits 2.
   - Tests first: `tests/test_collect_pre_nixos_journal.py` (a fake VM records the call order); all 5 failed before the fix.

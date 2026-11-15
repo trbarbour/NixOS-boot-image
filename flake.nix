@@ -90,7 +90,12 @@
         pkgs.python3Packages.buildPythonApplication {
           pname = "pre-nixos";
           version = preNixosVersion;
-          src = ./.;
+          # Item 6: only what the build reads, so edits elsewhere (docs, notes,
+          # tests, other tools) do not change the package or the boot image.
+          src = pkgs.lib.fileset.toSource {
+            root = ./.;
+            fileset = pkgs.lib.fileset.unions [ ./pyproject.toml ./pre_nixos ];
+          };
           pyproject = true;
           nativeBuildInputs = with pkgs; [ makeWrapper python3Packages.setuptools python3Packages.wheel ];
           propagatedBuildInputs = requiredToolPackages;
@@ -461,6 +466,16 @@
             pre-nixos = preNixosPackage;
           }) // { inherit writeImage; };
         checks = {
+          # Task queue item 6: the package is built from what it needs, so an
+          # edit to docs, notes or tests does not change it (and so the boot
+          # image).  Evaluated: a docs-only edit changed the package's
+          # derivation while src was the whole tree (2026-11-15).
+          package-source-files = pkgs.runCommand "package-source-files" { } ''
+            got=$(ls -A ${preNixosPackage.src} | tr '\n' ' ')
+            echo "package source: $got"
+            [ "$got" = "pre_nixos pyproject.toml " ]
+            touch $out
+          '';
           # Item 42: the app starts, and the root helper's bootstrap (run by
           # sudo with the store's python, -I) imports from the store.
           write-image-app = pkgs.runCommand "write-image-app" { } ''

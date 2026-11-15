@@ -3,7 +3,6 @@ name = "pre-nixos"
 dynamic = ["version"]
 description = "Pre-NixOS setup tool"
 authors = [{name = "Unknown"}]
-readme = "README.md"
 requires-python = ">=3.10"
 
 [tool.setuptools]
