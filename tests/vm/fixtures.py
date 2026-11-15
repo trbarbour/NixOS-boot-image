@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional,
 import pytest
 
 from scripts.nix_git_inputs import nix_command
-from tests.vm import disk_space
+from tests.vm import disk_space, site_build
 from tests.root_password_data import TEST_ROOT_PASSWORD_HASH
 from tests.vm.boot_medium import UsbStick, make_usb_stick
 from tests.vm.machines import Machine, x86_machine
@@ -325,33 +325,19 @@ def build_boot_artifact(
     cleared so it cannot disagree with the site.
     """
 
-    site_dir = key_pair.public_key.parent / "site"
-    site_dir.mkdir(exist_ok=True)
-    shutil.copyfile(key_pair.public_key, site_dir / "root_key.pub")
-    (site_dir / "pre-nixos-site.nix").write_text(
-        "{\n"
-        "  rootKey = ./root_key.pub;\n"
-        f'  rootHashedPassword = "{TEST_ROOT_PASSWORD_HASH}";\n'
-        "}\n",
-        encoding="utf-8",
+    site_dir = site_build.write_test_site(
+        key_pair.public_key.parent / "site",
+        key_pair.public_key,
+        root_hashed_password=TEST_ROOT_PASSWORD_HASH,
     )
-    env = os.environ.copy()
-    env.pop("PRE_NIXOS_ROOT_KEY", None)
-    env.pop("PRE_NIXOS_AUTO_INSTALL", None)
     build_started = time.perf_counter()
     result = subprocess.run(
-        nix_command(
-            nix_executable,
-            [
-                "build", attribute, "--no-link", "--print-out-paths",
-                "--override-input", "site", f"path:{site_dir}",
-            ],
-        ),
+        nix_command(nix_executable, site_build.build_args(attribute, site_dir)),
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
         text=True,
-        env=env,
+        env=site_build.build_environment(),
     )
     if result.returncode != 0:
         # Item 37: Nix's own error is the useful part, not the command.

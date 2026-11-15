@@ -186,3 +186,20 @@ Closed task-queue items, kept verbatim with their full history when they leave `
 8. **Let `collect_pre_nixos_journal.py` capture the whole run.**
    - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
     - **2026-11-12, audit:** still open: `scripts/collect_pre_nixos_journal.py` does not wait for the unit to finish.
+
+## Closed 2026-11-15: item 6 (fixed in 0.32.8)
+
+6. **Narrow the flake's package source (`src = ./.`).**
+   - 2026-10-19 evidence that this matters:
+     - Committing four new test files during a VM run changed the `pre-nixos` source, and so the whole AArch64 system.
+     - The image and a second evaluation of the system disagreed (`q9m06…` vs `cbcs15…`). The fixture's precondition caught it.
+     - Test-only edits should not change the product image. Rule until fixed: do not commit or edit tracked files while a VM run is evaluating.
+   - 2026-10-18T03-05-00Z - Every tracked-file change, docs included, alters the boot-image derivation. Shown: commit `4bb90dd` → `rmhwpzbb…`, current HEAD → `s8l0sbw4…`, with identical inputs. This defeats build caching and makes it harder to show two ISOs are the same. Consider `lib.fileset` restricted to `pre_nixos/`, `modules/` and packaging files; needs a design debate.
+    - **2026-11-12, audit:** still open: the package's `src = ./.` (flake.nix line 93).
+
+## Closed 2026-11-15: item 19 (fixed in 0.32.8)
+
+19. **Move the VM fixtures and scripts from PRE_NIXOS_ROOT_KEY/--impure to sites.** *(follow-up, site-settings design D2)*
+    - `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still pass the key through the legacy environment fallback.
+    - Move them to `--override-input site path:<tmp dir>`, then decide whether to drop the fallback.
+    - **2026-11-12, audit:** still open: `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still use `PRE_NIXOS_ROOT_KEY`.

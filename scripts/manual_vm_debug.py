@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
-import os
 import shutil
 import socket
 import subprocess
@@ -17,6 +16,7 @@ from typing import Iterable, Optional, TextIO, Tuple
 import pexpect
 
 from scripts.nix_git_inputs import nix_command
+from tests.vm import site_build
 from tests.vm.controller import BootImageVM
 from tests.vm.fixtures import BootImageBuild, probe_qemu_version, resolve_iso_path
 from tests.vm.metadata import write_boot_image_metadata
@@ -40,19 +40,16 @@ def build_boot_image(public_key: Path) -> BootImageBuild:
     """Build the ISO with ``public_key`` embedded as root's key and describe it."""
 
     nix = require_executable("nix")
-    env = os.environ.copy()
-    env["PRE_NIXOS_ROOT_KEY"] = str(public_key)
-
+    # Item 19: from a site, as the VM fixtures build, not the legacy
+    # PRE_NIXOS_ROOT_KEY/--impure fallback.
+    site_dir = site_build.write_test_site(public_key.parent / "site", public_key)
     build = subprocess.run(
-        nix_command(
-            nix,
-            ["build", ".#bootImage", "--impure", "--no-link", "--print-out-paths"],
-        ),
+        nix_command(nix, site_build.build_args(".#bootImage", site_dir)),
         cwd=REPO_ROOT,
         check=True,
         capture_output=True,
         text=True,
-        env=env,
+        env=site_build.build_environment(),
     )
     paths = [line.strip() for line in build.stdout.splitlines() if line.strip()]
     if not paths:

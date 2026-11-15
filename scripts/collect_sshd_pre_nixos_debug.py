@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-import os
 import shutil
 import socket
 import subprocess
@@ -22,6 +21,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.nix_git_inputs import nix_command  # noqa: E402
+from tests.vm import site_build  # noqa: E402
 from tests.vm.controller import BootImageVM, SHELL_PROMPT  # noqa: E402
 from tests.vm.fixtures import (  # noqa: E402
     BootImageBuild,
@@ -43,14 +43,12 @@ def _run(cmd: List[str], *, env: Dict[str, str] | None = None, cwd: Path | None 
 
 
 def build_boot_image(public_key: Path) -> BootImageBuild:
-    env = os.environ.copy()
-    env["PRE_NIXOS_ROOT_KEY"] = str(public_key)
+    # Item 19: from a site, as the VM fixtures build, not the legacy
+    # PRE_NIXOS_ROOT_KEY/--impure fallback.
+    site_dir = site_build.write_test_site(public_key.parent / "site", public_key)
     result = _run(
-        nix_command(
-            "nix",
-            ["build", ".#bootImage", "--impure", "--no-link", "--print-out-paths"],
-        ),
-        env=env,
+        nix_command("nix", site_build.build_args(".#bootImage", site_dir)),
+        env=site_build.build_environment(),
         cwd=REPO_ROOT,
     )
     store_paths = [line.strip() for line in result.stdout.splitlines() if line.strip()]
