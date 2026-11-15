@@ -34,7 +34,11 @@ def _keep_tests_out_of_host_paths(
     that sets ``PRE_NIXOS_LOG_FILE`` itself still wins (monkeypatch order).
     """
 
-    from pre_nixos import apply
+    from pre_nixos import apply, install
+
+    # Task queue item 14: install no longer skips the reboot under pytest, so
+    # no test may reach systemctl.  A test that checks the reboot sets its own.
+    monkeypatch.setattr(install, "_request_reboot", lambda: False)
 
     host_paths = tmp_path_factory.mktemp("pre-nixos-host-paths")
     monkeypatch.setenv("PRE_NIXOS_LOG_FILE", str(host_paths / "actions.log"))

@@ -96,6 +96,13 @@ def _sample_storage_plan() -> dict:
     }
 
 
+def _mounted(path: Path) -> bool:
+    """The test's target directory stands for a mounted root (item 14: no
+    product shortcut under pytest; tests inject the fact instead)."""
+
+    return True
+
+
 def _make_lan(tmp_path: Path, *, original_name: str = "eth0") -> LanConfiguration:
     key_path = tmp_path / "key.pub"
     key_path.write_text("ssh-ed25519 AAAAB3NzaC1yc2EAAAADAQABAAACAQC7 test@local")
@@ -125,7 +132,7 @@ def test_auto_install_skips_when_disabled(tmp_path, monkeypatch, broadcast_messa
         lan,
         _sample_storage_plan(),
         enabled=False,
-        root_path=tmp_path / "mnt",
+        root_path=tmp_path / "mnt", is_mount=_mounted,
         status_dir=tmp_path / "status",
     )
     assert result.status == "skipped"
@@ -193,7 +200,7 @@ def test_auto_install_success_writes_configuration(tmp_path, monkeypatch, broadc
     result = install.auto_install(
         lan,
         _sample_storage_plan(),
-        root_path=root,
+        root_path=root, is_mount=_mounted,
         status_dir=tmp_path / "status",
     )
     assert result.status == "success"
@@ -364,7 +371,7 @@ def test_auto_install_static_network_skips_dhcp_unit(
     result = install.auto_install(
         lan,
         _sample_storage_plan(),
-        root_path=root,
+        root_path=root, is_mount=_mounted,
         status_dir=tmp_path / "status",
         install_network=install_network,
     )
@@ -471,7 +478,7 @@ def test_auto_install_missing_plan_fails(tmp_path, monkeypatch, broadcast_messag
     result = install.auto_install(
         lan,
         None,
-        root_path=root,
+        root_path=root, is_mount=_mounted,
         status_dir=tmp_path / "status",
     )
 
@@ -517,7 +524,7 @@ def test_auto_install_failure_returns_failed(tmp_path, monkeypatch, broadcast_me
     result = install.auto_install(
         lan,
         _sample_storage_plan(),
-        root_path=root,
+        root_path=root, is_mount=_mounted,
         status_dir=tmp_path / "status",
     )
     assert result.status == "failed"
@@ -546,7 +553,7 @@ def test_auto_install_dry_run_skips(monkeypatch, tmp_path, broadcast_messages):
         lan,
         _sample_storage_plan(),
         dry_run=True,
-        root_path=tmp_path / "mnt",
+        root_path=tmp_path / "mnt", is_mount=_mounted,
         status_dir=tmp_path / "status",
     )
     assert result.status == "skipped"
@@ -645,14 +652,13 @@ def test_auto_install_rpi_puts_firmware_on_boot_and_enables_extlinux(
 
     root = tmp_path / "mnt"
     (root / "boot").mkdir(parents=True)
-    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
     _rpi_environment(tmp_path, monkeypatch)
     monkeypatch.setattr(install.boot_platform, "_is_mount", lambda path: path == root / "boot")
     commands: list[list[str]] = []
     monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands))
 
     result = install.auto_install(
-        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, is_mount=_mounted, status_dir=tmp_path / "status"
     )
 
     assert result.status == "success", result
@@ -684,7 +690,6 @@ def test_auto_install_rpi_config_defines_no_attribute_twice(
 
     root = tmp_path / "mnt"
     (root / "boot").mkdir(parents=True)
-    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
     _rpi_environment(tmp_path, monkeypatch)
     monkeypatch.setattr(install.boot_platform, "_is_mount", lambda path: path == root / "boot")
     commands: list[list[str]] = []
@@ -693,7 +698,7 @@ def test_auto_install_rpi_config_defines_no_attribute_twice(
     )
 
     result = install.auto_install(
-        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, is_mount=_mounted, status_dir=tmp_path / "status"
     )
 
     assert result.status == "success", result
@@ -720,14 +725,13 @@ def test_auto_install_rpi_fails_before_nixos_install_without_mounted_boot(
 ):
     root = tmp_path / "mnt"
     (root / "boot").mkdir(parents=True)
-    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
     _rpi_environment(tmp_path, monkeypatch)
     monkeypatch.setattr(install.boot_platform, "_is_mount", lambda path: False)
     commands: list[list[str]] = []
     monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands))
 
     result = install.auto_install(
-        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, is_mount=_mounted, status_dir=tmp_path / "status"
     )
 
     assert (result.status, result.reason) == ("failed", "boot-files")
@@ -743,7 +747,7 @@ def test_auto_install_rejects_an_unknown_installed_boot(tmp_path, monkeypatch, b
     result = install.auto_install(
         _make_lan(tmp_path),
         _sample_storage_plan(),
-        root_path=tmp_path / "mnt",
+        root_path=tmp_path / "mnt", is_mount=_mounted,
         status_dir=tmp_path / "status",
     )
 
@@ -756,14 +760,13 @@ def test_auto_install_rpi_refuses_when_the_card_boots_first(tmp_path, monkeypatc
 
     root = tmp_path / "mnt"
     (root / "boot").mkdir(parents=True)
-    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
     _rpi_environment(tmp_path, monkeypatch)
     monkeypatch.setattr(install.boot_order, "read_current", lambda: install.boot_order.Known(0xF41, "test"))
     commands: list[list[str]] = []
     monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands))
 
     result = install.auto_install(
-        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, is_mount=_mounted, status_dir=tmp_path / "status"
     )
 
     assert (result.status, result.reason) == ("failed", "boot-order")
@@ -787,7 +790,7 @@ def test_auto_install_x86_does_not_check_the_boot_order(tmp_path, monkeypatch, b
         install.subprocess, "run", _fake_install_run(root, [], expect_firmware=False)
     )
     result = install.auto_install(
-        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, is_mount=_mounted, status_dir=tmp_path / "status"
     )
     assert result.status == "success", result
 
@@ -803,7 +806,7 @@ def test_auto_install_refuses_bios_before_running_anything(tmp_path, monkeypatch
     monkeypatch.setattr(install.subprocess, "run", _fake_install_run(root, commands, expect_firmware=False))
 
     result = install.auto_install(
-        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, status_dir=tmp_path / "status"
+        _make_lan(tmp_path), _sample_storage_plan(), root_path=root, is_mount=_mounted, status_dir=tmp_path / "status"
     )
 
     assert (result.status, result.reason) == ("failed", "bios-unsupported")
@@ -844,7 +847,6 @@ def test_auto_install_on_bios_writes_grub_for_the_plans_boot_disks(
     monkeypatch.setattr(install, "_stable_disk_path", lambda disk: f"/dev/disk/by-id/ata-{disk}")
     root = tmp_path / "mnt"
     (root / "boot").mkdir(parents=True)
-    (root / "etc").mkdir()  # _is_mount_ready's test-only fallback
     commands: list[list[str]] = []
     monkeypatch.setattr(
         install.subprocess, "run", _fake_install_run(root, commands, expect_firmware=False, generated="grub")
@@ -852,7 +854,7 @@ def test_auto_install_on_bios_writes_grub_for_the_plans_boot_disks(
     plan = _sample_storage_plan()
     plan["boot"] = {"layout": "x86-bios", "disks": ["sda", "sdb"]}
 
-    result = install.auto_install(_make_lan(tmp_path), plan, root_path=root, status_dir=tmp_path / "status")
+    result = install.auto_install(_make_lan(tmp_path), plan, root_path=root, is_mount=_mounted, status_dir=tmp_path / "status")
 
     assert result.status == "success", result
     module = (root / "etc/nixos/pre-nixos-boot.nix").read_text()

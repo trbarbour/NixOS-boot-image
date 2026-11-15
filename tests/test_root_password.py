@@ -16,7 +16,7 @@ import pytest
 from pre_nixos import install, root_password
 from pre_nixos.root_password import InvalidRootHash, RootHash
 from tests.root_password_data import TEST_ROOT_PASSWORD_HASH as HASH
-from tests.test_install import _make_lan, _sample_storage_plan
+from tests.test_install import _make_lan, _mounted, _sample_storage_plan
 
 REPO = Path(__file__).resolve().parents[1]
 SHA512 = "$6$rounds=5000$saltsalt$hash/hash.hash"
@@ -155,7 +155,7 @@ def _install(tmp_path: Path, target: Target, password_file: Path):
         _sample_storage_plan(),
         enabled=True,
         trigger=install.InstallTrigger.REQUESTED,
-        root_path=target.root,
+        root_path=target.root, is_mount=_mounted,
         status_dir=tmp_path / "status",
         mount_attempts=1,
         mount_delay=0,

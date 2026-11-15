@@ -13,7 +13,7 @@ from importlib import resources
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple
 
 from . import boot_order, boot_platform, console, disk_class, kernel_cmdline, network, root_password, state
 from .console import broadcast_to_consoles
@@ -238,16 +238,17 @@ def _is_mount_ready(root_path: Path) -> bool:
     except OSError:
         return False
 
-    if os.environ.get("PYTEST_CURRENT_TEST"):
-        etc_dir = root_path / "etc"
-        if etc_dir.exists():
-            return True
-
     return False
 
 
-def _wait_for_mount(root_path: Path, *, attempts: int = 30, delay: float = 1.0) -> bool:
-    """Poll ``root_path`` until it becomes a mount point."""
+def _wait_for_mount(
+    root_path: Path,
+    *,
+    attempts: int = 30,
+    delay: float = 1.0,
+    is_mount: Callable[[Path], bool] = _is_mount_ready,
+) -> bool:
+    """Poll ``root_path`` until ``is_mount`` says it is a mount point."""
 
     exec_enabled = os.environ.get("PRE_NIXOS_EXEC") == "1"
     sleep_interval = delay if exec_enabled else min(delay, 0.1)
@@ -260,7 +261,7 @@ def _wait_for_mount(root_path: Path, *, attempts: int = 30, delay: float = 1.0) 
     )
 
     for attempt in range(1, attempts + 1):
-        if _is_mount_ready(root_path):
+        if is_mount(root_path):
             log_event(
                 "pre_nixos.install.wait_for_mount.ready",
                 root_path=root_path,
@@ -1057,13 +1058,6 @@ def _write_installation_issue(root_path: Path, completed_at: datetime) -> Option
 def _request_reboot() -> bool:
     """Attempt to reboot the system using ``systemctl``."""
 
-    if os.environ.get("PYTEST_CURRENT_TEST"):
-        log_event(
-            "pre_nixos.install.reboot_skipped",
-            reason="pytest",
-        )
-        return False
-
     result = subprocess.run(["systemctl", "reboot"], check=False)
     if result.returncode == 0:
         log_event("pre_nixos.install.reboot_requested", returncode=result.returncode)
@@ -1200,11 +1194,15 @@ def auto_install(
     mount_attempts: int = 30,
     mount_delay: float = 1.0,
     root_password_file: Path = root_password.EMBEDDED_FILE,
+    is_mount: Callable[[Path], bool] = _is_mount_ready,
 ) -> AutoInstallResult:
     """Automatically install NixOS when prerequisites are satisfied.
 
     ``root_password_file``: the image's hashed root password (reqs R-A1); a
     missing file means the site set none.
+    ``is_mount``: whether the target root is mounted; injected by tests that
+    install into a plain directory (task queue item 14; as
+    ``boot_platform.install_boot_files`` takes ``is_mount``).
     """
 
     log_event(
@@ -1300,7 +1298,7 @@ def auto_install(
     if refused is not None:
         return refused
 
-    if not _wait_for_mount(root_path, attempts=mount_attempts, delay=mount_delay):
+    if not _wait_for_mount(root_path, attempts=mount_attempts, delay=mount_delay, is_mount=is_mount):
         return _record_result(
             "failed",
             status_dir=status_dir,

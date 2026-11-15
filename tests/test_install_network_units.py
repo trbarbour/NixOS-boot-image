@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 
 from pre_nixos import install
-from tests.test_install import _make_lan, _sample_storage_plan
+from tests.test_install import _make_lan, _mounted, _sample_storage_plan
 
 STALE_DHCP = "[Match]\nName=lan\n\n[Network]\nDHCP=yes\n"
 STALE_LINK = "[Match]\nOriginalName=eth0\n\n[Link]\nName=lan\n"
@@ -57,7 +57,7 @@ def _install(tmp_path: Path, root: Path, install_network=None):
         enabled=True,
         trigger=install.InstallTrigger.REQUESTED,
         install_network=install_network,
-        root_path=root,
+        root_path=root, is_mount=_mounted,
         status_dir=tmp_path / "status",
         mount_attempts=1,
         mount_delay=0,
