@@ -16,6 +16,9 @@ max_attempts="${ANNOUNCE_MAX_ATTEMPTS:-60}"
 delay="${ANNOUNCE_DELAY:-1}"
 route_target="${ANNOUNCE_ROUTE_TARGET:-1.1.1.1}"
 broadcast_cmd="${BROADCAST_CONSOLE_CMD:-}"
+# Overridable like pre_nixos.console's active_path (tests use fake consoles).
+console_active="${ANNOUNCE_CONSOLE_ACTIVE:-/sys/class/tty/console/active}"
+dev_dir="${ANNOUNCE_DEV_DIR:-/dev}"
 preferred_missing_message=""
 shell_bin="${BASH:-sh}"
 
@@ -157,17 +160,25 @@ if [ "$update_issue" = "1" ]; then
   fi
 fi
 
-if [ "$notify_consoles" = "1" ] && [ -r /sys/class/tty/console/active ]; then
-  while IFS= read -r name; do
-    [ -n "$name" ] || continue
-    target="/dev/$name"
-    if [ -w "$target" ]; then
-      printf '%s\n' "$message" > "$target"
+# Each console gets the message once (task queue item 29; the rule of
+# pre_nixos.console, #327): the broadcast command if it worked; otherwise
+# each active console; /dev/console only when no console is known, since it
+# is the primary console, which the active list already names.
+console_written=0
+if [ "$broadcast_failed" = "1" ] && [ "$notify_consoles" = "1" ] && [ -r "$console_active" ]; then
+  written_names=" "
+  for name in $(cat "$console_active"); do
+    case "$written_names" in *" $name "*) continue ;; esac
+    written_names="$written_names$name "
+    target="$dev_dir/$name"
+    if [ -w "$target" ] && printf '%s\n' "$message" > "$target"; then
+      console_written=1
     fi
-  done < /sys/class/tty/console/active
+  done
 fi
 
-if [ "$console_fallback" = "1" ] && [ -w /dev/console ]; then
-  printf '%s\n' "$message" > /dev/console
+if [ "$broadcast_failed" = "1" ] && [ "$console_written" = "0" ] \
+  && [ "$console_fallback" = "1" ] && [ -w "$dev_dir/console" ]; then
+  printf '%s\n' "$message" > "$dev_dir/console"
 fi
 

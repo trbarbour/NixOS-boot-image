@@ -72,8 +72,10 @@ in {
     };
     serviceConfig = {
       Type = "oneshot";
-      StandardOutput = "journal+console";
-      StandardError = "journal+console";
+      # The script writes the consoles itself; sending its output to the
+      # console too added a copy on the primary console (task queue item 29).
+      StandardOutput = "journal";
+      StandardError = "journal";
     };
     script = "${announceLanIpScript}";
   };

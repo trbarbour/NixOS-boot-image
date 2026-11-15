@@ -987,7 +987,10 @@ def _announce(message: str, *, to_stderr: bool = False) -> Tuple[bool, Dict[str,
     terminal is ``/dev/console``, so a broadcast showed it twice (task queue
     item 40; #327, item 36).  ``None`` when nothing was broadcast."""
 
-    print(message, file=sys.stderr if to_stderr else sys.stdout)
+    # Flushed: under the boot service stdout is a pipe, so Python
+    # block-buffers it, and the line reached the journal only at exit, after
+    # later stderr lines (task queue item 21).
+    print(message, file=sys.stderr if to_stderr else sys.stdout, flush=True)
     if console.stdout_is_terminal():
         return None
     return _broadcast_install_message(message)
