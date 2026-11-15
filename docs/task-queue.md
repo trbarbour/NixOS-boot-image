@@ -224,25 +224,21 @@ _Last updated: 2026-11-12T02-36Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
     - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
-55. **The installer announces its LAN address twice, at two moments.** *(question for the user, 2026-11-15T04-20Z, found in item 29's VM run)*
-    - `network.configure_lan` announces as soon as `lan` gets an address (early: the user can SSH in during a long provisioning). The boot service script's `announce_network` announces again when the run ends (`notes/2026-11-15T041538Z-vm-run/logs/serial.log`, lines 81 and 152).
-    - Each reaches each console once (item 29 holds); they are two events by design, predating item 29.
-    - For the user: keep both (the end-of-run one confirms the address after provisioning, and covers a link that came up late), or announce once?
-
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-15T04-09Z - Item 21 fixed (0.32.6): install messages reach the journal when announced.
+- 2026-11-15T04-25Z - Item 55 closed (user decision): the installer keeps both LAN announcements, when `lan` gets its address and at the end of the boot run. Full text in `docs/task-queue-archive.md`.
+- 2026-11-15T04-09Z - Item 21 fixed (0.32.6), merged in trbarbour/NixOS-boot-image#358: install messages reach the journal when announced.
   - Root cause, from the CM4 attempt-1 journal (`docs/test-reports/2026-10-22T025029Z-cm4-item10-pre-nixos-journal.txt`, line 307): not a duplicate. The line is there once, logged at 02:53:25 although it says 02:50:29, after "Auto-install failed".
   - Under the boot service stdout is a pipe, so Python block-buffered it and the line left only at exit; stderr is unbuffered and came first. The console broadcast had shown it on time, so it looked repeated.
   - Fix: `install._announce` flushes, and the boot service sets `PYTHONUNBUFFERED=1` so every print reaches the journal in order.
   - Tests first: `tests/test_announce_order.py` runs `_announce` in a child with stdout on a pipe and finds the announcement after a later stderr line (the CM4 order); it passes now. A second test checks the service environment.
   - The item 29 VM run was stopped: its image was still building while item 21's files were edited (item 6's rule), so it would have proved nothing. One VM run on the final tree covers both.
   - VM `tests/vm/test_pre_nixos_vm.py` on 0.32.6 (`notes/2026-11-15T041538Z-vm-run`): **3 passed** (items 29 and 21). On the installer's serial console each announcement appears once; there are two announcements at different moments (item 55).
-- 2026-11-15T04-07Z - Item 29 fixed (0.32.5): the LAN announcement reaches each console once.
+- 2026-11-15T04-07Z - Item 29 fixed (0.32.5), merged in trbarbour/NixOS-boot-image#358 (CI green, Codex clean): the LAN announcement reaches each console once.
   - `announce-lan-ip.sh` had four independent console paths: stdout (the installed unit's `journal+console`), the broadcast command, each active console, and a `/dev/console` "fallback" that always ran. `/dev/console` is the primary console, already in the active list (#327), so a serial-primary system such as the CM4 saw repeats.
   - Now one chain, the rule `pre_nixos.console` already applies: the broadcast command if it worked; otherwise each active console once; `/dev/console` only when no console is known. The installed unit's output goes to the journal only.
   - The console paths are overridable (`ANNOUNCE_CONSOLE_ACTIVE`, `ANNOUNCE_DEV_DIR`), like `console.get_console_paths(active_path)`.
