@@ -80,7 +80,7 @@ def main(argv: Iterable[str]) -> int:
     output_dir = ensure_output_dir(args.output_dir or default_output_dir())
 
     private_key, public_key = generate_ssh_keypair(output_dir)
-    artifact = build_boot_image(public_key)
+    artifact = build_boot_image(public_key, site_dir=output_dir / "site")
 
     disk_image = prepare_disk_image(output_dir / "disk.img")
     ssh_port = allocate_ssh_port()

@@ -196,7 +196,7 @@ def main(argv: Iterable[str]) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     private_key, public_key = manual.generate_ssh_keypair(output_dir)
-    artifact = manual.build_boot_image(public_key)
+    artifact = manual.build_boot_image(public_key, site_dir=output_dir / "site")
     disk_image = manual.prepare_disk_image(output_dir / "disk.img")
     ssh_port = manual.allocate_ssh_port()
 

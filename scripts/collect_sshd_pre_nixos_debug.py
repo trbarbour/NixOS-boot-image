@@ -42,10 +42,13 @@ def _run(cmd: List[str], *, env: Dict[str, str] | None = None, cwd: Path | None 
     )
 
 
-def build_boot_image(public_key: Path) -> BootImageBuild:
+def build_boot_image(public_key: Path, *, site_dir: Path) -> BootImageBuild:
+    """Build the ISO with ``public_key`` as root's key, from a site written to
+    ``site_dir``: the key itself may be read-only (Codex on #360)."""
+
     # Item 19: from a site, as the VM fixtures build, not the legacy
     # PRE_NIXOS_ROOT_KEY/--impure fallback.
-    site_dir = site_build.write_test_site(public_key.parent / "site", public_key)
+    site_build.write_test_site(site_dir, public_key)
     result = _run(
         nix_command("nix", site_build.build_args(".#bootImage", site_dir)),
         env=site_build.build_environment(),
@@ -173,7 +176,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
         pub_key_path = pub_key_path.resolve()
 
         public_key_text = Path(pub_key_path).read_text(encoding="utf-8").strip()
-        build = build_boot_image(pub_key_path)
+        build = build_boot_image(pub_key_path, site_dir=Path(temp_root) / "site")
 
         disk_dir = temp_path / "disk"
         disk_dir.mkdir()

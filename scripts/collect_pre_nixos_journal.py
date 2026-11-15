@@ -86,7 +86,7 @@ def main(argv: Iterable[str]) -> int:
             key_dir = tmp_path / "ssh-key"
             key_dir.mkdir()
             _private_key, public_key = generate_ssh_keypair(key_dir)
-            artifact = build_boot_image(public_key)
+            artifact = build_boot_image(public_key, site_dir=tmp_path / "site")
 
         disk_image = prepare_disk_image(tmp_path / "disk.img", args.disk_size)
         serial_log = tmp_path / "serial.log"

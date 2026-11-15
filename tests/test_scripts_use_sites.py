@@ -59,22 +59,37 @@ def key(tmp_path: Path) -> Path:
     return path
 
 
-def test_manual_vm_debug_builds_from_a_site(monkeypatch, key: Path) -> None:
+def _assert_key_dir_untouched(key: Path) -> None:
+    """Codex on #360: a supplied key may sit in a read-only directory (the
+    Nix store, a shared key directory); only reading it is allowed."""
+
+    assert sorted(p.name for p in key.parent.iterdir()) == [key.name]
+
+
+def test_manual_vm_debug_builds_from_a_site(monkeypatch, key: Path, tmp_path: Path) -> None:
     calls = _capture(monkeypatch, manual_vm_debug)
     monkeypatch.setattr(manual_vm_debug, "require_executable", lambda name: name)
     monkeypatch.setattr(manual_vm_debug, "describe_boot_image", lambda path, public_key: path)
-    assert manual_vm_debug.build_boot_image(key) == Path(STORE_PATH)
-    _assert_site_build(_build_call(calls), key)
+    site = tmp_path / "work" / "site"
+    assert manual_vm_debug.build_boot_image(key, site_dir=site) == Path(STORE_PATH)
+    call = _build_call(calls)
+    _assert_site_build(call, key)
+    assert f"path:{site}" in call["cmd"]
+    _assert_key_dir_untouched(key)
 
 
-def test_collect_sshd_debug_builds_from_a_site(monkeypatch, key: Path) -> None:
+def test_collect_sshd_debug_builds_from_a_site(monkeypatch, key: Path, tmp_path: Path) -> None:
     calls = _capture(monkeypatch, collect_sshd_pre_nixos_debug)
     monkeypatch.setattr(collect_sshd_pre_nixos_debug, "resolve_iso_path", lambda path: path)
+    site = tmp_path / "work" / "site"
     try:
-        collect_sshd_pre_nixos_debug.build_boot_image(key)
+        collect_sshd_pre_nixos_debug.build_boot_image(key, site_dir=site)
     except Exception:
         pass  # what follows the build (path-info parsing) is not under test
-    _assert_site_build(_build_call(calls), key)
+    call = _build_call(calls)
+    _assert_site_build(call, key)
+    assert f"path:{site}" in call["cmd"]
+    _assert_key_dir_untouched(key)
 
 
 def test_the_site_helper_writes_key_and_optional_hash(tmp_path: Path, key: Path) -> None:
@@ -97,3 +112,22 @@ def test_the_build_arguments(tmp_path: Path) -> None:
         "build", ".#bootImage", "--no-link", "--print-out-paths",
         "--override-input", "site", f"path:{tmp_path}",
     ]
+
+
+def test_every_build_boot_image_caller_passes_a_site_dir() -> None:
+    """``scripts/`` is not type-checked (task queue item 7), so a caller left
+    without the new keyword would fail only at run time.  Two did, until
+    this test (Codex on #360)."""
+
+    import ast
+
+    scripts = Path(__file__).resolve().parents[1] / "scripts"
+    missing = []
+    for path in sorted(scripts.glob("*.py")):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if not isinstance(node, ast.Call):
+                continue
+            name = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
+            if name == "build_boot_image" and "site_dir" not in {k.arg for k in node.keywords}:
+                missing.append(f"{path.name}:{node.lineno}")
+    assert missing == []

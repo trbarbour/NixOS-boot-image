@@ -226,6 +226,7 @@ _Last updated: 2026-11-12T02-36Z_
   - **Item 19:** `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` build from a site (`--override-input site path:<dir>`), like the VM fixtures, through one helper, `tests/vm/site_build.py`, which the fixture now uses too.
     - Tests first: `tests/test_scripts_use_sites.py`; both script cases failed with `--impure` in the command.
     - Whether to drop the legacy fallback is item 56.
+    - Codex on #360: the site was written next to the supplied key, which may be read-only (`--public-key` in the Nix store). `build_boot_image` now takes `site_dir` from its caller (a directory the script owns). Two further callers (`collect_sshd_dependency_audit.py`, `probe_storage_detection.py`) had been missed: `scripts/` is not type-checked (item 7). A new test checks that every caller passes `site_dir`.
   - VM `tests/vm/test_pre_nixos_vm.py` on 0.32.8 (`notes/2026-11-15T140614Z-vm-run`): **3 passed**, built through the shared site helper from the narrowed package source.
 - 2026-11-15T04-31Z - Item 8 fixed (0.32.7), merged in trbarbour/NixOS-boot-image#359 (CI green, Codex clean): `scripts/collect_pre_nixos_journal.py` captures the whole boot run.
   - It took the journal right after login, while `pre-nixos` was still running (2 lines). Now it waits for `pre-nixos.service` to finish (`BootImageVM.wait_for_unit_inactive`, `--timeout`, default 1800 s for emulated VMs).
