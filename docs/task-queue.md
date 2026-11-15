@@ -230,6 +230,7 @@ _Last updated: 2026-11-12T02-36Z_
   - It took the journal right after login, while `pre-nixos` was still running (2 lines). Now it waits for `pre-nixos.service` to finish (`BootImageVM.wait_for_unit_inactive`, `--timeout`, default 1800 s for emulated VMs).
   - A unit that failed or did not finish still gets its journal; the script then says why on stderr and exits 2.
   - Tests first: `tests/test_collect_pre_nixos_journal.py` (a fake VM records the call order); all 5 failed before the fix.
+  - Real run against the 0.32.6 ISO (prebuilt, `--iso-path`): exit 0, a 204-line journal from "Starting Pre-NixOS setup..." to "Finished Pre-NixOS setup." (was 2 lines).
 - 2026-11-15T04-25Z - Item 55 closed (user decision): the installer keeps both LAN announcements, when `lan` gets its address and at the end of the boot run. Full text in `docs/task-queue-archive.md`.
 - 2026-11-15T04-09Z - Item 21 fixed (0.32.6), merged in trbarbour/NixOS-boot-image#358: install messages reach the journal when announced.
   - Root cause, from the CM4 attempt-1 journal (`docs/test-reports/2026-10-22T025029Z-cm4-item10-pre-nixos-journal.txt`, line 307): not a duplicate. The line is there once, logged at 02:53:25 although it says 02:50:29, after "Auto-install failed".
