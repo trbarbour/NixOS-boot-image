@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Boot the pre-NixOS image and capture `journalctl -u pre-nixos.service`."""
+"""Boot the pre-NixOS image and capture `journalctl -u pre-nixos.service`.
+
+The journal is taken once the unit has finished (task queue item 8): taken
+right after login, while pre-nixos was still running, it held two lines.  A
+unit that failed or did not finish in time still gets its journal, which is
+when it is wanted most, and the script then exits with status 2.
+"""
 from __future__ import annotations
 
 import argparse
@@ -23,6 +29,13 @@ from scripts.manual_vm_debug import (  # noqa: E402
     launch_vm,
     prepare_disk_image,
 )
+
+
+UNIT = "pre-nixos.service"
+# The boot run, provisioning included, under QEMU without KVM; as the AArch64
+# VM tests allow (tests/vm/test_aarch64_boot.py PRE_NIXOS_TIMEOUT).
+DEFAULT_TIMEOUT = 1800
+EXIT_UNIT_NOT_FINISHED = 2
 
 
 def write_text(path: Path, content: str) -> None:
@@ -53,6 +66,12 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
         default=DEFAULT_DISK_SIZE_BYTES,
         help="Disk image size in bytes (default: 4 GiB)",
     )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=DEFAULT_TIMEOUT,
+        help=f"Seconds to wait for {UNIT} to finish before taking the journal anyway (default: {DEFAULT_TIMEOUT})",
+    )
     return parser.parse_args(list(argv))
 
 
@@ -80,8 +99,16 @@ def main(argv: Iterable[str]) -> int:
             serial_log=serial_log,
             metadata_path=tmp_path / "metadata.json",
         )
+        finished = True
         try:
-            journal = vm.collect_journal("pre-nixos.service")
+            try:
+                vm.wait_for_unit_inactive(UNIT, timeout=args.timeout)
+            except AssertionError as error:
+                # Failed, or still running at the timeout: the journal is
+                # still the point of this script.
+                finished = False
+                print(f"{UNIT} did not finish cleanly: {error}", file=sys.stderr)
+            journal = vm.collect_journal(UNIT)
         finally:
             try:
                 vm.shutdown()
@@ -99,7 +126,7 @@ def main(argv: Iterable[str]) -> int:
             sys.stdout.write(journal)
             if not journal.endswith("\n"):
                 sys.stdout.write("\n")
-    return 0
+    return 0 if finished else EXIT_UNIT_NOT_FINISHED
 
 
 if __name__ == "__main__":

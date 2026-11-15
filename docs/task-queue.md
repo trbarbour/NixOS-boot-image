@@ -24,10 +24,6 @@ _Last updated: 2026-11-12T02-36Z_
    - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
     - **2026-11-12, audit:** still open: `[tool.mypy] files` lists no `tests/vm/` or `scripts/` modules.
 
-8. **Let `collect_pre_nixos_journal.py` capture the whole run.**
-   - 2026-10-18T04-04-07Z - The script collects the journal right after login, while `pre-nixos` is still running, so it captured only 2 lines. This behaviour predates the 0.9.3 repair. Wait for the unit to go inactive first, as the VM tests do.
-    - **2026-11-12, audit:** still open: `scripts/collect_pre_nixos_journal.py` does not wait for the unit to finish.
-
 12. **End-to-end install VM test (E9d).** *(gap, 2026-10-19)*
     - 2026-10-22: #320 (duplicate loader attribute) reached hardware because of this gap; the flake checks added for it now cover the parse and evaluation part.
     - No VM test runs `nixos-install` and then boots the installed system, on either x86 or AArch64. Images are built without `PRE_NIXOS_AUTO_INSTALL`.
@@ -230,6 +226,10 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-15T04-31Z - Item 8 fixed (0.32.7): `scripts/collect_pre_nixos_journal.py` captures the whole boot run.
+  - It took the journal right after login, while `pre-nixos` was still running (2 lines). Now it waits for `pre-nixos.service` to finish (`BootImageVM.wait_for_unit_inactive`, `--timeout`, default 1800 s for emulated VMs).
+  - A unit that failed or did not finish still gets its journal; the script then says why on stderr and exits 2.
+  - Tests first: `tests/test_collect_pre_nixos_journal.py` (a fake VM records the call order); all 5 failed before the fix.
 - 2026-11-15T04-25Z - Item 55 closed (user decision): the installer keeps both LAN announcements, when `lan` gets its address and at the end of the boot run. Full text in `docs/task-queue-archive.md`.
 - 2026-11-15T04-09Z - Item 21 fixed (0.32.6), merged in trbarbour/NixOS-boot-image#358: install messages reach the journal when announced.
   - Root cause, from the CM4 attempt-1 journal (`docs/test-reports/2026-10-22T025029Z-cm4-item10-pre-nixos-journal.txt`, line 307): not a duplicate. The line is there once, logged at 02:53:25 although it says 02:50:29, after "Auto-install failed".
