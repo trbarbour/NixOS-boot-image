@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, List
 
 import pytest
 
@@ -11,7 +12,7 @@ from tests.vm.late_disk import LateDiskPlugger
 TRIGGER = "pre-nixos: waiting for the disks to settle"
 
 
-def _plugger(tmp_path: Path, plugged: list, **kwargs) -> LateDiskPlugger:
+def _plugger(tmp_path: Path, plugged: List[str], **kwargs: Any) -> LateDiskPlugger:
     return LateDiskPlugger(
         serial_log=tmp_path / "serial.log",
         trigger=TRIGGER,
@@ -25,7 +26,7 @@ def _plugger(tmp_path: Path, plugged: list, **kwargs) -> LateDiskPlugger:
 def test_plugs_after_the_trigger_line(tmp_path: Path) -> None:
     log = tmp_path / "serial.log"
     log.write_text("booting\n")
-    plugged: list = []
+    plugged: List[str] = []
     plugger = _plugger(tmp_path, plugged, timeout=5)
     plugger.start()
     with log.open("a") as handle:
@@ -37,7 +38,7 @@ def test_plugs_after_the_trigger_line(tmp_path: Path) -> None:
 
 def test_times_out_without_the_trigger(tmp_path: Path) -> None:
     (tmp_path / "serial.log").write_text("booting\n")
-    plugged: list = []
+    plugged: List[str] = []
     plugger = _plugger(tmp_path, plugged, timeout=0.1)
     plugger.start()
     plugger.join(5)

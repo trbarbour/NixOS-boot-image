@@ -235,6 +235,7 @@ def updated_lock(
 
     parse_lock(lock)  # validates the version and structure
     new = json.loads(json.dumps(lock))
+    assert isinstance(new, dict), "a deep copy of a mapping is a dict"
     nodes = new["nodes"]
     node_name = _require(nodes[new["root"]].get("inputs", {}), input_name, "root inputs")
     if not isinstance(node_name, str):

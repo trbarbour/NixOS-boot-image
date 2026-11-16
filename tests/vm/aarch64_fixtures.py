@@ -10,6 +10,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import TYPE_CHECKING, Callable, Iterator
 
 import pytest
@@ -112,7 +113,7 @@ def aarch64_sd_card(
 
 @pytest.fixture(scope="module")
 def aarch64_boot_image_vm(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     aarch64_boot_image_build: Aarch64Build,
     aarch64_sd_card: Path,
     vm_disk_image_factory: Callable[..., Path],

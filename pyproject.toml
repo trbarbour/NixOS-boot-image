@@ -58,6 +58,9 @@ follow_imports = "silent"
 # Check against the minimum declared Python (requires-python), not the
 # interpreter running mypy.
 python_version = "3.10"
+# `tests/vm/` and `scripts/` import each other as `tests.vm…` and `scripts…`
+# from the repository root, where `tests` has no `__init__.py`.
+explicit_package_bases = true
 files = [
   "pre_nixos/__init__.py",
   "pre_nixos/apply.py",
@@ -75,6 +78,9 @@ files = [
   "pre_nixos/partition.py",
   "pre_nixos/root_password.py",
   "pre_nixos/storage_detection.py",
+  # Whole directories, so a new harness module or script is checked at once.
+  "scripts",
+  "tests/vm",
   "write_image/__init__.py",
   "write_image/_tools.py",
   "write_image/choices.py",

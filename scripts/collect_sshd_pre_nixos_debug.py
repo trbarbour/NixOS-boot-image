@@ -7,7 +7,6 @@ import argparse
 import datetime as _dt
 import json
 import shutil
-import socket
 import subprocess
 import sys
 import tempfile
@@ -25,6 +24,7 @@ from tests.vm import site_build  # noqa: E402
 from tests.vm.controller import BootImageVM, SHELL_PROMPT  # noqa: E402
 from tests.vm.fixtures import (  # noqa: E402
     BootImageBuild,
+    allocate_ssh_forward_port,
     probe_qemu_version,
     resolve_iso_path,
 )
@@ -117,12 +117,6 @@ def allocate_disk(temp_dir: Path) -> Path:
     return disk
 
 
-def reserve_ssh_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
-
-
 def collect_outputs(vm: BootImageVM) -> Dict[str, str]:
     # Issue a no-op first to ensure any prompt reconfiguration artefacts are
     # flushed before we start capturing command output.
@@ -189,7 +183,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
         serial_log = log_dir / "serial.log"
         metadata_path = log_dir / "metadata.json"
 
-        ssh_port = reserve_ssh_port()
+        ssh_port = allocate_ssh_forward_port()
         cmd = [
             "qemu-system-x86_64",
             "-m",
@@ -219,7 +213,7 @@ def collect_debug_data(output_dir: Path, public_key: Optional[Path] = None) -> N
 
         outputs: Dict[str, str] = {}
         failure: Optional[Dict[str, str]] = None
-        child: Optional[pexpect.spawn] = None
+        child: Optional[pexpect.spawn[str]] = None
         log_handle = None
         vm: Optional[BootImageVM] = None
 

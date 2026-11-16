@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts import manual_vm_debug as manual  # type: ignore  # noqa: E402
+from scripts import manual_vm_debug as manual  # noqa: E402
 from tests.vm.controller import (  # noqa: E402
     BootImageVM as BaseBootImageVM,
     SHELL_PROMPT,
@@ -30,7 +30,7 @@ DEFAULT_SUFFIX = "sshd-dependency-audit"
 class PatchedBootImageVM(BaseBootImageVM):
     """Boot image controller with a longer prompt configuration timeout."""
 
-    def _set_shell_prompt(self) -> None:  # type: ignore[override]
+    def _set_shell_prompt(self) -> None:
         self.child.sendline(f"export PS1='{SHELL_PROMPT}'")
         self._expect_normalised([SHELL_PROMPT], timeout=240)
         self._log_step("Shell prompt configured for interaction (extended timeout)")
@@ -69,7 +69,7 @@ def launch_vm(
     harness_log: Path,
     serial_log: Path,
     metadata_path: Path,
-) -> Tuple[PatchedBootImageVM, pexpect.spawn, TextIO]:
+) -> Tuple[PatchedBootImageVM, pexpect.spawn[str], TextIO]:
     ssh = manual.require_executable("ssh")
     qemu = manual.require_executable("qemu-system-x86_64")
 
@@ -208,7 +208,7 @@ def main(argv: Iterable[str]) -> int:
     manual.write_header(note_path, artifact, ssh_port, disk_image)
 
     vm: PatchedBootImageVM | None = None
-    child: pexpect.spawn | None = None
+    child: pexpect.spawn[str] | None = None
     serial_handle = None
     try:
         vm, child, serial_handle = launch_vm(

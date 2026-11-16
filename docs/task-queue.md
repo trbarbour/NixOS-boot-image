@@ -1,20 +1,11 @@
 # Task Queue
 
-_Last updated: 2026-11-12T02-36Z_
+_Last updated: 2026-11-16T00-42Z_
 
 ## Rules
 - **CI minutes (user decision, 2026-11-11):** record-keeping commits (notes, the task queue, VM run logs) go out with the next code push. When one must come after the last code push of a PR, its commit message carries `[skip ci]`. Not before the PR is opened: CI runs only for pull requests (and pushes to `main`), so the PR's first run would land on a `[skip ci]` head and be skipped (2026-11-11, item 52). Never write the skip marker in any other commit message, not even to describe this rule: GitHub matches it anywhere in the head commit's message. Commit d5e1bb0's subject quoted it and suppressed all of PR #353's CI, even after a close and reopen (2026-11-12). Most of #352's CI runs came from record-keeping pushes, and the account's free Actions minutes ran out.
 
 ## Active Tasks
-
-7. **Make the VM harness (`tests/vm/`) type-check cleanly.**
-   - 2026-10-18T03-25-00Z - `mypy --check-untyped-defs` reports 18 errors in `tests/vm/{controller,fixtures,metadata}.py`. Reviewed: none is a known runtime bug.
-     - 4× "Missing return": the functions end in `_raise_with_transcript`, which always raises but is annotated `-> None`; annotate it `NoReturn`.
-     - 3× undefined `Dict`: annotations only, under `from __future__ import annotations`.
-     - 4× undefined `pexpect`: a `TYPE_CHECKING` import alias.
-     - The rest are generator-fixture return types and `object`-typed metadata dicts.
-   - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
-    - **2026-11-12, audit:** still open: `[tool.mypy] files` lists no `tests/vm/` or `scripts/` modules.
 
 12. **End-to-end install VM test (E9d).** *(gap, 2026-10-19)*
     - 2026-10-22: #320 (duplicate loader attribute) reached hardware because of this gap; the flake checks added for it now cover the parse and evaluation part.
@@ -207,9 +198,9 @@ _Last updated: 2026-11-12T02-36Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
     - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
-56. **Questions left by items 6 and 19.** *(for the user, 2026-11-15T14-01Z)*
-    - **The ISO name carries the git revision** (`pre-nixos-<version>-g<rev>[-dirty]-…`), so any commit, docs included, renames the image and changes its derivation, even with item 6's narrow package source. This looks deliberate (provenance). Keep it, or keep the revision only in the image's metadata (e.g. `/etc/pre-nixos-version`) so that two images built from the same code are byte-identical?
-    - **The legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` fallback** (`flake.nix`, `nix/site.nix`, under `--impure`; site-settings design D2c) has no remaining user in this repository after item 19. Keep it for people's own scripts, or drop it?
+57. **Drop the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` fallback.** *(user decision on item 56, 2026-11-16)*
+   - The site (`--override-input site path:<dir>`) is the only way in; nothing in this repository uses the environment fallback since item 19.
+   - Remove it from `flake.nix` and `nix/site.nix` (site-settings design D2c), with `--impure` from the docs; then `tests/vm/site_build.build_environment` need not clear it. Test first: a flake check that an exported `PRE_NIXOS_ROOT_KEY` no longer reaches the image.
 
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
@@ -217,7 +208,19 @@ _Last updated: 2026-11-12T02-36Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-15T14-01Z - Items 6 and 19 fixed (0.32.8).
+- 2026-11-16T00-42Z - Item 7 fixed (0.32.9): `tests/vm/` and `scripts/` pass `mypy --strict` and CI checks them. Design `plans/2026-11-16T004209Z-vm-harness-type-checking-design.md` (R-T1).
+  - Test first: listing both directories in `[tool.mypy] files` gave 120 errors in 14 files. Now: no issues in 72 files.
+  - pexpect is typed through typeshed's `types-pexpect` (pinned in `requirements-dev.txt`). Module names come from the repository root (`explicit_package_bases`).
+  - Real defects found: `_raise_with_transcript` always raises but said `-> None` (now `NoReturn`); `run` passed a possibly-`None` `child.before` on (now an assertion naming the command); four copies of the free-port helper (now one); a dead "pexpect missing" branch in the controller tests.
+  - Found on the way: `python scripts/manual_vm_debug.py` failed with `No module named 'scripts'` (no `sys.path` preamble, unlike its siblings). Test first: `tests/test_script_imports.py::test_script_runs_by_path` runs every script by path with `--help`; only that one failed. Fixed.
+  - VM `tests/vm/test_pre_nixos_vm.py` on 0.32.9 (`notes/2026-11-16T004838Z-vm-run`, 00:43–00:52Z): **3 passed**, through the retyped controller, fixtures and metadata.
+- 2026-11-16T00-42Z - Item 56 closed (user decisions): the ISO name keeps the git revision ("doc-only changes will not be so common that we need to optimise for them"); the legacy environment fallback is to be dropped (item 57). Full text in `docs/task-queue-archive.md`.
+- 2026-11-16T00-42Z - **User's hardware report, pre-nixos 0.32.3:** NixOS installed on both old PCs (legacy BIOS).
+  - The network was configured in the TUI and copied to the installer (item 41, 0.31.0).
+  - The RAID-1 was handled correctly this time (#344, item 47, 0.28.1).
+  - Root logged in on the console with the hashed password embedded in the image (item 45).
+  - Not yet reported: whether each installed system then booted from its disks on its own (item 33's U1, `pmbr_boot`).
+- 2026-11-15T14-01Z - Items 6 and 19 fixed (0.32.8), merged in trbarbour/NixOS-boot-image#360 (CI green, Codex clean).
   - **Item 6:** the `pre-nixos` package is built from `pyproject.toml` and `pre_nixos/` only (`lib.fileset.toSource`), not the whole tree. `pyproject.toml` no longer names `README.md` as the package readme (unused: the package is not published).
     - Experiment first: a docs-only edit changed the package derivation (`07fc6a24…` → `2jwjkvk0…`).
     - Afterwards, a docs edit plus a test edit left it identical (`0w9v31ni…`).
