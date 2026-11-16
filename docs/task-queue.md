@@ -208,7 +208,7 @@ _Last updated: 2026-11-16T00-42Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-16T00-42Z - Item 7 fixed (0.32.9): `tests/vm/` and `scripts/` pass `mypy --strict` and CI checks them. Design `plans/2026-11-16T004209Z-vm-harness-type-checking-design.md` (R-T1).
+- 2026-11-16T00-42Z - Item 7 fixed (0.32.9), merged in trbarbour/NixOS-boot-image#361 (CI green, Codex clean): `tests/vm/` and `scripts/` pass `mypy --strict` and CI checks them. Design `plans/2026-11-16T004209Z-vm-harness-type-checking-design.md` (R-T1).
   - Test first: listing both directories in `[tool.mypy] files` gave 120 errors in 14 files. Now: no issues in 72 files.
   - pexpect is typed through typeshed's `types-pexpect` (pinned in `requirements-dev.txt`). Module names come from the repository root (`explicit_package_bases`).
   - Real defects found: `_raise_with_transcript` always raises but said `-> None` (now `NoReturn`); `run` passed a possibly-`None` `child.before` on (now an assertion naming the command); four copies of the free-port helper (now one); a dead "pexpect missing" branch in the controller tests.
