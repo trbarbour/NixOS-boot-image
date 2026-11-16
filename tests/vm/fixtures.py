@@ -16,6 +16,7 @@ import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Sequence, Set
 
 import pytest
@@ -34,6 +35,8 @@ from tests.vm.metadata import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
+    import pexpect
+
     from tests.vm.controller import BootImageVM
     from tests.vm.late_disk import LateDiskPlugger
 
@@ -186,12 +189,13 @@ def probe_qemu_version(executable: str) -> Optional[str]:
 
 
 @pytest.fixture(scope="session")
-def _pexpect() -> "pexpect":
+def _pexpect() -> ModuleType:
     if importlib.util.find_spec("pexpect") is None:  # pragma: no cover - env specific
         pytest.skip("pexpect is required for VM integration tests")
 
-    import pexpect  # type: ignore
-    return pexpect
+    import pexpect as module
+
+    return module
 
 
 @pytest.fixture(scope="session")
@@ -251,7 +255,9 @@ def allocate_ssh_forward_port() -> int:
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
+        port = sock.getsockname()[1]
+    assert isinstance(port, int), port
+    return port
 
 
 def resolve_iso_path(store_path: Path) -> Path:
@@ -506,7 +512,7 @@ def _low_space_handler(vm: Any, child: Any, log: Callable[[str], None]) -> Calla
 
 def _launch_boot_image_vm(
     *,
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     machine: Machine,
     boot_image_build: BootImageBuild,
     vm_disk_image: Optional[Path],
@@ -597,7 +603,7 @@ def _launch_boot_image_vm(
     disk_space.require_free_space(
         watched, minimum_bytes=disk_space.min_free_bytes(), purpose="starting a VM"
     )
-    child = _pexpect.spawn(
+    child: pexpect.spawn[str] = _pexpect.spawn(
         cmd[0],
         cmd[1:],
         encoding="utf-8",
@@ -725,7 +731,7 @@ def _launch_boot_image_vm(
 
 @pytest.fixture(scope="module")
 def boot_image_vm(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     vm_disk_image_factory: Callable[..., Path],
@@ -749,7 +755,7 @@ def boot_image_vm(
 
 @pytest.fixture(scope="module")
 def boot_image_vm_for_hotplug(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     vm_disk_image_factory: Callable[..., Path],
@@ -788,7 +794,7 @@ LATE_DISK_DELAY_SECONDS = 5.0
 
 @pytest.fixture
 def boot_image_vm_with_late_disk(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     vm_disk_image_factory: Callable[..., Path],
@@ -850,7 +856,7 @@ def usb_boot_stick(
 
 @pytest.fixture(scope="module")
 def boot_image_vm_from_usb_stick(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     usb_boot_stick: UsbStick,
@@ -900,7 +906,7 @@ def raid_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[S
 
 @pytest.fixture(scope="module")
 def boot_image_vm_with_raid_disks(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     raid_scsi_disks: List[ScsiDisk],
@@ -947,7 +953,7 @@ def hba_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterator[List[Sc
 
 @pytest.fixture(scope="module")
 def boot_image_vm_with_hba_disk(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     hba_scsi_disks: List[ScsiDisk],
@@ -997,7 +1003,7 @@ def ambiguous_ssd_scsi_disks(tmp_path_factory: pytest.TempPathFactory) -> Iterat
 
 @pytest.fixture(scope="module")
 def boot_image_vm_with_ambiguous_ssd(
-    _pexpect: "pexpect",
+    _pexpect: ModuleType,
     qemu_executable: str,
     boot_image_build: BootImageBuild,
     ambiguous_ssd_scsi_disks: List[ScsiDisk],

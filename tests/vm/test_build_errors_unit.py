@@ -32,7 +32,7 @@ def _keys(tmp_path: Path) -> SSHKeyPair:
     return SSHKeyPair(keys / "id", keys / "id.pub")
 
 
-def test_failed_build_reports_the_tail_of_nix_stderr(tmp_path: Path, monkeypatch) -> None:
+def test_failed_build_reports_the_tail_of_nix_stderr(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("PRE_NIXOS_NIX_GIT_INPUTS", raising=False)
     fake = _fake_nix(
         tmp_path,

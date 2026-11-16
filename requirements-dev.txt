@@ -1,3 +1,5 @@
 -e .[test]
 # Pinned to the version the strict list in pyproject.toml was verified with.
 mypy==2.3.1
+# Stubs for pexpect (tests/vm, scripts), from typeshed.
+types-pexpect==4.9.0.20260518

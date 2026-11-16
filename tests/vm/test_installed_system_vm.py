@@ -42,6 +42,7 @@ import pytest
 
 from tests.root_password_data import TEST_ROOT_PASSWORD_HASH
 from tests.vm.controller import BootImageVM
+from tests.vm.fixtures import SSHKeyPair, allocate_ssh_forward_port
 from tests.vm.scsi_disks import ScsiDisk, scsi_disk_args
 
 pytestmark = [pytest.mark.vm, pytest.mark.slow]
@@ -67,15 +68,7 @@ exec /run/current-system/sw/bin/systemctl "$@"
 """
 
 
-def _free_port() -> int:
-    import socket
-
-    with socket.socket() as sock:
-        sock.bind(("127.0.0.1", 0))
-        return int(sock.getsockname()[1])
-
-
-def _ssh(ssh_executable: str, key: Path, port: int, command: str) -> subprocess.CompletedProcess:
+def _ssh(ssh_executable: str, key: Path, port: int, command: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [
             ssh_executable, "-i", str(key),
@@ -126,7 +119,7 @@ def test_installed_system_with_a_static_address_is_reachable(
     raid_scsi_disks: List[ScsiDisk],
     qemu_executable: str,
     ssh_executable: str,
-    boot_ssh_key_pair,
+    boot_ssh_key_pair: SSHKeyPair,
     tmp_path: Path,
 ) -> None:
     vm = boot_image_vm_with_raid_disks
@@ -166,7 +159,7 @@ def test_installed_system_with_a_static_address_is_reachable(
     vm.shutdown()
 
     # Boot the installed disks: no ISO, same disks and NIC.
-    port = _free_port()
+    port = allocate_ssh_forward_port()
     serial = tmp_path / "installed-serial.log"
     cmd = [
         qemu_executable, "-m", "2048", "-smp", "2", "-display", "none", "-no-reboot",

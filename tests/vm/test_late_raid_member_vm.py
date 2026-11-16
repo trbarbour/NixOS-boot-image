@@ -46,6 +46,7 @@ def _mirror(mdstat: str) -> str:
     """The name of the RAID-1 array in /proc/mdstat (there is exactly one)."""
 
     (name,) = re.findall(r"^(md\S+) : .*raid1", mdstat, flags=re.MULTILINE)
+    assert isinstance(name, str), name
     return name
 
 

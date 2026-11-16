@@ -203,3 +203,20 @@ Closed task-queue items, kept verbatim with their full history when they leave `
     - `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still pass the key through the legacy environment fallback.
     - Move them to `--override-input site path:<tmp dir>`, then decide whether to drop the fallback.
     - **2026-11-12, audit:** still open: `tests/vm/fixtures.py`, `scripts/manual_vm_debug.py` and `scripts/collect_sshd_pre_nixos_debug.py` still use `PRE_NIXOS_ROOT_KEY`.
+
+## Closed 2026-11-16: item 56 (user decisions)
+
+56. **Questions left by items 6 and 19.** *(for the user, 2026-11-15T14-01Z)*
+    - **The ISO name carries the git revision** (`pre-nixos-<version>-g<rev>[-dirty]-…`), so any commit, docs included, renames the image and changes its derivation, even with item 6's narrow package source. This looks deliberate (provenance). Keep it, or keep the revision only in the image's metadata (e.g. `/etc/pre-nixos-version`) so that two images built from the same code are byte-identical?
+    - **The legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` fallback** (`flake.nix`, `nix/site.nix`, under `--impure`; site-settings design D2c) has no remaining user in this repository after item 19. Keep it for people's own scripts, or drop it?
+
+## Closed 2026-11-16: item 7 (fixed in 0.32.9)
+
+7. **Make the VM harness (`tests/vm/`) type-check cleanly.**
+   - 2026-10-18T03-25-00Z - `mypy --check-untyped-defs` reports 18 errors in `tests/vm/{controller,fixtures,metadata}.py`. Reviewed: none is a known runtime bug.
+     - 4× "Missing return": the functions end in `_raise_with_transcript`, which always raises but is annotated `-> None`; annotate it `NoReturn`.
+     - 3× undefined `Dict`: annotations only, under `from __future__ import annotations`.
+     - 4× undefined `pexpect`: a `TYPE_CHECKING` import alias.
+     - The rest are generator-fixture return types and `object`-typed metadata dicts.
+   - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
+    - **2026-11-12, audit:** still open: `[tool.mypy] files` lists no `tests/vm/` or `scripts/` modules.

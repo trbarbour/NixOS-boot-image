@@ -2,21 +2,15 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import re
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, NoReturn, Optional, Pattern, Tuple, Union
 
+import pexpect
 import pytest
-
-pexpect_spec = importlib.util.find_spec("pexpect")
-if pexpect_spec is None:  # pragma: no cover - environment specific
-    pexpect = None  # type: ignore[assignment]
-else:  # pragma: no cover - exercised in integration environments
-    import pexpect  # type: ignore
 
 from tests.vm.controller import ROOT_PROMPT_PATTERNS, BootImageVM, SHELL_PROMPT
 from tests.vm.fixtures import BootImageBuild, probe_qemu_version
@@ -65,7 +59,7 @@ def test_escalation_failure_artifact_and_raise(tmp_path: Path) -> None:
             self.before = ""
 
     vm = object.__new__(BootImageVM)
-    vm.child = DummyChild()
+    vm.child = DummyChild()  # type: ignore[assignment]
     vm.log_path = serial_log
     vm.harness_log_path = harness_log
     vm.metadata_path = metadata_path
@@ -179,7 +173,7 @@ def test_raise_with_transcript_includes_qemu_version(tmp_path: Path) -> None:
             return False
 
     vm = object.__new__(BootImageVM)
-    vm.child = DummyChild()
+    vm.child = DummyChild()  # type: ignore[assignment]
     vm.log_path = serial_log
     vm.harness_log_path = harness_log
     vm.metadata_path = metadata_path
@@ -231,25 +225,6 @@ def test_run_command_eof_records_diagnostics(
 ) -> None:
     """Unexpected EOF errors should surface diagnostics via _raise_with_transcript."""
 
-    stub_pexpect = pexpect
-    if pexpect is None:
-        class DummyTimeout(Exception):
-            pass
-
-        class DummyEOF(Exception):
-            pass
-
-        class DummyException(Exception):
-            pass
-
-        class StubPexpect:
-            TIMEOUT = DummyTimeout
-            EOF = DummyEOF
-            ExceptionPexpect = DummyException
-
-        monkeypatch.setitem(globals(), "pexpect", StubPexpect)
-        stub_pexpect = StubPexpect
-
     iso_path = tmp_path / "sample.iso"
     store_path = tmp_path / "store"
     disk_image = tmp_path / "disk.img"
@@ -297,13 +272,13 @@ def test_run_command_eof_records_diagnostics(
         def expect(self, pattern: object, timeout: int) -> None:
             self.before += "\r\nunexpected termination"
             self._alive = False
-            raise stub_pexpect.EOF("command stream closed")
+            raise pexpect.EOF("command stream closed")
 
         def isalive(self) -> bool:
             return self._alive
 
     vm = object.__new__(BootImageVM)
-    vm.child = EOFChild()
+    vm.child = EOFChild()  # type: ignore[assignment]
     vm.log_path = serial_log
     vm.harness_log_path = harness_log
     vm.metadata_path = metadata_path
@@ -393,7 +368,7 @@ def test_run_ssh_failure_records_diagnostics(
             self.before = ""
 
     vm = object.__new__(BootImageVM)
-    vm.child = DummyChild()
+    vm.child = DummyChild()  # type: ignore[assignment]
     vm.log_path = serial_log
     vm.harness_log_path = harness_log
     vm.metadata_path = metadata_path
@@ -415,9 +390,9 @@ def test_run_ssh_failure_records_diagnostics(
     commands: List[str] = []
     journal_calls: List[Tuple[str, bool]] = []
 
-    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+    def fake_run(cmd: List[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         result = subprocess.CompletedProcess(
-            args=args,
+            args=cmd,
             returncode=255,
             stdout="simulated stdout\n",
             stderr="simulated stderr\n",
@@ -440,18 +415,18 @@ def test_run_ssh_failure_records_diagnostics(
     monkeypatch.setattr("tests.vm.controller.time.monotonic", fake_monotonic)
     monkeypatch.setattr("tests.vm.controller.time.sleep", lambda _: None)
 
-    def fake_vm_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+    def fake_vm_run(command: str, *, timeout: int = 180) -> str:
         commands.append(command)
         return f"output for {command}"
 
     def fake_collect_journal(
         unit: str, *, since_boot: bool = True
-    ) -> str:  # type: ignore[override]
+    ) -> str:
         journal_calls.append((unit, since_boot))
         return f"journal for {unit}"
 
-    vm.run = fake_vm_run  # type: ignore[assignment]
-    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
+    vm.run = fake_vm_run  # type: ignore[method-assign]
+    vm.collect_journal = fake_collect_journal  # type: ignore[method-assign]
 
     with pytest.raises(AssertionError) as excinfo:
         vm.run_ssh(
@@ -556,7 +531,7 @@ def test_storage_timeout_records_systemd_jobs(
             self.before = ""
 
     vm = object.__new__(BootImageVM)
-    vm.child = DummyChild()
+    vm.child = DummyChild()  # type: ignore[assignment]
     vm.log_path = serial_log
     vm.harness_log_path = harness_log
     vm.metadata_path = metadata_path
@@ -576,7 +551,7 @@ def test_storage_timeout_records_systemd_jobs(
 
     commands: List[str] = []
 
-    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+    def fake_run(command: str, *, timeout: int = 180) -> str:
         commands.append(command)
         if "systemctl status pre-nixos" in command:
             return "pre-nixos status"
@@ -592,12 +567,12 @@ def test_storage_timeout_records_systemd_jobs(
             return "STATE=pending\nDETAIL=waiting"
         return ""
 
-    def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:  # type: ignore[override]
+    def fake_collect_journal(unit: str, *, since_boot: bool = True) -> str:
         return "journal output"
 
-    vm.run = fake_run  # type: ignore[assignment]
-    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
-    vm.read_storage_status = lambda: {}
+    vm.run = fake_run  # type: ignore[method-assign]
+    vm.collect_journal = fake_collect_journal  # type: ignore[method-assign]
+    vm.read_storage_status = lambda: {}  # type: ignore[method-assign]
 
     time_values = iter([0.0, 0.0, 1000.0])
 
@@ -712,7 +687,7 @@ def test_ipv4_timeout_records_systemd_jobs(
             self.before = ""
 
     vm = object.__new__(BootImageVM)
-    vm.child = DummyChild()
+    vm.child = DummyChild()  # type: ignore[assignment]
     vm.log_path = serial_log
     vm.harness_log_path = harness_log
     vm.metadata_path = metadata_path
@@ -733,7 +708,7 @@ def test_ipv4_timeout_records_systemd_jobs(
     commands: List[str] = []
     journal_calls: List[Tuple[str, bool]] = []
 
-    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+    def fake_run(command: str, *, timeout: int = 180) -> str:
         commands.append(command)
         if command.startswith("ip -o -4 addr"):
             return ""
@@ -759,14 +734,14 @@ def test_ipv4_timeout_records_systemd_jobs(
 
     def fake_collect_journal(
         unit: str, *, since_boot: bool = True
-    ) -> str:  # type: ignore[override]
+    ) -> str:
         journal_calls.append((unit, since_boot))
         if unit == "systemd-networkd.service":
             return "networkd journal"
         return "journal output"
 
-    vm.run = fake_run  # type: ignore[assignment]
-    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
+    vm.run = fake_run  # type: ignore[method-assign]
+    vm.collect_journal = fake_collect_journal  # type: ignore[method-assign]
 
     time_values = iter([0.0, 0.0, 1000.0])
 
@@ -940,7 +915,7 @@ def _make_unit_wait_vm(tmp_path: Path) -> Tuple[BootImageVM, Path]:
             self.before = ""
 
     vm = object.__new__(BootImageVM)
-    vm.child = DummyChild()
+    vm.child = DummyChild()  # type: ignore[assignment]
     vm.log_path = serial_log
     vm.harness_log_path = harness_log
     vm.metadata_path = metadata_path
@@ -970,7 +945,7 @@ def test_unit_inactive_timeout_records_failed_units(
     commands: List[str] = []
     journal_calls: List[Tuple[str, bool]] = []
 
-    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+    def fake_run(command: str, *, timeout: int = 180) -> str:
         commands.append(command)
         if command == ":":
             return ""
@@ -988,12 +963,12 @@ def test_unit_inactive_timeout_records_failed_units(
 
     def fake_collect_journal(
         unit: str, *, since_boot: bool = True
-    ) -> str:  # type: ignore[override]
+    ) -> str:
         journal_calls.append((unit, since_boot))
         return "journal output"
 
-    vm.run = fake_run  # type: ignore[assignment]
-    vm.collect_journal = fake_collect_journal  # type: ignore[assignment]
+    vm.run = fake_run  # type: ignore[method-assign]
+    vm.collect_journal = fake_collect_journal  # type: ignore[method-assign]
 
     time_values = iter([0.0, 0.0, 1000.0])
 
@@ -1072,26 +1047,24 @@ def test_unit_inactive_timeout_records_failed_units(
 def test_read_uid_uses_markers_to_filter_noise(monkeypatch: pytest.MonkeyPatch) -> None:
     """Marker-wrapped UID output should be returned even with extra lines."""
 
-    import tests.vm.controller as controller
-
     vm = object.__new__(BootImageVM)
-    vm._log_step = lambda *args, **kwargs: None  # type: ignore[assignment]
-    vm._transcript = []  # type: ignore[assignment]
-    monkeypatch.setattr(controller.time, "time", lambda: 1.0)
+    vm._log_step = lambda *args, **kwargs: None  # type: ignore[method-assign]
+    vm._transcript = []
+    monkeypatch.setattr(time, "time", lambda: 1.0)
 
     marker = "__UID_MARK__1000__"
-    vm._configure_prompt = lambda *args, **kwargs: None  # type: ignore[assignment]
-    vm._synchronise_prompt = (  # type: ignore[assignment]
+    vm._configure_prompt = lambda *args, **kwargs: None  # type: ignore[method-assign]
+    vm._synchronise_prompt = (  # type: ignore[method-assign]
         lambda *args, **kwargs: None
     )
-    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[assignment]
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[method-assign]
         AssertionError(args[0] if args else "")
     )
 
     class StubChild:
         def __init__(self) -> None:
             self.before = ""
-            self.match = None
+            self.match: Optional[re.Match[str]] = None
             self._output = f"{marker}\n0\n{marker}\n"
 
         def sendline(self, command: str) -> None:  # pragma: no cover - simple stub
@@ -1099,7 +1072,7 @@ def test_read_uid_uses_markers_to_filter_noise(monkeypatch: pytest.MonkeyPatch) 
             active_marker = marker_match.group(0) if marker_match else marker
             self._output = f"{active_marker}\n0\n{active_marker}\n"
 
-        def expect(self, pattern, timeout: int | None = None) -> int:
+        def expect(self, pattern: Union[str, Pattern[str]], timeout: Optional[int] = None) -> int:
             if pattern == SHELL_PROMPT:
                 self.before = self._output
                 return 0
@@ -1122,25 +1095,25 @@ def test_read_uid_raises_when_marker_missing() -> None:
     vm = object.__new__(BootImageVM)
     attempts = []
 
-    def stub_log_step(self, message: str, body: str | None = None) -> None:
+    def stub_log_step(self: BootImageVM, message: str, body: str | None = None) -> None:
         attempts.append(message)
 
-    def stub_configure_prompt(self, *, context: str = "shell") -> None:
+    def stub_configure_prompt(self: BootImageVM, *, context: str = "shell") -> None:
         attempts.append(context)
 
-    def stub_raise_with_transcript(self, message: str, **_: object) -> None:
+    def stub_raise_with_transcript(self: BootImageVM, message: str, **_: object) -> NoReturn:
         raise AssertionError(message)
 
     class StubChild:
         def __init__(self) -> None:
             self.before = ""
-            self.match = None
+            self.match: Optional[re.Match[str]] = None
             self.outputs = ["noise without marker", "still missing"]
 
         def sendline(self, command: str) -> None:  # pragma: no cover - simple stub
             self._current = self.outputs.pop(0)
 
-        def expect(self, pattern, timeout: int | None = None) -> int:
+        def expect(self, pattern: Union[str, Pattern[str]], timeout: Optional[int] = None) -> int:
             if pattern == SHELL_PROMPT:
                 self.before = ""
                 return 0
@@ -1152,12 +1125,12 @@ def test_read_uid_raises_when_marker_missing() -> None:
                 raise pexpect.TIMEOUT("uid marker not found")
             raise AssertionError(f"Unexpected pattern: {pattern!r}")
 
-    vm._log_step = stub_log_step.__get__(vm, BootImageVM)
-    vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)
-    vm._synchronise_prompt = (  # type: ignore[assignment]
+    vm._log_step = stub_log_step.__get__(vm, BootImageVM)  # type: ignore[method-assign]
+    vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)  # type: ignore[method-assign]
+    vm._synchronise_prompt = (  # type: ignore[method-assign]
         lambda *args, **kwargs: None
     )
-    vm._raise_with_transcript = stub_raise_with_transcript.__get__(vm, BootImageVM)
+    vm._raise_with_transcript = stub_raise_with_transcript.__get__(vm, BootImageVM)  # type: ignore[method-assign]
     vm.child = StubChild()  # type: ignore[assignment]
 
     with pytest.raises(AssertionError):
@@ -1172,19 +1145,19 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
     vm = object.__new__(BootImageVM)
     contexts: List[str] = []
 
-    def stub_log_step(self, message: str, body: str | None = None) -> None:
+    def stub_log_step(self: BootImageVM, message: str, body: str | None = None) -> None:
         contexts.append(message)
 
-    vm._transcript = []  # type: ignore[assignment]
-    vm._log_step = stub_log_step.__get__(vm, BootImageVM)
+    vm._transcript = []
+    vm._log_step = stub_log_step.__get__(vm, BootImageVM)  # type: ignore[method-assign]
 
-    def stub_configure_prompt(self, *, context: str = "shell") -> None:
+    def stub_configure_prompt(self: BootImageVM, *, context: str = "shell") -> None:
         contexts.append(context)
 
     class StubChild:
         def __init__(self) -> None:
             self.before = ""
-            self.match = None
+            self.match: Optional[re.Match[str]] = None
             self.outputs = ["noise without marker", "marker"]
 
         def sendline(self, command: str) -> None:  # pragma: no cover - simple stub
@@ -1196,7 +1169,7 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
             else:
                 self._current = next_output
 
-        def expect(self, pattern, timeout: int | None = None) -> int:
+        def expect(self, pattern: Union[str, Pattern[str]], timeout: Optional[int] = None) -> int:
             if pattern == SHELL_PROMPT:
                 self.before = self._current
                 return 0
@@ -1208,12 +1181,12 @@ def test_read_uid_resynchronises_after_parse_failure() -> None:
                 raise pexpect.TIMEOUT("uid marker not found")
             raise AssertionError(f"Unexpected pattern: {pattern!r}")
 
-    vm._log_step = stub_log_step.__get__(vm, BootImageVM)
-    vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)
-    vm._synchronise_prompt = (  # type: ignore[assignment]
+    vm._log_step = stub_log_step.__get__(vm, BootImageVM)  # type: ignore[method-assign]
+    vm._configure_prompt = stub_configure_prompt.__get__(vm, BootImageVM)  # type: ignore[method-assign]
+    vm._synchronise_prompt = (  # type: ignore[method-assign]
         lambda *args, **kwargs: None
     )
-    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[assignment]
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[method-assign]
         AssertionError(args[0] if args else "")
     )
     vm.child = StubChild()  # type: ignore[assignment]
@@ -1228,8 +1201,12 @@ def test_run_as_root_checked_success(monkeypatch: pytest.MonkeyPatch) -> None:
     """Checked commands should return output without the exit marker."""
 
     vm = object.__new__(BootImageVM)
-    vm.run_as_root = lambda command, timeout=180: "__BEGIN__\nhello\n__EXIT__=0"
-    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(
+
+    def fake_run_as_root(command: str, *, timeout: int = 180) -> str:
+        return "__BEGIN__\nhello\n__EXIT__=0"
+
+    vm.run_as_root = fake_run_as_root  # type: ignore[method-assign]
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[method-assign]
         AssertionError("unexpected raise")
     )
 
@@ -1257,11 +1234,15 @@ def test_run_as_root_checked_drops_the_echoed_command() -> None:
     """Regression: the echo of a multi-line wrapper leaked into stdout (#309)."""
 
     vm = object.__new__(BootImageVM)
-    vm.run_as_root = lambda command, timeout=180: _fake_shell(command)
-    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(
+
+    def fake_run_as_root(command: str, *, timeout: int = 180) -> str:
+        return _fake_shell(command)
+
+    vm.run_as_root = fake_run_as_root  # type: ignore[method-assign]
+    vm._raise_with_transcript = lambda *args, **kwargs: (_ for _ in ()).throw(  # type: ignore[method-assign]
         AssertionError("unexpected raise")
     )
-    vm._log_step = lambda *args, **kwargs: None
+    vm._log_step = lambda *args, **kwargs: None  # type: ignore[method-assign]
 
     assert vm.run_as_root_checked("lsblk -dnro NAME,TRAN,RM /dev/sda") == "sda usb 0"
 
@@ -1270,16 +1251,25 @@ def test_run_as_root_checked_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     """Non-zero exits should surface via transcript exceptions."""
 
     vm = object.__new__(BootImageVM)
-    vm.run_as_root = lambda command, timeout=180: "__BEGIN__\nboom\n__EXIT__=2"
 
-    captured: dict = {}
+    def fake_run_as_root(command: str, *, timeout: int = 180) -> str:
+        return "__BEGIN__\nboom\n__EXIT__=2"
 
-    def fake_raise(message: str, body: str | None = None, diagnostics=None) -> None:
+    vm.run_as_root = fake_run_as_root  # type: ignore[method-assign]
+
+    captured: Dict[str, Optional[str]] = {}
+
+    def fake_raise(
+        message: str,
+        *,
+        diagnostics: Optional[List[Tuple[str, Path]]] = None,
+        body: Optional[str] = None,
+    ) -> NoReturn:
         captured["message"] = message
         captured["body"] = body
         raise RuntimeError("expected failure")
 
-    vm._raise_with_transcript = fake_raise
+    vm._raise_with_transcript = fake_raise  # type: ignore[method-assign]
 
     with pytest.raises(RuntimeError):
         vm.run_as_root_checked("false")
@@ -1306,8 +1296,8 @@ def test_configure_prompt_disables_pagers() -> None:
 
     vm = object.__new__(BootImageVM)
     vm.child = RecordingChild()  # type: ignore[assignment]
-    vm._expect_normalised = lambda patterns, *, timeout: 0  # type: ignore[assignment]
-    vm._log_step = lambda *args, **kwargs: None  # type: ignore[assignment]
+    vm._expect_normalised = lambda patterns, *, timeout: 0  # type: ignore[method-assign]
+    vm._log_step = lambda *args, **kwargs: None  # type: ignore[method-assign]
 
     vm._configure_prompt(context="unit test")
 
@@ -1358,7 +1348,7 @@ def test_unit_wait_stops_at_once_when_the_unit_fails(
     vm, metadata_path = _make_unit_wait_vm(tmp_path)
     polls: List[str] = []
 
-    def fake_run(command: str, *, timeout: int = 180) -> str:  # type: ignore[override]
+    def fake_run(command: str, *, timeout: int = 180) -> str:
         if command.startswith("systemctl is-active"):
             polls.append(command)
             return "failed\n"
@@ -1366,8 +1356,8 @@ def test_unit_wait_stops_at_once_when_the_unit_fails(
             return '{"event": "pre_nixos.cleanup.verification_failed"}'
         return ""
 
-    vm.run = fake_run  # type: ignore[assignment]
-    vm.collect_journal = lambda unit, *, since_boot=True: "journal output"  # type: ignore[assignment]
+    vm.run = fake_run  # type: ignore[method-assign]
+    vm.collect_journal = lambda unit, *, since_boot=True: "journal output"  # type: ignore[method-assign]
     clock = iter(range(0, 10_000, 5))  # each call advances 5 s
     monkeypatch.setattr("tests.vm.controller.time.time", lambda: float(next(clock)))
     monkeypatch.setattr("tests.vm.controller.time.sleep", lambda _: None)

@@ -9,7 +9,7 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, NoReturn, Optional, Tuple
 
 import pexpect
 
@@ -84,7 +84,7 @@ def with_abort_reason(message: str, reason: Optional[str]) -> str:
 class BootImageVM:
     """Minimal controller for interacting with the boot image via serial and SSH."""
 
-    child: "pexpect.spawn"
+    child: "pexpect.spawn[str]"
     log_path: Path
     harness_log_path: Path
     metadata_path: Path
@@ -428,7 +428,7 @@ class BootImageVM:
         *,
         diagnostics: Optional[List[Tuple[str, Path]]] = None,
         body: Optional[str] = None,
-    ) -> None:
+    ) -> NoReturn:
         self._record_child_output()
         serial_tail = self._read_serial_tail()
         transcript = "\n".join(self._transcript)
@@ -871,7 +871,9 @@ class BootImageVM:
             self._raise_with_transcript(
                 f"pexpect error while running command '{command}': {exc}"
             )
-        return clean_command_output(self.child.before, command)
+        before = self.child.before
+        assert isinstance(before, str), f"no output captured for {command!r}: {before!r}"
+        return clean_command_output(before, command)
 
     def _ensure_root_privileges(self) -> None:
         """Re-establish a root shell when privileged operations are required."""

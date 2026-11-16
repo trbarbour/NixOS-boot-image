@@ -7,7 +7,6 @@ import argparse
 import datetime
 import json
 import shutil
-import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -15,14 +14,22 @@ from typing import Iterable, Optional, TextIO, Tuple
 
 import pexpect
 
-from scripts.nix_git_inputs import nix_command
-from tests.vm import site_build
-from tests.vm.controller import BootImageVM
-from tests.vm.fixtures import BootImageBuild, probe_qemu_version, resolve_iso_path
-from tests.vm.metadata import write_boot_image_metadata
-
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.nix_git_inputs import nix_command  # noqa: E402
+from tests.vm import site_build  # noqa: E402
+from tests.vm.controller import BootImageVM  # noqa: E402
+from tests.vm.fixtures import (  # noqa: E402
+    BootImageBuild,
+    allocate_ssh_forward_port,
+    probe_qemu_version,
+    resolve_iso_path,
+)
+from tests.vm.metadata import write_boot_image_metadata  # noqa: E402
+
+
 DEFAULT_OUTPUT = REPO_ROOT / "docs" / "work-notes" / "manual-debug"
 
 
@@ -141,9 +148,9 @@ def generate_ssh_keypair(output_dir: Path) -> Tuple[Path, Path]:
 
 
 def allocate_ssh_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
+    """A free local port for SSH forwarding (the VM fixtures' helper)."""
+
+    return allocate_ssh_forward_port()
 
 
 def ensure_output_dir(path: Path) -> Path:
@@ -167,7 +174,7 @@ def launch_vm(
     harness_log: Path,
     serial_log: Path,
     metadata_path: Path,
-) -> Tuple[BootImageVM, "pexpect.spawn", TextIO]:
+) -> Tuple[BootImageVM, "pexpect.spawn[str]", TextIO]:
     ssh = require_executable("ssh")
     qemu = require_executable("qemu-system-x86_64")
 
@@ -200,7 +207,7 @@ def launch_vm(
 
     harness_log.write_text("", encoding="utf-8")
     serial_handle = serial_log.open("w", encoding="utf-8")
-    child: Optional["pexpect.spawn"] = None
+    child: Optional["pexpect.spawn[str]"] = None
     # Until the caller holds the returned handles, cleaning up is our job:
     # BootImageVM logs in from its constructor, which is exactly the step
     # these debugging scripts are used to investigate when it fails.

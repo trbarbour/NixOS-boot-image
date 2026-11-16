@@ -39,6 +39,14 @@ def write_boot_image_metadata(
     log_dir = metadata_path.parent
     diagnostics_dir = log_dir / "diagnostics"
     diagnostics_dir.mkdir(parents=True, exist_ok=True)
+    qemu: Dict[str, object] = {
+        "command": qemu_command,
+        "disk_image": None if disk_image is None else str(disk_image),
+    }
+    if extra_disks:
+        qemu["extra_disks"] = [str(path) for path in extra_disks]
+    if qemu_version:
+        qemu["version"] = qemu_version
     metadata: Dict[str, object] = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "artifact": {
@@ -52,10 +60,7 @@ def write_boot_image_metadata(
             "harness": str(harness_log),
             "serial": str(serial_log),
         },
-        "qemu": {
-            "command": qemu_command,
-            "disk_image": None if disk_image is None else str(disk_image),
-        },
+        "qemu": qemu,
         "ssh": {
             "host": ssh_host,
             "port": ssh_port,
@@ -66,10 +71,6 @@ def write_boot_image_metadata(
             "artifacts": [],
         },
     }
-    if extra_disks:
-        metadata["qemu"]["extra_disks"] = [str(path) for path in extra_disks]
-    if qemu_version:
-        metadata["qemu"]["version"] = qemu_version
     if started_at:
         metadata["timings"] = {
             "start": started_at.isoformat(),

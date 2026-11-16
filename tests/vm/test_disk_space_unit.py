@@ -23,7 +23,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import List
+from typing import FrozenSet, Iterable, List
 
 import pytest
 
@@ -112,7 +112,7 @@ def test_guard_stays_quiet_above_the_floor() -> None:
     assert not guard.tripped
 
 
-def test_thresholds_from_the_environment(monkeypatch) -> None:
+def test_thresholds_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("PRE_NIXOS_VM_MIN_FREE_GIB", raising=False)
     assert disk_space.min_free_bytes() == int(disk_space.DEFAULT_MIN_FREE_GIB * GIB)
     monkeypatch.setenv("PRE_NIXOS_VM_MIN_FREE_GIB", "2.5")
@@ -153,15 +153,20 @@ def test_every_image_held_by_the_session_is_kept() -> None:
     assert calls == [["nix-store", "--delete", str(STORE / OLD_ISO)]]
 
 
-def test_fixture_registers_each_build_before_cleaning(monkeypatch, tmp_path: Path) -> None:
+def test_fixture_registers_each_build_before_cleaning(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     from tests.vm import fixtures
 
-    kept: List[frozenset] = []
+    kept: List[FrozenSet[Path]] = []
+
+    def record(nix_store: str, *, keep: Iterable[Path], **kw: object) -> List[Path]:
+        kept.append(frozenset(keep))
+        return []
+
     monkeypatch.delenv(disk_space.KEEP_IMAGES_ENV, raising=False)
     monkeypatch.setattr(fixtures, "_SESSION_IMAGES", set())
-    monkeypatch.setattr(
-        disk_space, "delete_stale_images", lambda nix_store, *, keep, **kw: kept.append(frozenset(keep)) or []
-    )
+    monkeypatch.setattr(disk_space, "delete_stale_images", record)
     fixtures._delete_stale_images("nix", keep=STORE / ISO)
     fixtures._delete_stale_images("nix", keep=STORE / SD)
     assert kept == [frozenset({STORE / ISO}), frozenset({STORE / ISO, STORE / SD})]
