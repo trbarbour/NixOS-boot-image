@@ -213,6 +213,7 @@ _Last updated: 2026-11-16T00-42Z_
   - pexpect is typed through typeshed's `types-pexpect` (pinned in `requirements-dev.txt`). Module names come from the repository root (`explicit_package_bases`).
   - Real defects found: `_raise_with_transcript` always raises but said `-> None` (now `NoReturn`); `run` passed a possibly-`None` `child.before` on (now an assertion naming the command); four copies of the free-port helper (now one); a dead "pexpect missing" branch in the controller tests.
   - Found on the way: `python scripts/manual_vm_debug.py` failed with `No module named 'scripts'` (no `sys.path` preamble, unlike its siblings). Test first: `tests/test_script_imports.py::test_script_runs_by_path` runs every script by path with `--help`; only that one failed. Fixed.
+  - VM `tests/vm/test_pre_nixos_vm.py` on 0.32.9 (`notes/2026-11-16T004838Z-vm-run`, 00:43–00:52Z): **3 passed**, through the retyped controller, fixtures and metadata.
 - 2026-11-16T00-42Z - Item 56 closed (user decisions): the ISO name keeps the git revision ("doc-only changes will not be so common that we need to optimise for them"); the legacy environment fallback is to be dropped (item 57). Full text in `docs/task-queue-archive.md`.
 - 2026-11-16T00-42Z - **User's hardware report, pre-nixos 0.32.3:** NixOS installed on both old PCs (legacy BIOS).
   - The network was configured in the TUI and copied to the installer (item 41, 0.31.0).
