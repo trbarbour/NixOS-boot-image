@@ -217,6 +217,7 @@ _Last updated: 2026-11-23T02-01Z_
     - `test_no_harness_or_script_evaluates_impurely`: failed on a leftover `--impure` in `tests/vm/test_disko_offline_closure.py`, now fixed.
   - `tests/vm/site_build.build_environment` is gone: a pure build cannot read the environment.
   - Also corrected: item 7's requirement ID R-T1 collided with the reqs' R-T1 (build hosts); it is now R-Q1.
+  - VM `tests/vm/test_pre_nixos_vm.py` on 0.33.0 (`notes/2026-11-23T020707Z-vm-run`, 02:02–02:10Z): **3 passed**, the image built from a test site with no environment clearing.
 - 2026-11-16T00-42Z - Item 7 fixed (0.32.9), merged in trbarbour/NixOS-boot-image#361 (CI green, Codex clean): `tests/vm/` and `scripts/` pass `mypy --strict` and CI checks them. Design `plans/2026-11-16T004209Z-vm-harness-type-checking-design.md` (R-Q1; first written R-T1, which collided with the reqs' R-T1, corrected 2026-11-23).
   - Test first: listing both directories in `[tool.mypy] files` gave 120 errors in 14 files. Now: no issues in 72 files.
   - pexpect is typed through typeshed's `types-pexpect` (pinned in `requirements-dev.txt`). Module names come from the repository root (`explicit_package_bases`).
