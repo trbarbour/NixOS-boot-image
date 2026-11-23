@@ -220,3 +220,9 @@ Closed task-queue items, kept verbatim with their full history when they leave `
      - The rest are generator-fixture return types and `object`-typed metadata dicts.
    - Then add a mypy check over `scripts/` and `tests/vm/` to the suite, so drift between script and harness APIs is caught at check time rather than at run time.
     - **2026-11-12, audit:** still open: `[tool.mypy] files` lists no `tests/vm/` or `scripts/` modules.
+
+## Closed 2026-11-23: item 57 (fixed in 0.33.0)
+
+57. **Drop the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` fallback.** *(user decision on item 56, 2026-11-16)*
+   - The site (`--override-input site path:<dir>`) is the only way in; nothing in this repository uses the environment fallback since item 19.
+   - Remove it from `flake.nix` and `nix/site.nix` (site-settings design D2c), with `--impure` from the docs; then `tests/vm/site_build.build_environment` need not clear it. Test first: a flake check that an exported `PRE_NIXOS_ROOT_KEY` no longer reaches the image.

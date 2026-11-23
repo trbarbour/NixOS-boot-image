@@ -35,6 +35,7 @@ Requirements traced:
 - **(c) Environment variables with `--impure`** (today): the result depends on unrecorded state.
 - **Choice: (a) and (b), both built on one function.**
   - `packages.<system>.bootImage*` are `mkBootImage` applied to the `site` input, so (b) is (a) with the repo's own input.
+  - **2026-11-23: superseded by task queue item 57 (user decision, 2026-11-16): (c) is removed; its variables, if set under `--impure`, are an evaluation error.** The original choice follows.
   - **(c) stays as a fallback, used only when the site sets nothing.** The VM-test fixtures, `manual_vm_debug.py` and the user's habit all rely on it. If both are set and they conflict, that is an **evaluation error** rather than a silent precedence.
   - Moving the fixtures off (c) is queued, not done here, to keep the change bounded.
 

@@ -34,14 +34,6 @@ let
       content = "${base64}${sep}${base64}(${sep}${base64})?";
     in
     "${sep}${scheme}${sep}${content}";
-
-  # PRE_NIXOS_AUTO_INSTALL as pre_nixos.py reads it; anything else is an error
-  # rather than a silent "off".
-  parseEnvBool = name: value:
-    let v = lib.toLower value; in
-    if lib.elem v [ "1" "true" "yes" "on" ] then true
-    else if lib.elem v [ "" "0" "false" "no" "off" ] then false
-    else throw "pre-nixos: ${name}=${builtins.toJSON value} is not a boolean (use 1/0, true/false, yes/no, on/off).";
 in
 rec {
   siteFileName = "pre-nixos-site.nix";
@@ -88,33 +80,29 @@ rec {
     if builtins.pathExists file then validateSite (toString file) (import file)
     else throw "pre-nixos site ${toString dir}: no ${siteFileName} (a site directory must contain it; see README \"Site settings\")";
 
-  # Combine a site with the legacy environment variables (design D2c): the
-  # environment only fills settings the site leaves unset, and a disagreement
-  # is an error.  `env` is { rootKey = string; autoInstall = string; }, the raw
-  # PRE_NIXOS_ROOT_KEY / PRE_NIXOS_AUTO_INSTALL values ("" when unset or when
-  # evaluating purely).  Result: { rootKey = path | null; autoInstall = bool;
-  # primaryConsole = "serial" | "display" | null; rootHashedPassword = string
-  # | null }, a null console meaning the format's default (design
-  # plans/2026-10-23T022949Z-primary-console-design.md).  The hashed password
-  # has no environment variable: it is new, and the variables are legacy.
-  resolveSettings = { site, env }:
+  # The settings an image is built with, from a site alone (task queue item
+  # 57: the legacy environment fallback, design D2c, is gone).  Result:
+  # { rootKey = path | null; autoInstall = bool; primaryConsole = "serial" |
+  # "display" | null; rootHashedPassword = string | null }, a null console
+  # meaning the format's default (design
+  # plans/2026-10-23T022949Z-primary-console-design.md).
+  resolveSettings = site:
+    { inherit (site) rootKey primaryConsole rootHashedPassword; autoInstall = site.autoInstall == true; };
+
+  # The removed fallback's variables, if set, are an error rather than
+  # silently ignored: an old `export PRE_NIXOS_ROOT_KEY=… ; nix build
+  # --impure` would otherwise build an image without the key it meant to
+  # embed.  `env` is { rootKey = string; autoInstall = string; }, the raw
+  # values ("" when unset, and always "" in a pure evaluation).
+  refuseLegacyEnv = env:
     let
-      envKey =
-        if env.rootKey == "" then null
-        else if builtins.pathExists env.rootKey then
-          builtins.path { path = env.rootKey; name = "pre-nixos-root-key.pub"; }
-        else throw "pre-nixos: PRE_NIXOS_ROOT_KEY=${env.rootKey} does not exist";
-      envAuto = if env.autoInstall == "" then null else parseEnvBool "PRE_NIXOS_AUTO_INSTALL" env.autoInstall;
-      rootKey =
-        if site.rootKey == null then envKey
-        else if envKey != null && builtins.readFile envKey != builtins.readFile site.rootKey then
-          throw "pre-nixos: the site's rootKey and PRE_NIXOS_ROOT_KEY differ; set only one"
-        else site.rootKey;
-      autoInstall =
-        if site.autoInstall == null then envAuto == true
-        else if envAuto != null && envAuto != site.autoInstall then
-          throw "pre-nixos: the site's autoInstall and PRE_NIXOS_AUTO_INSTALL differ; set only one"
-        else site.autoInstall;
+      set = lib.filter (name: env.${name} != "") [ "rootKey" "autoInstall" ];
+      variable = name: if name == "rootKey" then "PRE_NIXOS_ROOT_KEY" else "PRE_NIXOS_AUTO_INSTALL";
+      setting = name: if name == "rootKey" then "rootKey = ./root_key.pub;" else "autoInstall = true; or false;";
+      one = lib.length set == 1;
     in
-    { inherit rootKey autoInstall; inherit (site) primaryConsole rootHashedPassword; };
+    if set == [ ] then true
+    else throw ("pre-nixos: ${lib.concatMapStringsSep " and " variable set} no longer ${if one then "configures" else "configure"} the image (task queue item 57). "
+      + "Unset ${if one then "it" else "them"} and put the ${if one then "setting" else "settings"} in a site's ${siteFileName} instead "
+      + "(${lib.concatMapStringsSep " " setting set}), built with --override-input site path:<dir>; see README \"Site settings\".");
 }

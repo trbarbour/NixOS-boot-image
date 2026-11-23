@@ -1,6 +1,6 @@
 # Automated Pre-NixOS Setup — Design (per Design-Debate Template)
 
-**Doc status:** Draft v0.42
+**Doc status:** Draft v0.43
 **Date:** 2026-10-30 (UTC)
 **Author:** ChatGPT  
 **Based on:** `generic-debate-design-prompt-template.md` → applied to `automated-pre-nixos-setup.md` requirements
@@ -225,7 +225,7 @@ Provision bare-metal servers to a **known, repeatable disk + network baseline** 
 - It reaches a **pure** build as the flake input `site` (`--override-input site path:<dir>`), or as `lib.mkBootImage { format = "iso" | "sd"; site = <dir>; }` from a flake of the user's own. The same applies to every image.
 - Settings are typed: an unknown name or a wrong type is an evaluation error.
 - One resolved value builds the package (the embedded key) and sets the module options, so the two cannot disagree.
-- The legacy `PRE_NIXOS_ROOT_KEY` / `PRE_NIXOS_AUTO_INSTALL` (with `--impure`) only fill unset settings. A conflict is an error.
+- The site is the only source [R-A3]. The legacy `PRE_NIXOS_ROOT_KEY` / `PRE_NIXOS_AUTO_INSTALL` build variables were removed (task queue item 57, user decision 2026-11-16); set during an `--impure` evaluation, they are an evaluation error naming the site setting that replaces them.
 - Design: `plans/2026-10-21T135252Z-site-settings-pure-images-design.md`.
 - `rootHashedPassword` (R-A1, R-A2): a crypt hash, validated against NixOS's Modular Crypt Format pattern at evaluation, and by libxcrypt itself when the package is built (parameters and digest length). It is embedded in the package and written as `users.users.root.hashedPassword`. Before `nixos-install`, root's field in an existing `/mnt/etc/shadow` is set to it too: with mutable users NixOS applies the hash only to a new entry, so a reinstall would keep root locked. The installer keeps its empty console password. Design: `plans/2026-11-10T140423Z-root-password-design.md`.
 

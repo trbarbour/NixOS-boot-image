@@ -1,21 +1,17 @@
 """Build a boot image from a test site (README "Site settings"; task queue
 item 19).
 
-The site reaches the build purely, as ``--override-input site path:<dir>``.
-The legacy environment fallback (``PRE_NIXOS_ROOT_KEY`` /
-``PRE_NIXOS_AUTO_INSTALL`` under ``--impure``, site-settings design D2c) is
-cleared, so it cannot disagree with the site.  Shared by the VM fixtures and
-the VM debug scripts.
+The site reaches the build purely, as ``--override-input site path:<dir>``:
+a pure evaluation cannot read the environment at all, and the legacy
+``PRE_NIXOS_ROOT_KEY`` / ``PRE_NIXOS_AUTO_INSTALL`` fallback is gone (task
+queue item 57).  Shared by the VM fixtures and the VM debug scripts.
 """
 
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional
-
-LEGACY_ENVIRONMENT = ("PRE_NIXOS_ROOT_KEY", "PRE_NIXOS_AUTO_INSTALL")
+from typing import List, Optional
 
 
 def write_test_site(
@@ -32,15 +28,6 @@ def write_test_site(
     lines.append("}")
     (site_dir / "pre-nixos-site.nix").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return site_dir
-
-
-def build_environment() -> Dict[str, str]:
-    """This process's environment without the legacy fallback."""
-
-    env = os.environ.copy()
-    for name in LEGACY_ENVIRONMENT:
-        env.pop(name, None)
-    return env
 
 
 def build_args(attribute: str, site_dir: Path) -> List[str]:

@@ -5,7 +5,7 @@ _2026-11-16T00:42:09Z. Task queue item 7._
 **Problem.** `tests/vm/` (the VM harness and its tests) and `scripts/` (the VM debug tools) were outside the strict mypy list in `pyproject.toml`. An API change in the harness could leave a script or a test calling the old API, and only a run would show it. Item 19 had just shown this: two callers of `build_boot_image` were missed and only an ad-hoc AST test caught them (Codex on #360).
 
 ## 1. Requirement
-- **R-T1:** every Python module under `tests/vm/` and `scripts/` passes `mypy --strict` in CI, as `pre_nixos/` and `write_image/` modules do. A new module there is checked from its first commit.
+- **R-Q1** (named R-T1 until 2026-11-23, which collided with the reqs' R-T1, build hosts): every Python module under `tests/vm/` and `scripts/` passes `mypy --strict` in CI, as `pre_nixos/` and `write_image/` modules do. A new module there is checked from its first commit.
 - Traces to the user's preferences (bugs at compile time; strong static typing) and to item 7's own aim, "drift between script and harness APIs is caught at check time rather than at run time".
 
 ## 2. Design debate

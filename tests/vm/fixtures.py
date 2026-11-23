@@ -327,8 +327,7 @@ def build_boot_artifact(
 
     The site (README "Site settings") holds the test root key and the test
     hashed root password (reqs R-A1), and reaches the build purely, as
-    ``--override-input site path:<dir>``.  The legacy PRE_NIXOS_ROOT_KEY is
-    cleared so it cannot disagree with the site.
+    ``--override-input site path:<dir>``.
     """
 
     site_dir = site_build.write_test_site(
@@ -343,7 +342,6 @@ def build_boot_artifact(
         check=False,
         capture_output=True,
         text=True,
-        env=site_build.build_environment(),
     )
     if result.returncode != 0:
         # Item 37: Nix's own error is the useful part, not the command.

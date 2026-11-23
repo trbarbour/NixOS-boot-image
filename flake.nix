@@ -41,13 +41,15 @@
       # variants can be told apart (user request, 2026-10-31).
       imageBaseName = { label, system, consoleTag }:
         "pre-nixos-${preNixosVersion}-${sourceRev}${lib.optionalString (consoleTag != null) "-${consoleTag}"}-${label}-${system}";
-      # Legacy, impure fallback (design D2c): only read under --impure, and only
-      # fills settings the site leaves unset.
-      envSettings = {
+      # The removed legacy fallback (design D2c, task queue item 57): its
+      # variables are visible only under --impure, and are refused if set.
+      legacyEnv = {
         rootKey = builtins.getEnv "PRE_NIXOS_ROOT_KEY";
         autoInstall = builtins.getEnv "PRE_NIXOS_AUTO_INSTALL";
       };
-      settingsFor = siteDir: siteLib.resolveSettings { site = siteLib.readSite siteDir; env = envSettings; };
+      settingsFor = siteDir:
+        assert siteLib.refuseLegacyEnv legacyEnv;
+        siteLib.resolveSettings (siteLib.readSite siteDir);
       flakeSettings = settingsFor site.outPath;
 
       # RAID arrays get no write-intent bitmap (reqs §2.2).  disko has no option
@@ -257,7 +259,7 @@
         site-settings =
           let
             want = builtins.readFile (fixtureSite + "/root_key.pub");
-            settings = siteLib.resolveSettings { site = siteLib.readSite fixtureSite; env = noEnv; };
+            settings = siteLib.resolveSettings (siteLib.readSite fixtureSite);
             ok = format:
               let c = mkBootConfigurationWith { inherit format settings; }; in
               c.pkgs.pre-nixos.rootHashedPassword == (import (fixtureSite + "/pre-nixos-site.nix")).rootHashedPassword
@@ -271,7 +273,7 @@
         # The repo's own default site embeds nothing and does not auto-install.
         site-default =
           let
-            settings = siteLib.resolveSettings { site = siteLib.readSite ./nix/site-default; env = noEnv; };
+            settings = siteLib.resolveSettings (siteLib.readSite ./nix/site-default);
             c = mkBootConfigurationWith { format = "iso"; inherit settings; };
           in
           assert lib.assertMsg
@@ -300,7 +302,6 @@
               && !(fails (siteLib.validateSite "t" { rootHashedPassword = "$6$rounds=5000$saltsalt$hash/hash.hash"; }))
               && fails (formatOf "dvd")
               && fails (siteLib.readSite ./tests/fixtures)
-              && fails (siteLib.resolveSettings { site = siteLib.validateSite "t" { }; env = noEnv // { autoInstall = "maybe"; }; })
               && !(fails (siteLib.validateSite "t" { })))
             "site validation accepted an invalid setting or rejected an empty site";
           true;
@@ -360,21 +361,24 @@
             (lib.all (system: enabled system == siteLib.cryptSchemeIds) [ "x86_64-linux" aarch64System ])
             "nix/site.nix cryptSchemeIds ${builtins.toJSON siteLib.cryptSchemeIds} differ from libxcrypt's ${builtins.toJSON (enabled "x86_64-linux")}";
           true;
-        # The legacy environment only fills unset settings; disagreement is an error.
-        site-env-conflict =
+        # Item 57 (user decision, 2026-11-16): the site is the only source of
+        # settings.  The legacy PRE_NIXOS_ROOT_KEY / PRE_NIXOS_AUTO_INSTALL,
+        # visible only under --impure, are refused rather than ignored, so an
+        # old habit cannot build an image without the key it meant to embed.
+        site-legacy-env-refused =
           let
-            fixture = siteLib.readSite fixtureSite;
-            empty = siteLib.validateSite "t" { };
-            fixtureKey = toString (fixtureSite + "/root_key.pub");
-            filled = siteLib.resolveSettings { site = empty; env = { rootKey = toString otherKey; autoInstall = "1"; }; };
+            empty = siteLib.resolveSettings (siteLib.validateSite "t" { });
+            fixture = siteLib.resolveSettings (siteLib.readSite fixtureSite);
           in
           assert lib.assertMsg
-            (fails (siteLib.resolveSettings { site = fixture; env = noEnv // { rootKey = toString otherKey; }; })
-              && fails (siteLib.resolveSettings { site = fixture; env = noEnv // { autoInstall = "0"; }; })
-              && !(fails (siteLib.resolveSettings { site = fixture; env = { rootKey = fixtureKey; autoInstall = "1"; }; }))
-              && builtins.readFile filled.rootKey == builtins.readFile otherKey
-              && filled.autoInstall)
-            "the site/environment precedence or conflict detection is wrong";
+            (fails (siteLib.refuseLegacyEnv (noEnv // { rootKey = toString otherKey; }))
+              && fails (siteLib.refuseLegacyEnv (noEnv // { autoInstall = "1"; }))
+              && fails (siteLib.refuseLegacyEnv (noEnv // { autoInstall = "0"; }))
+              && siteLib.refuseLegacyEnv noEnv
+              && empty == noSettings
+              && fixture.autoInstall
+              && builtins.readFile fixture.rootKey == builtins.readFile (fixtureSite + "/root_key.pub"))
+            "the legacy environment must be refused, and settings come from the site alone";
           true;
       };
 
