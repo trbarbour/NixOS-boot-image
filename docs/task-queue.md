@@ -209,7 +209,7 @@ _Last updated: 2026-11-23T02-01Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-23T02-01Z - Item 57 fixed (0.33.0): the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` build-time fallback is gone (user decision on item 56). Design `plans/2026-11-23T020104Z-drop-legacy-env-fallback-design.md`; new requirement R-A3 (reqs §2.7); design v0.43.
+- 2026-11-23T02-01Z - Item 57 fixed (0.33.0), merged in trbarbour/NixOS-boot-image#362 (CI green, Codex clean): the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` build-time fallback is gone (user decision on item 56). Design `plans/2026-11-23T020104Z-drop-legacy-env-fallback-design.md`; new requirement R-A3 (reqs §2.7); design v0.43.
   - Experiment first: a pure flake evaluation reads `builtins.getEnv` as `""`; only `--impure` sees the variables.
   - If set under `--impure`, they are now an evaluation error naming the site setting to use, so an old habit cannot build an image without its key. The run-time `PRE_NIXOS_AUTO_INSTALL` of the boot service is unchanged.
   - Tests first:
