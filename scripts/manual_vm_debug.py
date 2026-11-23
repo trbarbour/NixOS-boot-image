@@ -51,8 +51,7 @@ def build_boot_image(public_key: Path, *, site_dir: Path) -> BootImageBuild:
     """
 
     nix = require_executable("nix")
-    # Item 19: from a site, as the VM fixtures build, not the legacy
-    # PRE_NIXOS_ROOT_KEY/--impure fallback.
+    # Item 19: from a site, as the VM fixtures build.
     site_build.write_test_site(site_dir, public_key)
     build = subprocess.run(
         nix_command(nix, site_build.build_args(".#bootImage", site_dir)),
@@ -60,7 +59,6 @@ def build_boot_image(public_key: Path, *, site_dir: Path) -> BootImageBuild:
         check=True,
         capture_output=True,
         text=True,
-        env=site_build.build_environment(),
     )
     paths = [line.strip() for line in build.stdout.splitlines() if line.strip()]
     if not paths:

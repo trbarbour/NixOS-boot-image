@@ -36,7 +36,7 @@ def _nix(nix: str, args: list[str]) -> str:
 
 
 def _build(nix: str, attr: str) -> Path:
-    return Path(_nix(nix, ["build", "--impure", "--no-link", "--print-out-paths", attr]).split()[-1])
+    return Path(_nix(nix, ["build", "--no-link", "--print-out-paths", attr]).split()[-1])
 
 
 GIB = 1024**3

@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-11-16T00-42Z_
+_Last updated: 2026-11-23T02-01Z_
 
 ## Rules
 - **CI minutes (user decision, 2026-11-11):** record-keeping commits (notes, the task queue, VM run logs) go out with the next code push. When one must come after the last code push of a PR, its commit message carries `[skip ci]`. Not before the PR is opened: CI runs only for pull requests (and pushes to `main`), so the PR's first run would land on a `[skip ci]` head and be skipped (2026-11-11, item 52). Never write the skip marker in any other commit message, not even to describe this rule: GitHub matches it anywhere in the head commit's message. Commit d5e1bb0's subject quoted it and suppressed all of PR #353's CI, even after a close and reopen (2026-11-12). Most of #352's CI runs came from record-keeping pushes, and the account's free Actions minutes ran out.
@@ -198,9 +198,10 @@ _Last updated: 2026-11-16T00-42Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
     - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
-57. **Drop the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` fallback.** *(user decision on item 56, 2026-11-16)*
-   - The site (`--override-input site path:<dir>`) is the only way in; nothing in this repository uses the environment fallback since item 19.
-   - Remove it from `flake.nix` and `nix/site.nix` (site-settings design D2c), with `--impure` from the docs; then `tests/vm/site_build.build_environment` need not clear it. Test first: a flake check that an exported `PRE_NIXOS_ROOT_KEY` no longer reaches the image.
+58. **`nix flake check --no-build` cannot evaluate `packages.x86_64-linux.default`.** *(anomaly, 2026-11-23, found during item 57)*
+   - It stops with `error: path '…-pre-nixos-root-key.pub' is not valid` on `main` (0ab999d), and with `…-pre-nixos-boot.nix` on item 57's branch. Evaluating the image reads store paths that `--no-build` will not realise.
+   - CI runs the full `nix flake check`, so CI is unaffected; evaluating each check's `drvPath` works (26/26).
+   - To do: find the reads (likely `system.extraDependencies` or the embedded key), and decide whether a cheap evaluation-only check is worth having.
 
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
@@ -208,7 +209,15 @@ _Last updated: 2026-11-16T00-42Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-16T00-42Z - Item 7 fixed (0.32.9), merged in trbarbour/NixOS-boot-image#361 (CI green, Codex clean): `tests/vm/` and `scripts/` pass `mypy --strict` and CI checks them. Design `plans/2026-11-16T004209Z-vm-harness-type-checking-design.md` (R-T1).
+- 2026-11-23T02-01Z - Item 57 fixed (0.33.0): the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` build-time fallback is gone (user decision on item 56). Design `plans/2026-11-23T020104Z-drop-legacy-env-fallback-design.md`; new requirement R-A3 (reqs §2.7); design v0.43.
+  - Experiment first: a pure flake evaluation reads `builtins.getEnv` as `""`; only `--impure` sees the variables.
+  - If set under `--impure`, they are now an evaluation error naming the site setting to use, so an old habit cannot build an image without its key. The run-time `PRE_NIXOS_AUTO_INSTALL` of the boot service is unchanged.
+  - Tests first:
+    - flake check `site-legacy-env-refused` (replaces `site-env-conflict`): it and three other site checks failed to evaluate, then passed;
+    - `test_no_harness_or_script_evaluates_impurely`: failed on a leftover `--impure` in `tests/vm/test_disko_offline_closure.py`, now fixed.
+  - `tests/vm/site_build.build_environment` is gone: a pure build cannot read the environment.
+  - Also corrected: item 7's requirement ID R-T1 collided with the reqs' R-T1 (build hosts); it is now R-Q1.
+- 2026-11-16T00-42Z - Item 7 fixed (0.32.9), merged in trbarbour/NixOS-boot-image#361 (CI green, Codex clean): `tests/vm/` and `scripts/` pass `mypy --strict` and CI checks them. Design `plans/2026-11-16T004209Z-vm-harness-type-checking-design.md` (R-Q1; first written R-T1, which collided with the reqs' R-T1, corrected 2026-11-23).
   - Test first: listing both directories in `[tool.mypy] files` gave 120 errors in 14 files. Now: no issues in 72 files.
   - pexpect is typed through typeshed's `types-pexpect` (pinned in `requirements-dev.txt`). Module names come from the repository root (`explicit_package_bases`).
   - Real defects found: `_raise_with_transcript` always raises but said `-> None` (now `NoReturn`); `run` passed a possibly-`None` `child.before` on (now an assertion naming the command); four copies of the free-port helper (now one); a dead "pexpect missing" branch in the controller tests.

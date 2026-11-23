@@ -179,3 +179,6 @@
 
 ### v0.42 — 2026-11-12
 - §7.4: no sliver LVs. An optional LV that would get less than 1 GiB, or less than its request if smaller, is omitted (R-L1, task queue item 11).
+
+### v0.43 — 2026-11-23
+- §7.8.1: the site is the only source of build-time settings; the legacy `PRE_NIXOS_ROOT_KEY` / `PRE_NIXOS_AUTO_INSTALL` fallback (design D2c) is removed, and its variables, if set under `--impure`, are an evaluation error (R-A3, task queue item 57).

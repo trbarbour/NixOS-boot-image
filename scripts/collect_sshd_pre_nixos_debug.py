@@ -46,12 +46,10 @@ def build_boot_image(public_key: Path, *, site_dir: Path) -> BootImageBuild:
     """Build the ISO with ``public_key`` as root's key, from a site written to
     ``site_dir``: the key itself may be read-only (Codex on #360)."""
 
-    # Item 19: from a site, as the VM fixtures build, not the legacy
-    # PRE_NIXOS_ROOT_KEY/--impure fallback.
+    # Item 19: from a site, as the VM fixtures build.
     site_build.write_test_site(site_dir, public_key)
     result = _run(
         nix_command("nix", site_build.build_args(".#bootImage", site_dir)),
-        env=site_build.build_environment(),
         cwd=REPO_ROOT,
     )
     store_paths = [line.strip() for line in result.stdout.splitlines() if line.strip()]

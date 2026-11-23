@@ -35,7 +35,7 @@ entries are also appended to `PRE_NIXOS_LOG_FILE` (defaulting to
 `/var/log/pre-nixos/actions.log`, which the boot image service creates) so they
 persist outside of the journal.
 
-When a root SSH key is embedded via `PRE_NIXOS_ROOT_KEY`, the CLI can generate a
+When a root SSH key is embedded from a site's `rootKey` ([Site settings](#site-settings)), the CLI can generate a
 minimal NixOS configuration (firewall enabled with SSH + ping, root key
 authorised, flakes enabled, and the `lan` interface managed by
 systemd-networkd) and runs `nixos-install --no-root-passwd` after the storage
@@ -173,7 +173,7 @@ The image is named after the pre-nixos version and git commit that built it, fol
 
 **Formats:** `"iso"` (x86_64-linux) and `"sd"` (aarch64-linux). Building the SD image on x86_64 needs AArch64 emulation (`boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` on NixOS, or `scripts/lib/aarch64_emulation.sh`).
 
-**Legacy:** `PRE_NIXOS_ROOT_KEY` and `PRE_NIXOS_AUTO_INSTALL` still work with `--impure`, but only for settings the site leaves unset. If both set the same thing differently, evaluation fails.
+**No environment variables:** the site is the only source of these settings. The former `PRE_NIXOS_ROOT_KEY` and `PRE_NIXOS_AUTO_INSTALL` build variables (read under `--impure`) are gone; if either is set during an `--impure` evaluation, the build stops and says which site setting replaces it.
 
 ## Writing an image to a USB stick or SD card
 
@@ -321,7 +321,7 @@ anonymous `git` reads but refuses those tarballs with HTTP 403. On such hosts,
 `narHash` against `flake.lock` and refuses to continue on any mismatch:
 
 ```bash
-scripts/nix_git_inputs.py build .#bootImage --impure   # runs nix with overrides
+scripts/nix_git_inputs.py build .#bootImage            # runs nix with overrides
 scripts/nix_git_inputs.py --print                       # just print the overrides
 ```
 

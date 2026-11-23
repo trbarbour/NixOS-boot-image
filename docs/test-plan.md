@@ -50,7 +50,7 @@ running slower integration scenarios.
 The boot image tests build the ISO with Nix, boot it inside QEMU, and validate
 end-to-end storage provisioning and DHCP configuration.
 
-The first `nix build .#bootImage --impure --no-link` run can take several
+The first `nix build .#bootImage --no-link` run can take several
 minutes while the derivations are realised, so run it ahead of `pytest
 tests/test_boot_image_vm.py` when possible. Subsequent invocations reuse the
 cached derivations and complete much faster as long as the inputs remain
@@ -66,19 +66,13 @@ These tests require hardware virtualisation support and may take several
 minutes.  They are non-optional: failures or skips indicate inadequate testing.
 Before running the suite:
 
-1. Generate a disposable SSH key pair and export the public key so Nix can
-   embed it into the boot image:
-
-   ```bash
-   ssh-keygen -t ed25519 -N '' -f /tmp/pre-nixos-test-key
-   export PRE_NIXOS_ROOT_KEY=/tmp/pre-nixos-test-key.pub
-   ```
-
-2. Invoke `nix build --impure` (the test harness does this automatically) so
-   `builtins.getEnv` can read `PRE_NIXOS_ROOT_KEY` during flake evaluation.  The
-   integration tests generate their own ephemeral key pair per run, forward the
-   VM's SSH port to the host, and assert that `ssh -i` connects as `root` using
-   the generated private key.
+1. Nothing to export: the integration tests generate their own ephemeral key
+   pair per run and write it into a test site (`tests/vm/site_build.py`), which
+   reaches a pure build as `--override-input site path:<dir>` (README "Site
+   settings").  The former `PRE_NIXOS_ROOT_KEY` / `--impure` route is gone
+   (task queue item 57).
+2. The tests forward the VM's SSH port to the host and assert that `ssh -i`
+   connects as `root` using the generated private key.
 3. Confirm the boot environment exposes the storage tooling by running
    `command -v disko` inside the VM; the automated tests assert the command is
    available so provisioning never begins without the required binary.

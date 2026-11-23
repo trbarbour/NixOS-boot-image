@@ -19,7 +19,7 @@ Activation is explicit: callers inside the repository use
 ``PRE_NIXOS_NIX_GIT_INPUTS=1``.  Running this file directly always applies
 them::
 
-    scripts/nix_git_inputs.py build .#bootImage --impure   # runs nix
+    scripts/nix_git_inputs.py build .#bootImage            # runs nix
     scripts/nix_git_inputs.py --print                       # shows the args
 
 ``nix flake update`` fetches tarballs too, so it fails on such hosts.

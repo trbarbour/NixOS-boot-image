@@ -4,7 +4,9 @@
 passed the root key through the legacy environment fallback
 (``PRE_NIXOS_ROOT_KEY`` with ``--impure``; site-settings design D2c), while
 ``tests/vm/fixtures.py`` already used ``--override-input site path:<dir>``.
-All three now share one helper, ``tests.vm.site_build``.
+All three now share one helper, ``tests.vm.site_build``.  The fallback itself
+is gone since item 57; a pure build (no ``--impure``) cannot read the
+environment, so the absence of ``--impure`` is what keeps it out.
 """
 
 from __future__ import annotations
@@ -29,7 +31,6 @@ def _capture(monkeypatch, module) -> List[Dict[str, Any]]:
         return subprocess.CompletedProcess(cmd, 0, stdout=STORE_PATH + "\n", stderr="")
 
     monkeypatch.setattr(module.subprocess, "run", fake_run)
-    monkeypatch.setenv("PRE_NIXOS_ROOT_KEY", "/somewhere/else.pub")  # must not reach the build
     # No real `nix flake metadata` from nix_command's verified overrides.
     monkeypatch.delenv("PRE_NIXOS_NIX_GIT_INPUTS", raising=False)
     return calls
@@ -48,7 +49,6 @@ def _assert_site_build(call: Dict[str, Any], key: Path) -> None:
     assert cmd[cmd.index("--override-input") + 1] == "site"
     assert (site / "root_key.pub").read_text() == key.read_text()
     assert "rootKey = ./root_key.pub;" in (site / "pre-nixos-site.nix").read_text()
-    assert "PRE_NIXOS_ROOT_KEY" not in call["env"]
 
 
 @pytest.fixture
@@ -100,13 +100,6 @@ def test_the_site_helper_writes_key_and_optional_hash(tmp_path: Path, key: Path)
     assert 'rootHashedPassword = "$6$x$y";' in (site / "pre-nixos-site.nix").read_text()
 
 
-def test_the_build_environment_drops_the_legacy_fallback(monkeypatch) -> None:
-    monkeypatch.setenv("PRE_NIXOS_ROOT_KEY", "/k")
-    monkeypatch.setenv("PRE_NIXOS_AUTO_INSTALL", "1")
-    env = site_build.build_environment()
-    assert "PRE_NIXOS_ROOT_KEY" not in env and "PRE_NIXOS_AUTO_INSTALL" not in env
-
-
 def test_the_build_arguments(tmp_path: Path) -> None:
     assert site_build.build_args(".#bootImage", tmp_path) == [
         "build", ".#bootImage", "--no-link", "--print-out-paths",
@@ -131,3 +124,34 @@ def test_every_build_boot_image_caller_passes_a_site_dir() -> None:
             if name == "build_boot_image" and "site_dir" not in {k.arg for k in node.keywords}:
                 missing.append(f"{path.name}:{node.lineno}")
     assert missing == []
+
+
+def test_no_harness_or_script_evaluates_impurely() -> None:
+    """Item 57: the flake reads the environment only under ``--impure``, where
+    the removed ``PRE_NIXOS_ROOT_KEY`` / ``PRE_NIXOS_AUTO_INSTALL`` now stop
+    the build.  Nothing here needs impurity, so no string literal in the
+    scripts or the VM harness may say ``--impure`` (docstrings aside)."""
+
+    import ast
+
+    repo = Path(__file__).resolve().parents[1]
+    found = []
+    for path in sorted([*(repo / "scripts").glob("*.py"), *(repo / "tests" / "vm").glob("*.py")]):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        docstrings = {
+            id(node.body[0].value)
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            and node.body
+            and isinstance(node.body[0], ast.Expr)
+            and isinstance(node.body[0].value, ast.Constant)
+        }
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, str)
+                and "--impure" in node.value
+                and id(node) not in docstrings
+            ):
+                found.append(f"{path.relative_to(repo)}:{node.lineno}")
+    assert found == []
