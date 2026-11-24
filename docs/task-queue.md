@@ -1,6 +1,6 @@
 # Task Queue
 
-_Last updated: 2026-11-23T02-01Z_
+_Last updated: 2026-11-24T01-42Z_
 
 ## Rules
 - **CI minutes (user decision, 2026-11-11):** record-keeping commits (notes, the task queue, VM run logs) go out with the next code push. When one must come after the last code push of a PR, its commit message carries `[skip ci]`. Not before the PR is opened: CI runs only for pull requests (and pushes to `main`), so the PR's first run would land on a `[skip ci]` head and be skipped (2026-11-11, item 52). Never write the skip marker in any other commit message, not even to describe this rule: GitHub matches it anywhere in the head commit's message. Commit d5e1bb0's subject quoted it and suppressed all of PR #353's CI, even after a close and reopen (2026-11-12). Most of #352's CI runs came from record-keeping pushes, and the account's free Actions minutes ran out.
@@ -198,17 +198,24 @@ _Last updated: 2026-11-23T02-01Z_
         - Remaining: the end-to-end install VM test (item 12), the hardware test on the user's old machines (U1 `pmbr_boot`), and syncing the other boot disks' ESPs (D3 (b)).
     - **2026-11-12, audit:** done apart from one point. The guard (0.23.1) and full BIOS support (0.24.0) are in; the end-to-end install is covered on x86 BIOS (item 12, `tests/vm/test_installed_system_vm.py`); the user's BIOS PC has been installed. **Remaining:** keep the other boot disks' ESPs in sync (plan D3 (b)), so the machine still boots if the first disk fails.
 
-58. **`nix flake check --no-build` cannot evaluate `packages.x86_64-linux.default`.** *(anomaly, 2026-11-23, found during item 57)*
-   - It stops with `error: path '…-pre-nixos-root-key.pub' is not valid` on `main` (0ab999d), and with `…-pre-nixos-boot.nix` on item 57's branch. Evaluating the image reads store paths that `--no-build` will not realise.
-   - CI runs the full `nix flake check`, so CI is unaffected; evaluating each check's `drvPath` works (26/26).
-   - To do: find the reads (likely `system.extraDependencies` or the embedded key), and decide whether a cheap evaluation-only check is worth having.
-
 51. **In the VM, stage 2's udev does not auto-load `mptsas` for QEMU's `mptsas1068`** *(anomaly, 2026-11-11, item 48)*.
     - Evidence: the controller is present (`pci 0000:00:04.0: [1000:0054]`), and `modules.alias` maps `pci:v00001000d00000054` to `mptsas`. `modprobe -n -v mptsas` resolves, and `systemd-udev-trigger` ran, yet the driver is unbound and nothing is loaded.
     - On the user's PC (SAS1068E, 1000:0058, 0.27.0 image), stage 2 did load it.
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
+- 2026-11-24T01-42Z - Item 58 fixed (0.33.1). Record: `notes/2026-11-24T013105Z-item58-flake-check-no-build.md`.
+  - **"path … is not valid" under `nix flake check --no-build`** is Nix's behaviour, not the flake's.
+    - Toy flakes showed it: `--no-build` evaluates against a read-only store, so a path that evaluation adds to the store and reads back fails (`builtins.path`/`toFile`, then `readFile`/`import`). Plain `nix eval` of the same is fine.
+    - Instead, new `scripts/eval_checks.py` evaluates every check's `drvPath` (all assertions, nothing built), documented in the README and the test plan.
+  - **Found on the way, a real bug:** with any input overridden, the README's `--override-input site path:<dir>` included, Nix gives the flake no git revision.
+    - `sourceIdOf` handles that (#332), but `image-file-names` still asserted a `-g` prefix (from 0.21.0), so `nix flake check` with a site override failed on any clean tree.
+    - Fixed: the name carries `<version>-<sourceRev>`, and a `g` source id exactly when Nix gives a revision.
+  - Tests first:
+    - `tests/test_eval_checks.py` failed (no script);
+    - `scripts/eval_checks.py --override-input site path:./nix/site-default` reproduced the bug; it now evaluates 26 checks.
+  - CI runs the script under a site override after `nix flake check` (its own checkout always has a revision), and a unit test keeps that step in the workflow.
+  - Unexplained, recorded in the note: a toy flake with a relative `path:` input showed `dirtyShortRev`, not nothing, under an override. The fix accepts both.
 - 2026-11-23T02-01Z - Item 57 fixed (0.33.0), merged in trbarbour/NixOS-boot-image#362 (CI green, Codex clean): the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` build-time fallback is gone (user decision on item 56). Design `plans/2026-11-23T020104Z-drop-legacy-env-fallback-design.md`; new requirement R-A3 (reqs §2.7); design v0.43.
   - Experiment first: a pure flake evaluation reads `builtins.getEnv` as `""`; only `--impure` sees the variables.
   - If set under `--impure`, they are now an evaluation error naming the site setting to use, so an old habit cannot build an image without its key. The run-time `PRE_NIXOS_AUTO_INSTALL` of the boot service is unchanged.

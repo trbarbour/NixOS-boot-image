@@ -226,3 +226,10 @@ Closed task-queue items, kept verbatim with their full history when they leave `
 57. **Drop the legacy `PRE_NIXOS_ROOT_KEY`/`PRE_NIXOS_AUTO_INSTALL` fallback.** *(user decision on item 56, 2026-11-16)*
    - The site (`--override-input site path:<dir>`) is the only way in; nothing in this repository uses the environment fallback since item 19.
    - Remove it from `flake.nix` and `nix/site.nix` (site-settings design D2c), with `--impure` from the docs; then `tests/vm/site_build.build_environment` need not clear it. Test first: a flake check that an exported `PRE_NIXOS_ROOT_KEY` no longer reaches the image.
+
+## Closed 2026-11-24: item 58 (fixed in 0.33.1)
+
+58. **`nix flake check --no-build` cannot evaluate `packages.x86_64-linux.default`.** *(anomaly, 2026-11-23, found during item 57)*
+   - It stops with `error: path '…-pre-nixos-root-key.pub' is not valid` on `main` (0ab999d), and with `…-pre-nixos-boot.nix` on item 57's branch. Evaluating the image reads store paths that `--no-build` will not realise.
+   - CI runs the full `nix flake check`, so CI is unaffected; evaluating each check's `drvPath` works (26/26).
+   - To do: find the reads (likely `system.extraDependencies` or the embedded key), and decide whether a cheap evaluation-only check is worth having.
