@@ -204,7 +204,7 @@ _Last updated: 2026-11-24T01-42Z_
     - Unknown why. Next: `udevadm test /sys/bus/pci/devices/0000:00:04.0` and udevd's debug log in the VM. Since item 48 the driver is in the initrd, so this no longer affects that controller.
 
 ## Recently Completed
-- 2026-11-24T01-42Z - Item 58 fixed (0.33.1). Record: `notes/2026-11-24T013105Z-item58-flake-check-no-build.md`.
+- 2026-11-24T01-42Z - Item 58 fixed (0.33.1), merged in trbarbour/NixOS-boot-image#363 (CI green, incl. the new step: "26 checks evaluated" under a site override; Codex clean). Record: `notes/2026-11-24T013105Z-item58-flake-check-no-build.md`.
   - **"path … is not valid" under `nix flake check --no-build`** is Nix's behaviour, not the flake's.
     - Toy flakes showed it: `--no-build` evaluates against a read-only store, so a path that evaluation adds to the store and reads back fails (`builtins.path`/`toFile`, then `readFile`/`import`). Plain `nix eval` of the same is fine.
     - Instead, new `scripts/eval_checks.py` evaluates every check's `drvPath` (all assertions, nothing built), documented in the README and the test plan.
