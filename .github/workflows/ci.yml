@@ -57,6 +57,11 @@ jobs:
         # cheap checks, including the stock-AArch64-boot-settings guard
         # (R-P2).  No image is built.
         run: nix flake check -L
+      - name: Evaluate the checks under a site override
+        # With any input overridden (the README's site build) Nix gives the
+        # flake no git revision; the checks must hold then too (task queue
+        # item 58).  Evaluation only; nothing is built.
+        run: python3 scripts/eval_checks.py --override-input site path:./nix/site-default
       - name: Evaluate the AArch64 SD image
         # On x86_64, flake check skips aarch64-linux outputs and evaluates
         # the AArch64 configuration only up to system.build.toplevel, so

@@ -105,7 +105,7 @@ Tests run in three tiers, by cost:
 
 | Tier | What | Where | Cost |
 |---|---|---|---|
-| 1 | Unit tests (`pytest -m "not vm"`) on Python 3.10 (the declared minimum) and 3.13 (the image's); strict `mypy` over the modules listed in `pyproject.toml`, targeting 3.10; `nix flake check` (evaluates the x86 ISO and both configurations, builds the cheap checks); and evaluation of the AArch64 SD image | `.github/workflows/ci.yml`, on every push to `main` and every pull request | minutes |
+| 1 | Unit tests (`pytest -m "not vm"`) on Python 3.10 (the declared minimum) and 3.13 (the image's); strict `mypy` over the modules listed in `pyproject.toml`, targeting 3.10; `nix flake check` (evaluates the x86 ISO and both configurations, builds the cheap checks); the checks evaluated again under a site override (`scripts/eval_checks.py`); and evaluation of the AArch64 SD image | `.github/workflows/ci.yml`, on every push to `main` and every pull request | minutes |
 | 2 | x86 VM tests (`pytest -m vm` without the AArch64 module) | not automated yet | about 1 hour |
 | 3 | AArch64 SD image build and VM tests under emulation | not automated yet; needs a binary cache to fit a 6-hour job | hours |
 
@@ -116,7 +116,10 @@ python -m pip install -r requirements-dev.txt   # once
 python -m pytest -m "not vm" tests
 mypy
 nix flake check -L
+scripts/eval_checks.py --override-input site path:./nix/site-default
 nix eval --raw .#packages.aarch64-linux.bootImageSd.drvPath
 ```
+
+`scripts/eval_checks.py` evaluates every check without building (task queue item 58). With an input overridden, Nix gives the flake no git revision, as in the README's site build; CI runs it so, because its own `nix flake check` always has one.
 
 **Strict typing is a ratchet.** When a module becomes clean under `mypy --strict`, add it to `[tool.mypy] files`, and never remove one.

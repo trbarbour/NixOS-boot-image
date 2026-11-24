@@ -345,6 +345,16 @@ nix flake check
 The configuration environment variable is optional when `nix.conf` already
 enables flakes and the modern CLI.
 
+For a quick check that builds nothing, evaluate every check instead.
+`nix flake check --no-build` does not work for this flake: it evaluates against
+a read-only store, where files the flake places in the store and reads back
+(the site's key, generated Nix files) are "not valid".
+
+```bash
+scripts/eval_checks.py                                              # every check's assertions
+scripts/eval_checks.py --override-input site path:./nix/site-default  # as CI also runs it
+```
+
 Build the CLI as a Nix package:
 
 ```bash

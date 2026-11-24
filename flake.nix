@@ -716,8 +716,14 @@
             in
             assert pkgs.lib.assertMsg (name "iso" == want "iso" "iso") "ISO file name is ${name "iso"}";
             assert pkgs.lib.assertMsg (name "sd" == want "sd" "img.zst") "SD file name is ${name "sd"}";
-            assert pkgs.lib.assertMsg (pkgs.lib.hasPrefix "pre-nixos-${preNixosVersion}-g" (name "sd"))
-              "SD file name ${name "sd"} does not start with the pre-nixos version";
+            # The version, then the commit when Nix gives one.  With any input
+            # overridden (the README's site build) it gives none, and
+            # sourceIdOf falls back to the commit date and a source hash
+            # (#332); this check holds either way (task queue item 58).
+            assert pkgs.lib.assertMsg
+              (pkgs.lib.hasPrefix "pre-nixos-${preNixosVersion}-${sourceRev}-" (name "sd")
+                && (self ? shortRev || self ? dirtyShortRev) == pkgs.lib.hasPrefix "g" sourceRev)
+              "SD file name ${name "sd"} does not start with the pre-nixos version and source id (${sourceRev})";
             # The ISO derivation names its file from isoName, not fileName.
             assert pkgs.lib.assertMsg (iso.isoImage.isoName == name "iso")
               "isoName ${iso.isoImage.isoName} differs from image.fileName ${name "iso"}";
